@@ -11,6 +11,8 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/css/welcome.css',
                 'resources/js/welcome.js',
+                'resources/css/auth/login.css',
+                'resources/js/auth/login.js',
             ],
             refresh: true,
         }),

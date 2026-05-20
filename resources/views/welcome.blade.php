@@ -1,15 +1,6 @@
-<!DOCTYPE html>
-<html lang="es" class="scroll-smooth">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="NovaReef — La plataforma digital para la gestión integral de colegios de árbitros de fútbol en Colombia.">
-    <title>NovaReef — Gestión de Árbitros de Fútbol</title>
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900&display=swap" rel="stylesheet" />
-    @vite(['resources/css/welcome.css', 'resources/js/welcome.js'])
-</head>
-<body class="bg-slate-950 text-white antialiased">
+@extends('layouts.public')
+
+@section('contenido')
 
     {{-- ===== NAVBAR ===== --}}
     <header id="navbar" class="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-lg transition-all duration-300">
@@ -38,7 +29,7 @@
 
                 {{-- CTA + hamburger --}}
                 <div class="flex items-center gap-3">
-                    <a href="/login"
+                    <a href="{{ route('login') }}"
                        class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400
                               text-white font-semibold rounded-lg text-sm transition-colors duration-200
                               shadow-md shadow-emerald-500/20">
@@ -116,7 +107,7 @@
 
             {{-- Botones --}}
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/login"
+                <a href="{{ route('login') }}"
                    class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-emerald-500
                           hover:bg-emerald-400 text-white font-bold rounded-xl text-base
                           transition-colors duration-200 shadow-xl shadow-emerald-500/20">
@@ -623,7 +614,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="/login"
+                            <a href="{{ route('login') }}"
                                class="text-slate-400 hover:text-white text-sm transition-colors">
                                 Iniciar sesión
                             </a>
@@ -677,5 +668,4 @@
         </div>
     </footer>
 
-</body>
-</html>
+@endsection
