@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Colegio\ColegioController;
 use Illuminate\Support\Facades\Route;
 
 // Página pública
@@ -16,4 +17,14 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+    Route::prefix('colegios')->name('colegios.')->group(function () {
+        Route::get('/',               [ColegioController::class, 'index'])->name('index');
+        Route::get('/crear',          [ColegioController::class, 'create'])->name('create');
+        Route::post('/',              [ColegioController::class, 'store'])->name('store');
+        Route::get('/{id}',           [ColegioController::class, 'show'])->name('show');
+        Route::get('/{id}/editar',    [ColegioController::class, 'edit'])->name('edit');
+        Route::put('/{id}',           [ColegioController::class, 'update'])->name('update');
+        Route::put('/{id}/estado',    [ColegioController::class, 'toggleEstado'])->name('toggleEstado');
+    });
 });

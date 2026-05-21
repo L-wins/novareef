@@ -13,6 +13,8 @@ export default defineConfig({
                 'resources/js/welcome.js',
                 'resources/css/auth/login.css',
                 'resources/js/auth/login.js',
+                'resources/css/colegios/colegios.css',
+                'resources/js/colegios/colegios.js',
             ],
             refresh: true,
         }),
