@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,13 +12,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call(AdminSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::firstOrCreate(
+            ['emailUsuario' => 'admin@novareef.test'],
+            [
+                'nombreUsuario'   => 'Administrador NovaReef',
+                'passwordUsuario' => 'password',
+                'rolUsuario'      => 'superadmin',
+                'estadoUsuario'   => 'activo',
+                'temaPreferencia' => 'oscuro',
+            ]
+        );
 
         $this->call(ColegioSeeder::class);
+        $this->call(CategoriaArbitroSeeder::class);
+        $this->call(PlanSeeder::class);
     }
 }

@@ -1,47 +1,82 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    protected $table      = 'usuarios';
+    protected $primaryKey = 'idUsuario';
+    protected $keyType    = 'int';
+    public    $incrementing = true;
+
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'idColegio',
+        'nombreUsuario',
+        'emailUsuario',
+        'passwordUsuario',
+        'telefonoUsuario',
+        'rolUsuario',
+        'estadoUsuario',
+        'temaPreferencia',
+        'tokenRecuperacion',
+        'tokenExpiracion',
+        'dobleFactorActivo',
+        'dobleFactorCodigo',
+        'ultimoAcceso',
+        'must_change_password',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
-        'password',
+        'passwordUsuario',
+        'tokenRecuperacion',
+        'dobleFactorCodigo',
         'remember_token',
     ];
 
+    protected $casts = [
+        'tokenExpiracion'    => 'datetime',
+        'ultimoAcceso'       => 'datetime',
+        'dobleFactorActivo'    => 'boolean',
+        'must_change_password' => 'boolean',
+        'rolUsuario'         => 'string',
+        'estadoUsuario'      => 'string',
+        'temaPreferencia'    => 'string',
+        'passwordUsuario'    => 'hashed',
+        'deleted_at'         => 'datetime',
+    ];
+
+    // ── Auth overrides ───────────────────────────────────────────────────────
+
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Indica a Laravel qué columna contiene la contraseña para autenticación.
      */
-    protected function casts(): array
+    public function getAuthPasswordName(): string
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return 'passwordUsuario';
+    }
+
+    /**
+     * Devuelve el valor de la contraseña hasheada para validación.
+     */
+    public function getAuthPassword(): string
+    {
+        return $this->passwordUsuario;
+    }
+
+    // ── Relaciones ───────────────────────────────────────────────────────────
+
+    public function colegio(): BelongsTo
+    {
+        return $this->belongsTo(Colegio::class, 'idColegio', 'idColegio');
     }
 }

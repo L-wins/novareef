@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Arbitro\ArbitroController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Colegio\ColegioController;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,16 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+    Route::prefix('arbitros')->name('arbitros.')->group(function () {
+        Route::get('/',            [ArbitroController::class, 'index'])->name('index');
+        Route::get('/crear',       [ArbitroController::class, 'create'])->name('create');
+        Route::post('/',           [ArbitroController::class, 'store'])->name('store');
+        Route::get('/{id}',        [ArbitroController::class, 'show'])->name('show');
+        Route::get('/{id}/editar', [ArbitroController::class, 'edit'])->name('edit');
+        Route::put('/{id}',        [ArbitroController::class, 'update'])->name('update');
+        Route::put('/{id}/estado', [ArbitroController::class, 'toggleEstado'])->name('toggleEstado');
+    });
 
     Route::prefix('colegios')->name('colegios.')->group(function () {
         Route::get('/',               [ColegioController::class, 'index'])->name('index');

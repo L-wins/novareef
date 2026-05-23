@@ -22,12 +22,12 @@ class LoginController extends Controller
     public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required', 'string'],
+            'emailUsuario'    => ['required', 'email'],
+            'passwordUsuario' => ['required', 'string'],
         ], [
-            'email.required'    => 'El correo electrónico es obligatorio.',
-            'email.email'       => 'Ingresa un correo electrónico válido.',
-            'password.required' => 'La contraseña es obligatoria.',
+            'emailUsuario.required'    => 'El correo electrónico es obligatorio.',
+            'emailUsuario.email'       => 'Ingresa un correo electrónico válido.',
+            'passwordUsuario.required' => 'La contraseña es obligatoria.',
         ]);
 
         $remember = $request->boolean('remember');
@@ -39,8 +39,8 @@ class LoginController extends Controller
         }
 
         return back()
-            ->withErrors(['email' => 'Las credenciales ingresadas no son válidas.'])
-            ->withInput($request->only('email', 'remember'));
+            ->withErrors(['emailUsuario' => 'Las credenciales ingresadas no son válidas.'])
+            ->withInput($request->only('emailUsuario', 'remember'));
     }
 
     public function logout(Request $request): RedirectResponse

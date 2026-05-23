@@ -1,0 +1,304 @@
+@extends('layouts.app')
+
+@section('titulo', 'Nuevo árbitro')
+@section('seccion', 'Árbitros')
+
+@push('styles')
+    @vite(['resources/css/arbitros/arbitros.css'])
+@endpush
+
+@section('contenido')
+<div class="container">
+
+    <a href="{{ route('arbitros.index') }}" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;">
+            <path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd"/>
+        </svg>
+        Volver a árbitros
+    </a>
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1 class="page-heading">Nuevo árbitro</h1>
+            <p class="page-subheading">El código de carné y el estado inicial se generan automáticamente</p>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('arbitros.store') }}" novalidate id="arbitro-form">
+        @csrf
+
+        <div class="form-card">
+
+            {{-- Sección 1: Datos personales --}}
+            <div class="form-section">
+                <p class="form-section-title">Datos personales</p>
+                <div class="form-grid form-grid-2">
+
+                    <div class="form-group span-2">
+                        <label for="nombreUsuario" class="form-label">Nombre completo <span class="req">*</span></label>
+                        <input type="text" id="nombreUsuario" name="nombreUsuario"
+                               value="{{ old('nombreUsuario') }}" maxlength="150"
+                               placeholder="Ej. Juan Carlos Pérez"
+                               class="form-input {{ $errors->has('nombreUsuario') ? 'is-invalid' : '' }}">
+                        @error('nombreUsuario') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailUsuario" class="form-label">Correo electrónico <span class="req">*</span></label>
+                        <input type="email" id="emailUsuario" name="emailUsuario"
+                               value="{{ old('emailUsuario') }}" placeholder="arbitro@ejemplo.com"
+                               class="form-input {{ $errors->has('emailUsuario') ? 'is-invalid' : '' }}">
+                        @error('emailUsuario') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telefonoUsuario" class="form-label">Teléfono</label>
+                        <input type="text" id="telefonoUsuario" name="telefonoUsuario"
+                               value="{{ old('telefonoUsuario') }}" maxlength="20"
+                               placeholder="Ej. 3001234567"
+                               class="form-input {{ $errors->has('telefonoUsuario') ? 'is-invalid' : '' }}">
+                        @error('telefonoUsuario') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="passwordUsuario" class="form-label">Contraseña <span class="req">*</span></label>
+                        <div class="password-wrapper">
+                            <input type="password" id="passwordUsuario" name="passwordUsuario"
+                                   placeholder="Mínimo 8 caracteres"
+                                   class="form-input {{ $errors->has('passwordUsuario') ? 'is-invalid' : '' }}">
+                            <button type="button" class="toggle-pwd" data-target="passwordUsuario" aria-label="Mostrar contraseña">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
+                                    <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41Z" clip-rule="evenodd"/>
+                                </svg>
+                            </button>
+                        </div>
+                        @error('passwordUsuario') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="passwordUsuario_confirmation" class="form-label">Confirmar contraseña <span class="req">*</span></label>
+                        <div class="password-wrapper">
+                            <input type="password" id="passwordUsuario_confirmation" name="passwordUsuario_confirmation"
+                                   placeholder="Repite la contraseña" class="form-input">
+                            <button type="button" class="toggle-pwd" data-target="passwordUsuario_confirmation" aria-label="Mostrar contraseña">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
+                                    <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41Z" clip-rule="evenodd"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <p id="pwd-match-msg" class="field-error" style="display:none;">Las contraseñas no coinciden.</p>
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- Sección 2: Identificación --}}
+            <div class="form-section">
+                <p class="form-section-title">Identificación</p>
+                <div class="form-grid form-grid-2">
+
+                    <div class="form-group">
+                        <label for="idCategoria" class="form-label">Categoría <span class="req">*</span></label>
+                        <select id="idCategoria" name="idCategoria"
+                                class="form-select {{ $errors->has('idCategoria') ? 'is-invalid' : '' }}">
+                            <option value="">— Selecciona —</option>
+                            @foreach ($categorias as $categoria)
+                                <option value="{{ $categoria->idCategoria }}"
+                                    {{ (int) old('idCategoria') === $categoria->idCategoria ? 'selected' : '' }}>
+                                    {{ $categoria->nombreCategoria }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('idCategoria') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="numeroDocumento" class="form-label">Número de documento <span class="req">*</span></label>
+                        <input type="text" id="numeroDocumento" name="numeroDocumento"
+                               value="{{ old('numeroDocumento') }}" maxlength="30"
+                               placeholder="Ej. 1234567890"
+                               class="form-input {{ $errors->has('numeroDocumento') ? 'is-invalid' : '' }}">
+                        @error('numeroDocumento') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tipoDocumento" class="form-label">Tipo de documento <span class="req">*</span></label>
+                        <select id="tipoDocumento" name="tipoDocumento"
+                                class="form-select {{ $errors->has('tipoDocumento') ? 'is-invalid' : '' }}">
+                            @php $tipo = old('tipoDocumento', 'cedula'); @endphp
+                            <option value="cedula"      {{ $tipo === 'cedula'      ? 'selected' : '' }}>Cédula</option>
+                            <option value="pasaporte"   {{ $tipo === 'pasaporte'   ? 'selected' : '' }}>Pasaporte</option>
+                            <option value="extranjeria" {{ $tipo === 'extranjeria' ? 'selected' : '' }}>Extranjería</option>
+                        </select>
+                        @error('tipoDocumento') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lugarExpedicionCC" class="form-label">Lugar de expedición</label>
+                        <input type="text" id="lugarExpedicionCC" name="lugarExpedicionCC"
+                               value="{{ old('lugarExpedicionCC') }}" maxlength="100"
+                               placeholder="Ej. Bogotá"
+                               class="form-input {{ $errors->has('lugarExpedicionCC') ? 'is-invalid' : '' }}">
+                        @error('lugarExpedicionCC') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- Sección 3: Información física y de salud --}}
+            <div class="form-section">
+                <p class="form-section-title">Información física y de salud</p>
+                <div class="form-grid form-grid-2">
+
+                    <div class="form-group">
+                        <label for="pesoArbitro" class="form-label">Peso (kg)</label>
+                        <input type="number" id="pesoArbitro" name="pesoArbitro" step="0.01" min="30" max="200"
+                               value="{{ old('pesoArbitro') }}" placeholder="Ej. 75.5"
+                               class="form-input {{ $errors->has('pesoArbitro') ? 'is-invalid' : '' }}">
+                        @error('pesoArbitro') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="estaturaArbitro" class="form-label">Estatura (m)</label>
+                        <input type="number" id="estaturaArbitro" name="estaturaArbitro" step="0.01" min="1.00" max="2.50"
+                               value="{{ old('estaturaArbitro') }}" placeholder="Ej. 1.78"
+                               class="form-input {{ $errors->has('estaturaArbitro') ? 'is-invalid' : '' }}">
+                        @error('estaturaArbitro') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rhArbitro" class="form-label">RH</label>
+                        <input type="text" id="rhArbitro" name="rhArbitro"
+                               value="{{ old('rhArbitro') }}" maxlength="5" placeholder="Ej. O+"
+                               class="form-input {{ $errors->has('rhArbitro') ? 'is-invalid' : '' }}">
+                        @error('rhArbitro') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="epsArbitro" class="form-label">EPS</label>
+                        <input type="text" id="epsArbitro" name="epsArbitro"
+                               value="{{ old('epsArbitro') }}" maxlength="100" placeholder="Ej. Sura"
+                               class="form-input {{ $errors->has('epsArbitro') ? 'is-invalid' : '' }}">
+                        @error('epsArbitro') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- Sección 4: Información profesional y administrativa --}}
+            <div class="form-section">
+                <p class="form-section-title">Información profesional y administrativa</p>
+                <div class="form-grid form-grid-2">
+
+                    <div class="form-group">
+                        <label for="profesionArbitro" class="form-label">Profesión</label>
+                        <input type="text" id="profesionArbitro" name="profesionArbitro"
+                               value="{{ old('profesionArbitro') }}" maxlength="100"
+                               placeholder="Ej. Ingeniero"
+                               class="form-input {{ $errors->has('profesionArbitro') ? 'is-invalid' : '' }}">
+                        @error('profesionArbitro') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fechaIngresoColegio" class="form-label">Fecha de ingreso al colegio</label>
+                        <input type="date" id="fechaIngresoColegio" name="fechaIngresoColegio"
+                               value="{{ old('fechaIngresoColegio') }}"
+                               class="form-input {{ $errors->has('fechaIngresoColegio') ? 'is-invalid' : '' }}">
+                        @error('fechaIngresoColegio') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group span-2">
+                        <label for="direccionArbitro" class="form-label">Dirección</label>
+                        <input type="text" id="direccionArbitro" name="direccionArbitro"
+                               value="{{ old('direccionArbitro') }}" maxlength="255"
+                               placeholder="Calle, número, complemento…"
+                               class="form-input {{ $errors->has('direccionArbitro') ? 'is-invalid' : '' }}">
+                        @error('direccionArbitro') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="barrioArbitro" class="form-label">Barrio</label>
+                        <input type="text" id="barrioArbitro" name="barrioArbitro"
+                               value="{{ old('barrioArbitro') }}" maxlength="100"
+                               placeholder="Ej. Chapinero"
+                               class="form-input {{ $errors->has('barrioArbitro') ? 'is-invalid' : '' }}">
+                        @error('barrioArbitro') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- Sección 5: Vehículo --}}
+            <div class="form-section">
+                <p class="form-section-title">Vehículo</p>
+
+                <div class="form-check" style="margin-bottom:1rem;">
+                    <input type="checkbox" id="tieneVehiculo" name="tieneVehiculo" value="1"
+                           class="form-check-input" {{ old('tieneVehiculo') ? 'checked' : '' }}>
+                    <label for="tieneVehiculo" class="form-check-label">El árbitro tiene vehículo</label>
+                </div>
+
+                <div id="vehiculo-fields" class="form-grid form-grid-2"
+                     style="{{ old('tieneVehiculo') ? '' : 'display:none' }}">
+
+                    <div class="form-group">
+                        <label for="tipoVehiculo" class="form-label">Tipo de vehículo</label>
+                        <select id="tipoVehiculo" name="tipoVehiculo"
+                                class="form-select {{ $errors->has('tipoVehiculo') ? 'is-invalid' : '' }}">
+                            @php $tv = old('tipoVehiculo'); @endphp
+                            <option value="">— Selecciona —</option>
+                            <option value="carro" {{ $tv === 'carro' ? 'selected' : '' }}>Carro</option>
+                            <option value="moto"  {{ $tv === 'moto'  ? 'selected' : '' }}>Moto</option>
+                            <option value="ambos" {{ $tv === 'ambos' ? 'selected' : '' }}>Ambos</option>
+                        </select>
+                        @error('tipoVehiculo') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="marcaVehiculo" class="form-label">Marca</label>
+                        <input type="text" id="marcaVehiculo" name="marcaVehiculo"
+                               value="{{ old('marcaVehiculo') }}" maxlength="50" placeholder="Ej. Mazda"
+                               class="form-input {{ $errors->has('marcaVehiculo') ? 'is-invalid' : '' }}">
+                        @error('marcaVehiculo') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="placaVehiculo" class="form-label">Placa</label>
+                        <input type="text" id="placaVehiculo" name="placaVehiculo"
+                               value="{{ old('placaVehiculo') }}" maxlength="20" placeholder="Ej. ABC123"
+                               class="form-input {{ $errors->has('placaVehiculo') ? 'is-invalid' : '' }}">
+                        @error('placaVehiculo') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="colorVehiculo" class="form-label">Color</label>
+                        <input type="text" id="colorVehiculo" name="colorVehiculo"
+                               value="{{ old('colorVehiculo') }}" maxlength="30" placeholder="Ej. Rojo"
+                               class="form-input {{ $errors->has('colorVehiculo') ? 'is-invalid' : '' }}">
+                        @error('colorVehiculo') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="form-footer">
+                <a href="{{ route('arbitros.index') }}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;">
+                        <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/>
+                    </svg>
+                    Registrar árbitro
+                </button>
+            </div>
+
+        </div>
+    </form>
+
+</div>
+@endsection
+
+@push('scripts')
+    @vite(['resources/js/arbitros/arbitros.js'])
+@endpush

@@ -27,7 +27,7 @@
                     <a href="#para-quien"    class="text-sm text-slate-400 hover:text-white transition-colors">¿Para quién?</a>
                 </nav>
 
-                {{-- CTA + hamburger --}}
+                {{-- CTA + Admin + hamburger --}}
                 <div class="flex items-center gap-3">
                     <a href="{{ route('login') }}"
                        class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400
@@ -38,6 +38,17 @@
                             <path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.638L10.23 5.29a.75.75 0 1 1 1.04-1.08l5.5 5.25a.75.75 0 0 1 0 1.08l-5.5 5.25a.75.75 0 1 1-1.04-1.08l4.158-3.96H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd"/>
                         </svg>
                     </a>
+
+                    {{-- Botón Admin (discreto) --}}
+                    <button id="admin-modal-trigger"
+                            title="Acceso administrador"
+                            class="flex items-center justify-center w-9 h-9 rounded-lg
+                                   bg-white/5 hover:bg-white/10 text-slate-500 hover:text-slate-300
+                                   border border-white/5 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                            <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clip-rule="evenodd"/>
+                        </svg>
+                    </button>
 
                     {{-- Botón hamburger (móvil) --}}
                     <button id="menu-toggle" aria-expanded="false" aria-label="Abrir menú"
@@ -667,5 +678,137 @@
             </div>
         </div>
     </footer>
+
+
+    {{-- ===== MODAL LOGIN ADMIN ===== --}}
+    <div id="admin-modal"
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4 hidden"
+         role="dialog" aria-modal="true" aria-labelledby="admin-modal-title">
+
+        {{-- Backdrop --}}
+        <div id="admin-modal-backdrop"
+             class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"></div>
+
+        {{-- Card --}}
+        <div class="relative w-full max-w-sm bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-8">
+
+            {{-- Cerrar --}}
+            <button id="admin-modal-close"
+                    class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg
+                           text-slate-500 hover:text-white hover:bg-white/5 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                    <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/>
+                </svg>
+            </button>
+
+            {{-- Header --}}
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20
+                            flex items-center justify-center shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-emerald-400">
+                        <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 id="admin-modal-title" class="text-base font-bold text-white">Acceso Administrador</h2>
+                    <p class="text-xs text-slate-500">Panel de control NovaReef</p>
+                </div>
+            </div>
+
+            {{-- Errores --}}
+            @if ($errors->any() && old('_admin_form'))
+                <div class="mb-5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-sm">
+                    {{ $errors->first() }}
+                </div>
+            @endif
+
+            {{-- Formulario --}}
+            <form method="POST" action="{{ route('admin.login.post') }}" id="admin-login-form">
+                @csrf
+                <input type="hidden" name="_admin_form" value="1">
+
+                <div class="mb-4">
+                    <label for="admin-email" class="block text-xs font-medium text-slate-400 mb-1.5">
+                        Correo electrónico
+                    </label>
+                    <input
+                        type="email"
+                        id="admin-email"
+                        name="email"
+                        value="{{ old('email') }}"
+                        autocomplete="username"
+                        placeholder="admin@novareef.com"
+                        class="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-white/10 text-white text-sm
+                               placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/40
+                               focus:border-emerald-500/50 transition-colors"
+                    >
+                </div>
+
+                <div class="mb-6">
+                    <label for="admin-password" class="block text-xs font-medium text-slate-400 mb-1.5">
+                        Contraseña
+                    </label>
+                    <input
+                        type="password"
+                        id="admin-password"
+                        name="password"
+                        autocomplete="current-password"
+                        placeholder="••••••••"
+                        class="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-white/10 text-white text-sm
+                               placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/40
+                               focus:border-emerald-500/50 transition-colors"
+                    >
+                </div>
+
+                <button type="submit"
+                        class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold
+                               rounded-xl text-sm transition-colors duration-200 flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                        <path fill-rule="evenodd" d="M3 4.25A2.25 2.25 0 0 1 5.25 2h5.5A2.25 2.25 0 0 1 13 4.25v2a.75.75 0 0 1-1.5 0v-2a.75.75 0 0 0-.75-.75h-5.5a.75.75 0 0 0-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 0 0 .75-.75v-2a.75.75 0 0 1 1.5 0v2A2.25 2.25 0 0 1 10.75 18h-5.5A2.25 2.25 0 0 1 3 15.75V4.25Z" clip-rule="evenodd"/>
+                        <path fill-rule="evenodd" d="M19 10a.75.75 0 0 0-.75-.75H8.704l1.048-.943a.75.75 0 1 0-1.004-1.114l-2.5 2.25a.75.75 0 0 0 0 1.114l2.5 2.25a.75.75 0 1 0 1.004-1.114l-1.048-.943h9.546A.75.75 0 0 0 19 10Z" clip-rule="evenodd"/>
+                    </svg>
+                    Ingresar
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        var modal    = document.getElementById('admin-modal');
+        var trigger  = document.getElementById('admin-modal-trigger');
+        var closeBtn = document.getElementById('admin-modal-close');
+        var backdrop = document.getElementById('admin-modal-backdrop');
+
+        function openModal() {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            document.getElementById('admin-email').focus();
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        trigger.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
+        backdrop.addEventListener('click', closeModal);
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Auto-abrir si hay parámetro ?admin=login o si hay errores del formulario admin
+        var params   = new URLSearchParams(window.location.search);
+        var hasError = {{ ($errors->any() && old('_admin_form')) ? 'true' : 'false' }};
+        var hasFlash = {{ session('admin_modal') ? 'true' : 'false' }};
+
+        if (params.get('admin') === 'login' || hasError || hasFlash) {
+            openModal();
+        }
+    })();
+    </script>
 
 @endsection

@@ -15,6 +15,8 @@ export default defineConfig({
                 'resources/js/auth/login.js',
                 'resources/css/colegios/colegios.css',
                 'resources/js/colegios/colegios.js',
+                'resources/css/arbitros/arbitros.css',
+                'resources/js/arbitros/arbitros.js',
             ],
             refresh: true,
         }),

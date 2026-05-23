@@ -36,14 +36,14 @@
              data-has-error="{{ $errors->isNotEmpty() ? 'true' : 'false' }}">
 
             {{-- Alerta de error de credenciales --}}
-            @if ($errors->has('email'))
+            @if ($errors->has('emailUsuario'))
                 <div class="alert-error mb-6" role="alert">
                     <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874
                                  1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
                     </svg>
-                    <span>{{ $errors->first('email') }}</span>
+                    <span>{{ $errors->first('emailUsuario') }}</span>
                 </div>
             @endif
 
@@ -53,21 +53,21 @@
 
                 {{-- Campo: Correo electrónico --}}
                 <div class="mb-5">
-                    <label for="email" class="block text-sm font-medium text-slate-300 mb-1.5">
+                    <label for="emailUsuario" class="block text-sm font-medium text-slate-300 mb-1.5">
                         Correo electrónico
                     </label>
                     <input
                         type="email"
-                        id="email"
-                        name="email"
-                        value="{{ old('email') }}"
+                        id="emailUsuario"
+                        name="emailUsuario"
+                        value="{{ old('emailUsuario') }}"
                         required
                         autocomplete="email"
                         autofocus
                         placeholder="tu@correo.com"
-                        class="field-input {{ $errors->has('email') ? 'has-error' : '' }}"
+                        class="field-input {{ $errors->has('emailUsuario') ? 'has-error' : '' }}"
                     >
-                    @error('email')
+                    @error('emailUsuario')
                         <p class="mt-1.5 text-xs text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
@@ -81,11 +81,11 @@
                         <input
                             type="password"
                             id="password"
-                            name="password"
+                            name="passwordUsuario"
                             required
                             autocomplete="current-password"
                             placeholder="••••••••"
-                            class="field-input {{ $errors->has('password') ? 'has-error' : '' }}"
+                            class="field-input {{ $errors->has('passwordUsuario') ? 'has-error' : '' }}"
                         >
                         <button type="button" id="toggle-password"
                                 class="toggle-password" aria-label="Mostrar contraseña">
@@ -113,7 +113,7 @@
                             </svg>
                         </button>
                     </div>
-                    @error('password')
+                    @error('passwordUsuario')
                         <p class="mt-1.5 text-xs text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
