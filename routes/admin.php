@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Admin2FAController;
 use App\Http\Controllers\Admin\AdminColegioController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminLoginController;
+use App\Http\Controllers\Admin\AdminPlanController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix(config('admin.prefix', 'novareef-panel'))->name('admin.')->group(function (): void {
@@ -30,7 +31,14 @@ Route::prefix(config('admin.prefix', 'novareef-panel'))->name('admin.')->group(f
             Route::put('/{id}',        [AdminColegioController::class, 'update'])->name('update');
             Route::put('/{id}/estado', [AdminColegioController::class, 'toggleEstado'])->name('toggleEstado');
         });
-        Route::get('/planes',    fn () => view('admin.planes.index'))->name('planes.index');
+        Route::prefix('planes')->name('planes.')->group(function (): void {
+            Route::get('/',              [AdminPlanController::class, 'index'])->name('index');
+            Route::get('/{id}',          [AdminPlanController::class, 'show'])->name('show');
+            Route::get('/{id}/editar',   [AdminPlanController::class, 'edit'])->name('edit');
+            Route::put('/{id}',          [AdminPlanController::class, 'update'])->name('update');
+            Route::put('/{id}/visible',  [AdminPlanController::class, 'toggleVisible'])->name('toggleVisible');
+            Route::put('/{id}/activo',   [AdminPlanController::class, 'toggleActivo'])->name('toggleActivo');
+        });
         Route::get('/usuarios',  fn () => view('admin.usuarios.index'))->name('usuarios.index');
         Route::get('/logs',      fn () => view('admin.logs.index'))->name('logs.index');
 

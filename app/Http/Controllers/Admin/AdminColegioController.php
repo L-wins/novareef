@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\CredencialesColegioMail;
 use App\Models\Arbitro;
+use App\Models\CategoriaArbitro;
 use App\Models\Colegio;
 use App\Models\Plan;
 use App\Models\Suscripcion;
@@ -103,6 +104,15 @@ class AdminColegioController extends Controller
                 'fechaVencimiento' => $vence,
                 'estado'           => 'activa',
             ]);
+
+            foreach (['FIFA', 'A', 'A-FEM', 'B', 'C'] as $nombreCategoria) {
+                CategoriaArbitro::create([
+                    'idColegio'       => $colegio->idColegio,
+                    'nombreCategoria' => $nombreCategoria,
+                    'esPorDefecto'    => true,
+                    'activa'          => true,
+                ]);
+            }
 
             $password = Str::password(12);
 

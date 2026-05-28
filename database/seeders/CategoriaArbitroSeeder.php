@@ -6,25 +6,29 @@ namespace Database\Seeders;
 
 use App\Models\CategoriaArbitro;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class CategoriaArbitroSeeder extends Seeder
 {
+    private const CATEGORIAS_BASE = ['FIFA', 'A', 'A-FEM', 'B', 'C'];
+
     public function run(): void
     {
-        $idColegio  = 1;
-        $categorias = ['FIFA', 'A', 'A-FEM', 'B', 'C'];
+        $idColegios = DB::table('colegios')->pluck('idColegio');
 
-        foreach ($categorias as $nombre) {
-            CategoriaArbitro::updateOrCreate(
-                [
-                    'idColegio'       => $idColegio,
-                    'nombreCategoria' => $nombre,
-                ],
-                [
-                    'esPorDefecto' => true,
-                    'activa'       => true,
-                ],
-            );
+        foreach ($idColegios as $idColegio) {
+            foreach (self::CATEGORIAS_BASE as $nombre) {
+                CategoriaArbitro::updateOrCreate(
+                    [
+                        'idColegio'       => $idColegio,
+                        'nombreCategoria' => $nombre,
+                    ],
+                    [
+                        'esPorDefecto' => true,
+                        'activa'       => true,
+                    ],
+                );
+            }
         }
     }
 }

@@ -9,36 +9,44 @@ use App\Http\Requests\Arbitro\StoreArbitroRequest;
 use App\Http\Requests\Arbitro\UpdateArbitroRequest;
 use App\Models\Arbitro;
 use App\Models\CategoriaArbitro;
-use App\Models\Colegio;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ArbitroController extends Controller
 {
-    /** Roles con permisos administrativos sobre el módulo de árbitros. */
-    private const ROLES_ADMIN = ['superadmin', 'ejecutivo'];
-
-    /** Ciclo de estados aplicado por toggleEstado(). */
     private const CICLO_ESTADO = [
         'proceso_ingreso' => 'activo',
-        'activo'          => 'suspendido',
-        'suspendido'      => 'inactivo',
-        'inactivo'        => 'proceso_ingreso',
+        'activo'          => 'inactivo',
+        'inactivo'        => 'suspendido',
+        'suspendido'      => 'retirado',
+        'retirado'        => 'proceso_ingreso',
     ];
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $this->autorizarAdmin();
+        $idColegio = $this->idColegioActivo();
 
-        $arbitros = Arbitro::with(['usuario', 'categoria'])
-            ->where('idColegio', $this->idColegioActivo())
-            ->orderByDesc('idArbitro')
-            ->paginate(15);
+        $query = Arbitro::with(['usuario', 'categoria'])
+            ->where('idColegio', $idColegio)
+            ->orderByDesc('idArbitro');
 
-        return view('arbitros.index', compact('arbitros'));
+        if ($estado = $request->query('estado')) {
+            $query->where('estadoArbitro', $estado);
+        }
+
+        if ($categoriaId = $request->query('categoria')) {
+            $query->where('idCategoria', (int) $categoriaId);
+        }
+
+        $arbitros   = $query->paginate(15)->withQueryString();
+        $categorias = $this->categoriasDisponibles($idColegio);
+
+        return view('arbitros.index', compact('arbitros', 'categorias'));
     }
 
     public function show(int $id): View
@@ -53,8 +61,6 @@ class ArbitroController extends Controller
 
     public function create(): View
     {
-        $this->autorizarAdmin();
-
         $categorias = $this->categoriasDisponibles($this->idColegioActivo());
 
         return view('arbitros.create', compact('categorias'));
@@ -62,48 +68,32 @@ class ArbitroController extends Controller
 
     public function store(StoreArbitroRequest $request): RedirectResponse
     {
-        $this->autorizarAdmin();
-
         $datos     = $request->validated();
         $idColegio = $this->idColegioActivo();
+        $password  = Str::password(12);
 
-        $arbitro = DB::transaction(function () use ($datos, $idColegio): Arbitro {
-            // 1. Usuario con rol 'arbitro' (la contraseña se cifra vía cast 'hashed').
+        $arbitro = DB::transaction(function () use ($datos, $idColegio, $password): Arbitro {
             $usuario = User::create([
-                'idColegio'       => $idColegio,
-                'nombreUsuario'   => $datos['nombreUsuario'],
-                'emailUsuario'    => $datos['emailUsuario'],
-                'passwordUsuario' => $datos['passwordUsuario'],
-                'telefonoUsuario' => $datos['telefonoUsuario'] ?? null,
-                'rolUsuario'      => 'arbitro',
-                'estadoUsuario'   => 'activo',
+                'idColegio'            => $idColegio,
+                'nombreUsuario'        => $datos['nombreUsuario'],
+                'emailUsuario'         => $datos['emailUsuario'],
+                'passwordUsuario'      => $password,
+                'telefonoUsuario'      => $datos['telefonoUsuario'],
+                'rolUsuario'           => 'arbitro',
+                'estadoUsuario'        => 'activo',
+                'must_change_password' => true,
             ]);
 
             $usuario->assignRole('arbitro');
 
-            // 2. Árbitro. codigoCarnet y estadoArbitro='proceso_ingreso' los genera
-            //    el modelo Arbitro en su evento 'creating'; la limpieza de datos de
-            //    vehículo la aplica el evento 'saving'.
             return Arbitro::create([
                 'idUsuario'           => $usuario->idUsuario,
                 'idColegio'           => $idColegio,
                 'idCategoria'         => $datos['idCategoria'],
-                'numeroDocumento'     => $datos['numeroDocumento'],
                 'tipoDocumento'       => $datos['tipoDocumento'],
+                'numeroDocumento'     => $datos['numeroDocumento'],
+                'fechaIngresoColegio' => $datos['fechaIngresoColegio'],
                 'lugarExpedicionCC'   => $datos['lugarExpedicionCC'] ?? null,
-                'pesoArbitro'         => $datos['pesoArbitro'] ?? null,
-                'estaturaArbitro'     => $datos['estaturaArbitro'] ?? null,
-                'rhArbitro'           => $datos['rhArbitro'] ?? null,
-                'epsArbitro'          => $datos['epsArbitro'] ?? null,
-                'profesionArbitro'    => $datos['profesionArbitro'] ?? null,
-                'fechaIngresoColegio' => $datos['fechaIngresoColegio'] ?? null,
-                'direccionArbitro'    => $datos['direccionArbitro'] ?? null,
-                'barrioArbitro'       => $datos['barrioArbitro'] ?? null,
-                'tieneVehiculo'       => $datos['tieneVehiculo'] ?? false,
-                'tipoVehiculo'        => $datos['tipoVehiculo'] ?? null,
-                'marcaVehiculo'       => $datos['marcaVehiculo'] ?? null,
-                'placaVehiculo'       => $datos['placaVehiculo'] ?? null,
-                'colorVehiculo'       => $datos['colorVehiculo'] ?? null,
             ]);
         });
 
@@ -116,7 +106,7 @@ class ArbitroController extends Controller
     {
         $arbitro = Arbitro::with('usuario')->findOrFail($id);
 
-        $this->autorizarAcceso($arbitro);
+        abort_unless((int) $arbitro->idColegio === $this->idColegioActivo(), 403);
 
         $categorias = $this->categoriasDisponibles($arbitro->idColegio);
 
@@ -127,7 +117,7 @@ class ArbitroController extends Controller
     {
         $arbitro = Arbitro::with('usuario')->findOrFail($id);
 
-        $this->autorizarAcceso($arbitro);
+        abort_unless((int) $arbitro->idColegio === $this->idColegioActivo(), 403);
 
         $datos = $request->validated();
 
@@ -138,7 +128,6 @@ class ArbitroController extends Controller
                 'telefonoUsuario' => $datos['telefonoUsuario'] ?? null,
             ];
 
-            // La contraseña solo se actualiza si se proporcionó una nueva.
             if (! empty($datos['passwordUsuario'])) {
                 $datosUsuario['passwordUsuario'] = $datos['passwordUsuario'];
             }
@@ -175,9 +164,9 @@ class ArbitroController extends Controller
     {
         $arbitro = Arbitro::findOrFail($id);
 
-        $this->autorizarAdmin();
+        abort_unless((int) $arbitro->idColegio === $this->idColegioActivo(), 403);
 
-        $nuevoEstado = self::CICLO_ESTADO[$arbitro->estadoArbitro] ?? 'proceso_ingreso';
+        $nuevoEstado            = self::CICLO_ESTADO[$arbitro->estadoArbitro] ?? 'proceso_ingreso';
         $arbitro->estadoArbitro = $nuevoEstado;
         $arbitro->save();
 
@@ -186,18 +175,54 @@ class ArbitroController extends Controller
         return back()->with('success', "Estado actualizado a «{$etiqueta}».");
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
-    /**
-     * Colegio del contexto del usuario autenticado. Si el usuario no tiene
-     * colegio asignado (p. ej. un superadmin global), usa el primer colegio.
-     */
-    private function idColegioActivo(): int
+    public function completarPerfil(): View
     {
-        return (int) (Auth::user()->idColegio ?? Colegio::query()->min('idColegio'));
+        $arbitro = Arbitro::where('idUsuario', Auth::id())->firstOrFail();
+
+        return view('arbitros.completar-perfil', compact('arbitro'));
     }
 
-    private function categoriasDisponibles(int $idColegio)
+    public function guardarPerfil(Request $request): RedirectResponse
+    {
+        $arbitro = Arbitro::where('idUsuario', Auth::id())->firstOrFail();
+
+        $datos = $request->validate([
+            'lugarExpedicionCC' => ['nullable', 'string', 'max:100'],
+            'pesoArbitro'       => ['nullable', 'numeric', 'min:30', 'max:200'],
+            'estaturaArbitro'   => ['nullable', 'numeric', 'min:1.00', 'max:2.50'],
+            'rhArbitro'         => ['nullable', 'string', 'max:5'],
+            'epsArbitro'        => ['nullable', 'string', 'max:100'],
+            'profesionArbitro'  => ['nullable', 'string', 'max:100'],
+            'direccionArbitro'  => ['nullable', 'string', 'max:255'],
+            'barrioArbitro'     => ['nullable', 'string', 'max:100'],
+            'tieneVehiculo'     => ['boolean'],
+            'tipoVehiculo'      => ['nullable', 'required_if:tieneVehiculo,true', 'in:carro,moto,ambos'],
+            'marcaVehiculo'     => ['nullable', 'required_if:tieneVehiculo,true', 'string', 'max:50'],
+            'placaVehiculo'     => ['nullable', 'required_if:tieneVehiculo,true', 'string', 'max:20'],
+            'colorVehiculo'     => ['nullable', 'required_if:tieneVehiculo,true', 'string', 'max:30'],
+        ]);
+
+        $arbitro->update(array_merge($datos, [
+            'tieneVehiculo' => $request->boolean('tieneVehiculo'),
+        ]));
+
+        return redirect()
+            ->route('dashboard')
+            ->with('success', 'Perfil completado correctamente. ¡Bienvenido a NovaReef!');
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private function idColegioActivo(): int
+    {
+        $idColegio = Auth::user()->idColegio;
+
+        abort_if($idColegio === null, 403, 'Tu cuenta no tiene un colegio asignado.');
+
+        return (int) $idColegio;
+    }
+
+    private function categoriasDisponibles(int $idColegio): \Illuminate\Database\Eloquent\Collection
     {
         return CategoriaArbitro::where('idColegio', $idColegio)
             ->where('activa', true)
@@ -205,28 +230,11 @@ class ArbitroController extends Controller
             ->get();
     }
 
-    private function esAdmin(): bool
-    {
-        return in_array(Auth::user()->rolUsuario, self::ROLES_ADMIN, true);
-    }
-
-    private function autorizarAdmin(): void
-    {
-        abort_unless($this->esAdmin(), 403, 'No tienes permisos para gestionar árbitros.');
-    }
-
-    /**
-     * Permite el acceso a un árbitro si el usuario es administrador o es el
-     * propio árbitro (su registro de usuario).
-     */
     private function autorizarAcceso(Arbitro $arbitro): void
     {
         $esPropietario = (int) $arbitro->idUsuario === (int) Auth::id();
+        $mismoColegio  = (int) $arbitro->idColegio === $this->idColegioActivo();
 
-        abort_unless(
-            $this->esAdmin() || $esPropietario,
-            403,
-            'No tienes permisos para acceder a este árbitro.'
-        );
+        abort_unless($mismoColegio || $esPropietario, 403, 'No tienes acceso a este árbitro.');
     }
 }

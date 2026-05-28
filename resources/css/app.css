@@ -266,6 +266,14 @@ svg  { display: block; }
     margin: 8px 12px;
 }
 
+.sidebar-link--sub {
+    padding-left: 20px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    min-height: 36px;
+}
+.sidebar:hover .sidebar-link--sub { padding-left: 28px; }
+
 /* ============================================================
    Contenido principal
    ============================================================ */

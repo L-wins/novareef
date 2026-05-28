@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Arbitro\ArbitroController;
+use App\Http\Controllers\Arbitro\CategoriaArbitroController;
 use App\Http\Controllers\Auth\CambioContrasenaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Colegio\ColegioController;
@@ -16,8 +17,14 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
 });
 
+// Completar perfil — solo auth, sin verificar.colegio ni verificar.perfil
+Route::middleware('auth')->group(function () {
+    Route::get('/mi-perfil/completar',  [ArbitroController::class, 'completarPerfil'])->name('arbitros.completar-perfil');
+    Route::post('/mi-perfil/completar', [ArbitroController::class, 'guardarPerfil'])->name('arbitros.guardar-perfil');
+});
+
 // Rutas privadas (requieren autenticación)
-Route::middleware(['auth', 'verificar.colegio'])->group(function () {
+Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
@@ -28,12 +35,20 @@ Route::middleware(['auth', 'verificar.colegio'])->group(function () {
     // ── Árbitros ─────────────────────────────────────────────────────────────
     Route::prefix('arbitros')->name('arbitros.')->middleware('permission:ver-arbitros')->group(function () {
         Route::get('/',            [ArbitroController::class, 'index'])->name('index');
-        Route::get('/{id}',        [ArbitroController::class, 'show'])->name('show');
         Route::get('/crear',       [ArbitroController::class, 'create'])->middleware('permission:crear-arbitros')->name('create');
         Route::post('/',           [ArbitroController::class, 'store'])->middleware('permission:crear-arbitros')->name('store');
+        Route::get('/{id}',        [ArbitroController::class, 'show'])->name('show');
         Route::get('/{id}/editar', [ArbitroController::class, 'edit'])->middleware('permission:editar-arbitros')->name('edit');
         Route::put('/{id}',        [ArbitroController::class, 'update'])->middleware('permission:editar-arbitros')->name('update');
         Route::put('/{id}/estado', [ArbitroController::class, 'toggleEstado'])->middleware('permission:editar-arbitros')->name('toggleEstado');
+    });
+
+    // ── Categorías de árbitro ────────────────────────────────────────────────
+    Route::prefix('categorias-arbitro')->name('categorias.arbitro.')->middleware('permission:editar-arbitros')->group(function () {
+        Route::get('/',        [CategoriaArbitroController::class, 'index'])->name('index');
+        Route::post('/',       [CategoriaArbitroController::class, 'store'])->name('store');
+        Route::put('/{id}',    [CategoriaArbitroController::class, 'toggleActiva'])->name('toggleActiva');
+        Route::delete('/{id}', [CategoriaArbitroController::class, 'destroy'])->name('destroy');
     });
 
     // ── Torneos ──────────────────────────────────────────────────────────────

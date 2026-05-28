@@ -5,10 +5,14 @@ use App\Http\Middleware\BlockResendWebhook;
 use App\Http\Middleware\SoloSuperAdmin;
 use App\Http\Middleware\VerificarCambioContrasena;
 use App\Http\Middleware\VerificarEstadoColegio;
+use App\Http\Middleware\VerificarPerfilCompleto;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\Route;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,9 +25,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'admin.auth'        => AdminAuth::class,
-            'verificar.colegio' => VerificarEstadoColegio::class,
-            'solo.superadmin'   => SoloSuperAdmin::class,
+            'admin.auth'          => AdminAuth::class,
+            'verificar.colegio'   => VerificarEstadoColegio::class,
+            'solo.superadmin'     => SoloSuperAdmin::class,
+            'verificar.perfil'    => VerificarPerfilCompleto::class,
+            'permission'          => PermissionMiddleware::class,
+            'role'                => RoleMiddleware::class,
+            'role_or_permission'  => RoleOrPermissionMiddleware::class,
         ]);
         $middleware->web(prepend: [
             BlockResendWebhook::class,

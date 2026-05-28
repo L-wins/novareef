@@ -16,38 +16,94 @@
         <div id="flash-msg" class="flash-error">{{ session('error') }}</div>
     @endif
 
+    {{-- Cabecera --}}
     <div class="page-header">
         <div class="page-header-left">
             <h1 class="page-heading">Árbitros</h1>
-            <p class="page-subheading">{{ $arbitros->total() }} árbitro{{ $arbitros->total() === 1 ? '' : 's' }} en el colegio</p>
+            <p class="page-subheading">{{ $arbitros->total() }} árbitro{{ $arbitros->total() === 1 ? '' : 's' }} encontrado{{ $arbitros->total() === 1 ? '' : 's' }}</p>
         </div>
+        @can('crear-arbitros')
         <a href="{{ route('arbitros.create') }}" class="btn btn-primary">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;">
                 <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z"/>
             </svg>
             Nuevo árbitro
         </a>
+        @endcan
     </div>
+
+    {{-- Filtros --}}
+    <form method="GET" action="{{ route('arbitros.index') }}" class="filter-bar">
+        <div class="filter-group">
+            <label class="filter-label">Estado</label>
+            <select name="estado" class="filter-select" onchange="this.form.submit()">
+                <option value="">Todos</option>
+                @foreach([
+                    'proceso_ingreso' => 'Proceso de ingreso',
+                    'activo'          => 'Activo',
+                    'inactivo'        => 'Inactivo',
+                    'suspendido'      => 'Suspendido',
+                    'retirado'        => 'Retirado',
+                ] as $val => $label)
+                    <option value="{{ $val }}" {{ request('estado') === $val ? 'selected' : '' }}>
+                        {{ $label }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        @if ($categorias->isNotEmpty())
+        <div class="filter-group">
+            <label class="filter-label">Categoría</label>
+            <select name="categoria" class="filter-select" onchange="this.form.submit()">
+                <option value="">Todas</option>
+                @foreach ($categorias as $cat)
+                    <option value="{{ $cat->idCategoria }}" {{ (string) request('categoria') === (string) $cat->idCategoria ? 'selected' : '' }}>
+                        {{ $cat->nombreCategoria }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        @endif
+
+        @if (request('estado') || request('categoria'))
+        <a href="{{ route('arbitros.index') }}" class="filter-clear">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:13px;height:13px;">
+                <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/>
+            </svg>
+            Limpiar filtros
+        </a>
+        @endif
+    </form>
 
     @if ($arbitros->isEmpty())
         <div class="empty-state">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
             </svg>
-            <p>No hay árbitros registrados todavía.</p>
-            <a href="{{ route('arbitros.create') }}" class="btn btn-primary" style="margin-top:1rem;">
-                Registrar primer árbitro
-            </a>
+            @if (request('estado') || request('categoria'))
+                <p>No hay árbitros que coincidan con los filtros aplicados.</p>
+                <a href="{{ route('arbitros.index') }}" class="btn btn-secondary" style="margin-top:1rem;">
+                    Ver todos
+                </a>
+            @else
+                <p>No hay árbitros registrados todavía.</p>
+                @can('crear-arbitros')
+                <a href="{{ route('arbitros.create') }}" class="btn btn-primary" style="margin-top:1rem;">
+                    Registrar primer árbitro
+                </a>
+                @endcan
+            @endif
         </div>
     @else
         <div class="table-card">
             <table class="data-table">
                 <thead>
                     <tr>
+                        <th>Carné</th>
                         <th>Árbitro</th>
                         <th>Documento</th>
                         <th>Categoría</th>
-                        <th>Carné</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -55,6 +111,7 @@
                 <tbody>
                     @foreach ($arbitros as $arbitro)
                     <tr>
+                        <td class="td-code">{{ $arbitro->codigoCarnet }}</td>
                         <td>
                             <span class="td-primary">{{ $arbitro->usuario->nombreUsuario }}</span>
                             <span class="td-secondary">{{ $arbitro->usuario->emailUsuario }}</span>
@@ -66,7 +123,6 @@
                         <td>
                             <span class="cat-badge">{{ $arbitro->categoria->nombreCategoria }}</span>
                         </td>
-                        <td class="td-code">{{ $arbitro->codigoCarnet }}</td>
                         <td>
                             <span class="status-badge status-{{ $arbitro->estadoArbitro }}">
                                 {{ ucfirst(str_replace('_', ' ', $arbitro->estadoArbitro)) }}
@@ -81,6 +137,7 @@
                                         <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41Z" clip-rule="evenodd"/>
                                     </svg>
                                 </a>
+                                @can('editar-arbitros')
                                 <a href="{{ route('arbitros.edit', $arbitro->idArbitro) }}"
                                    class="btn-icon btn-icon-edit" title="Editar">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -102,6 +159,7 @@
                                         </svg>
                                     </button>
                                 </form>
+                                @endcan
                             </div>
                         </td>
                     </tr>
