@@ -1,103 +1,87 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verificación 2FA — NovaReef Admin</title>
-    @vite(['resources/css/app.css'])
-    <style>
-        body { background: #020617; }
-    </style>
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons" defer></script>
+    @vite(['resources/css/admin/admin.css', 'resources/js/admin/admin.js'])
 </head>
-<body class="h-full flex items-center justify-center p-4">
+<body class="admin-body">
 
-    <div class="w-full max-w-sm">
+<div class="admin-2fa-wrap">
+    <div class="admin-2fa-card">
 
         {{-- Logo --}}
-        <div class="flex items-center justify-center gap-3 mb-8">
-            <div class="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+        <div class="admin-2fa-logo">
+            <div class="admin-2fa-logo__icon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2" class="w-5 h-5 text-white">
+                     stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/>
                     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
                     <path d="M2 12h20"/>
                 </svg>
             </div>
-            <span class="text-xl font-bold text-white tracking-tight">NovaReef</span>
+            <span class="admin-2fa-logo__name">NovaReef</span>
         </div>
 
-        {{-- Card --}}
-        <div class="bg-slate-900 border border-white/10 rounded-2xl p-8 shadow-2xl">
-
-            {{-- Ícono de seguridad --}}
-            <div class="flex justify-center mb-6">
-                <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.5" class="w-7 h-7 text-emerald-400">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0
-                                 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/>
-                    </svg>
-                </div>
-            </div>
-
-            <h1 class="text-xl font-bold text-white text-center mb-1">Verificación en dos pasos</h1>
-            <p class="text-sm text-slate-400 text-center mb-7">
-                Ingresa el código de tu aplicación Google Authenticator
-            </p>
-
-            {{-- Errores --}}
-            @if ($errors->any())
-                <div class="mb-5 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-sm">
-                    {{ $errors->first() }}
-                </div>
-            @endif
-
-            <form method="POST" action="{{ route('admin.2fa.post') }}">
-                @csrf
-
-                <div class="mb-6">
-                    <label for="code" class="block text-sm font-medium text-slate-300 mb-2">
-                        Código de autenticación
-                    </label>
-                    <input
-                        type="text"
-                        id="code"
-                        name="code"
-                        inputmode="numeric"
-                        pattern="[0-9]{6}"
-                        maxlength="6"
-                        autocomplete="one-time-code"
-                        autofocus
-                        placeholder="000000"
-                        class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-white/10 text-white text-center
-                               text-2xl tracking-[0.5em] font-mono placeholder:text-slate-600
-                               focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50
-                               transition-colors"
-                        value="{{ old('code') }}"
-                    >
-                </div>
-
-                <button type="submit"
-                        class="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold
-                               rounded-xl transition-colors duration-200 flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-                        <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/>
-                    </svg>
-                    Verificar código
-                </button>
-            </form>
-
+        {{-- Ícono --}}
+        <div class="admin-2fa-shield">
+            <i data-feather="smartphone"></i>
         </div>
 
-        <p class="text-center text-slate-600 text-xs mt-6">
-            ¿Problemas para acceder?
-            <a href="{{ route('welcome') }}" class="text-slate-500 hover:text-slate-400 transition-colors underline">
-                Volver al inicio
-            </a>
+        <h1 style="font-size:1.25rem;font-weight:800;color:var(--text-bright);text-align:center;margin:0 0 6px;letter-spacing:-0.3px;">
+            Verificación en dos pasos
+        </h1>
+        <p style="font-size:0.875rem;color:var(--text);text-align:center;margin:0 0 2rem;line-height:1.6;">
+            Abre <strong style="color:var(--text-bright);">Google Authenticator</strong>
+            y escribe el código de 6 dígitos
         </p>
 
+        {{-- Error --}}
+        @if ($errors->any())
+        <div class="a-alert a-alert--danger" style="margin-bottom:1.5rem;">
+            <i data-feather="alert-circle"></i>
+            {{ $errors->first() }}
+        </div>
+        @endif
+
+        <form method="POST" action="{{ route('admin.2fa.post') }}" id="otp-form">
+            @csrf
+            <input type="hidden" name="code" id="otp-code">
+
+            {{-- 6 dígitos individuales --}}
+            <div class="otp-row {{ $errors->any() ? 'otp-has-error' : '' }}" id="otp-group">
+                @for ($i = 0; $i < 6; $i++)
+                    <input type="text"
+                           class="otp-digit"
+                           inputmode="numeric"
+                           pattern="[0-9]"
+                           maxlength="1"
+                           autocomplete="{{ $i === 0 ? 'one-time-code' : 'off' }}"
+                           aria-label="Dígito {{ $i + 1 }}">
+                @endfor
+            </div>
+
+            <button type="submit" class="a-btn a-btn--primary a-btn--full" style="margin-bottom:1rem;">
+                <i data-feather="check"></i>
+                Verificar código
+            </button>
+        </form>
+
+        <a href="{{ route('welcome') }}"
+           style="display:flex;align-items:center;justify-content:center;gap:6px;
+                  font-size:0.8125rem;color:var(--text);transition:color .2s;"
+           onmouseover="this.style.color='var(--text-bright)'"
+           onmouseout="this.style.color='var(--text)'">
+            <i data-feather="arrow-left" style="width:14px;height:14px;"></i>
+            Volver al inicio
+        </a>
+
     </div>
+</div>
 
 </body>
 </html>

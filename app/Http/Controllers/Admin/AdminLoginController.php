@@ -16,13 +16,13 @@ use Illuminate\View\View;
 
 class AdminLoginController extends Controller
 {
-    public function showLogin(): RedirectResponse
+    public function showLogin(): View|RedirectResponse
     {
         if (Auth::guard('admin')->check()) {
             return redirect()->route('admin.dashboard');
         }
 
-        return redirect()->route('welcome')->with('admin_modal', true);
+        return view('admin.login');
     }
 
     public function login(Request $request): RedirectResponse

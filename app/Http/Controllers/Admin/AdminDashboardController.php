@@ -19,11 +19,14 @@ class AdminDashboardController extends Controller
         $colegiosTrial   = Suscripcion::where('estado', 'trial')->distinct('idColegio')->count('idColegio');
         $totalArbitros   = Arbitro::count();
 
+        $ultimosColegios = Colegio::orderByDesc('created_at')->take(5)->get();
+
         return view('admin.dashboard', compact(
             'totalColegios',
             'colegiosActivos',
             'colegiosTrial',
             'totalArbitros',
+            'ultimosColegios',
         ));
     }
 }

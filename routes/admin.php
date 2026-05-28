@@ -20,6 +20,11 @@ Route::prefix(config('admin.prefix', 'novareef-panel'))->name('admin.')->group(f
     Route::middleware(['admin.auth'])->group(function (): void {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
+        Route::get('/colegios',  fn () => view('admin.colegios.index'))->name('colegios.index');
+        Route::get('/planes',    fn () => view('admin.planes.index'))->name('planes.index');
+        Route::get('/usuarios',  fn () => view('admin.usuarios.index'))->name('usuarios.index');
+        Route::get('/logs',      fn () => view('admin.logs.index'))->name('logs.index');
+
         Route::get('/2fa/configurar',  [Admin2FAController::class, 'show'])->name('2fa.config');
         Route::post('/2fa/activar',    [Admin2FAController::class, 'enable'])->name('2fa.enable');
         Route::post('/2fa/desactivar', [Admin2FAController::class, 'disable'])->name('2fa.disable');
