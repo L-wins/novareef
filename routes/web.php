@@ -4,6 +4,7 @@ use App\Http\Controllers\Arbitro\ArbitroController;
 use App\Http\Controllers\Auth\CambioContrasenaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Colegio\ColegioController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 // Página pública
@@ -17,7 +18,7 @@ Route::middleware('guest')->group(function () {
 
 // Rutas privadas (requieren autenticación)
 Route::middleware(['auth', 'verificar.colegio'])->group(function () {
-    Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     // Cambio de contraseña obligatorio

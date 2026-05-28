@@ -190,11 +190,90 @@ svg  { display: block; }
 @media (min-width: 640px) { .btn-logout-text { display: block; } }
 
 /* ============================================================
+   App layout & Sidebar
+   ============================================================ */
+.app-layout {
+    display: flex;
+    padding-top: var(--navbar-h);
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 60px;
+    flex-shrink: 0;
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    position: sticky;
+    top: var(--navbar-h);
+    height: calc(100vh - var(--navbar-h));
+    overflow: hidden;
+    transition: width 0.22s var(--ease);
+    z-index: 10;
+}
+.sidebar:hover { width: 220px; }
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 8px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    text-decoration: none;
+    min-height: 42px;
+    transition: background 0.16s var(--ease), color 0.16s var(--ease);
+}
+.sidebar-link:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+.sidebar-link.active {
+    background: var(--accent-bg);
+    color: var(--accent-light);
+}
+.sidebar-link svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+.sidebar-link span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.18s var(--ease), transform 0.18s var(--ease);
+    pointer-events: none;
+}
+.sidebar:hover .sidebar-link span {
+    opacity: 1;
+    transform: none;
+}
+
+.sidebar-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 12px;
+}
+
+/* ============================================================
    Contenido principal
    ============================================================ */
 .main {
-    margin-top: var(--navbar-h);
+    flex: 1;
     padding: 40px 24px 72px;
+    min-width: 0;
+    overflow-x: hidden;
 }
 .container {
     max-width: 1280px;
@@ -379,6 +458,7 @@ svg  { display: block; }
 .val-amber   { color: #fbbf24; }
 .val-blue    { color: #60a5fa; }
 .val-purple  { color: #a78bfa; }
+.val-teal    { color: #2dd4bf; }
 
 /* ============================================================
    Tarjetas de módulos
@@ -462,7 +542,28 @@ svg  { display: block; }
     color: var(--accent);
     border: 1px solid var(--border-accent);
 }
+.badge-locked {
+    background: rgba(239,68,68,0.07);
+    color: #f87171;
+    border: 1px solid rgba(239,68,68,0.14);
+}
 
 /* Colores de iconos de módulos */
 .ic-teal   { background: rgba(20,184,166,0.10); color: #2dd4bf; }
 .ic-red    { background: rgba(239,68,68,0.10);  color: #f87171; }
+
+/* Estados de tarjetas de módulos */
+.module-card--link {
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color .18s, transform .18s, box-shadow .18s;
+}
+.module-card--link:hover {
+    border-color: var(--border-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16,185,129,0.10);
+}
+.module-card--locked {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
