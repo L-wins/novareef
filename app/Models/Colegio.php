@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Arbitro;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -44,6 +45,11 @@ class Colegio extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(\Stancl\Tenancy\Database\Models\Tenant::class, 'tenantId');
+    }
+
+    public function arbitros(): HasMany
+    {
+        return $this->hasMany(Arbitro::class, 'idColegio', 'idColegio');
     }
 
     public function suscripciones(): HasMany

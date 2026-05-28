@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Admin\Admin2FAController;
+use App\Http\Controllers\Admin\AdminColegioController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminLoginController;
 use Illuminate\Support\Facades\Route;
@@ -20,7 +21,15 @@ Route::prefix(config('admin.prefix', 'novareef-panel'))->name('admin.')->group(f
     Route::middleware(['admin.auth'])->group(function (): void {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-        Route::get('/colegios',  fn () => view('admin.colegios.index'))->name('colegios.index');
+        Route::prefix('colegios')->name('colegios.')->group(function (): void {
+            Route::get('/',            [AdminColegioController::class, 'index'])->name('index');
+            Route::get('/crear',       [AdminColegioController::class, 'create'])->name('create');
+            Route::post('/',           [AdminColegioController::class, 'store'])->name('store');
+            Route::get('/{id}',        [AdminColegioController::class, 'show'])->name('show');
+            Route::get('/{id}/editar', [AdminColegioController::class, 'edit'])->name('edit');
+            Route::put('/{id}',        [AdminColegioController::class, 'update'])->name('update');
+            Route::put('/{id}/estado', [AdminColegioController::class, 'toggleEstado'])->name('toggleEstado');
+        });
         Route::get('/planes',    fn () => view('admin.planes.index'))->name('planes.index');
         Route::get('/usuarios',  fn () => view('admin.usuarios.index'))->name('usuarios.index');
         Route::get('/logs',      fn () => view('admin.logs.index'))->name('logs.index');
