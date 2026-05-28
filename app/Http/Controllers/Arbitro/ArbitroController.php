@@ -79,6 +79,8 @@ class ArbitroController extends Controller
                 'estadoUsuario'   => 'activo',
             ]);
 
+            $usuario->assignRole('arbitro');
+
             // 2. Árbitro. codigoCarnet y estadoArbitro='proceso_ingreso' los genera
             //    el modelo Arbitro en su evento 'creating'; la limpieza de datos de
             //    vehículo la aplica el evento 'saving'.

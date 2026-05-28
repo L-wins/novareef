@@ -34,8 +34,10 @@
                     </div>
                 </div>
 
-                {{-- Admin info + logout --}}
-                <div class="flex items-center gap-4">
+                {{-- Admin info + acciones --}}
+                <div class="flex items-center gap-3">
+
+                    {{-- Nombre + badge 2FA --}}
                     <div class="hidden sm:flex items-center gap-2.5">
                         <div class="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30
                                     flex items-center justify-center text-xs font-bold text-emerald-400">
@@ -44,8 +46,46 @@
                         <span class="text-sm text-slate-300 font-medium">
                             {{ Auth::guard('admin')->user()->nombre }}
                         </span>
+                        @if(Auth::guard('admin')->user()->two_factor_enabled)
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium
+                                         bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
+                                  title="Autenticación de dos factores activa">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
+                                    <path fill-rule="evenodd"
+                                          d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A1.5 1.5 0 0 0 3 8.5v4A1.5 1.5 0 0 0 4.5 14h7a1.5 1.5 0 0 0 1.5-1.5v-4A1.5 1.5 0 0 0 11.5 7V4.5A3.5 3.5 0 0 0 8 1Zm2 6V4.5a2 2 0 1 0-4 0V7h4Z"
+                                          clip-rule="evenodd"/>
+                                </svg>
+                                2FA ✓
+                            </span>
+                        @else
+                            <a href="{{ route('admin.2fa.config') }}"
+                               class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium
+                                      bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20
+                                      transition-colors"
+                               title="2FA desactivado — Haz clic para configurarlo">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
+                                    <path d="M11.5 1A3.5 3.5 0 0 0 8 4.5V7H2.5A1.5 1.5 0 0 0 1 8.5v4A1.5 1.5 0 0 0 2.5 14h7a1.5 1.5 0 0 0 1.5-1.5v-4A1.5 1.5 0 0 0 9.5 7V4.5a2 2 0 1 1 4 0v1.75a.75.75 0 0 0 1.5 0V4.5A3.5 3.5 0 0 0 11.5 1Z"/>
+                                </svg>
+                                2FA ✗
+                            </a>
+                        @endif
                     </div>
 
+                    {{-- Configurar 2FA --}}
+                    <a href="{{ route('admin.2fa.config') }}"
+                       class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+                              text-slate-400 hover:text-white hover:bg-white/5 transition-colors border border-white/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                            <path fill-rule="evenodd"
+                                  d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2
+                                     2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10
+                                     1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                        Configurar 2FA
+                    </a>
+
+                    {{-- Logout --}}
                     <form method="POST" action="{{ route('admin.logout') }}">
                         @csrf
                         <button type="submit"

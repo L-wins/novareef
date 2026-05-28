@@ -313,6 +313,15 @@
     gap: 4px;
     line-height: 1.4;
 }
+.form-hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.5;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
 .form-footer {
     padding: 20px 32px;
     background: rgba(0,0,0,0.12);

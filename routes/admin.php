@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\Admin2FAController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminLoginController;
 use Illuminate\Support\Facades\Route;
@@ -18,5 +19,9 @@ Route::prefix(config('admin.prefix', 'novareef-panel'))->name('admin.')->group(f
     // Protegidas
     Route::middleware(['admin.auth'])->group(function (): void {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('/2fa/configurar',  [Admin2FAController::class, 'show'])->name('2fa.config');
+        Route::post('/2fa/activar',    [Admin2FAController::class, 'enable'])->name('2fa.enable');
+        Route::post('/2fa/desactivar', [Admin2FAController::class, 'disable'])->name('2fa.disable');
     });
 });

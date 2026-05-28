@@ -98,22 +98,6 @@
                         @enderror
                     </div>
 
-                    <div class="form-group">
-                        <label for="planColegio" class="form-label">
-                            Plan <span class="req">*</span>
-                        </label>
-                        <select id="planColegio" name="planColegio"
-                                class="form-select {{ $errors->has('planColegio') ? 'is-invalid' : '' }}">
-                            @php $plan = old('planColegio', $colegio->planColegio); @endphp
-                            <option value="basico"      {{ $plan === 'basico'      ? 'selected' : '' }}>Básico</option>
-                            <option value="profesional" {{ $plan === 'profesional' ? 'selected' : '' }}>Profesional</option>
-                            <option value="enterprise"  {{ $plan === 'enterprise'  ? 'selected' : '' }}>Enterprise</option>
-                        </select>
-                        @error('planColegio')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
                     <div class="form-group span-2">
                         <label for="logoColegio" class="form-label">URL del logo</label>
                         <input type="url" id="logoColegio" name="logoColegio"
@@ -183,29 +167,44 @@
                 </div>
             </div>
 
-            {{-- Sección 3: Suscripción --}}
+            {{-- Sección 3: Plan de suscripción (solo lectura) --}}
             <div class="form-section">
-                <p class="form-section-title">Suscripción</p>
+                <p class="form-section-title">Plan de suscripción</p>
                 <div class="form-grid form-grid-2">
 
+                    @php
+                        $suscripcion = $colegio->suscripcionActiva;
+                        $planActual  = $suscripcion?->plan;
+                    @endphp
+
                     <div class="form-group">
-                        <label for="fechaSuscripcion" class="form-label">Fecha de suscripción</label>
-                        <input type="date" id="fechaSuscripcion" name="fechaSuscripcion"
-                               value="{{ old('fechaSuscripcion', optional($colegio->fechaSuscripcion)->format('Y-m-d')) }}"
-                               class="form-input {{ $errors->has('fechaSuscripcion') ? 'is-invalid' : '' }}">
-                        @error('fechaSuscripcion')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
+                        <label class="form-label">Plan activo</label>
+                        <div class="form-input" style="background:rgba(255,255,255,0.03);cursor:default;user-select:none;">
+                            @if ($planActual)
+                                {{ $planActual->nombre }}
+                                — ${{ number_format($planActual->precio, 0, ',', '.') }} COP / {{ $planActual->periodicidad }}
+                            @else
+                                Sin plan activo
+                            @endif
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="fechaExpiracion" class="form-label">Fecha de expiración</label>
-                        <input type="date" id="fechaExpiracion" name="fechaExpiracion"
-                               value="{{ old('fechaExpiracion', optional($colegio->fechaExpiracion)->format('Y-m-d')) }}"
-                               class="form-input {{ $errors->has('fechaExpiracion') ? 'is-invalid' : '' }}">
-                        @error('fechaExpiracion')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
+                        <label class="form-label">Vencimiento</label>
+                        <div class="form-input" style="background:rgba(255,255,255,0.03);cursor:default;user-select:none;">
+                            @if ($suscripcion)
+                                {{ $suscripcion->fechaVencimiento->format('d/m/Y') }}
+                            @else
+                                —
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="form-group span-2">
+                        <p class="form-hint">
+                            Para cambiar el plan o renovar la suscripción, gestiona la suscripción
+                            directamente desde el módulo de suscripciones.
+                        </p>
                     </div>
 
                 </div>

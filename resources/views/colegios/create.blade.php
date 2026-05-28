@@ -93,22 +93,6 @@
                         @enderror
                     </div>
 
-                    <div class="form-group">
-                        <label for="planColegio" class="form-label">
-                            Plan <span class="req">*</span>
-                        </label>
-                        <select id="planColegio" name="planColegio"
-                                class="form-select {{ $errors->has('planColegio') ? 'is-invalid' : '' }}">
-                            <option value="">Seleccionar plan…</option>
-                            <option value="basico"      {{ old('planColegio') === 'basico'       ? 'selected' : '' }}>Básico</option>
-                            <option value="profesional" {{ old('planColegio') === 'profesional'  ? 'selected' : '' }}>Profesional</option>
-                            <option value="enterprise"  {{ old('planColegio') === 'enterprise'   ? 'selected' : '' }}>Enterprise</option>
-                        </select>
-                        @error('planColegio')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
                     <div class="form-group span-2">
                         <label for="logoColegio" class="form-label">URL del logo</label>
                         <input type="url" id="logoColegio" name="logoColegio"
@@ -178,29 +162,76 @@
                 </div>
             </div>
 
-            {{-- Sección 3: Suscripción --}}
+            {{-- Sección 3: Plan de suscripción --}}
             <div class="form-section">
-                <p class="form-section-title">Suscripción</p>
+                <p class="form-section-title">Plan de suscripción</p>
+                <div class="form-grid form-grid-2">
+
+                    <div class="form-group span-2">
+                        <label for="idPlan" class="form-label">
+                            Plan <span class="req">*</span>
+                        </label>
+                        <select id="idPlan" name="idPlan"
+                                class="form-select {{ $errors->has('idPlan') ? 'is-invalid' : '' }}">
+                            <option value="">Seleccionar plan…</option>
+                            @foreach ($planes as $plan)
+                                <option value="{{ $plan->idPlan }}"
+                                        {{ old('idPlan') == $plan->idPlan ? 'selected' : '' }}>
+                                    {{ $plan->nombre }}
+                                    — ${{ number_format($plan->precio, 0, ',', '.') }} COP
+                                    / {{ $plan->periodicidad }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('idPlan')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- Sección 4: Administrador del colegio --}}
+            <div class="form-section">
+                <p class="form-section-title">Administrador del colegio</p>
                 <div class="form-grid form-grid-2">
 
                     <div class="form-group">
-                        <label for="fechaSuscripcion" class="form-label">Fecha de suscripción</label>
-                        <input type="date" id="fechaSuscripcion" name="fechaSuscripcion"
-                               value="{{ old('fechaSuscripcion') }}"
-                               class="form-input {{ $errors->has('fechaSuscripcion') ? 'is-invalid' : '' }}">
-                        @error('fechaSuscripcion')
+                        <label for="nombreAdmin" class="form-label">
+                            Nombre completo <span class="req">*</span>
+                        </label>
+                        <input type="text" id="nombreAdmin" name="nombreAdmin"
+                               value="{{ old('nombreAdmin') }}"
+                               placeholder="Ej. Juan Carlos Pérez"
+                               maxlength="150"
+                               class="form-input {{ $errors->has('nombreAdmin') ? 'is-invalid' : '' }}">
+                        @error('nombreAdmin')
                             <p class="field-error">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div class="form-group">
-                        <label for="fechaExpiracion" class="form-label">Fecha de expiración</label>
-                        <input type="date" id="fechaExpiracion" name="fechaExpiracion"
-                               value="{{ old('fechaExpiracion') }}"
-                               class="form-input {{ $errors->has('fechaExpiracion') ? 'is-invalid' : '' }}">
-                        @error('fechaExpiracion')
+                        <label for="emailAdmin" class="form-label">
+                            Correo electrónico <span class="req">*</span>
+                        </label>
+                        <input type="email" id="emailAdmin" name="emailAdmin"
+                               value="{{ old('emailAdmin') }}"
+                               placeholder="admin@colegio.com"
+                               class="form-input {{ $errors->has('emailAdmin') ? 'is-invalid' : '' }}">
+                        @error('emailAdmin')
                             <p class="field-error">{{ $message }}</p>
                         @enderror
+                    </div>
+
+                    <div class="form-group span-2">
+                        <p class="form-hint">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                 style="width:14px;height:14px;display:inline;vertical-align:-2px;margin-right:4px;">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clip-rule="evenodd"/>
+                            </svg>
+                            Se generará una contraseña automática y se enviará al correo ingresado.
+                            El administrador deberá cambiarla en su primer inicio de sesión.
+                        </p>
                     </div>
 
                 </div>
@@ -213,11 +244,11 @@
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
                          style="width:15px;height:15px;">
                         <path fill-rule="evenodd"
-                              d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75
-                                 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                              d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0
+                                 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
                               clip-rule="evenodd"/>
                     </svg>
-                    Guardar colegio
+                    Registrar colegio
                 </button>
             </div>
 

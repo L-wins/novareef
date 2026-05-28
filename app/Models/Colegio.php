@@ -6,6 +6,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Colegio extends Model
 {
@@ -26,7 +29,6 @@ class Colegio extends Model
         'paisColegio',
         'logoColegio',
         'estadoColegio',
-        'planColegio',
         'fechaSuscripcion',
         'fechaExpiracion',
     ];
@@ -35,11 +37,39 @@ class Colegio extends Model
         'fechaSuscripcion' => 'date',
         'fechaExpiracion'  => 'date',
         'estadoColegio'    => 'string',
-        'planColegio'      => 'string',
     ];
+
+    // ── Relaciones ───────────────────────────────────────────────────────────
 
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(\Stancl\Tenancy\Database\Models\Tenant::class, 'tenantId');
+    }
+
+    public function suscripciones(): HasMany
+    {
+        return $this->hasMany(Suscripcion::class, 'idColegio', 'idColegio');
+    }
+
+    public function suscripcionActiva(): HasOne
+    {
+        return $this->hasOne(Suscripcion::class, 'idColegio', 'idColegio')
+            ->ofMany(
+                ['fechaVencimiento' => 'max'],
+                fn ($query) => $query->where('estado', 'activa'),
+            );
+    }
+
+    public function plan(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Plan::class,
+            Suscripcion::class,
+            'idColegio',
+            'idPlan',
+            'idColegio',
+            'idPlan',
+        )->where('suscripciones.estado', 'activa')
+         ->orderByDesc('suscripciones.fechaVencimiento');
     }
 }

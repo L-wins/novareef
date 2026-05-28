@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(AdminSeeder::class);
+        $this->call(RolesPermisosSeeder::class);
 
         User::firstOrCreate(
             ['emailUsuario' => 'admin@novareef.test'],
@@ -28,5 +29,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ColegioSeeder::class);
         $this->call(CategoriaArbitroSeeder::class);
         $this->call(PlanSeeder::class);
+        $this->call(SuscripcionColegioSeeder::class);
     }
 }

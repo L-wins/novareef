@@ -178,6 +178,12 @@ return [
      */
     // 'wildcard_permission' => Spatie\Permission\WildcardPermission::class,
 
+    /*
+     * Guards a los que aplica Spatie Permission.
+     * El guard 'admin' (tabla admins) NO usa Spatie — se excluye deliberadamente.
+     */
+    'guards' => ['web'],
+
     /* Cache-specific settings */
 
     'cache' => [
