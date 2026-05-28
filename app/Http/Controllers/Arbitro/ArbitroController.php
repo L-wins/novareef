@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Arbitro;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Arbitro\StoreArbitroRequest;
 use App\Http\Requests\Arbitro\UpdateArbitroRequest;
+use App\Mail\CredencialesColegioMail;
 use App\Models\Arbitro;
 use App\Models\CategoriaArbitro;
 use App\Models\User;
@@ -14,6 +15,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -68,11 +71,13 @@ class ArbitroController extends Controller
 
     public function store(StoreArbitroRequest $request): RedirectResponse
     {
-        $datos     = $request->validated();
-        $idColegio = $this->idColegioActivo();
-        $password  = Str::password(12);
+        $datos         = $request->validated();
+        $idColegio     = $this->idColegioActivo();
+        $password      = Str::password(12);
+        $mailData      = null;
+        $nombreColegio = DB::table('colegios')->where('idColegio', $idColegio)->value('nombreColegio') ?? 'NovaReef';
 
-        $arbitro = DB::transaction(function () use ($datos, $idColegio, $password): Arbitro {
+        $arbitro = DB::transaction(function () use ($datos, $idColegio, $password, &$mailData): Arbitro {
             $usuario = User::create([
                 'idColegio'            => $idColegio,
                 'nombreUsuario'        => $datos['nombreUsuario'],
@@ -86,6 +91,8 @@ class ArbitroController extends Controller
 
             $usuario->assignRole('arbitro');
 
+            $mailData = $usuario->emailUsuario;
+
             return Arbitro::create([
                 'idUsuario'           => $usuario->idUsuario,
                 'idColegio'           => $idColegio,
@@ -96,6 +103,22 @@ class ArbitroController extends Controller
                 'lugarExpedicionCC'   => $datos['lugarExpedicionCC'] ?? null,
             ]);
         });
+
+        try {
+            Mail::to($mailData)->send(
+                new CredencialesColegioMail(
+                    $nombreColegio,
+                    config('app.url') . '/login',
+                    $mailData,
+                    $password,
+                )
+            );
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo enviar email de credenciales al árbitro', [
+                'email' => $mailData,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return redirect()
             ->route('arbitros.show', $arbitro->idArbitro)
