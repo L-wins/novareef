@@ -144,5 +144,22 @@
     </div>
 
     @stack('scripts')
+
+    {{-- ===== Flash messages vía SweetAlert2 ===== --}}
+    @if (session('success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.novaAlert) novaAlert.success(@json(session('success')));
+        });
+    </script>
+    @endif
+
+    @if (session('error'))
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.novaAlert) novaAlert.error(@json(session('error')));
+        });
+    </script>
+    @endif
 </body>
 </html>

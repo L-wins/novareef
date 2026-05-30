@@ -1,26 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ── Confirmación de cambio de estado ──────────────────────────────────
-    document.querySelectorAll('[data-confirm]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            if (!window.confirm(btn.dataset.confirm)) return;
-            btn.closest('form').submit();
-        });
-    });
-
-    // ── Auto-dismiss flash ────────────────────────────────────────────────
-    var flash = document.getElementById('flash-msg');
-    if (flash) {
-        setTimeout(function () {
-            flash.style.transition = 'opacity .4s, max-height .4s';
-            flash.style.opacity    = '0';
-            flash.style.maxHeight  = '0';
-            flash.style.overflow   = 'hidden';
-            flash.style.padding    = '0';
-            flash.style.margin     = '0';
-        }, 4000);
-    }
-
     // ── Toggle visibilidad de contraseña ──────────────────────────────────
     document.querySelectorAll('.toggle-pwd').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -57,19 +36,36 @@ document.addEventListener('DOMContentLoaded', function () {
         syncCambioEstado();
     }
 
-    // ── Modal de cambio de estado ────────────────────────────────────────
-    var modalEstado = document.getElementById('modal-cambio-estado');
-    if (modalEstado) {
-        document.querySelectorAll('[data-open-modal="cambio-estado"]').forEach(function (btn) {
-            btn.addEventListener('click', function () { modalEstado.classList.add('is-open'); });
+    // ── Modales (genérico): data-open-modal="X" → #modal-X ───────────────
+    document.querySelectorAll('[data-open-modal]').forEach(function (btn) {
+        var key = btn.dataset.openModal;
+        var modal = document.getElementById('modal-' + key);
+        if (!modal) return;
+
+        btn.addEventListener('click', function () {
+            modal.classList.add('is-open');
+            // Foco al primer campo si existe
+            var first = modal.querySelector('textarea, input:not([type="hidden"]), select');
+            if (first) setTimeout(function () { first.focus(); }, 50);
         });
-        modalEstado.querySelectorAll('[data-close-modal]').forEach(function (btn) {
-            btn.addEventListener('click', function () { modalEstado.classList.remove('is-open'); });
+    });
+
+    document.querySelectorAll('.modal').forEach(function (modal) {
+        modal.querySelectorAll('[data-close-modal]').forEach(function (btn) {
+            btn.addEventListener('click', function () { modal.classList.remove('is-open'); });
         });
-        modalEstado.addEventListener('click', function (e) {
-            if (e.target === modalEstado) modalEstado.classList.remove('is-open');
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) modal.classList.remove('is-open');
         });
-    }
+    });
+
+    // Cerrar con tecla ESC
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        document.querySelectorAll('.modal.is-open').forEach(function (m) {
+            m.classList.remove('is-open');
+        });
+    });
 
     // ── Foto perfil: preview antes de subir ──────────────────────────────
     var inputFoto = document.getElementById('input-foto');
@@ -77,6 +73,115 @@ document.addEventListener('DOMContentLoaded', function () {
         inputFoto.addEventListener('change', function () {
             if (inputFoto.files && inputFoto.files[0]) {
                 inputFoto.form.submit();
+            }
+        });
+    }
+
+    // ── Contador de caracteres: motivo del archivado ─────────────────────
+    var motivoInput = document.getElementById('motivo-archivar');
+    var contador    = document.getElementById('contador-motivo');
+    if (motivoInput && contador) {
+        function syncContador() {
+            var len = motivoInput.value.length;
+            contador.textContent = len + '/150';
+            contador.style.color = len >= 130 ? '#ef4444' : '#8892a4';
+        }
+        motivoInput.addEventListener('input', syncContador);
+        syncContador();
+    }
+
+    // ── Restaurar árbitro (vista archivados) ─────────────────────────────
+    document.querySelectorAll('.btn-restaurar').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            var nombre = btn.dataset.nombre;
+            var id     = btn.dataset.id;
+
+            if (!window.novaAlert) {
+                console.warn('novaAlert no disponible');
+                return;
+            }
+
+            var result = await novaAlert.confirm({
+                titulo:         '¿Restaurar árbitro?',
+                texto:          nombre + ' volverá a la lista de árbitros activos con estado "Inactivo". Esta acción quedará registrada en el historial.',
+                icono:          'question',
+                iconColor:      '#4f8ef7',
+                confirmarTexto: 'Sí, restaurar',
+                confirmColor:   '#4f8ef7',
+            });
+
+            if (result.isConfirmed) {
+                var form = document.getElementById('form-restaurar-' + id);
+                if (form) form.submit();
+            }
+        });
+    });
+
+    // ── Interceptar archivar: confirm final vía novaAlert ────────────────
+    var formArchivar = document.getElementById('form-archivar');
+    if (formArchivar) {
+        formArchivar.addEventListener('submit', async function (e) {
+            if (formArchivar.dataset.confirmed === '1') return; // ya confirmado, dejar pasar
+            e.preventDefault();
+
+            var motivo = (motivoInput && motivoInput.value || '').trim();
+            if (motivo === '') {
+                if (window.novaAlert) novaAlert.error('Debes indicar el motivo del archivado.');
+                if (motivoInput) motivoInput.focus();
+                return;
+            }
+
+            var nombre = formArchivar.dataset.confirmNombre || 'este árbitro';
+            var modal  = document.getElementById('modal-archivar');
+            if (modal) modal.classList.remove('is-open');
+
+            var result = await novaAlert.confirm({
+                titulo:         '¿Archivar a ' + nombre + '?',
+                texto:          'El árbitro pasará a estado "retirado" y no podrá iniciar sesión. Podrás restaurarlo desde la sección de archivados.',
+                confirmarTexto: 'Sí, archivar',
+                confirmColor:   '#ef4444',
+            });
+
+            if (result.isConfirmed) {
+                formArchivar.dataset.confirmed = '1';
+                formArchivar.submit();
+            } else if (modal) {
+                modal.classList.add('is-open');
+            }
+        });
+    }
+
+    // ── Interceptar cambio de estado: confirm final vía novaAlert ────────
+    var formCambioEstado = document.getElementById('form-cambio-estado');
+    if (formCambioEstado) {
+        formCambioEstado.addEventListener('submit', async function (e) {
+            if (formCambioEstado.dataset.confirmed === '1') return;
+            e.preventDefault();
+
+            if (!estadoSelect || !estadoSelect.value) {
+                if (window.novaAlert) novaAlert.error('Debes seleccionar un estado.');
+                return;
+            }
+
+            var estadoLabel = estadoSelect.options[estadoSelect.selectedIndex].text;
+            var nombre      = formCambioEstado.dataset.confirmNombre || 'este árbitro';
+            var modal       = document.getElementById('modal-cambio-estado');
+            if (modal) modal.classList.remove('is-open');
+
+            var result = await novaAlert.confirm({
+                titulo:         '¿Cambiar estado?',
+                texto:          'El estado de ' + nombre + ' cambiará a "' + estadoLabel + '". El cambio quedará registrado en el historial.',
+                icono:          'question',
+                iconColor:      '#f59e0b',
+                confirmarTexto: 'Sí, cambiar',
+                confirmColor:   '#4f8ef7',
+            });
+
+            if (result.isConfirmed) {
+                formCambioEstado.dataset.confirmed = '1';
+                formCambioEstado.submit();
+            } else if (modal) {
+                modal.classList.add('is-open');
             }
         });
     }

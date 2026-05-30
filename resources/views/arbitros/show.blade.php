@@ -18,12 +18,6 @@
 
 <div class="container">
 
-    @if (session('success'))
-        <div id="flash-msg" class="flash-success">{{ session('success') }}</div>
-    @elseif (session('error'))
-        <div id="flash-msg" class="flash-error">{{ session('error') }}</div>
-    @endif
-
     @if ($errors->any())
         <div class="flash-error">
             <strong>Corrige los siguientes errores:</strong>
@@ -114,7 +108,12 @@
                     Editar
                 </a>
                 <button type="button" class="btn btn-warning" data-open-modal="cambio-estado">
+                    <i class="fa-solid fa-arrows-rotate"></i>
                     Cambiar estado
+                </button>
+                <button type="button" class="btn btn-danger" data-open-modal="archivar">
+                    <i class="fa-solid fa-box-archive"></i>
+                    Archivar
                 </button>
             @endcan
         </div>
@@ -321,7 +320,9 @@
 <div class="modal" id="modal-cambio-estado" role="dialog" aria-modal="true">
     <div class="modal-overlay" data-close-modal></div>
     <div class="modal-dialog">
-        <form method="POST" action="{{ route('arbitros.toggleEstado', $arbitro->idArbitro) }}">
+        <form method="POST" action="{{ route('arbitros.toggleEstado', $arbitro->idArbitro) }}"
+              id="form-cambio-estado"
+              data-confirm-nombre="{{ $arbitro->usuario->nombreUsuario }}">
             @csrf
             @method('PUT')
             <div class="modal-header">
@@ -375,6 +376,64 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
                 <button type="submit" class="btn btn-primary">Confirmar cambio</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- ===== MODAL ARCHIVAR ÁRBITRO ===== --}}
+<div class="modal" id="modal-archivar" role="dialog" aria-modal="true">
+    <div class="modal-overlay" data-close-modal></div>
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('arbitros.archivar', $arbitro->idArbitro) }}"
+              id="form-archivar"
+              data-confirm-nombre="{{ $arbitro->usuario->nombreUsuario }}">
+            @csrf
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fa-solid fa-box-archive" style="color:#ef4444;margin-right:0.5rem;"></i>
+                    Archivar árbitro
+                </h3>
+                <button type="button" class="modal-close" data-close-modal aria-label="Cerrar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="archive-warning">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <div>
+                        <p class="archive-warning-title">Esta acción archivará al árbitro</p>
+                        <p class="archive-warning-text">
+                            <strong>{{ $arbitro->usuario->nombreUsuario }}</strong> dejará de aparecer
+                            en el listado activo y no podrá iniciar sesión.
+                            Podrás restaurarlo desde la sección de árbitros archivados.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top:1.25rem;">
+                    <label for="motivo-archivar" class="form-label">Motivo del archivado <span class="req">*</span></label>
+                    <input type="text"
+                           id="motivo-archivar"
+                           name="motivo"
+                           maxlength="150"
+                           required
+                           value="{{ old('motivo') }}"
+                           placeholder="Motivo del archivado..."
+                           class="form-input {{ $errors->has('motivo') ? 'is-invalid' : '' }}">
+                    <div class="counter-wrap">
+                        <span id="contador-motivo" class="counter-text">{{ strlen(old('motivo', '')) }}/150</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                <button type="submit" class="btn btn-danger">
+                    <i class="fa-solid fa-box-archive"></i>
+                    Archivar árbitro
+                </button>
             </div>
         </form>
     </div>

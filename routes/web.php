@@ -40,15 +40,22 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     Route::post('/arbitros/{id}/foto',   [ArbitroController::class, 'subirFoto'])->name('arbitros.foto.subir');
     Route::delete('/arbitros/{id}/foto', [ArbitroController::class, 'eliminarFoto'])->name('arbitros.foto.eliminar');
 
+    // ── Árbitros archivados ──────────────────────────────────────────────────
+    Route::get('/arbitros-archivados', [ArbitroController::class, 'archivados'])
+        ->middleware('permission:editar-arbitros')
+        ->name('arbitros.archivados');
+
     // ── Árbitros ─────────────────────────────────────────────────────────────
     Route::prefix('arbitros')->name('arbitros.')->middleware('permission:ver-arbitros')->group(function () {
-        Route::get('/',            [ArbitroController::class, 'index'])->name('index');
-        Route::get('/crear',       [ArbitroController::class, 'create'])->middleware('permission:crear-arbitros')->name('create');
-        Route::post('/',           [ArbitroController::class, 'store'])->middleware('permission:crear-arbitros')->name('store');
-        Route::get('/{id}',        [ArbitroController::class, 'show'])->name('show');
-        Route::get('/{id}/editar', [ArbitroController::class, 'edit'])->middleware('permission:editar-arbitros')->name('edit');
-        Route::put('/{id}',        [ArbitroController::class, 'update'])->middleware('permission:editar-arbitros')->name('update');
-        Route::put('/{id}/estado', [ArbitroController::class, 'toggleEstado'])->middleware('permission:editar-arbitros')->name('toggleEstado');
+        Route::get('/',              [ArbitroController::class, 'index'])->name('index');
+        Route::get('/crear',         [ArbitroController::class, 'create'])->middleware('permission:crear-arbitros')->name('create');
+        Route::post('/',             [ArbitroController::class, 'store'])->middleware('permission:crear-arbitros')->name('store');
+        Route::get('/{id}',          [ArbitroController::class, 'show'])->name('show');
+        Route::get('/{id}/editar',   [ArbitroController::class, 'edit'])->middleware('permission:editar-arbitros')->name('edit');
+        Route::put('/{id}',          [ArbitroController::class, 'update'])->middleware('permission:editar-arbitros')->name('update');
+        Route::put('/{id}/estado',   [ArbitroController::class, 'toggleEstado'])->middleware('permission:editar-arbitros')->name('toggleEstado');
+        Route::post('/{id}/archivar',  [ArbitroController::class, 'archivar'])->middleware('permission:editar-arbitros')->name('archivar');
+        Route::post('/{id}/restaurar', [ArbitroController::class, 'restaurar'])->middleware('permission:editar-arbitros')->name('restaurar');
     });
 
     // ── Categorías de árbitro ────────────────────────────────────────────────

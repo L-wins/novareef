@@ -252,6 +252,85 @@ class ArbitroController extends Controller
         return back()->with('success', 'Estado actualizado correctamente.');
     }
 
+    // ── Archivado (soft delete) ──────────────────────────────────────────────
+
+    public function archivar(Request $request, int $id): RedirectResponse
+    {
+        $arbitro = Arbitro::with('usuario')
+            ->where('idArbitro', $id)
+            ->where('idColegio', $this->idColegioActivo())
+            ->firstOrFail();
+
+        $datos = $request->validate([
+            'motivo' => ['required', 'string', 'max:150'],
+        ], [
+            'motivo.required' => 'Debes indicar el motivo del archivado.',
+            'motivo.max'      => 'El motivo no puede superar los 150 caracteres.',
+        ]);
+
+        $estadoAnterior = $arbitro->estadoArbitro;
+
+        DB::transaction(function () use ($arbitro, $estadoAnterior, $datos): void {
+            HistorialEstadoArbitro::create([
+                'idArbitro'       => $arbitro->idArbitro,
+                'idUsuarioCambio' => Auth::user()->idUsuario,
+                'estadoAnterior'  => $estadoAnterior,
+                'estadoNuevo'     => 'retirado',
+                'motivo'          => $datos['motivo'],
+            ]);
+
+            $arbitro->update(['estadoArbitro' => 'retirado']);
+
+            $arbitro->usuario?->update(['estadoUsuario' => 'inactivo']);
+
+            $arbitro->delete();
+        });
+
+        return redirect()
+            ->route('arbitros.index')
+            ->with('success', 'Árbitro archivado correctamente.');
+    }
+
+    public function restaurar(int $id): RedirectResponse
+    {
+        $arbitro = Arbitro::withTrashed()
+            ->with('usuario')
+            ->where('idArbitro', $id)
+            ->where('idColegio', $this->idColegioActivo())
+            ->firstOrFail();
+
+        DB::transaction(function () use ($arbitro): void {
+            $arbitro->restore();
+
+            $arbitro->update(['estadoArbitro' => 'inactivo']);
+
+            $arbitro->usuario?->update(['estadoUsuario' => 'activo']);
+
+            HistorialEstadoArbitro::create([
+                'idArbitro'       => $arbitro->idArbitro,
+                'idUsuarioCambio' => Auth::user()->idUsuario,
+                'estadoAnterior'  => 'retirado',
+                'estadoNuevo'     => 'inactivo',
+                'motivo'          => 'Árbitro restaurado',
+            ]);
+        });
+
+        return redirect()
+            ->route('arbitros.show', $arbitro->idArbitro)
+            ->with('success', 'Árbitro restaurado correctamente.');
+    }
+
+    public function archivados(): View
+    {
+        $arbitros = Arbitro::onlyTrashed()
+            ->with(['usuario', 'categoria'])
+            ->where('idColegio', $this->idColegioActivo())
+            ->orderByDesc('deleted_at')
+            ->paginate(15);
+
+        return view('arbitros.archivados', compact('arbitros'));
+    }
+
     // ── Foto de perfil ───────────────────────────────────────────────────────
 
     public function subirFoto(Request $request, int $id): RedirectResponse

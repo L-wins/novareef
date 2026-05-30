@@ -10,12 +10,6 @@
 @section('contenido')
 <div class="container">
 
-    @if (session('success'))
-        <div id="flash-msg" class="flash-success">{{ session('success') }}</div>
-    @elseif (session('error'))
-        <div id="flash-msg" class="flash-error">{{ session('error') }}</div>
-    @endif
-
     {{-- Cabecera --}}
     <div class="page-header">
         <div class="page-header-left">
@@ -186,6 +180,15 @@
             <div class="pagination-wrapper">{{ $arbitros->links() }}</div>
         @endif
     @endif
+
+    @can('editar-arbitros')
+        <div class="archived-link-wrap">
+            <a href="{{ route('arbitros.archivados') }}" class="archived-link">
+                <i class="fa-solid fa-box-archive"></i>
+                Ver árbitros archivados
+            </a>
+        </div>
+    @endcan
 
 </div>
 @endsection
