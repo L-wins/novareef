@@ -13,7 +13,7 @@
 
 @if(session('success'))
 <div class="admin-alert admin-alert--success" style="margin-bottom:1.25rem;">
-    <i data-feather="check-circle"></i>
+    <i class="fa-solid fa-circle-check"></i>
     {{ session('success') }}
 </div>
 @endif
@@ -91,11 +91,11 @@
         {{-- Acciones --}}
         <div class="plan-mgmt-card__footer">
             <a href="{{ route('admin.planes.show', $plan->idPlan) }}" class="a-btn a-btn--ghost plan-mgmt-card__btn">
-                <i data-feather="eye"></i>
+                <i class="fa-solid fa-eye"></i>
                 Ver
             </a>
             <a href="{{ route('admin.planes.edit', $plan->idPlan) }}" class="a-btn a-btn--ghost plan-mgmt-card__btn">
-                <i data-feather="edit-2"></i>
+                <i class="fa-solid fa-pen-to-square"></i>
                 Editar
             </a>
             <form method="POST" action="{{ route('admin.planes.toggleActivo', $plan->idPlan) }}" style="display:contents;">
@@ -103,7 +103,7 @@
                 @method('PUT')
                 <button type="submit" class="a-btn a-btn--ghost plan-mgmt-card__btn"
                         title="{{ $plan->esActivo ? 'Desactivar plan' : 'Activar plan' }}">
-                    <i data-feather="{{ $plan->esActivo ? 'toggle-right' : 'toggle-left' }}"></i>
+                    <i class="fa-solid {{ $plan->esActivo ? 'fa-toggle-on' : 'fa-toggle-off' }}"></i>
                     {{ $plan->esActivo ? 'Desactivar' : 'Activar' }}
                 </button>
             </form>

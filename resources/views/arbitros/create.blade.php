@@ -11,9 +11,7 @@
 <div class="container">
 
     <a href="{{ route('arbitros.index') }}" class="back-link">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;">
-            <path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd"/>
-        </svg>
+        <i class="fa-solid fa-arrow-left"></i>
         Volver a árbitros
     </a>
 
@@ -135,10 +133,7 @@
             {{-- Nota informativa --}}
             <div class="form-section" style="background:rgba(16,185,129,.05);border-bottom:none;">
                 <div style="display:flex;align-items:flex-start;gap:0.75rem;">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                         style="width:16px;height:16px;flex-shrink:0;margin-top:2px;color:#6ee7b7;">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clip-rule="evenodd"/>
-                    </svg>
+                    <i class="fa-solid fa-circle-info" style="font-size:16px;flex-shrink:0;margin-top:2px;color:#6ee7b7;"></i>
                     <p style="font-size:0.85rem;color:#6ee7b7;margin:0;line-height:1.5;">
                         Los demás datos del perfil (peso, estatura, dirección, vehículo, etc.) serán completados
                         por el árbitro en su primer inicio de sesión.
@@ -149,10 +144,7 @@
             <div class="form-footer">
                 <a href="{{ route('arbitros.index') }}" class="btn btn-secondary">Cancelar</a>
                 <button type="submit" class="btn btn-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;">
-                        <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM2.046 15.253c-.332 1.295.997 2.267 2.164 1.799 1.023-.409 2.56-.82 4.29-.82 1.73 0 3.267.411 4.29.82 1.167.468 2.496-.504 2.164-1.799A6.97 6.97 0 0 0 8.5 11a6.97 6.97 0 0 0-6.454 4.253Z"/>
-                        <path d="M12.5 5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM15.5 4a.75.75 0 0 1 .75.75v1h1a.75.75 0 0 1 0 1.5h-1v1a.75.75 0 0 1-1.5 0v-1h-1a.75.75 0 0 1 0-1.5h1v-1A.75.75 0 0 1 15.5 4Z"/>
-                    </svg>
+                    <i class="fa-solid fa-user-plus"></i>
                     Registrar árbitro
                 </button>
             </div>

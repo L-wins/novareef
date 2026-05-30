@@ -6,7 +6,7 @@
 
 {{-- Volver --}}
 <a href="{{ route('admin.colegios.index') }}" class="admin-back-link">
-    <i data-feather="arrow-left"></i>
+    <i class="fa-solid fa-arrow-left"></i>
     Volver a colegios
 </a>
 
@@ -138,7 +138,7 @@
 
         @error('idPlan')
             <div class="admin-flash admin-flash--danger" style="margin-bottom:1rem;">
-                <i data-feather="alert-circle"></i>
+                <i class="fa-solid fa-circle-exclamation"></i>
                 {{ $message }}
             </div>
         @enderror
@@ -154,10 +154,7 @@
                        style="position:absolute;opacity:0;pointer-events:none;">
 
                 <div class="plan-card-check">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                         stroke="currentColor" stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                    </svg>
+                    <i class="fa-solid fa-check"></i>
                 </div>
 
                 <span class="plan-card__badge">{{ $plan->nombre }}</span>
@@ -168,20 +165,20 @@
                 </div>
 
                 <div class="plan-card__detail">
-                    <i data-feather="users"></i>
+                    <i class="fa-solid fa-users"></i>
                     {{ $plan->limiteArbitrosTexto }} árbitros
                 </div>
 
                 @if($plan->incluyePaginaWeb)
                 <div class="plan-card__detail">
-                    <i data-feather="globe"></i>
+                    <i class="fa-solid fa-globe"></i>
                     Página web
                 </div>
                 @endif
 
                 @if($plan->incluyeOnboarding)
                 <div class="plan-card__detail">
-                    <i data-feather="life-buoy"></i>
+                    <i class="fa-solid fa-life-ring"></i>
                     Onboarding
                 </div>
                 @endif
@@ -224,7 +221,7 @@
 
             <div class="admin-form-group admin-form-col-2">
                 <div class="admin-form-hint">
-                    <i data-feather="info"></i>
+                    <i class="fa-solid fa-circle-info"></i>
                     Se generará una contraseña automática y se enviará al correo ingresado.
                     El administrador deberá cambiarla en su primer inicio de sesión.
                 </div>
@@ -239,7 +236,7 @@
             Cancelar
         </a>
         <button type="submit" class="a-btn a-btn--primary">
-            <i data-feather="check"></i>
+            <i class="fa-solid fa-check"></i>
             Crear colegio
         </button>
     </div>

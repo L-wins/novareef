@@ -1,11 +1,19 @@
 @import "tailwindcss";
+@import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
+@import "../vendor/fontawesome-fonts.css";
+
+body {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+}
 
 /* ================================================
-   Fondo de la página de login
+   Fondo de la página de login — premium
    ================================================ */
 .login-bg {
     background-image:
-        radial-gradient(ellipse 70% 50% at 50% -10%, rgba(16, 185, 129, 0.12), transparent),
+        radial-gradient(ellipse 70% 50% at 50% -10%, rgba(79, 142, 247, 0.12), transparent),
         radial-gradient(ellipse 40% 40% at 90% 100%, rgba(20, 184, 166, 0.06), transparent);
 }
 
@@ -37,8 +45,8 @@
 }
 
 .field-input:focus {
-    border-color: rgb(16 185 129);              /* emerald-500 */
-    box-shadow: 0 0 0 3px rgb(16 185 129 / 0.15);
+    border-color: rgb(79 142 247);              /* emerald-500 */
+    box-shadow: 0 0 0 3px rgb(79 142 247 / 0.15);
 }
 
 .field-input.has-error {
@@ -86,7 +94,7 @@
     justify-content: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
-    background-color: rgb(16 185 129);          /* emerald-500 */
+    background-color: rgb(79 142 247);          /* emerald-500 */
     color: #fff;
     font-weight: 700;
     font-size: 0.9375rem;
@@ -94,17 +102,78 @@
     border: none;
     cursor: pointer;
     transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
-    box-shadow: 0 4px 20px rgb(16 185 129 / 0.25);
+    box-shadow: 0 4px 20px rgb(79 142 247 / 0.25);
 }
 
 .btn-login:hover:not(:disabled) {
-    background-color: rgb(52 211 153);          /* emerald-400 */
-    box-shadow: 0 6px 24px rgb(16 185 129 / 0.35);
+    background-color: rgb(122 168 249);          /* emerald-400 */
+    box-shadow: 0 6px 24px rgb(79 142 247 / 0.35);
 }
 
 .btn-login:active:not(:disabled) {
     transform: scale(0.99);
 }
+
+/* ================================================
+   Detalles premium — silbato decorativo, líneas
+   ================================================ */
+.login-stripes {
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+        90deg,
+        transparent 0,
+        transparent 100px,
+        rgba(255, 255, 255, 0.010) 100px,
+        rgba(255, 255, 255, 0.010) 140px
+    );
+    pointer-events: none;
+}
+
+.login-circle {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(79, 142, 247, 0.10);
+    pointer-events: none;
+}
+
+@keyframes loginFadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.login-fade {
+    animation: loginFadeUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.login-fade-1 { animation-delay: 0.05s; }
+.login-fade-2 { animation-delay: 0.15s; }
+.login-fade-3 { animation-delay: 0.25s; }
+.login-fade-4 { animation-delay: 0.35s; }
+
+/* Card del login con sombras premium */
+#login-card {
+    box-shadow:
+        0 30px 60px -15px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+#login-card[data-has-error="true"] {
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+/* Pequeñas tarjetas decorativas */
+.deco-ref-card {
+    width: 32px;
+    height: 44px;
+    border-radius: 3px;
+    box-shadow: 0 6px 14px -4px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.deco-ref-card--yellow { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+.deco-ref-card--red    { background: linear-gradient(135deg, #ef4444, #dc2626); }
 
 .btn-login:disabled {
     opacity: 0.65;
@@ -156,7 +225,7 @@
 .custom-checkbox {
     width: 1rem;
     height: 1rem;
-    accent-color: rgb(16 185 129);
+    accent-color: rgb(79 142 247);
     cursor: pointer;
     flex-shrink: 0;
     margin-top: 0.125rem;

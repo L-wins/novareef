@@ -13,7 +13,7 @@
     <div style="width:64px;height:64px;border-radius:20px;background:rgba(79,142,247,0.1);
                 border:1px solid rgba(79,142,247,0.2);display:flex;align-items:center;
                 justify-content:center;margin:0 auto 1.25rem;">
-        <i data-feather="activity" style="width:28px;height:28px;color:var(--primary);"></i>
+        <i class="fa-solid fa-chart-line" style="font-size:28px;color:var(--primary);"></i>
     </div>
     <h2 style="font-size:1.125rem;font-weight:700;color:var(--text-bright);margin:0 0 0.5rem;">
         Módulo en construcción

@@ -15,10 +15,7 @@
         <div style="width:56px;height:56px;border-radius:50%;background:rgba(16,185,129,.15);
                     border:2px solid rgba(16,185,129,.3);display:flex;align-items:center;
                     justify-content:center;margin:0 auto 1rem;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                 style="width:22px;height:22px;color:#6ee7b7;">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd"/>
-            </svg>
+            <i class="fa-solid fa-circle-check" style="font-size:22px;color:#6ee7b7;"></i>
         </div>
         <h1 class="page-heading" style="font-size:1.35rem;margin-bottom:0.4rem;">
             Bienvenido a NovaReef
@@ -196,9 +193,7 @@
 
             <div class="form-footer">
                 <button type="submit" class="btn btn-primary" style="min-width:180px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;">
-                        <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/>
-                    </svg>
+                    <i class="fa-solid fa-check"></i>
                     Guardar y continuar
                 </button>
             </div>

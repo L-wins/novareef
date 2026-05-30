@@ -19,13 +19,13 @@
 
 {{-- Volver --}}
 <a href="{{ route('admin.planes.index') }}" class="admin-back-link">
-    <i data-feather="arrow-left"></i>
+    <i class="fa-solid fa-arrow-left"></i>
     Volver a planes
 </a>
 
 @if(session('success'))
 <div class="admin-alert admin-alert--success" style="margin-bottom:1.25rem;">
-    <i data-feather="check-circle"></i>
+    <i class="fa-solid fa-circle-check"></i>
     {{ session('success') }}
 </div>
 @endif
@@ -56,14 +56,14 @@
         @endif
 
         <a href="{{ route('admin.planes.edit', $plan->idPlan) }}" class="a-btn a-btn--ghost" style="height:38px;font-size:0.8125rem;">
-            <i data-feather="edit-2"></i>
+            <i class="fa-solid fa-pen-to-square"></i>
             Editar
         </a>
 
         <form method="POST" action="{{ route('admin.planes.toggleVisible', $plan->idPlan) }}" style="display:contents;">
             @csrf @method('PUT')
             <button type="submit" class="a-btn a-btn--ghost" style="height:38px;font-size:0.8125rem;">
-                <i data-feather="{{ $plan->esVisible ? 'eye-off' : 'eye' }}"></i>
+                <i class="fa-solid {{ $plan->esVisible ? 'fa-eye-slash' : 'fa-eye' }}"></i>
                 {{ $plan->esVisible ? 'Ocultar' : 'Mostrar' }}
             </button>
         </form>
@@ -71,7 +71,7 @@
         <form method="POST" action="{{ route('admin.planes.toggleActivo', $plan->idPlan) }}" style="display:contents;">
             @csrf @method('PUT')
             <button type="submit" class="a-btn a-btn--ghost" style="height:38px;font-size:0.8125rem;">
-                <i data-feather="{{ $plan->esActivo ? 'toggle-right' : 'toggle-left' }}"></i>
+                <i class="fa-solid {{ $plan->esActivo ? 'fa-toggle-on' : 'fa-toggle-off' }}"></i>
                 {{ $plan->esActivo ? 'Desactivar' : 'Activar' }}
             </button>
         </form>
@@ -196,7 +196,7 @@
                             @if($sus->colegio)
                                 <a href="{{ route('admin.colegios.show', $sus->colegio->idColegio) }}"
                                    class="a-tbl-btn" title="Ver colegio">
-                                    <i data-feather="external-link"></i>
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
                                 </a>
                             @endif
                         </td>

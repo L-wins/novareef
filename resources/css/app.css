@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
+@import "./vendor/fontawesome-fonts.css";
 
 /* ============================================================
    Variables de diseño
@@ -102,6 +104,7 @@ svg  { display: block; }
     box-shadow: 0 2px 14px var(--accent-glow);
     flex-shrink: 0;
 }
+.brand-icon i { color: #fff; font-size: 16px; }
 .brand-name {
     font-size: 1.0625rem;
     font-weight: 800;
@@ -242,9 +245,14 @@ svg  { display: block; }
     background: var(--accent-bg);
     color: var(--accent-light);
 }
-.sidebar-link svg {
+.sidebar-link svg,
+.sidebar-link i {
     width: 18px;
     height: 18px;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
 }
 .sidebar-link span {
@@ -438,6 +446,10 @@ svg  { display: block; }
     justify-content: center;
     margin-bottom: 16px;
 }
+.stat-icon-box i { font-size: 18px; }
+.mod-icon-box i { font-size: 20px; }
+.meta-item i { font-size: 13px; }
+.welcome-meta i { width: 14px; height: 14px; }
 .stat-value {
     font-size: 2rem;
     font-weight: 800;

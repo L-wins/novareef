@@ -1,0 +1,48 @@
+/* ============================================================
+   Font Awesome 7.2 — @font-face manual
+   Las webfonts viven en /public/webfonts/ (copiadas desde
+   node_modules/@fortawesome/fontawesome-free/webfonts/).
+
+   Rutas absolutas para evitar problemas con la resolución de URL
+   de Vite cuando el proyecto está alojado en un subdirectorio
+   de XAMPP (localhost/novareef/public/).
+   ============================================================ */
+
+/* ── Solid (fas) ──────────────────────────────────────────── */
+@font-face {
+    font-family: 'Font Awesome 7 Free';
+    font-style: normal;
+    font-weight: 900;
+    font-display: block;
+    src: url('/novareef/public/webfonts/fa-solid-900.woff2') format('woff2');
+}
+.fa-solid, .fas {
+    font-family: 'Font Awesome 7 Free';
+    font-weight: 900;
+}
+
+/* ── Regular (far) ────────────────────────────────────────── */
+@font-face {
+    font-family: 'Font Awesome 7 Free';
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+    src: url('/novareef/public/webfonts/fa-regular-400.woff2') format('woff2');
+}
+.fa-regular, .far {
+    font-family: 'Font Awesome 7 Free';
+    font-weight: 400;
+}
+
+/* ── Brands (fab) ─────────────────────────────────────────── */
+@font-face {
+    font-family: 'Font Awesome 7 Brands';
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+    src: url('/novareef/public/webfonts/fa-brands-400.woff2') format('woff2');
+}
+.fa-brands, .fab {
+    font-family: 'Font Awesome 7 Brands';
+    font-weight: 400;
+}

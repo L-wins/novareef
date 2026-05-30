@@ -11,9 +11,7 @@
 <div class="container">
 
     <a href="{{ route('arbitros.show', $arbitro->idArbitro) }}" class="back-link">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;">
-            <path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd"/>
-        </svg>
+        <i class="fa-solid fa-arrow-left"></i>
         Volver al detalle
     </a>
 
@@ -71,10 +69,7 @@
                                    placeholder="Dejar en blanco para no cambiar"
                                    class="form-input {{ $errors->has('passwordUsuario') ? 'is-invalid' : '' }}">
                             <button type="button" class="toggle-pwd" data-target="passwordUsuario" aria-label="Mostrar contraseña">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
-                                    <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41Z" clip-rule="evenodd"/>
-                                </svg>
+                                <i class="fa-solid fa-eye"></i>
                             </button>
                         </div>
                         @error('passwordUsuario') <p class="field-error">{{ $message }}</p> @enderror
@@ -86,10 +81,7 @@
                             <input type="password" id="passwordUsuario_confirmation" name="passwordUsuario_confirmation"
                                    placeholder="Repite la nueva contraseña" class="form-input">
                             <button type="button" class="toggle-pwd" data-target="passwordUsuario_confirmation" aria-label="Mostrar contraseña">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
-                                    <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41Z" clip-rule="evenodd"/>
-                                </svg>
+                                <i class="fa-solid fa-eye"></i>
                             </button>
                         </div>
                         <p id="pwd-match-msg" class="field-error" style="display:none;">Las contraseñas no coinciden.</p>
@@ -293,9 +285,7 @@
             <div class="form-footer">
                 <a href="{{ route('arbitros.show', $arbitro->idArbitro) }}" class="btn btn-secondary">Cancelar</a>
                 <button type="submit" class="btn btn-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;">
-                        <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/>
-                    </svg>
+                    <i class="fa-solid fa-check"></i>
                     Guardar cambios
                 </button>
             </div>

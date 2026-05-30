@@ -2,11 +2,6 @@
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ── Feather Icons ──────────────────────────────────────────────
-    if (typeof feather !== 'undefined') {
-        feather.replace({ 'stroke-width': 1.8, width: 18, height: 18 });
-    }
-
     // ── OTP Inputs ─────────────────────────────────────────────────
     const digits  = document.querySelectorAll('.otp-digit');
     const hidden  = document.getElementById('otp-code');

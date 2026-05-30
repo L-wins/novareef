@@ -6,7 +6,7 @@
 
 {{-- Volver --}}
 <a href="{{ route('admin.colegios.index') }}" class="admin-back-link">
-    <i data-feather="arrow-left"></i>
+    <i class="fa-solid fa-arrow-left"></i>
     Volver a colegios
 </a>
 
@@ -28,7 +28,7 @@
         @endif
 
         <a href="{{ route('admin.colegios.edit', $colegio->idColegio) }}" class="a-btn a-btn--ghost" style="height:38px;font-size:0.8125rem;">
-            <i data-feather="edit-2"></i>
+            <i class="fa-solid fa-pen-to-square"></i>
             Editar
         </a>
 
@@ -36,9 +36,9 @@
         <div style="position:relative;display:inline-block;" x-data="{ open: false }">
             <button onclick="this.nextElementSibling.classList.toggle('hidden')"
                     class="a-btn a-btn--ghost" style="height:38px;font-size:0.8125rem;">
-                <i data-feather="power"></i>
+                <i class="fa-solid fa-power-off"></i>
                 Estado
-                <i data-feather="chevron-down" style="width:12px;height:12px;"></i>
+                <i class="fa-solid fa-chevron-down" style="font-size:12px;"></i>
             </button>
             <div class="hidden" style="position:absolute;right:0;top:calc(100% + 6px);
                          background:var(--bg-navbar);border:1px solid var(--border-color);

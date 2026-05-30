@@ -18,7 +18,7 @@
             <div style="width:56px;height:56px;border-radius:16px;background:rgba(16,185,129,0.1);
                         border:1px solid rgba(16,185,129,0.2);
                         display:flex;align-items:center;justify-content:center;">
-                <i data-feather="shield" style="width:26px;height:26px;color:var(--success);"></i>
+                <i class="fa-solid fa-shield-halved" style="font-size:26px;color:var(--success);"></i>
             </div>
             <div>
                 <div class="twofa-active-badge">
@@ -43,7 +43,7 @@
 
             <div style="flex:1;">
                 <div class="a-input-wrap">
-                    <span class="a-icon"><i data-feather="lock"></i></span>
+                    <span class="a-icon"><i class="fa-solid fa-lock"></i></span>
                     <input type="password" name="password"
                            placeholder="Contraseña actual"
                            class="a-input {{ $errors->has('password') ? 'is-invalid' : '' }}">
@@ -54,7 +54,7 @@
             </div>
 
             <button type="submit" class="a-btn a-btn--danger-soft" style="white-space:nowrap;">
-                <i data-feather="x-circle"></i>
+                <i class="fa-solid fa-circle-xmark"></i>
                 Desactivar 2FA
             </button>
         </form>
@@ -125,7 +125,7 @@
                 @enderror
 
                 <button type="submit" class="a-btn a-btn--primary a-btn--full">
-                    <i data-feather="shield"></i>
+                    <i class="fa-solid fa-shield-halved"></i>
                     Activar 2FA
                 </button>
             </form>
@@ -135,7 +135,7 @@
 
     {{-- Advertencia --}}
     <div class="admin-flash admin-flash--warning" style="margin-top:1rem;">
-        <i data-feather="alert-triangle"></i>
+        <i class="fa-solid fa-triangle-exclamation"></i>
         Guarda la clave secreta en un lugar seguro. Sin ella no podrás recuperar el acceso si pierdes tu dispositivo.
     </div>
 

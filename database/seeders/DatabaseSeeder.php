@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
         $this->call(ColegioSeeder::class);
         $this->call(CategoriaArbitroSeeder::class);
         $this->call(PlanSeeder::class);
+        $this->call(EstadoArbitroSeeder::class);
         $this->call(SuscripcionColegioSeeder::class);
     }
 }

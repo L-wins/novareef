@@ -21,11 +21,7 @@
         display:flex;align-items:center;justify-content:center;
         margin-bottom:1.5rem;
     ">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-             stroke="#ef4444" stroke-width="1.8" style="width:34px;height:34px;">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
+        <i class="fa-solid fa-lock" style="font-size:34px;color:#ef4444;"></i>
     </div>
 
     <h1 style="font-size:1.5rem;font-weight:700;color:#f9fafb;margin:0 0 0.5rem;">
@@ -45,14 +41,7 @@
         text-decoration:none;
         transition:background 0.15s;
     ">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-             style="width:15px;height:15px;">
-            <path fill-rule="evenodd"
-                  d="M9.293 2.293a1 1 0 0 1 1.414 0l7 7A1 1 0 0 1 17 11h-1v6a1 1 0 0 1-1
-                     1h-2a1 1 0 0 1-1-1v-3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3a1 1 0 0 1-1
-                     1H5a1 1 0 0 1-1-1v-6H3a1 1 0 0 1-.707-1.707l7-7Z"
-                  clip-rule="evenodd"/>
-        </svg>
+        <i class="fa-solid fa-house"></i>
         Volver al panel
     </a>
 

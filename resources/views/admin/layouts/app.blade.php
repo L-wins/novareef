@@ -6,7 +6,6 @@
     <title>@yield('titulo', 'Panel') — NovaReef Admin</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/feather-icons" defer></script>
     @vite(['resources/css/admin/admin.css', 'resources/js/admin/admin.js'])
     @stack('styles')
 </head>
@@ -20,12 +19,7 @@
         {{-- Logo --}}
         <div class="navbar__logo">
             <div class="navbar__logo-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                    <path d="M2 12h20"/>
-                </svg>
+                <i class="fa-solid fa-futbol"></i>
             </div>
             <span class="navbar__logo-text">NovaReef</span>
         </div>
@@ -36,7 +30,7 @@
             <li class="navbar__item">
                 <a href="{{ route('admin.dashboard') }}"
                    class="navbar__link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <i data-feather="home"></i>
+                    <i class="fa-solid fa-house"></i>
                     <span>Dashboard</span>
                 </a>
             </li>
@@ -44,7 +38,7 @@
             <li class="navbar__item">
                 <a href="{{ route('admin.colegios.index') }}"
                    class="navbar__link {{ request()->routeIs('admin.colegios.*') ? 'active' : '' }}">
-                    <i data-feather="shield"></i>
+                    <i class="fa-solid fa-shield-halved"></i>
                     <span>Colegios</span>
                 </a>
             </li>
@@ -52,7 +46,7 @@
             <li class="navbar__item">
                 <a href="{{ route('admin.planes.index') }}"
                    class="navbar__link {{ request()->routeIs('admin.planes.*') ? 'active' : '' }}">
-                    <i data-feather="credit-card"></i>
+                    <i class="fa-solid fa-credit-card"></i>
                     <span>Planes</span>
                 </a>
             </li>
@@ -60,7 +54,7 @@
             <li class="navbar__item">
                 <a href="{{ route('admin.usuarios.index') }}"
                    class="navbar__link {{ request()->routeIs('admin.usuarios.*') ? 'active' : '' }}">
-                    <i data-feather="users"></i>
+                    <i class="fa-solid fa-users"></i>
                     <span>Usuarios</span>
                 </a>
             </li>
@@ -68,7 +62,7 @@
             <li class="navbar__item">
                 <a href="{{ route('admin.logs.index') }}"
                    class="navbar__link {{ request()->routeIs('admin.logs.*') ? 'active' : '' }}">
-                    <i data-feather="activity"></i>
+                    <i class="fa-solid fa-chart-line"></i>
                     <span>Logs</span>
                 </a>
             </li>
@@ -78,7 +72,7 @@
             <li class="navbar__item">
                 <a href="{{ route('admin.2fa.config') }}"
                    class="navbar__link {{ request()->routeIs('admin.2fa.config') ? 'active' : '' }}">
-                    <i data-feather="settings"></i>
+                    <i class="fa-solid fa-gear"></i>
                     <span>Configuración</span>
                 </a>
             </li>
@@ -98,7 +92,7 @@
             <form method="POST" action="{{ route('admin.logout') }}">
                 @csrf
                 <button type="submit" class="navbar__logout">
-                    <i data-feather="log-out"></i>
+                    <i class="fa-solid fa-right-from-bracket"></i>
                     <span>Cerrar sesión</span>
                 </button>
             </form>
@@ -116,12 +110,12 @@
             <div class="admin-header__right">
                 @if(Auth::guard('admin')->user()->two_factor_enabled)
                     <span class="badge badge--2fa-on">
-                        <i data-feather="lock" style="width:11px;height:11px;"></i>
+                        <i class="fa-solid fa-lock"></i>
                         2FA ✓
                     </span>
                 @else
                     <a href="{{ route('admin.2fa.config') }}" class="badge badge--2fa-off">
-                        <i data-feather="unlock" style="width:11px;height:11px;"></i>
+                        <i class="fa-solid fa-lock-open"></i>
                         2FA ✗
                     </a>
                 @endif
@@ -134,14 +128,14 @@
             {{-- Flash messages --}}
             @if(session('success'))
             <div class="admin-flash admin-flash--success">
-                <i data-feather="check-circle"></i>
+                <i class="fa-solid fa-circle-check"></i>
                 {{ session('success') }}
             </div>
             @endif
 
             @if(session('error'))
             <div class="admin-flash admin-flash--danger">
-                <i data-feather="alert-circle"></i>
+                <i class="fa-solid fa-circle-exclamation"></i>
                 {{ session('error') }}
             </div>
             @endif

@@ -11,7 +11,7 @@
 
 {{-- Volver --}}
 <a href="{{ route('admin.planes.show', $plan->idPlan) }}" class="admin-back-link">
-    <i data-feather="arrow-left"></i>
+    <i class="fa-solid fa-arrow-left"></i>
     Volver al plan
 </a>
 
@@ -22,7 +22,7 @@
 
 @if($errors->any())
 <div class="admin-alert admin-alert--danger" style="margin-bottom:1.25rem;">
-    <i data-feather="alert-circle"></i>
+    <i class="fa-solid fa-circle-exclamation"></i>
     <div>
         <strong>Corrige los siguientes errores:</strong>
         <ul style="margin:6px 0 0 16px;padding:0;list-style:disc;">
@@ -130,15 +130,15 @@
                     <input type="checkbox" name="modulos[]" value="{{ $modulo }}"
                            {{ $checked ? 'checked' : '' }}
                            onchange="this.closest('label').classList.toggle('plan-edit-modulo-label--active', this.checked)">
-                    <i data-feather="{{ match($modulo) {
-                        'arbitros'      => 'users',
-                        'torneos'       => 'award',
-                        'designaciones' => 'clipboard',
-                        'finanzas'      => 'dollar-sign',
-                        'academico'     => 'book-open',
-                        'sanciones'     => 'shield',
-                        'reportes'      => 'bar-chart-2',
-                        default         => 'circle',
+                    <i class="fa-solid {{ match($modulo) {
+                        'arbitros'      => 'fa-users',
+                        'torneos'       => 'fa-trophy',
+                        'designaciones' => 'fa-clipboard',
+                        'finanzas'      => 'fa-dollar-sign',
+                        'academico'     => 'fa-book-open',
+                        'sanciones'     => 'fa-shield-halved',
+                        'reportes'      => 'fa-chart-bar',
+                        default         => 'fa-circle',
                     } }}"></i>
                     {{ ucfirst($modulo) }}
                 </label>
@@ -215,7 +215,7 @@
             Cancelar
         </a>
         <button type="submit" class="a-btn a-btn--primary">
-            <i data-feather="save"></i>
+            <i class="fa-solid fa-floppy-disk"></i>
             Guardar cambios
         </button>
     </div>

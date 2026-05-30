@@ -16,12 +16,7 @@
         {{-- Logo --}}
         <div class="flex items-center justify-center gap-3 mb-10">
             <div class="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2" class="w-5 h-5 text-white">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                    <path d="M2 12h20"/>
-                </svg>
+                <i class="fa-solid fa-futbol text-white text-base"></i>
             </div>
             <span class="text-xl font-bold text-white tracking-tight">NovaReef</span>
         </div>
@@ -29,11 +24,7 @@
         {{-- Ícono de advertencia --}}
         <div class="flex justify-center mb-6">
             <div class="w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="1.5" class="w-10 h-10 text-red-400">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
-                </svg>
+                <i class="fa-solid fa-triangle-exclamation text-red-400 text-3xl"></i>
             </div>
         </div>
 
@@ -56,10 +47,7 @@
                class="flex items-center gap-3 text-sm text-slate-300 hover:text-white transition-colors group">
                 <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20
                             flex items-center justify-center shrink-0">
-                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                              d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/>
-                    </svg>
+                    <i class="fa-solid fa-envelope text-emerald-400 text-sm"></i>
                 </div>
                 soporte@novareef.com
             </a>
@@ -72,10 +60,7 @@
                     class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10
                            border border-white/10 text-slate-300 hover:text-white text-sm font-medium
                            transition-colors duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-                    <path fill-rule="evenodd" d="M3 4.25A2.25 2.25 0 0 1 5.25 2h5.5A2.25 2.25 0 0 1 13 4.25v2a.75.75 0 0 1-1.5 0v-2a.75.75 0 0 0-.75-.75h-5.5a.75.75 0 0 0-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 0 0 .75-.75v-2a.75.75 0 0 1 1.5 0v2A2.25 2.25 0 0 1 10.75 18h-5.5A2.25 2.25 0 0 1 3 15.75V4.25Z" clip-rule="evenodd"/>
-                    <path fill-rule="evenodd" d="M19 10a.75.75 0 0 0-.75-.75H8.704l1.048-.943a.75.75 0 1 0-1.004-1.114l-2.5 2.25a.75.75 0 0 0 0 1.114l2.5 2.25a.75.75 0 1 0 1.004-1.114l-1.048-.943h9.546A.75.75 0 0 0 19 10Z" clip-rule="evenodd"/>
-                </svg>
+                <i class="fa-solid fa-right-from-bracket"></i>
                 Cerrar sesión
             </button>
         </form>

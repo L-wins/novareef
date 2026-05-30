@@ -8,6 +8,14 @@
 @endpush
 
 @section('contenido')
+@php
+    $esPropio   = (int) $arbitro->idUsuario === (int) auth()->id();
+    $puedeFoto  = $esPropio || auth()->user()->can('editar-arbitros');
+    $porcentaje = $arbitro->porcentajePerfil;
+    $colorBar   = $arbitro->colorPerfil;
+    $estadoObj  = $arbitro->estado;
+@endphp
+
 <div class="container">
 
     @if (session('success'))
@@ -16,44 +24,98 @@
         <div id="flash-msg" class="flash-error">{{ session('error') }}</div>
     @endif
 
+    @if ($errors->any())
+        <div class="flash-error">
+            <strong>Corrige los siguientes errores:</strong>
+            <ul style="margin:.4rem 0 0 1.25rem;">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <a href="{{ route('arbitros.index') }}" class="back-link">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;">
-            <path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd"/>
-        </svg>
+        <i class="fa-solid fa-arrow-left"></i>
         Volver a árbitros
     </a>
 
-    <div class="detail-hero">
-        <div class="detail-hero-left">
-            <div class="detail-avatar">{{ strtoupper(substr($arbitro->usuario->nombreUsuario, 0, 2)) }}</div>
-            <div>
-                <h1 class="detail-hero-name">{{ $arbitro->usuario->nombreUsuario }}</h1>
-                <div class="detail-hero-meta">
+    {{-- ===== HERO ===== --}}
+    <div class="profile-hero">
+        <div class="profile-hero-left">
+
+            {{-- Foto de perfil --}}
+            <div class="profile-photo-wrap">
+                @if ($arbitro->fotoPerfil)
+                    <img src="{{ asset('storage/' . $arbitro->fotoPerfil) }}"
+                         alt="{{ $arbitro->usuario->nombreUsuario }}"
+                         class="profile-photo">
+                @else
+                    <div class="profile-photo profile-photo-initials">
+                        {{ strtoupper(substr($arbitro->usuario->nombreUsuario, 0, 2)) }}
+                    </div>
+                @endif
+
+                @if ($puedeFoto)
+                    <form method="POST" action="{{ route('arbitros.foto.subir', $arbitro->idArbitro) }}"
+                          enctype="multipart/form-data" class="profile-photo-form">
+                        @csrf
+                        <label for="input-foto" class="profile-photo-overlay" title="Cambiar foto">
+                            <i class="fa-solid fa-camera"></i>
+                            <span>Cambiar foto</span>
+                        </label>
+                        <input type="file" id="input-foto" name="foto"
+                               accept="image/jpeg,image/png,image/gif,image/webp,image/bmp,image/svg+xml"
+                               style="display:none;">
+                    </form>
+
+                    @if ($esPropio && $arbitro->fotoPerfil)
+                        <form method="POST" action="{{ route('arbitros.foto.eliminar', $arbitro->idArbitro) }}"
+                              class="profile-photo-delete"
+                              onsubmit="return confirm('¿Eliminar tu foto de perfil?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn-icon-delete" title="Eliminar foto">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </form>
+                    @endif
+                @endif
+            </div>
+
+            <div class="profile-hero-info">
+                <h1 class="profile-hero-name">{{ $arbitro->usuario->nombreUsuario }}</h1>
+                <div class="profile-hero-meta">
                     <span class="cat-badge">{{ $arbitro->categoria->nombreCategoria }}</span>
-                    <span class="status-badge status-{{ $arbitro->estadoArbitro }}">
-                        {{ ucfirst(str_replace('_', ' ', $arbitro->estadoArbitro)) }}
+                    <span class="estado-pill" data-color="{{ $estadoObj->color ?? 'gray' }}">
+                        {{ $estadoObj->etiqueta ?? ucfirst(str_replace('_', ' ', $arbitro->estadoArbitro)) }}
                     </span>
                     <span class="td-code" style="font-size:0.78rem;">{{ $arbitro->codigoCarnet }}</span>
                 </div>
+
+                {{-- Barra de progreso --}}
+                <div class="profile-progress">
+                    <div class="profile-progress-head">
+                        <span class="profile-progress-label">Perfil completo</span>
+                        <span class="profile-progress-value" data-color="{{ $colorBar }}">{{ $porcentaje }}%</span>
+                    </div>
+                    <div class="profile-progress-bar">
+                        <div class="profile-progress-fill" data-color="{{ $colorBar }}"
+                             style="width: {{ $porcentaje }}%;"></div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="detail-hero-actions">
+
+        <div class="profile-hero-actions">
             @can('editar-arbitros')
-            <a href="{{ route('arbitros.edit', $arbitro->idArbitro) }}" class="btn btn-secondary">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;">
-                    <path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z"/>
-                    <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z"/>
-                </svg>
-                Editar
-            </a>
-            <form method="POST" action="{{ route('arbitros.toggleEstado', $arbitro->idArbitro) }}">
-                @csrf
-                @method('PUT')
-                <button type="button" class="btn btn-warning"
-                        data-confirm="¿Avanzar el estado de {{ $arbitro->usuario->nombreUsuario }}?">
+                <a href="{{ route('arbitros.edit', $arbitro->idArbitro) }}" class="btn btn-secondary">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    Editar
+                </a>
+                <button type="button" class="btn btn-warning" data-open-modal="cambio-estado">
                     Cambiar estado
                 </button>
-            </form>
             @endcan
         </div>
     </div>
@@ -133,7 +195,7 @@
             </div>
         </div>
 
-        {{-- Información profesional y administrativa --}}
+        {{-- Información profesional --}}
         <div class="detail-card">
             <p class="detail-section-title">Información profesional y administrativa</p>
             <div class="detail-grid">
@@ -191,9 +253,7 @@
             @forelse ($arbitro->documentos as $documento)
                 <div class="docs-list">
                     <div class="doc-item">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 10.88 2H4.5Zm6 4.5a1 1 0 0 0 1 1h3l-4-4v3Z" clip-rule="evenodd"/>
-                        </svg>
+                        <i class="fa-solid fa-file-lines"></i>
                         <span>{{ $documento->nombreDocumento }}</span>
                         @if ($documento->obligatorio)
                             <span class="cat-badge" style="margin-left:auto;">Obligatorio</span>
@@ -205,9 +265,122 @@
             @endforelse
         </div>
 
-    </div>
+        {{-- Historial de estados --}}
+        @can('editar-arbitros')
+        <div class="detail-card">
+            <p class="detail-section-title">Historial de estados</p>
+            @if ($arbitro->historialEstados->isEmpty())
+                <p class="detail-empty">No hay cambios de estado registrados.</p>
+            @else
+                <ol class="timeline">
+                    @foreach ($arbitro->historialEstados->sortByDesc('created_at') as $h)
+                        <li class="timeline-item">
+                            <span class="timeline-dot" data-color="{{ $h->estadoNuevoModel->color ?? 'gray' }}"></span>
+                            <div class="timeline-content">
+                                <div class="timeline-head">
+                                    <span class="estado-pill estado-pill-sm" data-color="{{ $h->estadoNuevoModel->color ?? 'gray' }}">
+                                        {{ $h->estadoNuevoModel->etiqueta ?? $h->estadoNuevo }}
+                                    </span>
+                                    <span class="timeline-date">{{ $h->created_at?->format('d/m/Y H:i') }}</span>
+                                </div>
+                                <p class="timeline-meta">
+                                    De
+                                    <strong>{{ ucfirst(str_replace('_',' ',$h->estadoAnterior)) }}</strong>
+                                    →
+                                    <strong>{{ ucfirst(str_replace('_',' ',$h->estadoNuevo)) }}</strong>
+                                    · por <strong>{{ $h->usuarioCambio?->nombreUsuario ?? 'Sistema' }}</strong>
+                                </p>
+                                @if ($h->fechaInicio || $h->fechaFin)
+                                    <p class="timeline-meta">
+                                        @if ($h->fechaInicio)
+                                            <span class="detail-label">Inicio:</span>
+                                            {{ $h->fechaInicio->format('d/m/Y') }}
+                                        @endif
+                                        @if ($h->fechaFin)
+                                            · <span class="detail-label">Fin:</span>
+                                            {{ $h->fechaFin->format('d/m/Y') }}
+                                        @endif
+                                    </p>
+                                @endif
+                                @if ($h->motivo)
+                                    <p class="timeline-motivo">{{ $h->motivo }}</p>
+                                @endif
+                            </div>
+                        </li>
+                    @endforeach
+                </ol>
+            @endif
+        </div>
+        @endcan
 
+    </div>
 </div>
+
+{{-- ===== MODAL CAMBIO DE ESTADO ===== --}}
+@can('editar-arbitros')
+<div class="modal" id="modal-cambio-estado" role="dialog" aria-modal="true">
+    <div class="modal-overlay" data-close-modal></div>
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('arbitros.toggleEstado', $arbitro->idArbitro) }}">
+            @csrf
+            @method('PUT')
+            <div class="modal-header">
+                <h3 class="modal-title">Cambiar estado del árbitro</h3>
+                <button type="button" class="modal-close" data-close-modal aria-label="Cerrar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="estadoNuevo" class="form-label">Nuevo estado <span class="req">*</span></label>
+                    <select id="estadoNuevo" name="estadoNuevo"
+                            class="form-select {{ $errors->has('estadoNuevo') ? 'is-invalid' : '' }}">
+                        <option value="">— Selecciona —</option>
+                        @foreach ($estados as $est)
+                            @if ($est->nombre !== $arbitro->estadoArbitro)
+                                <option value="{{ $est->nombre }}" {{ old('estadoNuevo') === $est->nombre ? 'selected' : '' }}>
+                                    {{ $est->etiqueta }}
+                                </option>
+                            @endif
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="form-group" id="fechas-wrap" style="display:none;">
+                    <div class="form-grid form-grid-2">
+                        <div class="form-group">
+                            <label for="fechaInicio" class="form-label">Fecha de inicio <span class="req">*</span></label>
+                            <input type="date" id="fechaInicio" name="fechaInicio"
+                                   value="{{ old('fechaInicio') }}"
+                                   class="form-input {{ $errors->has('fechaInicio') ? 'is-invalid' : '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="fechaFin" class="form-label">Fecha de fin</label>
+                            <input type="date" id="fechaFin" name="fechaFin"
+                                   value="{{ old('fechaFin') }}"
+                                   class="form-input {{ $errors->has('fechaFin') ? 'is-invalid' : '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" id="motivo-wrap" style="display:none;">
+                    <label for="motivo" class="form-label">Motivo <span class="req">*</span></label>
+                    <textarea id="motivo" name="motivo" rows="3" maxlength="500"
+                              class="form-textarea {{ $errors->has('motivo') ? 'is-invalid' : '' }}"
+                              placeholder="Describe el motivo del cambio...">{{ old('motivo') }}</textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+                <button type="submit" class="btn btn-primary">Confirmar cambio</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endcan
+
 @endsection
 
 @push('scripts')

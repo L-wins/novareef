@@ -12,26 +12,14 @@
 
     {{-- Volver --}}
     <a href="{{ route('colegios.index') }}" class="back-link">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-             style="width:14px;height:14px;">
-            <path fill-rule="evenodd"
-                  d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75
-                     0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z"
-                  clip-rule="evenodd"/>
-        </svg>
+        <i class="fa-solid fa-arrow-left"></i>
         Volver a colegios
     </a>
 
     {{-- Flash --}}
     @if (session('success'))
         <div class="flash flash-success" id="flash-msg">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                 style="width:16px;height:16px;flex-shrink:0;">
-                <path fill-rule="evenodd"
-                      d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483
-                         4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
-                      clip-rule="evenodd"/>
-            </svg>
+            <i class="fa-solid fa-circle-check"></i>
             {{ session('success') }}
         </div>
     @endif
@@ -58,24 +46,14 @@
                         data-confirm="{{ $esSuspender
                             ? '¿Suspender el colegio «' . $colegio->nombreColegio . '»?'
                             : '¿Activar el colegio «' . $colegio->nombreColegio . '»?' }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                         stroke-width="1.75" stroke="currentColor" style="width:15px;height:15px;">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M5.636 5.636a9 9 0 1 0 12.728 0M12 3v9"/>
-                    </svg>
+                    <i class="fa-solid fa-power-off"></i>
                     {{ $esSuspender ? 'Suspender' : 'Activar' }}
                 </button>
             </form>
 
             {{-- Editar --}}
             <a href="{{ route('colegios.edit', $colegio->idColegio) }}" class="btn btn-secondary">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                     stroke-width="1.75" stroke="currentColor" style="width:15px;height:15px;">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5
-                             0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5
-                             7.125"/>
-                </svg>
+                <i class="fa-solid fa-pen-to-square"></i>
                 Editar
             </a>
         </div>

@@ -27,7 +27,7 @@
         <div class="stat-card__head">
             <span class="stat-card__label">Total Colegios</span>
             <div class="stat-card__icon">
-                <i data-feather="shield"></i>
+                <i class="fa-solid fa-shield-halved"></i>
             </div>
         </div>
         <div class="stat-card__value">{{ $totalColegios }}</div>
@@ -38,7 +38,7 @@
         <div class="stat-card__head">
             <span class="stat-card__label">Colegios Activos</span>
             <div class="stat-card__icon">
-                <i data-feather="check-circle"></i>
+                <i class="fa-solid fa-circle-check"></i>
             </div>
         </div>
         <div class="stat-card__value">{{ $colegiosActivos }}</div>
@@ -49,7 +49,7 @@
         <div class="stat-card__head">
             <span class="stat-card__label">En Trial</span>
             <div class="stat-card__icon">
-                <i data-feather="clock"></i>
+                <i class="fa-solid fa-clock"></i>
             </div>
         </div>
         <div class="stat-card__value">{{ $colegiosTrial }}</div>
@@ -60,7 +60,7 @@
         <div class="stat-card__head">
             <span class="stat-card__label">Total Árbitros</span>
             <div class="stat-card__icon">
-                <i data-feather="users"></i>
+                <i class="fa-solid fa-users"></i>
             </div>
         </div>
         <div class="stat-card__value">{{ $totalArbitros }}</div>
@@ -76,7 +76,7 @@
         <a href="{{ route('admin.colegios.index') }}"
            style="font-size:0.8125rem;color:var(--primary);display:flex;align-items:center;gap:5px;">
             Ver todos
-            <i data-feather="arrow-right" style="width:14px;height:14px;"></i>
+            <i class="fa-solid fa-arrow-right"></i>
         </a>
     </div>
 

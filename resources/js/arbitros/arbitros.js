@@ -43,6 +43,44 @@ document.addEventListener('DOMContentLoaded', function () {
         syncVehiculo();
     }
 
+    // ── Cambio de estado: motivo/fechas según selección ──────────────────
+    var estadoSelect    = document.getElementById('estadoNuevo');
+    var motivoWrap      = document.getElementById('motivo-wrap');
+    var fechasWrap      = document.getElementById('fechas-wrap');
+    if (estadoSelect) {
+        function syncCambioEstado() {
+            var v = estadoSelect.value;
+            if (motivoWrap) motivoWrap.style.display = (v === 'suspendido' || v === 'retirado') ? '' : 'none';
+            if (fechasWrap) fechasWrap.style.display = (v === 'suspendido') ? '' : 'none';
+        }
+        estadoSelect.addEventListener('change', syncCambioEstado);
+        syncCambioEstado();
+    }
+
+    // ── Modal de cambio de estado ────────────────────────────────────────
+    var modalEstado = document.getElementById('modal-cambio-estado');
+    if (modalEstado) {
+        document.querySelectorAll('[data-open-modal="cambio-estado"]').forEach(function (btn) {
+            btn.addEventListener('click', function () { modalEstado.classList.add('is-open'); });
+        });
+        modalEstado.querySelectorAll('[data-close-modal]').forEach(function (btn) {
+            btn.addEventListener('click', function () { modalEstado.classList.remove('is-open'); });
+        });
+        modalEstado.addEventListener('click', function (e) {
+            if (e.target === modalEstado) modalEstado.classList.remove('is-open');
+        });
+    }
+
+    // ── Foto perfil: preview antes de subir ──────────────────────────────
+    var inputFoto = document.getElementById('input-foto');
+    if (inputFoto) {
+        inputFoto.addEventListener('change', function () {
+            if (inputFoto.files && inputFoto.files[0]) {
+                inputFoto.form.submit();
+            }
+        });
+    }
+
     // ── Validación cliente: contraseñas coinciden ─────────────────────────
     var pwdInput   = document.getElementById('passwordUsuario');
     var pwdConfirm = document.getElementById('passwordUsuario_confirmation');

@@ -32,6 +32,14 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     Route::get('/cambiar-contrasena',  [CambioContrasenaController::class, 'show'])->name('password.change');
     Route::post('/cambiar-contrasena', [CambioContrasenaController::class, 'update'])->name('password.change.update');
 
+    // ── Mi perfil (árbitro autenticado) ──────────────────────────────────────
+    Route::get('/mi-perfil',          [ArbitroController::class, 'miPerfil'])->name('arbitros.mi-perfil');
+    Route::put('/mi-perfil',          [ArbitroController::class, 'actualizarMiPerfil'])->name('arbitros.mi-perfil.update');
+
+    // Foto de perfil — el árbitro siempre, y editores con permiso
+    Route::post('/arbitros/{id}/foto',   [ArbitroController::class, 'subirFoto'])->name('arbitros.foto.subir');
+    Route::delete('/arbitros/{id}/foto', [ArbitroController::class, 'eliminarFoto'])->name('arbitros.foto.eliminar');
+
     // ── Árbitros ─────────────────────────────────────────────────────────────
     Route::prefix('arbitros')->name('arbitros.')->middleware('permission:ver-arbitros')->group(function () {
         Route::get('/',            [ArbitroController::class, 'index'])->name('index');

@@ -6,7 +6,7 @@
 
 {{-- Volver --}}
 <a href="{{ route('admin.colegios.show', $colegio->idColegio) }}" class="admin-back-link">
-    <i data-feather="arrow-left"></i>
+    <i class="fa-solid fa-arrow-left"></i>
     Volver al detalle
 </a>
 
@@ -177,7 +177,7 @@
 
             <div class="admin-form-group admin-form-col-2">
                 <div class="admin-form-hint">
-                    <i data-feather="info"></i>
+                    <i class="fa-solid fa-circle-info"></i>
                     El plan y la suscripción se gestionan desde el módulo de suscripciones.
                     Esta pantalla solo modifica los datos del colegio.
                 </div>
@@ -192,7 +192,7 @@
             Cancelar
         </a>
         <button type="submit" class="a-btn a-btn--primary">
-            <i data-feather="save"></i>
+            <i class="fa-solid fa-floppy-disk"></i>
             Guardar cambios
         </button>
     </div>

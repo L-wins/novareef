@@ -15,7 +15,7 @@
         </p>
     </div>
     <a href="{{ route('admin.colegios.create') }}" class="a-btn a-btn--primary" style="white-space:nowrap;">
-        <i data-feather="plus"></i>
+        <i class="fa-solid fa-plus"></i>
         Nuevo colegio
     </a>
 </div>
@@ -24,14 +24,14 @@
 <div class="admin-card" style="padding:0.875rem 1.25rem;margin-bottom:1rem;">
     <form method="GET" action="{{ route('admin.colegios.index') }}">
         <div class="admin-search-bar">
-            <i data-feather="search"></i>
+            <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" name="q" value="{{ request('q') }}"
                    placeholder="Buscar por nombre o código…"
                    class="admin-search-input"
                    autocomplete="off">
             @if(request('q'))
                 <a href="{{ route('admin.colegios.index') }}" class="admin-search-clear" title="Limpiar">
-                    <i data-feather="x"></i>
+                    <i class="fa-solid fa-xmark"></i>
                 </a>
             @endif
         </div>
@@ -94,11 +94,11 @@
                     <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
                         <a href="{{ route('admin.colegios.show', $colegio->idColegio) }}"
                            class="a-tbl-btn" title="Ver detalle">
-                            <i data-feather="eye"></i>
+                            <i class="fa-solid fa-eye"></i>
                         </a>
                         <a href="{{ route('admin.colegios.edit', $colegio->idColegio) }}"
                            class="a-tbl-btn" title="Editar">
-                            <i data-feather="edit-2"></i>
+                            <i class="fa-solid fa-pen-to-square"></i>
                         </a>
                         <form method="POST"
                               action="{{ route('admin.colegios.toggleEstado', $colegio->idColegio) }}"
@@ -109,7 +109,7 @@
                             <button type="submit"
                                     class="a-tbl-btn {{ $colegio->estadoColegio === 'activo' ? 'a-tbl-btn--danger' : 'a-tbl-btn--success' }}"
                                     title="{{ $colegio->estadoColegio === 'activo' ? 'Suspender' : 'Activar' }}">
-                                <i data-feather="power"></i>
+                                <i class="fa-solid fa-power-off"></i>
                             </button>
                         </form>
                     </div>
@@ -119,7 +119,7 @@
             <tr>
                 <td colspan="7" style="text-align:center;padding:3.5rem;color:var(--text-muted);">
                     <div>
-                        <i data-feather="inbox" style="width:32px;height:32px;margin:0 auto 0.75rem;display:block;"></i>
+                        <i class="fa-solid fa-inbox" style="font-size:32px;margin:0 auto 0.75rem;display:block;"></i>
                         @if(request('q'))
                             No se encontraron colegios para <strong style="color:var(--text);">«{{ request('q') }}»</strong>
                         @else
@@ -147,11 +147,11 @@
         <div class="admin-pagination__nav">
             @if($colegios->onFirstPage())
                 <span class="admin-pagination__btn admin-pagination__btn--disabled">
-                    <i data-feather="chevron-left"></i>
+                    <i class="fa-solid fa-chevron-left"></i>
                 </span>
             @else
                 <a href="{{ $colegios->previousPageUrl() }}" class="admin-pagination__btn">
-                    <i data-feather="chevron-left"></i>
+                    <i class="fa-solid fa-chevron-left"></i>
                 </a>
             @endif
             <span class="admin-pagination__pages">
@@ -159,11 +159,11 @@
             </span>
             @if($colegios->hasMorePages())
                 <a href="{{ $colegios->nextPageUrl() }}" class="admin-pagination__btn">
-                    <i data-feather="chevron-right"></i>
+                    <i class="fa-solid fa-chevron-right"></i>
                 </a>
             @else
                 <span class="admin-pagination__btn admin-pagination__btn--disabled">
-                    <i data-feather="chevron-right"></i>
+                    <i class="fa-solid fa-chevron-right"></i>
                 </span>
             @endif
         </div>
