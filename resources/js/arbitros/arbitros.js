@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ── Toggle visibilidad de contraseña ──────────────────────────────────
+    //  Toggle visibilidad de contraseña ─
     document.querySelectorAll('.toggle-pwd').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var input = document.getElementById(btn.dataset.target);
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ── Mostrar/ocultar campos de vehículo según el checkbox ──────────────
+    //  Mostrar/ocultar campos de vehículo según el checkbox ─
     var vehiculoCheck  = document.getElementById('tieneVehiculo');
     var vehiculoFields = document.getElementById('vehiculo-fields');
     if (vehiculoCheck && vehiculoFields) {
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
         syncVehiculo();
     }
 
-    // ── Cambio de estado: motivo/fechas según selección ──────────────────
+    //  Cambio de estado: motivo/fechas según selección 
     var estadoSelect    = document.getElementById('estadoNuevo');
     var motivoWrap      = document.getElementById('motivo-wrap');
     var fechasWrap      = document.getElementById('fechas-wrap');
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
         syncCambioEstado();
     }
 
-    // ── Modales (genérico): data-open-modal="X" → #modal-X ───────────────
+    //  Modales (genérico): data-open-modal="X" → #modal-X 
     document.querySelectorAll('[data-open-modal]').forEach(function (btn) {
         var key = btn.dataset.openModal;
         var modal = document.getElementById('modal-' + key);
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         btn.addEventListener('click', function () {
             modal.classList.add('is-open');
-            // Foco al primer campo si existe
+            if (window.initNovaSelects) initNovaSelects(modal);
             var first = modal.querySelector('textarea, input:not([type="hidden"]), select');
             if (first) setTimeout(function () { first.focus(); }, 50);
         });
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ── Foto perfil: preview antes de subir ──────────────────────────────
+    //  Foto perfil: preview antes de subir ─
     var inputFoto = document.getElementById('input-foto');
     if (inputFoto) {
         inputFoto.addEventListener('change', function () {
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ── Contador de caracteres: motivo del archivado ─────────────────────
+    //  Contador de caracteres: motivo del archivado ─
     var motivoInput = document.getElementById('motivo-archivar');
     var contador    = document.getElementById('contador-motivo');
     if (motivoInput && contador) {
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
         syncContador();
     }
 
-    // ── Restaurar árbitro (vista archivados) ─────────────────────────────
+    //  Restaurar árbitro (vista archivados) 
     document.querySelectorAll('.btn-restaurar').forEach(function (btn) {
         btn.addEventListener('click', async function () {
             var nombre = btn.dataset.nombre;
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ── Interceptar archivar: confirm final vía novaAlert ────────────────
+    //  Interceptar archivar: confirm final vía novaAlert ─
     var formArchivar = document.getElementById('form-archivar');
     if (formArchivar) {
         formArchivar.addEventListener('submit', async function (e) {
@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ── Interceptar cambio de estado: confirm final vía novaAlert ────────
+    //  Interceptar cambio de estado: confirm final vía novaAlert 
     var formCambioEstado = document.getElementById('form-cambio-estado');
     if (formCambioEstado) {
         formCambioEstado.addEventListener('submit', async function (e) {
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ── Validación cliente: contraseñas coinciden ─────────────────────────
+    //  Validación cliente: contraseñas coinciden ─
     var pwdInput   = document.getElementById('passwordUsuario');
     var pwdConfirm = document.getElementById('passwordUsuario_confirmation');
     var pwdMsg     = document.getElementById('pwd-match-msg');

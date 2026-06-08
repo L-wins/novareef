@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('titulo', 'Nuevo árbitro')
 @section('seccion', 'Árbitros')
@@ -69,6 +69,7 @@
                     <div class="form-group">
                         <label for="tipoDocumento" class="form-label">Tipo de documento <span class="req">*</span></label>
                         <select id="tipoDocumento" name="tipoDocumento"
+                                data-nova-select data-placeholder="Tipo de documento"
                                 class="form-select {{ $errors->has('tipoDocumento') ? 'is-invalid' : '' }}">
                             @php $tipo = old('tipoDocumento', 'cedula'); @endphp
                             <option value="cedula"      {{ $tipo === 'cedula'      ? 'selected' : '' }}>Cédula</option>
@@ -107,6 +108,7 @@
                     <div class="form-group">
                         <label for="idCategoria" class="form-label">Categoría <span class="req">*</span></label>
                         <select id="idCategoria" name="idCategoria"
+                                data-nova-select data-searchable="true" data-placeholder="Selecciona una categoría"
                                 class="form-select {{ $errors->has('idCategoria') ? 'is-invalid' : '' }}">
                             <option value="">Selecciona una categoría</option>
                             @foreach($categorias as $categoria)
@@ -121,7 +123,8 @@
 
                     <div class="form-group">
                         <label for="fechaIngresoColegio" class="form-label">Fecha de ingreso <span class="req">*</span></label>
-                        <input type="date" id="fechaIngresoColegio" name="fechaIngresoColegio"
+                        <input type="text" id="fechaIngresoColegio" name="fechaIngresoColegio"
+                               data-nova-date placeholder="dd/mm/aaaa"
                                value="{{ old('fechaIngresoColegio') }}"
                                class="form-input {{ $errors->has('fechaIngresoColegio') ? 'is-invalid' : '' }}">
                         @error('fechaIngresoColegio') <p class="field-error">{{ $message }}</p> @enderror
@@ -131,7 +134,7 @@
             </div>
 
             {{-- Nota informativa --}}
-            <div class="form-section" style="background:rgba(16,185,129,.05);border-bottom:none;">
+            <div class="form-section" style="background:rgba(79,142,247,.05);border-bottom:none;">
                 <div style="display:flex;align-items:flex-start;gap:0.75rem;">
                     <i class="fa-solid fa-circle-info" style="font-size:16px;flex-shrink:0;margin-top:2px;color:#6ee7b7;"></i>
                     <p style="font-size:0.85rem;color:#6ee7b7;margin:0;line-height:1.5;">

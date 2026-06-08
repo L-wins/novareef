@@ -166,6 +166,7 @@
                             Plan <span class="req">*</span>
                         </label>
                         <select id="idPlan" name="idPlan"
+                                data-nova-select data-placeholder="Selecciona un plan"
                                 class="form-select {{ $errors->has('idPlan') ? 'is-invalid' : '' }}">
                             <option value="">Seleccionar plan…</option>
                             @foreach ($planes as $plan)

@@ -12,70 +12,50 @@ class AsignarRolesExistentes extends Command
     protected $signature   = 'novareef:asignar-roles';
     protected $description = 'Asigna roles Spatie a usuarios existentes según su columna rolUsuario';
 
-    private const MAPA = [
-        'arbitro'    => 'arbitro',
-        'ejecutivo'  => 'ejecutivo',
-        'tesorero'   => 'tesorero',
-        'designador' => 'designador',
-        'sanciones'  => 'sanciones',
-        'tecnico'    => 'tecnico',
+    /** Roles válidos en Spatie. superadmin se excluye: vive en la tabla admins, no en usuarios. */
+    private const ROLES_VALIDOS = [
+        'arbitro',
+        'ejecutivo',
+        'tesorero',
+        'designador',
+        'sanciones',
+        'tecnico',
     ];
 
     public function handle(): int
     {
-        $usuarios = User::all();
+        $total = User::whereIn('rolUsuario', self::ROLES_VALIDOS)->count();
 
-        if ($usuarios->isEmpty()) {
-            $this->info('No se encontraron usuarios en la tabla.');
+        if ($total === 0) {
+            $this->info('No se encontraron usuarios con roles asignables.');
             return self::SUCCESS;
         }
 
-        $procesados = [];
-        $asignados  = 0;
-        $omitidos   = 0;
+        $this->info("Procesando {$total} usuario(s)...");
 
-        foreach ($usuarios as $usuario) {
-            $rolSpatie = self::MAPA[$usuario->rolUsuario] ?? null;
+        $asignados = 0;
+        $omitidos  = 0;
+        $filas     = [];
 
-            if (! $rolSpatie) {
-                $procesados[] = [
-                    $usuario->idUsuario,
-                    $usuario->nombreUsuario,
-                    $usuario->rolUsuario,
-                    'Omitido — rol sin equivalencia Spatie',
-                ];
-                $omitidos++;
-                continue;
-            }
+        User::whereIn('rolUsuario', self::ROLES_VALIDOS)
+            ->select(['idUsuario', 'nombreUsuario', 'rolUsuario'])
+            ->chunkById(200, 'idUsuario', function ($chunk) use (&$asignados, &$omitidos, &$filas): void {
+                foreach ($chunk as $usuario) {
+                    if ($usuario->hasRole($usuario->rolUsuario)) {
+                        $filas[] = [$usuario->idUsuario, $usuario->nombreUsuario, $usuario->rolUsuario, 'Sin cambios'];
+                        $omitidos++;
+                        continue;
+                    }
 
-            if ($usuario->hasRole($rolSpatie)) {
-                $procesados[] = [
-                    $usuario->idUsuario,
-                    $usuario->nombreUsuario,
-                    $rolSpatie,
-                    'Sin cambios — ya tenía el rol',
-                ];
-                $omitidos++;
-                continue;
-            }
+                    $usuario->syncRoles([$usuario->rolUsuario]);
+                    $filas[] = [$usuario->idUsuario, $usuario->nombreUsuario, $usuario->rolUsuario, '✓ Asignado'];
+                    $asignados++;
+                }
+            });
 
-            $usuario->assignRole($rolSpatie);
-            $procesados[] = [
-                $usuario->idUsuario,
-                $usuario->nombreUsuario,
-                $rolSpatie,
-                '✓ Rol asignado',
-            ];
-            $asignados++;
-        }
-
-        $this->table(
-            ['ID', 'Nombre', 'Rol Spatie', 'Resultado'],
-            $procesados
-        );
-
+        $this->table(['ID', 'Nombre', 'Rol', 'Resultado'], $filas);
         $this->newLine();
-        $this->info("Roles asignados: {$asignados}  |  Omitidos: {$omitidos}");
+        $this->info("Asignados: {$asignados}  |  Sin cambios: {$omitidos}");
 
         return self::SUCCESS;
     }

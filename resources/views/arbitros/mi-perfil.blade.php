@@ -234,6 +234,7 @@
                     <div class="form-group">
                         <label for="tipoVehiculo" class="form-label">Tipo</label>
                         <select id="tipoVehiculo" name="tipoVehiculo"
+                                data-nova-select data-placeholder="Tipo de vehículo"
                                 class="form-select {{ $errors->has('tipoVehiculo') ? 'is-invalid' : '' }}">
                             @php $tv = old('tipoVehiculo', $arbitro->tipoVehiculo); @endphp
                             <option value="">— Selecciona —</option>

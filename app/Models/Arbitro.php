@@ -60,7 +60,7 @@ class Arbitro extends Model
 
     protected $appends = ['porcentajePerfil', 'colorPerfil'];
 
-    // ── Eventos del modelo ───────────────────────────────────────────────────
+    //  Eventos del modelo 
 
     protected static function booted(): void
     {
@@ -84,7 +84,7 @@ class Arbitro extends Model
         });
     }
 
-    // ── Reglas de negocio ────────────────────────────────────────────────────
+    //  Reglas de negocio ─
 
     public static function generarCodigoCarnet(int $idColegio): string
     {
@@ -104,7 +104,7 @@ class Arbitro extends Model
         return ! in_array($this->estadoArbitro, self::ESTADOS_NO_DESIGNABLES, true);
     }
 
-    // ── Accesores: porcentaje y color del perfil ─────────────────────────────
+    //  Accesores: porcentaje y color del perfil 
 
     public function getPorcentajePerfilAttribute(): int
     {
@@ -151,11 +151,13 @@ class Arbitro extends Model
             }
         }
 
-        // 20% — documentos obligatorios (la fila existe = ya está subido)
-        $obligatorios = $this->documentos()->where('obligatorio', true)->count();
-        if ($obligatorios === 0) {
-            $puntos += 20;
-        } else {
+        // 20% — documentos obligatorios subidos.
+        // Usa la relación cargada (documentos) si ya está en memoria para evitar N+1.
+        $docs = $this->relationLoaded('documentos')
+            ? $this->documentos->where('obligatorio', true)
+            : $this->documentos()->where('obligatorio', true)->get();
+
+        if ($docs->isNotEmpty()) {
             $puntos += 20;
         }
 
@@ -174,7 +176,7 @@ class Arbitro extends Model
         };
     }
 
-    // ── Relaciones ───────────────────────────────────────────────────────────
+    //  Relaciones ─
 
     public function usuario(): BelongsTo
     {
@@ -204,5 +206,20 @@ class Arbitro extends Model
     public function historialEstados(): HasMany
     {
         return $this->hasMany(HistorialEstadoArbitro::class, 'idArbitro', 'idArbitro');
+    }
+
+    public function disponibilidades(): HasMany
+    {
+        return $this->hasMany(DisponibilidadArbitro::class, 'idArbitro', 'idArbitro');
+    }
+
+    public function indisponibilidadesExtraordinarias(): HasMany
+    {
+        return $this->hasMany(IndisponibilidadExtraordinaria::class, 'idArbitro', 'idArbitro');
+    }
+
+    public function designaciones(): HasMany
+    {
+        return $this->hasMany(Designacion::class, 'idArbitro', 'idArbitro');
     }
 }

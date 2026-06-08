@@ -1,0 +1,19 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Requests\Admin;
+
+use Illuminate\Validation\Rule;
+
+class StoreColegio extends ColegioRequest
+{
+    public function rules(): array
+    {
+        return array_merge($this->reglasComunes(), [
+            'idPlan'      => ['required', 'integer', Rule::exists('planes', 'idPlan')],
+            'nombreAdmin' => ['required', 'string', 'max:150'],
+            'emailAdmin'  => ['required', 'email', 'max:255', Rule::unique('usuarios', 'emailUsuario')],
+        ]);
+    }
+}

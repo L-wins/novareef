@@ -8,7 +8,7 @@
    de XAMPP (localhost/novareef/public/).
    ============================================================ */
 
-/* ── Solid (fas) ──────────────────────────────────────────── */
+/*  Solid (fas)  */
 @font-face {
     font-family: 'Font Awesome 7 Free';
     font-style: normal;
@@ -21,7 +21,7 @@
     font-weight: 900;
 }
 
-/* ── Regular (far) ────────────────────────────────────────── */
+/*  Regular (far)  */
 @font-face {
     font-family: 'Font Awesome 7 Free';
     font-style: normal;
@@ -34,7 +34,7 @@
     font-weight: 400;
 }
 
-/* ── Brands (fab) ─────────────────────────────────────────── */
+/*  Brands (fab) ─ */
 @font-face {
     font-family: 'Font Awesome 7 Brands';
     font-style: normal;

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('titulo', 'Categorías de árbitro')
 @section('seccion', 'Árbitros')
@@ -107,7 +107,7 @@
         @endif
 
         {{-- Formulario de nueva categoría --}}
-        <div class="form-section" style="background:rgba(16,185,129,.03);border-bottom:none;">
+        <div class="form-section" style="background:rgba(79,142,247,.03);border-bottom:none;">
             <p class="form-section-title">Agregar categoría</p>
             <form method="POST" action="{{ route('categorias.arbitro.store') }}" novalidate>
                 @csrf

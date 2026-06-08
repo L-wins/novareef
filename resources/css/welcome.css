@@ -15,7 +15,7 @@ body {
     text-rendering: optimizeLegibility;
 }
 
-/* ── Tipografía premium ──────────────────────────────────── */
+/*  Tipografía premium  */
 h1, h2, h3, h4 {
     letter-spacing: -0.02em;
 }
@@ -62,7 +62,7 @@ h1, h2, h3, h4 {
     pointer-events: none;
 }
 
-/* ── Texto con degradado verde (título) ─────────────────── */
+/*  Texto con degradado verde (título) ─ */
 .glow-text {
     background: linear-gradient(135deg, #7aa8f9 0%, #60a5fa 60%, #bae6fd 100%);
     -webkit-background-clip: text;
@@ -75,14 +75,14 @@ h1, h2, h3, h4 {
     text-shadow: 0 6px 32px rgba(79, 142, 247, 0.15);
 }
 
-/* ── Navbar ─────────────────────────────────────────────── */
+/*  Navbar  */
 .navbar-scrolled {
     border-bottom-color: rgba(255, 255, 255, 0.08);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
     background-color: rgba(2, 6, 23, 0.92) !important;
 }
 
-/* ── Menú móvil ─────────────────────────────────────────── */
+/*  Menú móvil ─ */
 #mobile-menu {
     display: none;
 }
@@ -390,7 +390,7 @@ h1, h2, h3, h4 {
     font-size: 0.7rem;
 }
 
-/* ── Scrollbar oscuro ──────────────────────────────────── */
+/*  Scrollbar oscuro  */
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-track { background: #020617; }
 ::-webkit-scrollbar-thumb {

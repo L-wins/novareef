@@ -12,6 +12,9 @@ class Plan extends Model
     protected $table      = 'planes';
     protected $primaryKey = 'idPlan';
 
+    /** Periodicidades válidas — única fuente de verdad para validaciones y lógica de negocio. */
+    public const PERIODICIDADES = ['mensual', 'trimestral', 'semestral', 'anual'];
+
     protected $fillable = [
         'nombre',
         'precio',
@@ -48,5 +51,20 @@ class Plan extends Model
     public function getLimiteRolesTextoAttribute(): string
     {
         return $this->limiteRoles === null ? 'Ilimitado' : (string) $this->limiteRoles;
+    }
+
+    /**
+     * Calcula la fecha de vencimiento a partir de una fecha de inicio
+     * según la periodicidad del plan. Centraliza esta regla de negocio
+     * para que no se repita en controladores ni Actions.
+     */
+    public function calcularVencimiento(\Illuminate\Support\Carbon $inicio): \Illuminate\Support\Carbon
+    {
+        return match ($this->periodicidad) {
+            'anual'      => $inicio->copy()->addYear(),
+            'semestral'  => $inicio->copy()->addMonths(6),
+            'trimestral' => $inicio->copy()->addMonths(3),
+            default      => $inicio->copy()->addMonth(),
+        };
     }
 }

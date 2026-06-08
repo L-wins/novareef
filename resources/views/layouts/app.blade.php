@@ -66,7 +66,20 @@
                     <i class="fa-solid fa-circle-user"></i>
                     <span>Mi perfil</span>
                 </a>
+                <a href="{{ route('disponibilidad.index') }}"
+                   class="sidebar-link {{ request()->routeIs('disponibilidad.index') || request()->routeIs('disponibilidad.store') || request()->routeIs('disponibilidad.extraordinaria') ? 'active' : '' }}">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Mi disponibilidad</span>
+                </a>
                 @endif
+
+                @can('crear-designaciones')
+                <a href="{{ route('disponibilidad.general') }}"
+                   class="sidebar-link {{ request()->routeIs('disponibilidad.general') ? 'active' : '' }}">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Disponibilidad</span>
+                </a>
+                @endcan
 
                 @can('ver-arbitros')
                 <a href="{{ route('arbitros.index') }}"
@@ -86,7 +99,7 @@
 
                 @can('ver-torneos')
                 <a href="{{ route('torneos.index') }}"
-                   class="sidebar-link {{ request()->routeIs('torneos.*') ? 'active' : '' }}">
+                   class="sidebar-link {{ request()->routeIs('torneos.*') || request()->routeIs('partidos.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-trophy"></i>
                     <span>Torneos</span>
                 </a>
@@ -121,6 +134,15 @@
                    class="sidebar-link {{ request()->routeIs('sanciones.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-gavel"></i>
                     <span>Sanciones</span>
+                </a>
+                @endcan
+
+                @can('editar-arbitros')
+                <div class="sidebar-divider"></div>
+                <a href="{{ route('configuracion.index') }}"
+                   class="sidebar-link {{ request()->routeIs('configuracion.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Configuración</span>
                 </a>
                 @endcan
 

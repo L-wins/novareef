@@ -13,9 +13,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
+use PragmaRX\Google2FA\Google2FA;
 
 class AdminLoginController extends Controller
 {
+    public function __construct(private readonly Google2FA $google2fa) {}
+
     public function showLogin(): View|RedirectResponse
     {
         if (Auth::guard('admin')->check()) {
@@ -32,43 +35,30 @@ class AdminLoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $key         = 'admin-login:' . $request->ip() . '|' . $request->input('email');
-        $maxIntentos = config('admin.max_intentos', 3);
-        $bloqueo     = config('admin.bloqueo_segundos', 300);
-
-        if (RateLimiter::tooManyAttempts($key, $maxIntentos)) {
-            $segundos = RateLimiter::availableIn($key);
+        if (RateLimiter::tooManyAttempts($this->throttleKey($request), config('admin.max_intentos'))) {
+            $segundos = RateLimiter::availableIn($this->throttleKey($request));
             return back()
                 ->withErrors(['email' => "Demasiados intentos fallidos. Intenta nuevamente en {$segundos} segundos."])
                 ->withInput($request->only('email'));
         }
 
-        $admin = Admin::where('email', $request->input('email'))
-            ->where('activo', true)
-            ->first();
-
+        $admin          = Admin::where('email', $request->input('email'))->where('activo', true)->first();
         $credencialesOk = $admin && Hash::check($request->input('password'), $admin->getAuthPassword());
 
-        DB::table('admin_login_logs')->insert([
-            'ip'         => $request->ip(),
-            'email'      => $request->input('email'),
-            'exitoso'    => $credencialesOk,
-            'user_agent' => $request->userAgent(),
-            'created_at' => now(),
-        ]);
+        $this->registrarLog($request, $request->input('email'), $credencialesOk);
 
         if (! $credencialesOk) {
-            RateLimiter::hit($key, $bloqueo);
+            RateLimiter::hit($this->throttleKey($request), config('admin.bloqueo_segundos'));
             return back()
                 ->withErrors(['email' => 'Correo o contraseña incorrectos.'])
                 ->withInput($request->only('email'));
         }
 
-        RateLimiter::clear($key);
+        RateLimiter::clear($this->throttleKey($request));
         $admin->update(['ultimo_acceso' => now()]);
 
         if ($admin->two_factor_enabled) {
-            session(['admin_2fa_pending' => $admin->idAdmin]);
+            $request->session()->put('admin_2fa_pending', $admin->idAdmin);
             return redirect()->route('admin.2fa');
         }
 
@@ -89,10 +79,10 @@ class AdminLoginController extends Controller
     public function verify2fa(Request $request): RedirectResponse
     {
         $request->validate([
-            'code' => ['required', 'string', 'digits:6'],
+            'code' => ['required', 'digits:6'],
         ]);
 
-        $adminId = session('admin_2fa_pending');
+        $adminId = $request->session()->get('admin_2fa_pending');
 
         if (! $adminId) {
             return redirect()->route('admin.login');
@@ -101,26 +91,22 @@ class AdminLoginController extends Controller
         $admin = Admin::find($adminId);
 
         if (! $admin || ! $admin->two_factor_enabled || ! $admin->google2fa_secret) {
-            session()->forget('admin_2fa_pending');
+            $request->session()->forget('admin_2fa_pending');
             return redirect()->route('admin.login');
         }
 
-        $google2fa = app(\PragmaRX\Google2FA\Google2FA::class);
-        $valido    = $google2fa->verifyKey($admin->getRawOriginal('google2fa_secret') ?? '', $request->input('code'));
+        $valido = $this->google2fa->verifyKey(
+            $admin->getRawOriginal('google2fa_secret') ?? '',
+            $request->input('code'),
+        );
 
-        DB::table('admin_login_logs')->insert([
-            'ip'         => $request->ip(),
-            'email'      => $admin->email,
-            'exitoso'    => $valido,
-            'user_agent' => $request->userAgent(),
-            'created_at' => now(),
-        ]);
+        $this->registrarLog($request, $admin->email, $valido);
 
         if (! $valido) {
             return back()->withErrors(['code' => 'Código incorrecto. Verifica tu aplicación de autenticación.']);
         }
 
-        session()->forget('admin_2fa_pending');
+        $request->session()->forget('admin_2fa_pending');
         Auth::guard('admin')->login($admin);
 
         return redirect()->route('admin.dashboard');
@@ -133,5 +119,30 @@ class AdminLoginController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('welcome');
+    }
+
+    // ── Helpers privados ──────────────────────────────────────────────────────
+
+    /**
+     * Clave única de throttle por IP + email — identifica al atacante, no al admin.
+     */
+    private function throttleKey(Request $request): string
+    {
+        return 'admin-login:' . $request->ip() . '|' . $request->input('email');
+    }
+
+    /**
+     * Persiste un intento de login (contraseña o 2FA) para auditoría.
+     * Usa insert directo — no necesita modelo ni timestamps automáticos.
+     */
+    private function registrarLog(Request $request, string $email, bool $exitoso): void
+    {
+        DB::table('admin_login_logs')->insert([
+            'ip'         => $request->ip(),
+            'email'      => $email,
+            'exitoso'    => $exitoso,
+            'user_agent' => $request->userAgent(),
+            'created_at' => now(),
+        ]);
     }
 }

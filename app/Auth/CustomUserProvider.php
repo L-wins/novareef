@@ -7,17 +7,21 @@ namespace App\Auth;
 use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Contracts\Auth\Authenticatable as UserContract;
 
+/**
+ * Provider personalizado para el guard 'web'.
+ * Necesario porque el modelo User usa columnas no estándar (emailUsuario, passwordUsuario).
+ * El padre de Laravel 11 resuelve la clave de escritura con getAuthPasswordName(), pero
+ * sigue leyendo $credentials['password'] en rehashPasswordIfRequired — este override lo corrige.
+ */
 class CustomUserProvider extends EloquentUserProvider
 {
     public function validateCredentials(UserContract $user, #[\SensitiveParameter] array $credentials): bool
     {
         $passwordKey = $user->getAuthPasswordName();
+        $plain       = $credentials[$passwordKey] ?? null;
+        $hashed      = $user->getAuthPassword();
 
-        if (is_null($plain = $credentials[$passwordKey] ?? null)) {
-            return false;
-        }   
-
-        if (is_null($hashed = $user->getAuthPassword())) {
+        if (empty($plain) || empty($hashed)) {
             return false;
         }
 
@@ -26,7 +30,9 @@ class CustomUserProvider extends EloquentUserProvider
 
     public function rehashPasswordIfRequired(UserContract $user, #[\SensitiveParameter] array $credentials, bool $force = false): void
     {
-        if (! $this->hasher->needsRehash($user->getAuthPassword()) && ! $force) {
+        $hashed = $user->getAuthPassword();
+
+        if (! $this->hasher->needsRehash($hashed) && ! $force) {
             return;
         }
 

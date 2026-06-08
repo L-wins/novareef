@@ -1,14 +1,21 @@
 import { createApp } from 'vue';
 import Swal from 'sweetalert2';
+import Choices from 'choices.js';
+import flatpickr from 'flatpickr';
+import { Spanish } from 'flatpickr/dist/l10n/es.js';
 import '../css/app.css';
 
-// SweetAlert2 disponible globalmente
-window.Swal = Swal;
+// Librerías globales
+window.Swal      = Swal;
+window.Choices   = Choices;
+window.flatpickr = flatpickr;
 
-/* ════════════════════════════════════════════════════════════════════════
+flatpickr.localize(Spanish);
+
+/* 
    novaAlert — helpers de notificaciones coherentes con NovaReef
    Paleta: bg #1a1f2e · texto #e2e8f0 · primary #4f8ef7
-   ════════════════════════════════════════════════════════════════════════ */
+    */
 window.novaAlert = {
     success: (mensaje) => Swal.fire({
         icon: 'success',
@@ -51,6 +58,58 @@ window.novaAlert = {
         customClass: { popup: 'nova-swal' },
     }),
 };
+
+/* 
+   initNovaSelects — inicializa Choices.js y Flatpickr de forma global
+   en cualquier select[data-nova-select] o input[data-nova-date] del DOM.
+
+   Idempotente: ignora elementos ya inicializados (data-choices-init / _flatpickr).
+   Permite re-inicializar en contenedores específicos para contenido dinámico.
+    */
+window.initNovaSelects = function (container = document) {
+
+    // ── Choices.js ───────────────────────────────────────────────────────
+    container.querySelectorAll('select[data-nova-select]').forEach(function (el) {
+        if (el.dataset.choicesInit === '1') return;
+
+        new Choices(el, {
+            searchEnabled:    el.dataset.searchable === 'true',
+            shouldSort:       false,
+            itemSelectText:   '',
+            noChoicesText:    'No hay opciones disponibles',
+            noResultsText:    'No se encontraron resultados',
+            loadingText:      'Cargando...',
+            placeholder:      true,
+            placeholderValue: el.dataset.placeholder || 'Selecciona una opción',
+            allowHTML:        false,
+            position:         'auto',
+        });
+
+        el.dataset.choicesInit = '1';
+
+    });
+
+    // ── Flatpickr ────────────────────────────────────────────────────────
+    container.querySelectorAll('input[data-nova-date]').forEach(function (el) {
+        if (el._flatpickr) return;
+
+        flatpickr(el, {
+            locale:        'es',
+            dateFormat:    'Y-m-d',    // formato enviado al backend
+            altInput:      true,
+            altInputClass: 'form-input', // el altInput visible hereda estilos de formulario
+            altFormat:     'd/m/Y',    // formato visible al usuario
+            allowInput:    true,
+            defaultDate:   el.dataset.defaultDate || el.value || null,
+            minDate:       el.dataset.minDate     || null,
+        });
+    });
+};
+
+// Inicialización automática
+document.addEventListener('DOMContentLoaded', function () {
+    window.initNovaSelects();
+});
 
 // Sombra en el navbar al hacer scroll
 (function () {

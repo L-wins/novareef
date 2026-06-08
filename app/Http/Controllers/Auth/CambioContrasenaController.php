@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\CambioContrasenaRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -14,6 +15,9 @@ class CambioContrasenaController extends Controller
 {
     public function show(): View|RedirectResponse
     {
+        // El middleware VerificarCambioContrasena redirige a esta vista cuando
+        // must_change_password = true. Esta guarda cubre el caso inverso: un usuario
+        // que ya cambió su contraseña navega directamente a la URL.
         if (! Auth::user()->must_change_password) {
             return redirect()->route('dashboard');
         }
@@ -21,25 +25,15 @@ class CambioContrasenaController extends Controller
         return view('auth.cambiar-contrasena');
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(CambioContrasenaRequest $request): RedirectResponse
     {
-        $request->validate(
-            [
-                'nueva_password'              => ['required', 'string', 'min:8', 'confirmed'],
-                'nueva_password_confirmation' => ['required'],
-            ],
-            [
-                'nueva_password.required'  => 'La nueva contraseña es obligatoria.',
-                'nueva_password.min'       => 'La contraseña debe tener al menos 8 caracteres.',
-                'nueva_password.confirmed' => 'Las contraseñas no coinciden.',
-                'nueva_password_confirmation.required' => 'Debes confirmar la nueva contraseña.',
-            ]
-        );
-
+        /** @var User $user */
         $user = Auth::user();
-        $user->passwordUsuario      = $request->input('nueva_password');
-        $user->must_change_password = false;
-        $user->save();
+
+        $user->update([
+            'passwordUsuario'      => $request->validated('nueva_password'),
+            'must_change_password' => false,
+        ]);
 
         return redirect()
             ->route('dashboard')

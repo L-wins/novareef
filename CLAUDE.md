@@ -17,6 +17,9 @@ Laravel 11 · PHP 8.2 · MySQL · Vite · CSS puro (sin Tailwind en el panel adm
 | Resend Laravel | ^1.4 |
 | Sentry | ^4.25 |
 | Tenancy (stancl) | ^3.10 |
+| Choices.js | ^11.2.3 |
+| Flatpickr | ^4.6.13 |
+| SweetAlert2 | ^11.x |
 
 ---
 
@@ -77,11 +80,23 @@ php artisan permission:cache-reset
 | `/dashboard` | auth, verificar.colegio | Dashboard colegio |
 | `/arbitros/*` | auth, verificar.colegio, permission:ver-arbitros | CRUD árbitros |
 | `/colegios/*` | auth, verificar.colegio, solo.superadmin | CRUD colegios |
-| `/torneos/*` | auth, verificar.colegio, permission:ver-torneos | Placeholder |
+| `/torneos/*` | auth, verificar.colegio, permission:ver-torneos | CRUD torneos |
+| `/torneos/{id}/partidos/*` | auth, verificar.colegio, permission:ver-torneos | CRUD partidos |
 | `/designaciones/*` | auth, verificar.colegio, permission:ver-designaciones | Placeholder |
 | `/finanzas/*` | auth, verificar.colegio, permission:ver-finanzas | Placeholder |
 | `/academico/*` | auth, verificar.colegio, permission:ver-academico | Placeholder |
 | `/sanciones/*` | auth, verificar.colegio, permission:ver-sanciones | Placeholder |
+
+### Rutas especiales de árbitros
+
+| URI | Descripción |
+|---|---|
+| GET `/arbitros/mi-perfil` | Perfil del árbitro autenticado |
+| PUT `/arbitros/mi-perfil` | Actualizar perfil del árbitro |
+| GET `/arbitros/completar-perfil` | Wizard de completar perfil (primer acceso) |
+| POST `/arbitros/guardar-perfil` | Guardar datos del wizard |
+| POST `/arbitros/{id}/foto` | Subir foto de perfil |
+| DELETE `/arbitros/{id}/foto` | Eliminar foto de perfil |
 
 ### `routes/admin.php` — Superadmin (guard admin)
 
@@ -136,7 +151,22 @@ En `bootstrap/app.php`:
 ### `Arbitro` (`arbitros`)
 - Traits: `SoftDeletes`
 - Clave: `idColegio`
-- Relación: `hasMany(DocumentoArbitro)`
+- Campos nuevos: `fotoPerfil` (path storage), `estadoArbitro` (FK → `estados_arbitro`)
+- Relaciones: `hasMany(DocumentoArbitro)`, `belongsTo(EstadoArbitro)`, `hasMany(HistorialEstadoArbitro)`
+- Accessors: `porcentajePerfil`, `colorPerfil`
+
+### `Torneo` (`torneos`)
+- Traits: `SoftDeletes`
+- Campos clave: `idColegio`, `idOrganizador`, `tipoTorneo`, `estadoTorneo`, `temporada`, `modalidadPago`
+- Relaciones: `divisiones()`, `sedes()`, `partidos()`, `reglamentos()`, `reglamentoActual()`
+
+### `SedeTorneo` (`sedes_torneo`)
+- Campos: `nombreSede`, `municipio`, `urlMaps` (NO `barrio` — fue migrado)
+
+### `ReglamentoTorneo` (`reglamentos_torneo`)
+- Sin `updated_at`, solo `created_at` (gestionado en `booted()`)
+- `esActual` (bool): solo uno activo por torneo
+- Accessor: `tamanoLegibleAttribute()`
 
 ### `Suscripcion` (`suscripciones`)
 - `estado`: trial | activo | vencido | cancelado
@@ -170,6 +200,36 @@ En `bootstrap/app.php`:
 
 ---
 
+## Frontend — librerías y patrones
+
+### Font Awesome 7.x
+- Instalado via npm (`@fortawesome/fontawesome-free ^7.2.0`)
+- Webfonts copiados a `public/webfonts/`
+- `@font-face` manual en `resources/css/vendor/fontawesome-fonts.css` (evita rutas absolutas Windows de Vite)
+- **NO usar CDN** para iconos — todo via npm + Vite
+
+### Choices.js v11 (selects con búsqueda)
+- Usar atributo `data-nova-select` en el `<select>` para activar
+- Agregar `data-searchable="true"` cuando la lista tiene >10 items
+- Agregar `data-placeholder="Texto..."` para el placeholder
+- **Tematización**: usar `!important` en los overrides CSS (v11 usa CSS custom properties internamente que necesitan ser forzadas)
+- Inicialización global en `app.js` → `window.initNovaSelects()`, llamar también al abrir modales con contenido dinámico
+- El selector `estadoNuevo` en modales por-partido NO usa Choices (tiene listener nativo que muestra/oculta campos de resultado)
+
+### Flatpickr v4 (date picker)
+- Usar `type="text"` + atributo `data-nova-date` (NO `type="date"`)
+- `dateFormat: 'Y-m-d'` (backend Laravel-compatible) + `altFormat: 'd/m/Y'` (visible usuario)
+- El input original se oculta con `.flatpickr-input.form-input { display: none !important; }`
+- **Tematización**: usar `!important` en todos los overrides CSS
+
+### SweetAlert2
+- `window.novaAlert.success(mensaje)` — toast verde, 3s, sin botón
+- `window.novaAlert.error(mensaje)` — modal error rojo
+- `window.novaAlert.confirm({ titulo, texto, icono, confirmColor, confirmarTexto, iconColor })` — confirmación destructiva
+- Flash messages del servidor se disparan automáticamente desde `layouts/app.blade.php`
+
+---
+
 ## Panel Admin — assets
 
 - CSS: `resources/css/admin/admin.css`
@@ -181,11 +241,11 @@ En `bootstrap/app.php`:
 --primary: #4f8ef7
 --bg-navbar: #1a1f2e
 --bg-body: #0f1117
---bg-card: #161b27
---text-bright: #f1f5f9
---text: #94a3b8
---text-muted: #4b5563
---border-color: rgba(255,255,255,0.07)
+--bg-card: #131927
+--text-bright: #e2e8f0
+--text: #8892a4
+--text-muted: #3d4558
+--border-color: rgba(255,255,255,0.06)
 ```
 
 ### JS (admin.js)
@@ -196,6 +256,21 @@ En `bootstrap/app.php`:
 - `.navbar`: fixed 72px → 230px en hover
 - `.navbar__link.active`: badge izquierdo + efecto "gooey" via `::after`
 - Labels: `opacity:0 → 1` con `translateX` al expandir
+
+---
+
+## Panel usuario — CSS palette (app.css)
+
+```css
+--bg-base:      #020617
+--bg-surface:   #0f172a
+--bg-card:      #1e293b
+--accent:       #4f8ef7   /* azul primario — NO cambiar a verde */
+--accent-light: #7aa8f9
+--text-primary: #f8fafc
+--text-secondary: #94a3b8
+--text-muted:   #475569
+```
 
 ---
 
@@ -219,11 +294,14 @@ En `bootstrap/app.php`:
 
 - **`declare(strict_types=1)`** en todos los archivos PHP
 - Columnas en camelCase español: `nombreColegio`, `emailUsuario`, `idColegio`
-- Rutas nombradas con prefijo de guard: `admin.*`, `arbitros.*`, `colegios.*`
+- PKs propias: `bigIncrements('idXxx')` — **NO usar** `$table->id()`
+- Rutas nombradas con prefijo de módulo: `arbitros.*`, `torneos.*`, `partidos.*`, `colegios.*`
 - No Tailwind en el panel admin — CSS puro con variables
 - Feather Icons vía CDN con `defer` (antes del `@vite()` para garantizar orden de ejecución)
 - Vistas admin: `resources/views/admin/` — siempre extienden `admin.layouts.app`
 - Vistas usuario: `resources/views/` — extienden `layouts.app`
+- Multi-tenant: siempre filtrar por `Auth::user()->idColegio` en queries, `abort_unless` checks en controladores
+- Archivado suave: `SoftDeletes` en `Arbitro` y `Torneo`; árbitros archivados muestran banner de advertencia
 
 ---
 
@@ -236,6 +314,7 @@ En `bootstrap/app.php`:
 5. `CategoriaArbitroSeeder`
 6. `PlanSeeder`
 7. `SuscripcionColegioSeeder`
+8. `EstadoArbitroSeeder` — estados del árbitro con colores y etiquetas
 
 ---
 
@@ -247,4 +326,19 @@ ADMIN_PREFIX=novareef-panel   # prefijo URL panel admin
 ADMIN_MAX_INTENTOS=3
 ADMIN_BLOQUEO_SEGUNDOS=300
 GOOGLE2FA_SECRET=             # no se configura aquí — se genera por admin
+RESEND_API_KEY=               # para envío de emails (credenciales, bienvenida)
+```
+
+---
+
+## Migraciones M03 pendientes de ejecutar
+
+Si es una instalación nueva, correr en orden:
+```bash
+php artisan migrate
+# o si las migraciones de árbitros/torneos no corrieron aún:
+php artisan migrate --path=database/migrations/2026_05_28_000010_create_estados_arbitro_table.php
+php artisan migrate --path=database/migrations/2026_05_28_000020_create_historial_estados_arbitro_table.php
+php artisan migrate --path=database/migrations/2026_05_28_000030_update_estado_arbitro_in_arbitros_table.php
+php artisan migrate --path=database/migrations/2026_05_28_000040_add_foto_to_arbitros_table.php
 ```

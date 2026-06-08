@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ── OTP Inputs ─────────────────────────────────────────────────
+    //  OTP Inputs 
     const digits  = document.querySelectorAll('.otp-digit');
     const hidden  = document.getElementById('otp-code');
 

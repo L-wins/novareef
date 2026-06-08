@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('titulo', 'Completa tu perfil')
 @section('seccion', 'Mi perfil')
@@ -12,8 +12,8 @@
 
     {{-- Bienvenida --}}
     <div style="text-align:center;margin-bottom:2rem;">
-        <div style="width:56px;height:56px;border-radius:50%;background:rgba(16,185,129,.15);
-                    border:2px solid rgba(16,185,129,.3);display:flex;align-items:center;
+        <div style="width:56px;height:56px;border-radius:50%;background:rgba(79,142,247,.15);
+                    border:2px solid rgba(79,142,247,.3);display:flex;align-items:center;
                     justify-content:center;margin:0 auto 1rem;">
             <i class="fa-solid fa-circle-check" style="font-size:22px;color:#6ee7b7;"></i>
         </div>
@@ -151,6 +151,7 @@
                     <div class="form-group">
                         <label for="tipoVehiculo" class="form-label">Tipo</label>
                         <select id="tipoVehiculo" name="tipoVehiculo"
+                                data-nova-select data-placeholder="Tipo de vehículo"
                                 class="form-select {{ $errors->has('tipoVehiculo') ? 'is-invalid' : '' }}">
                             @php $tv = old('tipoVehiculo', $arbitro->tipoVehiculo); @endphp
                             <option value="">— Selecciona —</option>

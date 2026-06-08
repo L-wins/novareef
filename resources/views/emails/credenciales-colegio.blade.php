@@ -176,10 +176,10 @@
                 <p class="credential-value">{{ $emailAdmin }}</p>
             </div>
 
-            {{-- Contraseña --}}
+            {{-- Contraseña — {!! !!} evita que & se convierta en &amp; en el HTML del email --}}
             <div class="credential-row">
                 <p class="section-label">Contraseña temporal</p>
-                <p class="credential-value mono">{{ $passwordGenerado }}</p>
+                <p class="credential-value mono">{!! $passwordGenerado !!}</p>
             </div>
 
             <a href="{{ $urlAcceso }}" class="cta-btn">Ingresar al panel →</a>

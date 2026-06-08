@@ -33,7 +33,7 @@ class RolesPermisosSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permiso, 'guard_name' => 'web']);
         }
 
-        // ── Roles ────────────────────────────────────────────────────────────
+        //  Roles 
 
         $ejecutivo = Role::firstOrCreate(['name' => 'ejecutivo', 'guard_name' => 'web']);
         $ejecutivo->syncPermissions($permisos);

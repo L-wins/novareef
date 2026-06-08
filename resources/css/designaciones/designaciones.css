@@ -1,0 +1,528 @@
+/* ============================================================
+   NovaReef — Módulo Designaciones / Disponibilidad
+   Diseño premium — paleta oscura del panel
+   ============================================================ */
+
+:root {
+  --disp-bg-card:          #1e2536;
+  --disp-bg-card-hover:    #252d42;
+  --disp-border:           #2d3748;
+  --disp-day-today-border: #4f8ef7;
+  --disp-available:        #22c55e;
+  --disp-extraordinary:    #ef4444;
+  --disp-warning:          #f59e0b;
+  --disp-text:             #e2e8f0;
+  --disp-text-2:           #8892a4;
+  --disp-radius:           16px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   HERO SECTION
+   ══════════════════════════════════════════════════════════ */
+
+.disp-hero {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     flex-end;
+  flex-wrap:       wrap;
+  gap:             1.5rem;
+  margin-bottom:   2rem;
+  padding-bottom:  1.5rem;
+  border-bottom:   1px solid var(--disp-border);
+}
+
+.disp-hero__label {
+  display:        block;
+  font-size:      0.68rem;
+  font-weight:    700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color:          #4f8ef7;
+  margin-bottom:  0.5rem;
+}
+
+.disp-hero__title {
+  font-size:   2rem;
+  font-weight: 800;
+  color:       #f1f5f9;
+  margin:      0 0 0.3rem;
+  line-height: 1.1;
+}
+
+.disp-hero__subtitle {
+  font-size: 0.95rem;
+  color:     var(--disp-text-2);
+  margin:    0;
+}
+
+.disp-hero__subtitle strong { color: var(--disp-text); }
+
+.disp-hero__right {
+  display:        flex;
+  flex-direction: column;
+  align-items:    flex-end;
+  gap:            0.75rem;
+}
+
+/* ── Badge de estado ──────────────────────────────────────── */
+.disp-status-badge {
+  display:     inline-flex;
+  align-items: center;
+  gap:         8px;
+  padding:     10px 20px;
+  border-radius: 50px;
+  font-size:   0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.disp-status-badge.guardado {
+  background: rgba(34, 197, 94, 0.12);
+  color:      #22c55e;
+  border:     1px solid rgba(34, 197, 94, 0.25);
+}
+
+.disp-status-badge.pendiente {
+  background: rgba(79, 142, 247, 0.12);
+  color:      #4f8ef7;
+  border:     1px solid rgba(79, 142, 247, 0.25);
+}
+
+/* ── Botón guardar premium ────────────────────────────────── */
+.disp-save-btn {
+  background:    linear-gradient(135deg, #4f8ef7, #3a7bd5);
+  color:         #ffffff;
+  border:        none;
+  padding:       13px 28px;
+  border-radius: 10px;
+  font-size:     0.95rem;
+  font-weight:   700;
+  cursor:        pointer;
+  display:       inline-flex;
+  align-items:   center;
+  gap:           0.5rem;
+  transition:    all 250ms ease;
+  box-shadow:    0 4px 15px rgba(79, 142, 247, 0.3);
+  white-space:   nowrap;
+}
+
+.disp-save-btn:hover {
+  transform:  translateY(-2px);
+  box-shadow: 0 8px 25px rgba(79, 142, 247, 0.4);
+}
+
+.disp-save-btn:disabled {
+  opacity:   0.5;
+  cursor:    not-allowed;
+  transform: none;
+}
+
+/* ── Banner de disponibilidad ya guardada ─────────────────── */
+.disp-saved-banner {
+  display:      flex;
+  align-items:  center;
+  gap:          0.75rem;
+  background:   rgba(34, 197, 94, 0.08);
+  border:       1px solid rgba(34, 197, 94, 0.2);
+  border-left:  4px solid #22c55e;
+  border-radius: var(--disp-radius);
+  padding:      1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size:    0.9rem;
+  color:        var(--disp-text);
+  line-height:  1.55;
+}
+
+.disp-saved-banner i {
+  color:       #22c55e;
+  font-size:   1.1rem;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   LEYENDA DE FRANJAS (strip premium)
+   ══════════════════════════════════════════════════════════ */
+
+.disp-legend-strip {
+  display:       flex;
+  flex-wrap:     wrap;
+  align-items:   center;
+  gap:           0.5rem 0.75rem;
+  background:    linear-gradient(135deg, #1a1f2e, #1e2536);
+  border:        1px solid var(--disp-border);
+  border-radius: 12px;
+  padding:       0.85rem 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.disp-legend-label {
+  font-size:      0.68rem;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color:          var(--disp-text-2);
+  margin-right:   0.25rem;
+  display:        flex;
+  align-items:    center;
+  gap:            5px;
+}
+
+.disp-legend-chip {
+  display:     inline-flex;
+  align-items: center;
+  gap:         5px;
+  padding:     4px 11px;
+  border-radius: 20px;
+  font-size:   0.76rem;
+  font-weight: 600;
+  border:      1px solid;
+  white-space: nowrap;
+}
+
+.disp-legend-chip__time {
+  font-size:   0.68rem;
+  font-weight: 400;
+  opacity:     0.75;
+}
+
+/* ══════════════════════════════════════════════════════════
+   GRID DE DÍAS — premium
+   ══════════════════════════════════════════════════════════ */
+
+.disp-grid {
+  display:               grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:                   1rem;
+  margin-bottom:         2.5rem;
+}
+
+@media (max-width:  900px) { .disp-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width:  640px) { .disp-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width:  400px) { .disp-grid { grid-template-columns: 1fr; } }
+
+/* ── Card de día ───────────────────────────────────────────── */
+.disp-day-card {
+  background:    var(--disp-bg-card);
+  border:        2px solid var(--disp-border);
+  border-radius: var(--disp-radius);
+  padding:       1.5rem;
+  min-height:    200px;
+  display:       flex;
+  flex-direction: column;
+  gap:           0.6rem;
+  position:      relative;
+  transition:    border-color 220ms ease, box-shadow 220ms ease, margin 220ms ease;
+  box-shadow:    0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.disp-day-card:hover:not(.is-past) {
+  border-color:  #3d4e6a;
+  box-shadow:    0 8px 30px rgba(0, 0, 0, 0.3);
+  margin-top:    -2px;
+  margin-bottom: 2px;
+}
+
+.disp-day-card.is-today        { border-color: var(--disp-day-today-border); }
+.disp-day-card.is-available    { border-color: var(--disp-available); }
+.disp-day-card.is-extraordinary{ border-color: var(--disp-extraordinary); }
+
+.disp-day-card.is-past {
+  opacity:        0.4;
+  pointer-events: none;
+  filter:         grayscale(0.3);
+}
+
+/* Overlay "Pasado" */
+.disp-past-overlay {
+  position:       absolute;
+  inset:          0;
+  display:        flex;
+  align-items:    center;
+  justify-content: center;
+  font-size:      0.7rem;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color:          var(--disp-text-2);
+  border-radius:  calc(var(--disp-radius) - 2px);
+  background:     rgba(15, 17, 23, 0.4);
+  pointer-events: none;
+}
+
+/* ── Header del card ───────────────────────────────────────── */
+.disp-day-card__header {
+  display:     flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap:         0.5rem;
+}
+
+.disp-day-name {
+  font-size:      0.7rem;
+  font-weight:    800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color:          #4f8ef7;
+  margin-bottom:  2px;
+}
+
+.disp-day-date {
+  font-size: 0.82rem;
+  color:     var(--disp-text-2);
+}
+
+.disp-day-divider {
+  height:     1px;
+  background: var(--disp-border);
+  margin:     0.15rem 0;
+}
+
+.disp-day-select-wrap { flex: 1; }
+
+/* Select de franja dentro del card */
+.disp-day-card .choices__inner {
+  min-height:    44px !important;
+  padding:       10px 12px !important;
+  font-size:     0.88rem !important;
+  border-radius: 8px !important;
+}
+
+/* ── Estado del día (disponible / no disponible) ─────────────── */
+.disp-day-status {
+  display:     flex;
+  align-items: center;
+  gap:         6px;
+  font-size:   0.82rem;
+  font-weight: 600;
+  margin-top:  auto;
+  padding-top: 0.25rem;
+}
+
+/* ── Badges pequeños ──────────────────────────────────────── */
+.disp-badge {
+  display:     inline-flex;
+  align-items: center;
+  gap:         4px;
+  font-size:   0.68rem;
+  font-weight: 700;
+  padding:     3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.disp-badge.available     { background: rgba(34, 197, 94, 0.14); color: #22c55e; }
+.disp-badge.unavailable   { background: rgba(74, 85, 104, 0.28); color: var(--disp-text-2); }
+.disp-badge.extraordinary { background: rgba(239, 68, 68, 0.14); color: #ef4444; cursor: default; }
+.disp-badge.today         { background: rgba(79, 142, 247, 0.14); color: #4f8ef7; }
+
+/* ══════════════════════════════════════════════════════════
+   SECCIÓN INDISPONIBILIDAD EXTRAORDINARIA — premium
+   ══════════════════════════════════════════════════════════ */
+
+.disp-extraordinary-section {
+  background:      rgba(245, 158, 11, 0.03);
+  border:          2px solid rgba(245, 158, 11, 0.25);
+  border-left:     4px solid var(--disp-warning);
+  border-radius:   var(--disp-radius);
+  padding:         2rem;
+  margin-top:      1rem;
+}
+
+/* Divisor con título centrado */
+.disp-extraordinary-divider {
+  display:     flex;
+  align-items: center;
+  gap:         1rem;
+  margin-bottom: 1.5rem;
+}
+
+.disp-extraordinary-divider::before,
+.disp-extraordinary-divider::after {
+  content:    '';
+  flex:       1;
+  height:     1px;
+  background: rgba(245, 158, 11, 0.25);
+}
+
+.disp-extraordinary-title {
+  font-size:      0.8rem;
+  font-weight:    800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color:          var(--disp-warning);
+  white-space:    nowrap;
+  display:        flex;
+  align-items:    center;
+  gap:            6px;
+}
+
+.disp-extraordinary-subtitle {
+  font-size:     0.88rem;
+  color:         var(--disp-text-2);
+  margin-bottom: 1.5rem;
+  line-height:   1.6;
+}
+
+/* Grid 3 columnas del formulario */
+.disp-form-grid {
+  display:               grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap:                   1rem;
+  align-items:           start;
+}
+
+@media (max-width: 760px) { .disp-form-grid { grid-template-columns: 1fr; } }
+
+/* Nota informativa al pie */
+.disp-extraordinary-note {
+  display:    flex;
+  gap:        0.5rem;
+  font-size:  0.78rem;
+  color:      var(--disp-text-2);
+  margin-top: 1rem;
+  line-height: 1.55;
+}
+
+.disp-extraordinary-note i {
+  color:       #4f8ef7;
+  flex-shrink: 0;
+  margin-top:  2px;
+}
+
+/* ── Botón reportar (amber) ────────────────────────────────── */
+.disp-report-btn {
+  background:    linear-gradient(135deg, #f59e0b, #d97706);
+  color:         #000000;
+  border:        none;
+  padding:       13px 28px;
+  border-radius: 10px;
+  font-size:     0.95rem;
+  font-weight:   700;
+  cursor:        pointer;
+  display:       inline-flex;
+  align-items:   center;
+  gap:           0.5rem;
+  margin-top:    1.25rem;
+  transition:    all 250ms ease;
+  box-shadow:    0 4px 15px rgba(245, 158, 11, 0.25);
+}
+
+.disp-report-btn:hover {
+  transform:  translateY(-2px);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+}
+
+.disp-report-btn:disabled {
+  opacity:   0.55;
+  cursor:    not-allowed;
+  transform: none;
+}
+
+/* ══════════════════════════════════════════════════════════
+   VISTA GENERAL — tabla designador
+   ══════════════════════════════════════════════════════════ */
+
+.disp-general-header {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  flex-wrap:       wrap;
+  gap:             0.75rem;
+  margin-bottom:   1.25rem;
+}
+
+.disp-week-nav {
+  display:     flex;
+  align-items: center;
+  gap:         0.5rem;
+}
+
+.disp-week-label {
+  font-size:   0.88rem;
+  font-weight: 600;
+  color:       var(--disp-text);
+  min-width:   180px;
+  text-align:  center;
+}
+
+.disp-table-wrap {
+  overflow-x:    auto;
+  border-radius: var(--disp-radius);
+  border:        1px solid var(--disp-border);
+}
+
+.disp-table {
+  width:           100%;
+  border-collapse: collapse;
+  font-size:       0.82rem;
+}
+
+.disp-table th,
+.disp-table td {
+  padding:       10px 12px;
+  border-bottom: 1px solid var(--disp-border);
+  vertical-align: middle;
+}
+
+.disp-table thead th {
+  background:     #0f172a;
+  color:          var(--disp-text-2);
+  font-weight:    600;
+  text-transform: uppercase;
+  font-size:      0.68rem;
+  letter-spacing: 0.06em;
+  white-space:    nowrap;
+}
+
+.disp-table thead th:first-child  { text-align: left; }
+.disp-table thead th:not(:first-child) { text-align: center; }
+
+.disp-table tbody td:first-child    { color: var(--disp-text); font-weight: 500; }
+.disp-table tbody td:not(:first-child) { text-align: center; }
+.disp-table tbody tr:last-child td  { border-bottom: none; }
+.disp-table tbody tr:hover td       { background: rgba(255, 255, 255, 0.022); }
+
+.disp-table th.col-hoy,
+.disp-table td.col-hoy { background: rgba(79, 142, 247, 0.07); }
+
+.disp-cell-disponible {
+  display:     inline-flex;
+  align-items: center;
+  gap:         0.2rem;
+  background:  rgba(34, 197, 94, 0.12);
+  color:       #22c55e;
+  font-size:   0.72rem;
+  font-weight: 700;
+  padding:     3px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.disp-cell-nodisp {
+  font-size: 0.78rem;
+  color:     var(--disp-text-2);
+}
+
+.disp-cell-extraordinaria {
+  display:     flex;
+  align-items: center;
+  gap:         3px;
+  background:  rgba(239, 68, 68, 0.12);
+  color:       #ef4444;
+  font-size:   0.68rem;
+  font-weight: 600;
+  padding:     2px 6px;
+  border-radius: 4px;
+  margin-top:  3px;
+  white-space: nowrap;
+  cursor:      help;
+}
+
+/* ── Hero responsive ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  .disp-hero          { flex-direction: column; align-items: flex-start; }
+  .disp-hero__right   { align-items: flex-start; width: 100%; }
+  .disp-hero__title   { font-size: 1.5rem; }
+  .disp-save-btn,
+  .disp-report-btn    { width: 100%; justify-content: center; }
+}

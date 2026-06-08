@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Arbitro;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -40,7 +41,7 @@ class Colegio extends Model
         'estadoColegio'    => 'string',
     ];
 
-    // ── Relaciones ───────────────────────────────────────────────────────────
+    //  Relaciones ─
 
     public function tenant(): BelongsTo
     {
@@ -77,5 +78,15 @@ class Colegio extends Model
             'idPlan',
         )->where('suscripciones.estado', 'activa')
          ->orderByDesc('suscripciones.fechaVencimiento');
+    }
+
+    public function usuarios(): HasMany
+    {
+        return $this->hasMany(User::class, 'idColegio', 'idColegio');
+    }
+
+    public function configuraciones(): HasMany
+    {
+        return $this->hasMany(ConfiguracionColegio::class, 'idColegio', 'idColegio');
     }
 }

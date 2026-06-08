@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,22 +13,13 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(AdminSeeder::class);
         $this->call(RolesPermisosSeeder::class);
-
-        User::firstOrCreate(
-            ['emailUsuario' => 'admin@novareef.test'],
-            [
-                'nombreUsuario'   => 'Administrador NovaReef',
-                'passwordUsuario' => 'password',
-                'rolUsuario'      => 'superadmin',
-                'estadoUsuario'   => 'activo',
-                'temaPreferencia' => 'oscuro',
-            ]
-        );
-
         $this->call(ColegioSeeder::class);
         $this->call(CategoriaArbitroSeeder::class);
         $this->call(PlanSeeder::class);
+        $this->call(RolesPartidoSeeder::class);
+        $this->call(FormatosDesignacionSeeder::class);
         $this->call(EstadoArbitroSeeder::class);
         $this->call(SuscripcionColegioSeeder::class);
+        $this->call(ConfiguracionColegioSeeder::class);
     }
 }

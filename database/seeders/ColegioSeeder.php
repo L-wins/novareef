@@ -33,7 +33,6 @@ class ColegioSeeder extends Seeder
                 'departamentoColegio' => 'Cundinamarca',
                 'paisColegio'         => 'Colombia',
                 'estadoColegio'       => 'activo',
-                'planColegio'         => 'profesional',
                 'fechaSuscripcion'    => Carbon::today(),
                 'fechaExpiracion'     => Carbon::today()->addYear(),
             ]

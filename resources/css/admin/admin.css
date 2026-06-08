@@ -4,8 +4,10 @@
 
 @import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
 @import "../vendor/fontawesome-fonts.css";
+@import "choices.js/public/assets/styles/choices.min.css";
+@import "flatpickr/dist/flatpickr.min.css";
 
-/* ── Variables ─────────────────────────────────────────────────── */
+/*  Variables  */
 :root {
   --border-radius: 10px;
   --spacer: 1rem;
@@ -32,7 +34,7 @@
   --danger: #ef4444;
 }
 
-/* ── Reset ─────────────────────────────────────────────────────── */
+/*  Reset ─ */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
 body.admin-body {
@@ -291,7 +293,7 @@ input, textarea { font: inherit; }
   flex-direction: column;
 }
 
-/* ── Top Header ────────────────────────────────────────────────── */
+/*  Top Header ─ */
 .admin-header {
   height: var(--header-h);
   border-bottom: 1px solid var(--border-color);
@@ -318,13 +320,13 @@ input, textarea { font: inherit; }
   gap: 12px;
 }
 
-/* ── Main Area ─────────────────────────────────────────────────── */
+/*  Main Area  */
 .admin-main {
   flex: 1;
   padding: 2rem;
 }
 
-/* ── Flash Messages ────────────────────────────────────────────── */
+/*  Flash Messages ─ */
 .admin-flash {
   display: flex;
   align-items: center;
@@ -352,7 +354,7 @@ input, textarea { font: inherit; }
   color: #fcd34d;
 }
 
-/* ── Page Heading ──────────────────────────────────────────────── */
+/*  Page Heading ─ */
 .admin-page-header {
   margin-bottom: 2rem;
 }
@@ -369,7 +371,7 @@ input, textarea { font: inherit; }
   margin: 0;
 }
 
-/* ── Stat Grid ─────────────────────────────────────────────────── */
+/*  Stat Grid  */
 .admin-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -434,7 +436,7 @@ input, textarea { font: inherit; }
 .stat-card.purple .stat-card__icon { background: rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.2); }
 .stat-card.purple .stat-card__icon svg { color: #8b5cf6; }
 
-/* ── Admin Card ────────────────────────────────────────────────── */
+/*  Admin Card ─ */
 .admin-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -456,7 +458,7 @@ input, textarea { font: inherit; }
   margin: 0;
 }
 
-/* ── Table ─────────────────────────────────────────────────────── */
+/*  Table ─ */
 .admin-table {
   width: 100%;
   border-collapse: collapse;
@@ -649,7 +651,7 @@ input, textarea { font: inherit; }
   margin: 0 0 2rem;
 }
 
-/* ── Form Fields ───────────────────────────────────────────────── */
+/*  Form Fields  */
 .a-field { margin-bottom: 1rem; }
 
 .a-field label {
@@ -717,7 +719,7 @@ input, textarea { font: inherit; }
   color: #fca5a5;
 }
 
-/* ── Buttons ───────────────────────────────────────────────────── */
+/*  Buttons  */
 .a-btn {
   display: inline-flex;
   align-items: center;
@@ -822,7 +824,7 @@ input, textarea { font: inherit; }
   75%     { transform: translateX(5px); }
 }
 
-/* ── 2FA Standalone Page ───────────────────────────────────────── */
+/*  2FA Standalone Page ─ */
 .admin-2fa-wrap {
   min-height: 100vh;
   display: flex;
@@ -869,7 +871,7 @@ input, textarea { font: inherit; }
 }
 .admin-2fa-shield svg { width: 30px; height: 30px; color: var(--primary); }
 
-/* ── 2FA Config Page ───────────────────────────────────────────── */
+/*  2FA Config Page  */
 .twofa-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -964,7 +966,7 @@ input, textarea { font: inherit; }
   font-size:0.625rem; font-weight:800; color:var(--text-bright); margin-top:2px;
 }
 
-/* ── Placeholder ───────────────────────────────────────────────── */
+/*  Placeholder  */
 .admin-placeholder {
   display:flex; flex-direction:column; align-items:center;
   justify-content:center; min-height:55vh; text-align:center;
@@ -975,7 +977,7 @@ input, textarea { font: inherit; }
 }
 .admin-placeholder p { font-size:0.875rem; color:var(--text); margin:0; }
 
-/* ── Misc ──────────────────────────────────────────────────────── */
+/*  Misc  */
 .text-muted { color: var(--text); }
 .text-sm    { font-size: 0.875rem; }
 .mt-1  { margin-top: 0.25rem; }
@@ -1755,3 +1757,222 @@ select.admin-input { cursor: pointer; appearance: none; background-image: url("d
 .admin-alert svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
 .admin-alert--success { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: #6ee7b7; }
 .admin-alert--danger  { background: rgba(239,68,68,0.08);  border: 1px solid rgba(239,68,68,0.2);  color: #fca5a5; }
+
+/* ═══════════════════════════════════════════════════════════════
+   Flatpickr — tema oscuro (panel admin)
+   ═══════════════════════════════════════════════════════════════ */
+.flatpickr-calendar {
+    background: #1a1f2e !important;
+    border: 1px solid #2d3748 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+    color: #e2e8f0 !important;
+}
+.flatpickr-calendar.arrowTop:before,
+.flatpickr-calendar.arrowTop:after {
+    border-bottom-color: #2d3748 !important;
+}
+.flatpickr-months {
+    background: #1a1f2e !important;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 8px 0 !important;
+}
+.flatpickr-months .flatpickr-month {
+    background: transparent !important;
+    color: #e2e8f0 !important;
+    fill: #e2e8f0 !important;
+    height: 44px !important;
+}
+.flatpickr-current-month {
+    color: #e2e8f0 !important;
+    font-size: 1rem !important;
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    background: #1a1f2e !important;
+    color: #e2e8f0 !important;
+    border: none !important;
+    font-weight: 600 !important;
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months option {
+    background: #1a1f2e !important;
+    color: #e2e8f0 !important;
+}
+.flatpickr-current-month input.cur-year {
+    color: #e2e8f0 !important;
+    font-weight: 600 !important;
+}
+.flatpickr-prev-month,
+.flatpickr-next-month {
+    color: #8892a4 !important;
+    fill: #8892a4 !important;
+}
+.flatpickr-prev-month:hover,
+.flatpickr-next-month:hover {
+    color: #4f8ef7 !important;
+    fill: #4f8ef7 !important;
+}
+.flatpickr-weekdays {
+    background: #1a1f2e !important;
+}
+span.flatpickr-weekday {
+    background: transparent !important;
+    color: #4f8ef7 !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
+}
+.flatpickr-days {
+    border-left: 1px solid #2d3748 !important;
+    border-right: 1px solid #2d3748 !important;
+}
+.dayContainer {
+    background: #1a1f2e !important;
+}
+.flatpickr-day {
+    color: #e2e8f0 !important;
+    border-radius: 8px !important;
+    border: none !important;
+}
+.flatpickr-day:hover {
+    background: #2d3748 !important;
+    color: #e2e8f0 !important;
+    border: none !important;
+}
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    background: #4f8ef7 !important;
+    color: #ffffff !important;
+    border-color: #4f8ef7 !important;
+    border-radius: 8px !important;
+}
+.flatpickr-day.today {
+    border-color: #4f8ef7 !important;
+    color: #4f8ef7 !important;
+    font-weight: 700 !important;
+}
+.flatpickr-day.today:hover {
+    background: #2d3748 !important;
+}
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: #4a5568 !important;
+}
+.numInputWrapper {
+    background: transparent !important;
+}
+.numInputWrapper:hover {
+    background: #2d3748 !important;
+}
+.numInputWrapper span {
+    border-color: #2d3748 !important;
+}
+.numInputWrapper span:after {
+    border-top-color: #8892a4 !important;
+    border-bottom-color: #8892a4 !important;
+}
+.flatpickr-input.a-input { display: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   Choices.js — tema oscuro (panel admin)
+   ═══════════════════════════════════════════════════════════════ */
+.choices {
+    margin-bottom: 0 !important;
+}
+.choices__inner {
+    background-color: #1e2536 !important;
+    border: 1px solid #2d3748 !important;
+    border-radius: 8px !important;
+    color: #e2e8f0 !important;
+    min-height: 44px !important;
+    padding: 6px 12px !important;
+    font-size: 0.95rem !important;
+}
+.choices__inner:focus-within {
+    border-color: #4f8ef7 !important;
+    box-shadow: 0 0 0 3px rgba(79,142,247,0.15) !important;
+}
+.choices.is-open .choices__inner {
+    border-color: #4f8ef7 !important;
+    border-radius: 8px 8px 0 0 !important;
+}
+.choices__input {
+    background-color: transparent !important;
+    color: #e2e8f0 !important;
+    font-size: 0.95rem !important;
+}
+.choices__input::placeholder {
+    color: #8892a4 !important;
+}
+.choices__list--single .choices__item {
+    color: #e2e8f0 !important;
+}
+.choices__placeholder {
+    color: #8892a4 !important;
+    opacity: 1 !important;
+}
+.choices__list--dropdown,
+.choices__list[aria-expanded] {
+    background-color: #1a1f2e !important;
+    border: 1px solid #4f8ef7 !important;
+    border-top: none !important;
+    border-radius: 0 0 8px 8px !important;
+    z-index: 9999 !important;
+}
+.choices__list--dropdown .choices__item {
+    color: #e2e8f0 !important;
+    padding: 10px 14px !important;
+    font-size: 0.95rem !important;
+}
+.choices__list--dropdown .choices__item--selectable {
+    color: #e2e8f0 !important;
+}
+.choices__list--dropdown .choices__item--selectable.is-highlighted,
+.choices__list--dropdown .choices__item--selectable:hover {
+    background-color: #4f8ef7 !important;
+    color: #ffffff !important;
+}
+.choices__list--dropdown .choices__item.is-selected {
+    background-color: rgba(79,142,247,0.15) !important;
+    color: #4f8ef7 !important;
+}
+.choices__list--dropdown .choices__input {
+    background: #1e2536 !important;
+    border-bottom: 1px solid #2d3748 !important;
+    color: #e2e8f0 !important;
+    padding: 10px 14px !important;
+}
+.choices__list--dropdown .choices__input::placeholder {
+    color: #8892a4 !important;
+}
+.choices[data-type*='select-one']:after {
+    border-color: #8892a4 transparent transparent transparent !important;
+}
+.choices[data-type*='select-one'].is-open:after {
+    border-color: transparent transparent #4f8ef7 transparent !important;
+}
+.choices__list--multiple .choices__item {
+    background-color: #4f8ef7 !important;
+    border: 1px solid #3a7bd5 !important;
+    color: #ffffff !important;
+    border-radius: 4px !important;
+}
+
+
+/* Choices.js — scrollbar oscuro en lista desplegable */
+.choices__list--dropdown .choices__list {
+    scrollbar-width: thin;
+    scrollbar-color: #4f8ef7 #1a1f2e;
+}
+.choices__list--dropdown .choices__list::-webkit-scrollbar {
+    width: 4px !important;
+}
+.choices__list--dropdown .choices__list::-webkit-scrollbar-track {
+    background: #1a1f2e !important;
+}
+.choices__list--dropdown .choices__list::-webkit-scrollbar-thumb {
+    background: #4f8ef7 !important;
+    border-radius: 2px !important;
+}
+.choices__list--dropdown .choices__list::-webkit-scrollbar-thumb:hover {
+    background: #7aa8f9 !important;
+}

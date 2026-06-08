@@ -98,6 +98,7 @@
                     <div class="form-group">
                         <label for="idCategoria" class="form-label">Categoría <span class="req">*</span></label>
                         <select id="idCategoria" name="idCategoria"
+                                data-nova-select data-searchable="true" data-placeholder="Selecciona una categoría"
                                 class="form-select {{ $errors->has('idCategoria') ? 'is-invalid' : '' }}">
                             <option value="">— Selecciona —</option>
                             @php $catSel = (int) old('idCategoria', $arbitro->idCategoria); @endphp
@@ -123,6 +124,7 @@
                     <div class="form-group">
                         <label for="tipoDocumento" class="form-label">Tipo de documento <span class="req">*</span></label>
                         <select id="tipoDocumento" name="tipoDocumento"
+                                data-nova-select data-placeholder="Tipo de documento"
                                 class="form-select {{ $errors->has('tipoDocumento') ? 'is-invalid' : '' }}">
                             @php $tipo = old('tipoDocumento', $arbitro->tipoDocumento); @endphp
                             <option value="cedula"      {{ $tipo === 'cedula'      ? 'selected' : '' }}>Cédula</option>
@@ -200,7 +202,8 @@
 
                     <div class="form-group">
                         <label for="fechaIngresoColegio" class="form-label">Fecha de ingreso al colegio</label>
-                        <input type="date" id="fechaIngresoColegio" name="fechaIngresoColegio"
+                        <input type="text" id="fechaIngresoColegio" name="fechaIngresoColegio"
+                               data-nova-date placeholder="dd/mm/aaaa"
                                value="{{ old('fechaIngresoColegio', optional($arbitro->fechaIngresoColegio)->format('Y-m-d')) }}"
                                class="form-input {{ $errors->has('fechaIngresoColegio') ? 'is-invalid' : '' }}">
                         @error('fechaIngresoColegio') <p class="field-error">{{ $message }}</p> @enderror
@@ -245,6 +248,7 @@
                     <div class="form-group">
                         <label for="tipoVehiculo" class="form-label">Tipo de vehículo</label>
                         <select id="tipoVehiculo" name="tipoVehiculo"
+                                data-nova-select data-placeholder="Tipo de vehículo"
                                 class="form-select {{ $errors->has('tipoVehiculo') ? 'is-invalid' : '' }}">
                             @php $tv = old('tipoVehiculo', $arbitro->tipoVehiculo); @endphp
                             <option value="">— Selecciona —</option>

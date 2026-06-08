@@ -56,7 +56,7 @@ class User extends Authenticatable
         'deleted_at'         => 'datetime',
     ];
 
-    // ── Auth overrides ───────────────────────────────────────────────────────
+    //  Auth overrides ─
 
     /**
      * Indica a Laravel qué columna contiene la contraseña para autenticación.
@@ -74,7 +74,7 @@ class User extends Authenticatable
         return $this->passwordUsuario;
     }
 
-    // ── Relaciones ───────────────────────────────────────────────────────────
+    //  Relaciones ─
 
     public function colegio(): BelongsTo
     {

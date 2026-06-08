@@ -9,17 +9,19 @@ use Illuminate\Console\Command;
 
 class LimpiarUsuariosFantasma extends Command
 {
-    protected $signature   = 'novareef:limpiar-fantasmas';
-    protected $description = 'Elimina usuarios con rolUsuario=superadmin de la tabla usuarios (son fantasmas — el superadmin real vive en admins)';
+    protected $signature = 'novareef:limpiar-fantasmas
+                            {--force : Eliminar sin pedir confirmación interactiva (útil en CI/scripts)}';
+
+    protected $description = 'Elimina permanentemente usuarios con rolUsuario=superadmin (fantasmas — el superadmin real vive en la tabla admins)';
 
     public function handle(): int
     {
         $fantasmas = User::withTrashed()
             ->where('rolUsuario', 'superadmin')
-            ->get();
+            ->get(['idUsuario', 'nombreUsuario', 'emailUsuario', 'estadoUsuario', 'deleted_at']);
 
         if ($fantasmas->isEmpty()) {
-            $this->info('No se encontraron usuarios fantasma (rolUsuario=superadmin).');
+            $this->info('No se encontraron usuarios fantasma (rolUsuario=superadmin). Todo limpio.');
             return self::SUCCESS;
         }
 
@@ -35,14 +37,18 @@ class LimpiarUsuariosFantasma extends Command
             ])->toArray()
         );
 
-        if (! $this->confirm('¿Eliminar permanentemente estos usuarios?', false)) {
+        $confirmar = $this->option('force')
+            || $this->confirm('¿Eliminar permanentemente estos usuarios?', false);
+
+        if (! $confirmar) {
             $this->info('Operación cancelada.');
             return self::SUCCESS;
         }
 
+        $count = $fantasmas->count();
         $fantasmas->each(fn ($u) => $u->forceDelete());
 
-        $this->info("{$fantasmas->count()} usuario(s) eliminado(s) permanentemente.");
+        $this->info("{$count} usuario(s) eliminado(s) permanentemente.");
         return self::SUCCESS;
     }
 }

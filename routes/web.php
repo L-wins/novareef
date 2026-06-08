@@ -1,11 +1,22 @@
 <?php
 
 use App\Http\Controllers\Arbitro\ArbitroController;
+use App\Http\Controllers\Arbitro\ArbitroFotoController;
+use App\Http\Controllers\Arbitro\ArbitroPerfilController;
 use App\Http\Controllers\Arbitro\CategoriaArbitroController;
 use App\Http\Controllers\Auth\CambioContrasenaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Colegio\ColegioController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Configuracion\ConfiguracionController;
+use App\Http\Controllers\Designacion\DesignacionController;
+use App\Http\Controllers\Designacion\DisponibilidadController;
+use App\Http\Controllers\Torneo\DivisionTorneoController;
+use App\Http\Controllers\Torneo\EmergenteTorneoController;
+use App\Http\Controllers\Torneo\PartidoController;
+use App\Http\Controllers\Torneo\SedeTorneoController;
+use App\Http\Controllers\Torneo\TarifaTorneoController;
+use App\Http\Controllers\Torneo\TorneoController;
 use Illuminate\Support\Facades\Route;
 
 // Página pública
@@ -19,8 +30,8 @@ Route::middleware('guest')->group(function () {
 
 // Completar perfil — solo auth, sin verificar.colegio ni verificar.perfil
 Route::middleware('auth')->group(function () {
-    Route::get('/mi-perfil/completar',  [ArbitroController::class, 'completarPerfil'])->name('arbitros.completar-perfil');
-    Route::post('/mi-perfil/completar', [ArbitroController::class, 'guardarPerfil'])->name('arbitros.guardar-perfil');
+    Route::get('/mi-perfil/completar',  [ArbitroPerfilController::class, 'completar'])->name('arbitros.completar-perfil');
+    Route::post('/mi-perfil/completar', [ArbitroPerfilController::class, 'guardar'])->name('arbitros.guardar-perfil');
 });
 
 // Rutas privadas (requieren autenticación)
@@ -32,20 +43,20 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     Route::get('/cambiar-contrasena',  [CambioContrasenaController::class, 'show'])->name('password.change');
     Route::post('/cambiar-contrasena', [CambioContrasenaController::class, 'update'])->name('password.change.update');
 
-    // ── Mi perfil (árbitro autenticado) ──────────────────────────────────────
-    Route::get('/mi-perfil',          [ArbitroController::class, 'miPerfil'])->name('arbitros.mi-perfil');
-    Route::put('/mi-perfil',          [ArbitroController::class, 'actualizarMiPerfil'])->name('arbitros.mi-perfil.update');
+    //  Mi perfil (árbitro autenticado)
+    Route::get('/mi-perfil', [ArbitroPerfilController::class, 'show'])->name('arbitros.mi-perfil');
+    Route::put('/mi-perfil', [ArbitroPerfilController::class, 'update'])->name('arbitros.mi-perfil.update');
 
     // Foto de perfil — el árbitro siempre, y editores con permiso
-    Route::post('/arbitros/{id}/foto',   [ArbitroController::class, 'subirFoto'])->name('arbitros.foto.subir');
-    Route::delete('/arbitros/{id}/foto', [ArbitroController::class, 'eliminarFoto'])->name('arbitros.foto.eliminar');
+    Route::post('/arbitros/{id}/foto',   [ArbitroFotoController::class, 'subir'])->name('arbitros.foto.subir');
+    Route::delete('/arbitros/{id}/foto', [ArbitroFotoController::class, 'eliminar'])->name('arbitros.foto.eliminar');
 
-    // ── Árbitros archivados ──────────────────────────────────────────────────
+    //  Árbitros archivados ─
     Route::get('/arbitros-archivados', [ArbitroController::class, 'archivados'])
         ->middleware('permission:editar-arbitros')
         ->name('arbitros.archivados');
 
-    // ── Árbitros ─────────────────────────────────────────────────────────────
+    //  Árbitros ─
     Route::prefix('arbitros')->name('arbitros.')->middleware('permission:ver-arbitros')->group(function () {
         Route::get('/',              [ArbitroController::class, 'index'])->name('index');
         Route::get('/crear',         [ArbitroController::class, 'create'])->middleware('permission:crear-arbitros')->name('create');
@@ -58,7 +69,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::post('/{id}/restaurar', [ArbitroController::class, 'restaurar'])->middleware('permission:editar-arbitros')->name('restaurar');
     });
 
-    // ── Categorías de árbitro ────────────────────────────────────────────────
+    //  Categorías de árbitro ─
     Route::prefix('categorias-arbitro')->name('categorias.arbitro.')->middleware('permission:editar-arbitros')->group(function () {
         Route::get('/',        [CategoriaArbitroController::class, 'index'])->name('index');
         Route::post('/',       [CategoriaArbitroController::class, 'store'])->name('store');
@@ -66,17 +77,63 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::delete('/{id}', [CategoriaArbitroController::class, 'destroy'])->name('destroy');
     });
 
-    // ── Torneos ──────────────────────────────────────────────────────────────
+    //  Torneos 
     Route::prefix('torneos')->name('torneos.')->middleware('permission:ver-torneos')->group(function () {
-        Route::get('/',            fn () => redirect()->route('dashboard'))->name('index');
-        Route::get('/{id}',        fn () => redirect()->route('dashboard'))->name('show');
-        Route::get('/crear',       fn () => redirect()->route('dashboard'))->middleware('permission:crear-torneos')->name('create');
-        Route::post('/',           fn () => redirect()->route('dashboard'))->middleware('permission:crear-torneos')->name('store');
-        Route::get('/{id}/editar', fn () => redirect()->route('dashboard'))->middleware('permission:editar-torneos')->name('edit');
-        Route::put('/{id}',        fn () => redirect()->route('dashboard'))->middleware('permission:editar-torneos')->name('update');
+        Route::get('/',              [TorneoController::class, 'index'])->name('index');
+        Route::get('/crear',         [TorneoController::class, 'create'])->middleware('permission:crear-torneos')->name('create');
+        Route::post('/',             [TorneoController::class, 'store'])->middleware('permission:crear-torneos')->name('store');
+        Route::get('/{id}',          [TorneoController::class, 'show'])->name('show');
+        Route::get('/{id}/perfil',   [TorneoController::class, 'perfil'])->middleware('permission:editar-torneos')->name('perfil');
+        Route::post('/{id}/perfil',  [TorneoController::class, 'guardarPerfil'])->middleware('permission:editar-torneos')->name('perfil.guardar');
+        Route::get('/{id}/editar',   [TorneoController::class, 'edit'])->middleware('permission:editar-torneos')->name('edit');
+        Route::put('/{id}',          [TorneoController::class, 'update'])->middleware('permission:editar-torneos')->name('update');
+        Route::put('/{id}/estado',   [TorneoController::class, 'cambiarEstado'])->middleware('permission:editar-torneos')->name('estado');
+        Route::post('/{id}/archivar', [TorneoController::class, 'archivar'])->middleware('permission:editar-torneos')->name('archivar');
     });
 
-    // ── Designaciones ────────────────────────────────────────────────────────
+    //  Divisiones del torneo ─
+    Route::middleware('permission:editar-torneos')->group(function () {
+        Route::post('/torneos/{torneoId}/divisiones', [DivisionTorneoController::class, 'store'])->name('divisiones.store');
+        Route::put('/divisiones/{id}',                [DivisionTorneoController::class, 'update'])->name('divisiones.update');
+        Route::delete('/divisiones/{id}',             [DivisionTorneoController::class, 'destroy'])->name('divisiones.destroy');
+    });
+
+    //  Sedes del torneo
+    Route::middleware('permission:editar-torneos')->group(function () {
+        Route::post('/torneos/{torneoId}/sedes', [SedeTorneoController::class, 'store'])->name('sedes.store');
+        Route::put('/sedes/{id}',                [SedeTorneoController::class, 'update'])->name('sedes.update');
+        Route::delete('/sedes/{id}',             [SedeTorneoController::class, 'destroy'])->name('sedes.destroy');
+    });
+
+    //  Tarifas por división
+    Route::middleware('permission:editar-torneos')->group(function () {
+        Route::post('/divisiones/{divisionId}/tarifas', [TarifaTorneoController::class, 'store'])->name('tarifas.store');
+        Route::put('/tarifas/{id}',                     [TarifaTorneoController::class, 'update'])->name('tarifas.update');
+        Route::delete('/tarifas/{id}',                  [TarifaTorneoController::class, 'destroy'])->name('tarifas.destroy');
+    });
+
+    //  Reglamentos
+    Route::middleware('permission:editar-torneos')->group(function () {
+        Route::delete('/reglamentos/{id}', [TorneoController::class, 'eliminarReglamento'])->name('reglamentos.destroy');
+    });
+
+    //  Emergentes del torneo
+    Route::prefix('torneos/{torneoId}/emergentes')->name('emergentes.')
+        ->middleware('permission:crear-designaciones')->group(function () {
+            Route::get('/',       [EmergenteTorneoController::class, 'index'])->name('index');
+            Route::post('/',      [EmergenteTorneoController::class, 'store'])->name('store');
+            Route::delete('/{id}',[EmergenteTorneoController::class, 'destroy'])->name('destroy');
+        });
+
+    //  Partidos de un torneo ─
+    Route::prefix('torneos/{torneoId}/partidos')->name('partidos.')->middleware('permission:ver-torneos')->group(function () {
+        Route::get('/',           [PartidoController::class, 'index'])->name('index');
+        Route::post('/',          [PartidoController::class, 'store'])->middleware('permission:crear-torneos')->name('store');
+        Route::put('/{id}',       [PartidoController::class, 'update'])->middleware('permission:editar-torneos')->name('update');
+        Route::put('/{id}/estado',[PartidoController::class, 'cambiarEstado'])->middleware('permission:editar-torneos')->name('estado');
+    });
+
+    //  Designaciones (placeholder — M04 Bloque 3)
     Route::prefix('designaciones')->name('designaciones.')->middleware('permission:ver-designaciones')->group(function () {
         Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
         Route::get('/{id}',  fn () => redirect()->route('dashboard'))->name('show');
@@ -84,28 +141,54 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-designaciones')->name('store');
     });
 
-    // ── Finanzas ─────────────────────────────────────────────────────────────
+    //  Disponibilidad — árbitro (registro semanal e indisponibilidad extraordinaria)
+    Route::prefix('disponibilidad')->name('disponibilidad.')
+        ->middleware(['verificar.perfil'])
+        ->group(function () {
+            Route::get('/',                  [DisponibilidadController::class, 'index'])->name('index');
+            Route::post('/',                 [DisponibilidadController::class, 'store'])->name('store');
+            Route::post('/extraordinaria',   [DisponibilidadController::class, 'indisponibilidadExtraordinaria'])->name('extraordinaria');
+            Route::delete('/{fecha}',        [DisponibilidadController::class, 'marcarNoDisponible'])->name('eliminar');
+        });
+
+    //  Disponibilidad general (designador/ejecutivo)
+    Route::get('/disponibilidad/general', [DesignacionController::class, 'disponibilidadGeneral'])
+        ->name('disponibilidad.general')
+        ->middleware('permission:crear-designaciones');
+
+    //  Ver disponibilidad de árbitro específico (respuesta JSON para AJAX)
+    Route::get('/disponibilidad/arbitro/{id}', [DisponibilidadController::class, 'verDisponibilidad'])
+        ->name('disponibilidad.arbitro')
+        ->middleware('permission:crear-designaciones');
+
+    //  Finanzas ─
     Route::prefix('finanzas')->name('finanzas.')->middleware('permission:ver-finanzas')->group(function () {
         Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
         Route::get('/crear', fn () => redirect()->route('dashboard'))->middleware('permission:crear-finanzas')->name('create');
         Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-finanzas')->name('store');
     });
 
-    // ── Académico ────────────────────────────────────────────────────────────
+    //  Académico 
     Route::prefix('academico')->name('academico.')->middleware('permission:ver-academico')->group(function () {
         Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
         Route::get('/crear', fn () => redirect()->route('dashboard'))->middleware('permission:crear-academico')->name('create');
         Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-academico')->name('store');
     });
 
-    // ── Sanciones ────────────────────────────────────────────────────────────
+    //  Sanciones 
     Route::prefix('sanciones')->name('sanciones.')->middleware('permission:ver-sanciones')->group(function () {
         Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
         Route::get('/crear', fn () => redirect()->route('dashboard'))->middleware('permission:crear-sanciones')->name('create');
         Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-sanciones')->name('store');
     });
 
-    // ── Colegios — solo superadmin ────────────────────────────────────────────
+    //  Configuración del colegio — solo ejecutivo
+    Route::prefix('configuracion')->name('configuracion.')->middleware('permission:editar-arbitros')->group(function () {
+        Route::get('/',  [ConfiguracionController::class, 'index'])->name('index');
+        Route::put('/',  [ConfiguracionController::class, 'update'])->name('update');
+    });
+
+    //  Colegios — solo superadmin
     Route::prefix('colegios')->name('colegios.')->middleware('solo.superadmin')->group(function () {
         Route::get('/',            [ColegioController::class, 'index'])->name('index');
         Route::get('/crear',       [ColegioController::class, 'create'])->name('create');
