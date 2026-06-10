@@ -17,9 +17,9 @@
             <h1 class="disp-hero__title">Mi Disponibilidad</h1>
             <p class="disp-hero__subtitle">
                 Semana del
-                <strong>{{ ucfirst($semana[0]->locale('es')->isoFormat('dddd D [de] MMMM')) }}</strong>
+                <strong>{{ ucfirst($semana->lunes->locale('es')->isoFormat('dddd D [de] MMMM')) }}</strong>
                 al
-                <strong>{{ ucfirst($semana[6]->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY')) }}</strong>
+                <strong>{{ ucfirst($semana->domingo->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY')) }}</strong>
             </p>
         </div>
 
@@ -89,7 +89,7 @@
         @csrf
 
         <div class="disp-grid">
-            @foreach ($semana as $dia)
+            @foreach ($semana->dias as $dia)
                 @php
                     $key          = $dia->format('Y-m-d');
                     $esPasado     = $dia->isPast() && !$dia->isToday();
