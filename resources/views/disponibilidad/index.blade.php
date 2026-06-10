@@ -286,5 +286,5 @@
 @endsection
 
 @push('scripts')
-    @vite(['resources/js/designaciones/designaciones.js'])
+    @vite(['resources/js/disponibilidad/disponibilidad.js'])
 @endpush

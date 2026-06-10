@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="@yield('descripcion', 'Panel de control — NovaReef')">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('titulo', 'Panel') — NovaReef</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
@@ -70,6 +71,11 @@
                    class="sidebar-link {{ request()->routeIs('disponibilidad.index') || request()->routeIs('disponibilidad.store') || request()->routeIs('disponibilidad.extraordinaria') ? 'active' : '' }}">
                     <i class="fa-solid fa-calendar-check"></i>
                     <span>Mi disponibilidad</span>
+                </a>
+                <a href="{{ route('mis-partidos.index') }}"
+                   class="sidebar-link {{ request()->routeIs('mis-partidos.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-futbol"></i>
+                    <span>Mis partidos</span>
                 </a>
                 @endif
 
