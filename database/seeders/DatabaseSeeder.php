@@ -21,5 +21,9 @@ class DatabaseSeeder extends Seeder
         $this->call(EstadoArbitroSeeder::class);
         $this->call(SuscripcionColegioSeeder::class);
         $this->call(ConfiguracionColegioSeeder::class);
+
+        if (app()->environment('local')) {
+            $this->call(ArbitrosTestSeeder::class);
+        }
     }
 }
