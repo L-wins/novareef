@@ -68,7 +68,6 @@ class RolesPermisosSeeder extends Seeder
 
         $arbitro = Role::firstOrCreate(['name' => 'arbitro', 'guard_name' => 'web']);
         $arbitro->syncPermissions([
-            'ver-designaciones',
             'ver-academico',
             'ver-sanciones',
         ]);

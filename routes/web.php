@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Colegio\ColegioController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Configuracion\ConfiguracionController;
+use App\Http\Controllers\Designacion\CalificacionController;
 use App\Http\Controllers\Designacion\DesignacionController;
 use App\Http\Controllers\Designacion\DisponibilidadController;
 use App\Http\Controllers\Torneo\DivisionTorneoController;
@@ -133,12 +134,46 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::put('/{id}/estado',[PartidoController::class, 'cambiarEstado'])->middleware('permission:editar-torneos')->name('estado');
     });
 
-    //  Designaciones (placeholder — M04 Bloque 3)
+    //  Designaciones — M04 Bloque 3
     Route::prefix('designaciones')->name('designaciones.')->middleware('permission:ver-designaciones')->group(function () {
-        Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
-        Route::get('/{id}',  fn () => redirect()->route('dashboard'))->name('show');
-        Route::get('/crear', fn () => redirect()->route('dashboard'))->middleware('permission:crear-designaciones')->name('create');
-        Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-designaciones')->name('store');
+        Route::get('/',         [DesignacionController::class, 'index'])->name('index');
+        Route::get('/crear',    [DesignacionController::class, 'crearPartido'])->middleware('permission:crear-designaciones')->name('create');
+        Route::post('/',        [DesignacionController::class, 'guardarPartido'])->middleware('permission:crear-designaciones')->name('store');
+        Route::get('/{id}',     [DesignacionController::class, 'show'])->name('show');
+
+        // AJAX — requieren permiso crear-designaciones
+        Route::post('/{id}/asignar',           [DesignacionController::class, 'asignarArbitro'])->middleware('permission:crear-designaciones')->name('asignar');
+        Route::delete('/designacion/{id}',     [DesignacionController::class, 'quitarDesignacion'])->middleware('permission:crear-designaciones')->name('quitar');
+        Route::put('/{id}/estado',             [DesignacionController::class, 'cambiarEstadoPartido'])->middleware('permission:crear-designaciones')->name('estado');
+        Route::post('/partido/{id}/publicar',  [DesignacionController::class, 'publicarPartido'])->middleware('permission:crear-designaciones')->name('partido.publicar');
+        Route::put('/partido/{id}/veedor',     [DesignacionController::class, 'asignarVeedor'])->middleware('permission:crear-designaciones')->name('partido.veedor');
+        Route::get('/partido/{id}/acta',       [DesignacionController::class, 'generarActa'])->middleware('permission:ver-designaciones')->name('partido.acta');
+        Route::get('/partido/{id}/calificaciones', [CalificacionController::class, 'index'])->middleware('permission:crear-calificaciones')->name('calificaciones.index');
+    });
+
+    //  Finalizar partido — solo el árbitro Central (validado en el controlador,
+    //  fuera del grupo designaciones porque el árbitro no tiene ver-designaciones)
+    Route::post('/designaciones/partido/{id}/finalizar', [DesignacionController::class, 'finalizarPartido'])
+        ->name('designaciones.partido.finalizar');
+
+    //  Mis partidos (árbitro)
+    Route::prefix('mis-partidos')->name('mis-partidos.')->group(function () {
+        Route::get('/',           [DesignacionController::class, 'misPartidos'])->name('index');
+        Route::get('/{id}',       [DesignacionController::class, 'detallePartido'])->name('detalle');
+        Route::post('/{id}/confirmar', [DesignacionController::class, 'confirmarDesignacion'])->name('confirmar');
+        Route::post('/{id}/rechazar',  [DesignacionController::class, 'rechazarDesignacion'])->name('rechazar');
+    });
+
+    //  Calificaciones (veedor/ejecutivo)
+    Route::post('/calificaciones/{designacionId}', [CalificacionController::class, 'store'])
+        ->name('calificaciones.store')
+        ->middleware('permission:crear-calificaciones');
+
+    //  API AJAX — Designaciones (JSON endpoints sin Sanctum, misma sesión web)
+    Route::middleware('permission:ver-designaciones')->group(function () {
+        Route::get('/api/torneos/{id}/divisiones',            [DesignacionController::class, 'getDivisiones'])->name('api.torneos.divisiones');
+        Route::get('/api/torneos/{id}/sedes',                 [DesignacionController::class, 'getSedes'])->name('api.torneos.sedes');
+        Route::get('/api/partidos/{id}/arbitros-disponibles', [DesignacionController::class, 'getArbitrosDisponibles'])->name('api.partidos.arbitros-disponibles');
     });
 
     //  Disponibilidad — árbitro (registro semanal e indisponibilidad extraordinaria)

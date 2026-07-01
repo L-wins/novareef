@@ -23,17 +23,26 @@ class ConfiguracionController extends Controller
         $idColegio = $this->idColegioActivo();
 
         return view('configuracion.index', [
-            'diaDisponibilidad' => ConfiguracionColegio::getDiaDisponibilidad($idColegio),
-            'diasSemana'        => ConfiguracionColegio::diasSemana(),
+            'diaDisponibilidad'       => ConfiguracionColegio::getDiaDisponibilidad($idColegio),
+            'diasSemana'              => ConfiguracionColegio::diasSemana(),
+            'horasLimiteConfirmacion' => ConfiguracionColegio::getHorasLimiteConfirmacion($idColegio),
         ]);
     }
 
     public function update(ActualizarConfiguracionRequest $request): RedirectResponse
     {
+        $idColegio = $this->idColegioActivo();
+
         ConfiguracionColegio::set(
-            $this->idColegioActivo(),
+            $idColegio,
             ConfiguracionColegio::DIA_DISPONIBILIDAD,
             $request->validated('dia_disponibilidad'),
+        );
+
+        ConfiguracionColegio::set(
+            $idColegio,
+            ConfiguracionColegio::HORAS_LIMITE_CONFIRMACION,
+            $request->validated('horas_limite_confirmacion'),
         );
 
         return back()->with('success', 'Configuración guardada correctamente.');

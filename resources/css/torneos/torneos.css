@@ -447,7 +447,7 @@
     border: 1px solid var(--t-border);
     border-radius: var(--t-radius);
     margin-bottom: 1rem;
-    overflow: hidden;
+    /* overflow: hidden eliminado — cortaba los dropdowns de Choices.js */
 }
 .perfil-step-head {
     display: flex;
@@ -525,8 +525,12 @@
     background: rgba(255,255,255,0.02);
     border: 1px solid var(--t-border);
     border-radius: var(--t-radius-sm);
+    /* Crítico: sin overflow:hidden para que dropdowns Choices escapen el grid */
+    overflow: visible;
 }
 .perfil-add-form .btn { align-self: end; }
+/* Las celdas del grid tampoco deben cortar el dropdown */
+.perfil-add-form .form-group { overflow: visible; }
 
 .tarifas-block {
     margin-top: 1rem;

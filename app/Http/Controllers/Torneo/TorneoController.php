@@ -11,13 +11,10 @@ use App\Http\Requests\Torneo\CambiarEstadoTorneoRequest;
 use App\Http\Requests\Torneo\GuardarPerfilTorneoRequest;
 use App\Http\Requests\Torneo\StoreTorneoRequest;
 use App\Http\Requests\Torneo\UpdateTorneoRequest;
-use App\Models\Arbitro;
-use App\Models\EmergenteTorneo;
 use App\Models\FormatoDesignacion;
 use App\Models\ReglamentoTorneo;
 use App\Models\RolPartido;
 use App\Models\Torneo;
-use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -116,23 +113,7 @@ class TorneoController extends Controller
         $roles    = RolPartido::where('esActivo', true)->orderBy('orden')->get();
         $formatos = FormatoDesignacion::where('esActivo', true)->orderBy('orden')->get();
 
-        $arbitros = Arbitro::where('idColegio', $torneo->idColegio)
-            ->where('estadoArbitro', 'activo')
-            ->with('usuario')
-            ->orderBy('idArbitro')
-            ->get();
-
-        // Una sola query — se particiona en memoria por fecha relativa a hoy.
-        [$proximos, $historial] = EmergenteTorneo::where('idTorneo', $torneo->idTorneo)
-            ->with(['arbitro.usuario', 'sede'])
-            ->orderBy('fechaEmergente')
-            ->get()
-            ->partition(fn ($e) => $e->fechaEmergente->greaterThanOrEqualTo(Carbon::today()));
-
-        $proximos  = $proximos->groupBy(fn ($e) => $e->fechaEmergente->format('Y-m-d'));
-        $historial = $historial->sortByDesc('fechaEmergente')->groupBy(fn ($e) => $e->fechaEmergente->format('Y-m-d'));
-
-        return view('torneos.perfil', compact('torneo', 'roles', 'formatos', 'arbitros', 'proximos', 'historial'));
+        return view('torneos.perfil', compact('torneo', 'roles', 'formatos'));
     }
 
     public function guardarPerfil(GuardarPerfilTorneoRequest $request, int $id): RedirectResponse
@@ -140,14 +121,6 @@ class TorneoController extends Controller
         $torneo = Torneo::findOrFail($id);
 
         $this->autorizarTorneo($torneo);
-
-        $datos = $request->validated();
-
-        // Actualizar valor emergente si viene en el request.
-        if (array_key_exists('valorEmergente', $datos)) {
-            $raw = $datos['valorEmergente'];
-            $torneo->update(['valorEmergente' => ($raw !== null && $raw !== '') ? $raw : null]);
-        }
 
         if ($request->hasFile('reglamentoPDF')) {
             DB::transaction(function () use ($torneo, $request): void {

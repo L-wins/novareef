@@ -72,7 +72,7 @@ window.initNovaSelects = function (container = document) {
     container.querySelectorAll('select[data-nova-select]').forEach(function (el) {
         if (el.dataset.choicesInit === '1') return;
 
-        new Choices(el, {
+        var instance = new Choices(el, {
             searchEnabled:    el.dataset.searchable === 'true',
             shouldSort:       false,
             itemSelectText:   '',
@@ -85,6 +85,7 @@ window.initNovaSelects = function (container = document) {
             position:         'auto',
         });
 
+        el._choicesInstance = instance;
         el.dataset.choicesInit = '1';
 
     });
@@ -93,13 +94,21 @@ window.initNovaSelects = function (container = document) {
     container.querySelectorAll('input[data-nova-date]').forEach(function (el) {
         if (el._flatpickr) return;
 
+        var esHora       = el.dataset.noCalendar === 'true';
+        var enableTime   = el.dataset.enableTime === 'true' || esHora;
+        var dateFormat   = el.dataset.dateFormat  || (esHora ? 'H:i' : 'Y-m-d');
+        var altFormat    = el.dataset.altFormat   || (esHora ? 'H:i' : 'd/m/Y');
+
         flatpickr(el, {
             locale:        'es',
-            dateFormat:    'Y-m-d',    // formato enviado al backend
-            altInput:      true,
-            altInputClass: 'form-input', // el altInput visible hereda estilos de formulario
-            altFormat:     'd/m/Y',    // formato visible al usuario
+            noCalendar:    esHora,
+            enableTime:    enableTime,
+            dateFormat:    dateFormat,
+            altInput:      !esHora,         // el campo hora no usa altInput (no hay formato alternativo)
+            altInputClass: 'form-input',
+            altFormat:     altFormat,
             allowInput:    true,
+            time_24hr:     true,
             defaultDate:   el.dataset.defaultDate || el.value || null,
             minDate:       el.dataset.minDate     || null,
         });

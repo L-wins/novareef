@@ -19,6 +19,7 @@ class Partido extends Model
     public    $incrementing = true;
 
     // ── Estados del partido ───────────────────────────────────────────────────
+    public const ESTADO_BORRADOR   = 'borrador';
     public const ESTADO_PROGRAMADO = 'programado';
     public const ESTADO_EN_CURSO   = 'en_curso';
     public const ESTADO_CONFIRMADO = 'confirmado';
@@ -38,12 +39,16 @@ class Partido extends Model
         'fechaPartido',
         'horaPartido',
         'estadoPartido',
+        'version',
         'modalidadPago',
         'observaciones',
+        'idVeedor',
+        'horaInicio',
     ];
 
     protected $casts = [
         'fechaPartido' => 'date',
+        'horaInicio'   => 'datetime',
     ];
 
     // ── Accessors ─────────────────────────────────────────────────────────────
@@ -109,5 +114,16 @@ class Partido extends Model
     {
         return $this->hasMany(Designacion::class, 'idPartido', 'idPartido')
                     ->where('estadoDesignacion', Designacion::ESTADO_CONFIRMADA);
+    }
+
+    public function historial(): HasMany
+    {
+        return $this->hasMany(HistorialDesignacion::class, 'idPartido', 'idPartido')
+                    ->orderByDesc('created_at');
+    }
+
+    public function veedor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'idVeedor', 'idUsuario');
     }
 }

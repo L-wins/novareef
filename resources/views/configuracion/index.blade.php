@@ -60,6 +60,44 @@
             </div>
         </div>
 
+        {{-- ── Confirmación de designaciones ─────────────────────────────── --}}
+        <div class="detail-card" style="max-width:640px;margin-top:1.5rem;">
+            <div class="detail-card-header">
+                <div class="detail-card-title">
+                    <i class="fa-solid fa-stopwatch" style="color:var(--accent);margin-right:0.5rem;"></i>
+                    Confirmación de designaciones
+                </div>
+            </div>
+            <div class="detail-card-body">
+
+                <div class="form-group">
+                    <label class="form-label" for="horas_limite_confirmacion">
+                        Horas límite para confirmar
+                    </label>
+                    <input type="number"
+                           name="horas_limite_confirmacion"
+                           id="horas_limite_confirmacion"
+                           class="form-input"
+                           min="1"
+                           max="72"
+                           value="{{ old('horas_limite_confirmacion', $horasLimiteConfirmacion) }}"
+                           style="max-width:140px">
+                    @error('horas_limite_confirmacion')
+                        <span class="form-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-note form-note--info" style="margin-top:0.75rem;">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>
+                        El árbitro tiene este tiempo para confirmar una designación
+                        antes de que el partido pase a <strong>CRÍTICO</strong>.
+                    </span>
+                </div>
+
+            </div>
+        </div>
+
         <div style="margin-top:1.5rem;">
             <button type="submit" class="btn btn-primary">
                 <i class="fa-solid fa-floppy-disk"></i>

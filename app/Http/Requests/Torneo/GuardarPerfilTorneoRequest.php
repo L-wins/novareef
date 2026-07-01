@@ -16,18 +16,15 @@ class GuardarPerfilTorneoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reglamentoPDF'  => ['nullable', 'file', 'mimes:pdf', 'max:61440'],
-            'valorEmergente' => ['nullable', 'numeric', 'min:0'],
+            'reglamentoPDF' => ['nullable', 'file', 'mimes:pdf', 'max:61440'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'reglamentoPDF.mimes'    => 'El reglamento debe ser un archivo PDF.',
-            'reglamentoPDF.max'      => 'El reglamento no puede superar los 60 MB.',
-            'valorEmergente.numeric' => 'El valor emergente debe ser un número.',
-            'valorEmergente.min'     => 'El valor emergente no puede ser negativo.',
+            'reglamentoPDF.mimes' => 'El reglamento debe ser un archivo PDF.',
+            'reglamentoPDF.max'   => 'El reglamento no puede superar los 60 MB.',
         ];
     }
 }

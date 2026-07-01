@@ -7,6 +7,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Designacion extends Model
 {
@@ -85,5 +87,16 @@ class Designacion extends Model
     public function designador(): BelongsTo
     {
         return $this->belongsTo(User::class, 'idUsuarioDesignador', 'idUsuario');
+    }
+
+    public function historial(): HasMany
+    {
+        return $this->hasMany(HistorialDesignacion::class, 'idDesignacion', 'idDesignacion')
+                    ->orderByDesc('created_at');
+    }
+
+    public function calificacion(): HasOne
+    {
+        return $this->hasOne(CalificacionArbitro::class, 'idDesignacion', 'idDesignacion');
     }
 }

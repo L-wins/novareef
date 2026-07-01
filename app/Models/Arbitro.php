@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Arbitro extends Model
@@ -48,6 +49,7 @@ class Arbitro extends Model
         'fotoPerfil',
         'codigoCarnet',
         'estadoArbitro',
+        'scoreDesempeno',
     ];
 
     protected $casts = [
@@ -55,6 +57,7 @@ class Arbitro extends Model
         'tieneVehiculo'       => 'boolean',
         'pesoArbitro'         => 'decimal:2',
         'estaturaArbitro'     => 'decimal:2',
+        'scoreDesempeno'      => 'decimal:2',
         'deleted_at'          => 'datetime',
     ];
 
@@ -221,5 +224,28 @@ class Arbitro extends Model
     public function designaciones(): HasMany
     {
         return $this->hasMany(Designacion::class, 'idArbitro', 'idArbitro');
+    }
+
+    public function calificaciones(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            CalificacionArbitro::class,
+            Designacion::class,
+            'idArbitro',
+            'idDesignacion',
+            'idArbitro',
+            'idDesignacion'
+        );
+    }
+
+    public function getScorePromedioAttribute(): ?float
+    {
+        if (! $this->relationLoaded('calificaciones')) {
+            $promedio = $this->calificaciones()->avg('nota');
+        } else {
+            $promedio = $this->calificaciones->avg('nota');
+        }
+
+        return $promedio !== null ? round((float) $promedio, 2) : null;
     }
 }

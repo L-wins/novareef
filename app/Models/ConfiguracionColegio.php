@@ -15,10 +15,12 @@ class ConfiguracionColegio extends Model
     public    $incrementing = true;
 
     // ── Claves de configuración ───────────────────────────────────────────────
-    public const DIA_DISPONIBILIDAD = 'dia_disponibilidad';
+    public const DIA_DISPONIBILIDAD        = 'dia_disponibilidad';
+    public const HORAS_LIMITE_CONFIRMACION = 'horas_limite_confirmacion';
 
     private const DESCRIPCIONES = [
-        self::DIA_DISPONIBILIDAD => 'Día de la semana en que los árbitros deben reportar disponibilidad (1=Lunes ... 7=Domingo)',
+        self::DIA_DISPONIBILIDAD        => 'Día de la semana en que los árbitros deben reportar disponibilidad (1=Lunes ... 7=Domingo)',
+        self::HORAS_LIMITE_CONFIRMACION => 'Horas que tiene el árbitro para confirmar una designación antes de que el partido pase a CRÍTICO',
     ];
 
     protected $fillable = [
@@ -78,6 +80,17 @@ class ConfiguracionColegio extends Model
         $valor = (int) static::get($idColegio, static::DIA_DISPONIBILIDAD, '1');
 
         return ($valor >= 1 && $valor <= 7) ? $valor : 1;
+    }
+
+    /**
+     * Retorna las horas límite que tiene un árbitro para confirmar una
+     * designación antes de que el partido pase a CRÍTICO (default 4, rango 1–72).
+     */
+    public static function getHorasLimiteConfirmacion(int $idColegio): int
+    {
+        $valor = (int) static::get($idColegio, static::HORAS_LIMITE_CONFIRMACION, '4');
+
+        return ($valor >= 1 && $valor <= 72) ? $valor : 4;
     }
 
     /**
