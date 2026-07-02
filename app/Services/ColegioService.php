@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Actions;
+namespace App\Services;
 
 use App\Models\CategoriaArbitro;
 use App\Models\Colegio;
@@ -11,13 +11,13 @@ use App\Models\Plan;
 use App\Models\Suscripcion;
 use Illuminate\Support\Facades\DB;
 
-final class RegistrarColegio
+final class ColegioService
 {
     /** Categorías que se crean automáticamente en todo colegio nuevo. */
     private const CATEGORIAS_DEFAULT = ['FIFA', 'A', 'A-FEM', 'B', 'C'];
 
     public function __construct(
-        private readonly RegistrarUsuarioConCredenciales $registrarUsuario,
+        private readonly ArbitroService $arbitros,
     ) {}
 
     /**
@@ -25,12 +25,12 @@ final class RegistrarColegio
      * inicial y el usuario ejecutivo con credenciales. Todo en una transacción.
      *
      * El correo de credenciales se despacha vía DB::afterCommit() dentro de
-     * RegistrarUsuarioConCredenciales, por lo que nunca se envía en rollback.
+     * ArbitroService::registrarConCredenciales(), por lo que nunca se envía en rollback.
      *
      * @throws \InvalidArgumentException  Si el plan o el rol no existen.
      * @throws \RuntimeException          Si el email del admin ya está en uso.
      */
-    public function ejecutar(
+    public function registrar(
         string $nombreColegio,
         string $codigoColegio,
         string $emailColegio,
@@ -78,7 +78,7 @@ final class RegistrarColegio
 
             $urlAcceso = 'https://' . $tenantId . '.novareef.com';
 
-            $this->registrarUsuario->ejecutar(
+            $this->arbitros->registrarConCredenciales(
                 idColegio:    $colegio->idColegio,
                 nombre:       $nombreAdmin,
                 email:        $emailAdmin,

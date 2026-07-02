@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Actions;
+namespace App\Services;
 
 use App\Mail\CredencialesColegioMail;
 use App\Models\User;
@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\Models\Role;
 
-final class RegistrarUsuarioConCredenciales
+final class ArbitroService
 {
     /**
      * Genera contraseña, crea el User, asigna rol Spatie y programa el envío
@@ -20,14 +20,14 @@ final class RegistrarUsuarioConCredenciales
      *
      * Garantías:
      *   - User::create() y assignRole() son atómicos (transacción propia con savepoint
-     *     si el caller ya tiene una activa, lo que hace a este Action seguro en cualquier contexto).
+     *     si el caller ya tiene una activa, lo que hace este método seguro en cualquier contexto).
      *   - El mail se despacha solo si TODAS las transacciones anidadas confirman.
      *   - Un fallo de mail no hace rollback del usuario ya creado.
      *
      * @throws \InvalidArgumentException  Si el rol no existe en Spatie (guard web).
      * @throws \RuntimeException          Si el email ya está en uso (incluyendo soft-deleted).
      */
-    public function ejecutar(
+    public function registrarConCredenciales(
         int    $idColegio,
         string $nombre,
         string $email,

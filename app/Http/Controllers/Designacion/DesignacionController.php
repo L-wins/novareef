@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Designacion;
 
-use App\Actions\CalcularAdvertenciasDesignacion;
 use App\Events\DesignacionActualizadaEvent;
 use App\Events\PartidoActualizadoEvent;
 use App\Exceptions\OptimisticLockException;
@@ -25,6 +24,7 @@ use App\Models\SlotDesignacion;
 use App\Models\TarifaTorneo;
 use App\Models\Torneo;
 use App\Models\User;
+use App\Services\DesignacionService;
 use App\StateMachines\PartidoStateMachine;
 use App\Support\SemanaNavegacion;
 use Illuminate\Http\JsonResponse;
@@ -40,7 +40,7 @@ class DesignacionController extends Controller
     use ResuelveColegio;
 
     public function __construct(
-        private readonly CalcularAdvertenciasDesignacion $calcularAdvertencias,
+        private readonly DesignacionService $designaciones,
     ) {}
 
     // ── Designador / Ejecutivo ────────────────────────────────────────────────
@@ -324,7 +324,7 @@ class DesignacionController extends Controller
 
                 abort_if($slot === null, 422, 'No hay slots disponibles para este rol.');
 
-                $advertencias = $this->calcularAdvertencias->ejecutar($arbitro, $partido);
+                $advertencias = $this->designaciones->calcularAdvertencias($arbitro, $partido);
 
                 $designacion = Designacion::create([
                     'idPartido'          => $partido->idPartido,
@@ -480,7 +480,7 @@ class DesignacionController extends Controller
         $yaAsignados = $partido->designaciones()->pluck('idArbitro')->flip();
 
         // Choques de horario para todos los árbitros con una sola query
-        $advertenciasPorArbitro = $this->calcularAdvertencias->paraLista($arbitros, $partido);
+        $advertenciasPorArbitro = $this->designaciones->advertenciasPorLista($arbitros, $partido);
 
         $resultado = $arbitros->map(function (Arbitro $a) use ($franjaNeed, $yaAsignados, $advertenciasPorArbitro): array {
             $disponibilidad = $a->disponibilidades->first();

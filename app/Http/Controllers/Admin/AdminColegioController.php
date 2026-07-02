@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
-use App\Actions\RegistrarColegio;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreColegio;
 use App\Http\Requests\Admin\UpdateColegio;
 use App\Models\Arbitro;
 use App\Models\Colegio;
 use App\Models\Plan;
+use App\Services\ColegioService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -18,7 +18,7 @@ use Illuminate\View\View;
 class AdminColegioController extends Controller
 {
     public function __construct(
-        private readonly RegistrarColegio $registrarColegio,
+        private readonly ColegioService $colegios,
     ) {}
 
     public function index(Request $request): View
@@ -75,7 +75,7 @@ class AdminColegioController extends Controller
     {
         $data = $request->validated();
 
-        $this->registrarColegio->ejecutar(
+        $this->colegios->registrar(
             nombreColegio:       $data['nombreColegio'],
             codigoColegio:       $data['codigoColegio'],
             emailColegio:        $data['emailColegio'],

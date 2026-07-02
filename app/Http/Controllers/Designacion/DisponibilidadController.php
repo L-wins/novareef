@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Designacion;
 
-use App\Actions\NotificarDesignadorIndisponibilidad;
 use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Designacion\IndisponibilidadExtraordinariaRequest;
@@ -13,6 +12,7 @@ use App\Http\Requests\Designacion\StoreDisponibilidadRequest;
 use App\Models\Designacion;
 use App\Models\DisponibilidadArbitro;
 use App\Models\IndisponibilidadExtraordinaria;
+use App\Services\DesignacionService;
 use App\Support\SemanaNavegacion;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -27,7 +27,7 @@ class DisponibilidadController extends Controller
     use ResuelveColegio;
 
     public function __construct(
-        private readonly NotificarDesignadorIndisponibilidad $notificar,
+        private readonly DesignacionService $designaciones,
     ) {}
 
     // ── index ─────────────────────────────────────────────────────────────────
@@ -131,7 +131,7 @@ class DisponibilidadController extends Controller
                 'idUsuarioRegistro' => Auth::id(),
             ]);
 
-            $this->notificar->ejecutar(
+            $this->designaciones->notificarIndisponibilidad(
                 $arbitro, $fecha,
                 DisponibilidadArbitro::FRANJA_TODO_DIA,
                 $request->validated('motivo'),
@@ -166,7 +166,7 @@ class DisponibilidadController extends Controller
 
         $designacionesAfectadas = $this->designacionesConfirmadasEnFecha($arbitro->idArbitro, $datos['fechaAfectada']);
 
-        $this->notificar->ejecutar($arbitro, $datos['fechaAfectada'], $datos['franjaAfectada'], $datos['motivo'], $designacionesAfectadas);
+        $this->designaciones->notificarIndisponibilidad($arbitro, $datos['fechaAfectada'], $datos['franjaAfectada'], $datos['motivo'], $designacionesAfectadas);
 
         $sufijo = $designacionesAfectadas->isNotEmpty() ? ' El designador fue notificado.' : '';
 

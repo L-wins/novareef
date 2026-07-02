@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Arbitro;
 
-use App\Actions\RegistrarUsuarioConCredenciales;
 use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Arbitro\ArchivarArbitroRequest;
@@ -15,6 +14,7 @@ use App\Models\Arbitro;
 use App\Models\CategoriaArbitro;
 use App\Models\EstadoArbitro;
 use App\Models\HistorialEstadoArbitro;
+use App\Services\ArbitroService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -34,7 +34,7 @@ class ArbitroController extends Controller
     ];
 
     public function __construct(
-        private readonly RegistrarUsuarioConCredenciales $registrar,
+        private readonly ArbitroService $arbitros,
     ) {}
 
     public function index(Request $request): View
@@ -104,7 +104,7 @@ class ArbitroController extends Controller
 
         try {
             $arbitro = DB::transaction(function () use ($datos, $idColegio, $nombreColegio): Arbitro {
-                $usuario = $this->registrar->ejecutar(
+                $usuario = $this->arbitros->registrarConCredenciales(
                     idColegio:     $idColegio,
                     nombre:        $datos['nombreUsuario'],
                     email:         $datos['emailUsuario'],

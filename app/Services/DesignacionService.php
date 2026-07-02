@@ -2,27 +2,28 @@
 
 declare(strict_types=1);
 
-namespace App\Actions;
+namespace App\Services;
 
+use App\Mail\IndisponibilidadExtraordinariaMail;
 use App\Models\Arbitro;
 use App\Models\Designacion;
 use App\Models\Partido;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
-/**
- * Calcula las advertencias a mostrar al designador antes de confirmar
- * la asignación de un árbitro a un partido: disponibilidad, indisponibilidad
- * extraordinaria, suspensión y choques de horario con otros partidos del día.
- *
- * Única fuente de verdad para esta lógica — antes duplicada entre
- * DesignacionController::asignarArbitro() y ::getArbitrosDisponibles().
- */
-final class CalcularAdvertenciasDesignacion
+final class DesignacionService
 {
     private const MINUTOS_MARGEN_PARTIDO_CERCANO = 60;
 
     /**
+     * Calcula las advertencias a mostrar al designador antes de confirmar
+     * la asignación de un árbitro a un partido: disponibilidad, indisponibilidad
+     * extraordinaria, suspensión y choques de horario con otros partidos del día.
+     *
      * @return array{
      *     sinDisponibilidad: bool,
      *     tieneExtraordinaria: bool,
@@ -31,7 +32,7 @@ final class CalcularAdvertenciasDesignacion
      *     esSuspendido: bool,
      * }
      */
-    public function ejecutar(Arbitro $arbitro, Partido $partido): array
+    public function calcularAdvertencias(Arbitro $arbitro, Partido $partido): array
     {
         $disponibilidad = $arbitro->disponibilidades->first();
         $extraordinaria = $arbitro->indisponibilidadesExtraordinarias
@@ -60,7 +61,7 @@ final class CalcularAdvertenciasDesignacion
      * @return array<int, array{advertenciaTiempo: bool, minutosAlPartidoCercano: int|null}>
      *         indexado por idArbitro
      */
-    public function paraLista(Collection $arbitros, Partido $partido): array
+    public function advertenciasPorLista(Collection $arbitros, Partido $partido): array
     {
         $designacionesDia = Designacion::whereIn('idArbitro', $arbitros->pluck('idArbitro'))
             ->whereHas('partido', fn ($q) => $q->where('fechaPartido', $partido->fechaPartido)
@@ -81,6 +82,47 @@ final class CalcularAdvertenciasDesignacion
             ]];
         })->all();
     }
+
+    /**
+     * Notifica al designador (o ejecutivo) del colegio cuando un árbitro
+     * registra una indisponibilidad extraordinaria con partidos confirmados.
+     *
+     * @param  EloquentCollection<int, Designacion>  $partidosAfectados
+     */
+    public function notificarIndisponibilidad(
+        Arbitro           $arbitro,
+        string             $fecha,
+        string             $franja,
+        string             $motivo,
+        EloquentCollection $partidosAfectados,
+    ): void {
+        if ($partidosAfectados->isEmpty()) {
+            return;
+        }
+
+        $designador = User::where('idColegio', $arbitro->idColegio)
+            ->whereIn('rolUsuario', ['ejecutivo', 'designador'])
+            ->first();
+
+        if ($designador === null) {
+            return;
+        }
+
+        try {
+            Mail::to($designador->emailUsuario)->send(
+                new IndisponibilidadExtraordinariaMail($arbitro, $fecha, $franja, $motivo, $partidosAfectados)
+            );
+        } catch (\Throwable $e) {
+            Log::error('[DesignacionService] Error enviando mail de indisponibilidad', [
+                'idArbitro'  => $arbitro->idArbitro,
+                'idColegio'  => $arbitro->idColegio,
+                'fecha'      => $fecha,
+                'error'      => $e->getMessage(),
+            ]);
+        }
+    }
+
+    // ── Helpers privados ──────────────────────────────────────────────────────
 
     private function designacionesDelDia(Partido $partido, int $idArbitro): Collection
     {
