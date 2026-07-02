@@ -110,7 +110,7 @@ class ConfiguracionColegio extends Model
         };
     }
 
-    // ── Relaciones ────────────────────────────────────────────────────────────
+    // ── Relaciones ──
 
     public function colegio(): BelongsTo
     {

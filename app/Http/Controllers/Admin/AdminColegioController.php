@@ -7,7 +7,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreColegio;
 use App\Http\Requests\Admin\UpdateColegio;
-use App\Models\Arbitro;
 use App\Models\Colegio;
 use App\Models\Plan;
 use App\Services\ColegioService;
@@ -42,25 +41,14 @@ class AdminColegioController extends Controller
     public function show(int $id): View
     {
         $colegio = Colegio::with(['suscripcionActiva.plan'])->findOrFail($id);
-
-        $admin = $colegio->usuarios()
-            ->where('rolUsuario', 'ejecutivo')
-            ->orderByDesc('created_at')
-            ->first();
-
-        // Una sola query con conteos condicionales en lugar de 3 queries separadas.
-        $stats = Arbitro::where('idColegio', $id)
-            ->selectRaw('COUNT(*) as total')
-            ->selectRaw("SUM(estadoArbitro = 'activo') as activos")
-            ->selectRaw("SUM(estadoArbitro = 'proceso_ingreso') as en_proceso")
-            ->first();
+        $stats   = $this->colegios->estadisticasArbitros($id);
 
         return view('admin.colegios.show', [
             'colegio'         => $colegio,
-            'admin'           => $admin,
-            'totalArbitros'   => (int) $stats->total,
-            'arbitrosActivos' => (int) $stats->activos,
-            'arbitrosProceso' => (int) $stats->en_proceso,
+            'admin'           => $this->colegios->adminPrincipal($colegio),
+            'totalArbitros'   => $stats['total'],
+            'arbitrosActivos' => $stats['activos'],
+            'arbitrosProceso' => $stats['enProceso'],
         ]);
     }
 
@@ -75,20 +63,24 @@ class AdminColegioController extends Controller
     {
         $data = $request->validated();
 
-        $this->colegios->registrar(
-            nombreColegio:       $data['nombreColegio'],
-            codigoColegio:       $data['codigoColegio'],
-            emailColegio:        $data['emailColegio'],
-            telefonoColegio:     $data['telefonoColegio'] ?? null,
-            direccionColegio:    $data['direccionColegio'] ?? null,
-            ciudadColegio:       $data['ciudadColegio'] ?? null,
-            departamentoColegio: $data['departamentoColegio'] ?? null,
-            paisColegio:         $data['paisColegio'],
-            logoColegio:         $data['logoColegio'] ?? null,
-            idPlan:              (int) $data['idPlan'],
-            nombreAdmin:         $data['nombreAdmin'],
-            emailAdmin:          $data['emailAdmin'],
-        );
+        try {
+            $this->colegios->registrar(
+                nombreColegio:       $data['nombreColegio'],
+                codigoColegio:       $data['codigoColegio'],
+                emailColegio:        $data['emailColegio'],
+                telefonoColegio:     $data['telefonoColegio'] ?? null,
+                direccionColegio:    $data['direccionColegio'] ?? null,
+                ciudadColegio:       $data['ciudadColegio'] ?? null,
+                departamentoColegio: $data['departamentoColegio'] ?? null,
+                paisColegio:         $data['paisColegio'],
+                logoColegio:         $data['logoColegio'] ?? null,
+                idPlan:              (int) $data['idPlan'],
+                nombreAdmin:         $data['nombreAdmin'],
+                emailAdmin:          $data['emailAdmin'],
+            );
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->withErrors(['emailAdmin' => $e->getMessage()]);
+        }
 
         return redirect()
             ->route('admin.colegios.index')
@@ -115,17 +107,9 @@ class AdminColegioController extends Controller
 
     public function toggleEstado(Request $request, int $id): RedirectResponse
     {
-        $colegio     = Colegio::findOrFail($id);
-        $nuevoEstado = $request->input('estado');
+        $colegio = Colegio::findOrFail($id);
+        $label   = $this->colegios->cambiarEstado($colegio, $request->input('estado'));
 
-        $estadoFinal = in_array($nuevoEstado, ['activo', 'suspendido', 'inactivo'], true)
-            ? $nuevoEstado
-            : ($colegio->estadoColegio === 'activo' ? 'suspendido' : 'activo');
-
-        $colegio->update(['estadoColegio' => $estadoFinal]);
-
-        $labels = ['activo' => 'activado', 'suspendido' => 'suspendido', 'inactivo' => 'marcado como inactivo'];
-
-        return back()->with('success', "Colegio {$labels[$estadoFinal]} correctamente.");
+        return back()->with('success', "Colegio {$label} correctamente.");
     }
 }

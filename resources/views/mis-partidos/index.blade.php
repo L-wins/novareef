@@ -397,7 +397,7 @@ function actualizarEtiquetas() {
     });
 }
 
-// ── Countdown HOY ─────────────────────────────────────────────────────────────
+// ── Countdown HOY ───
 function actualizarCountdowns() {
     document.querySelectorAll('[data-hora-partido]').forEach(function (card) {
         const fecha = card.dataset.fechaPartido;

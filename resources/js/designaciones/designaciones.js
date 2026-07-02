@@ -633,7 +633,7 @@ async function asignarVeedor(partidoId) {
 }
 window.asignarVeedor = asignarVeedor;
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ──
 function configurarContador(textareaId, counterId) {
     const ta    = document.getElementById(textareaId);
     const count = document.getElementById(counterId);

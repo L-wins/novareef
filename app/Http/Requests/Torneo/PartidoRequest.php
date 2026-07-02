@@ -36,8 +36,6 @@ abstract class PartidoRequest extends FormRequest
             'fechaPartido'       => ['required', 'date_format:Y-m-d'],
             'horaPartido'        => ['required', 'date_format:H:i'],
             'observaciones'      => ['nullable', 'string'],
-            'resultadoLocal'     => ['nullable', 'integer', 'min:0'],
-            'resultadoVisitante' => ['nullable', 'integer', 'min:0'],
         ];
     }
 

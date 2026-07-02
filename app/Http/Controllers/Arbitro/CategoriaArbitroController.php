@@ -8,12 +8,17 @@ use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Arbitro\StoreCategoriaArbitroRequest;
 use App\Models\CategoriaArbitro;
+use App\Services\CategoriaArbitroService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class CategoriaArbitroController extends Controller
 {
     use ResuelveColegio;
+
+    public function __construct(
+        private readonly CategoriaArbitroService $categorias,
+    ) {}
 
     public function index(): View
     {
@@ -27,12 +32,7 @@ class CategoriaArbitroController extends Controller
 
     public function store(StoreCategoriaArbitroRequest $request): RedirectResponse
     {
-        CategoriaArbitro::create([
-            'idColegio'       => $this->idColegioActivo(),
-            'nombreCategoria' => $request->validated('nombreCategoria'),
-            'esPorDefecto'    => false,
-            'activa'          => true,
-        ]);
+        $this->categorias->crear($this->idColegioActivo(), $request->validated('nombreCategoria'));
 
         return redirect()
             ->route('categorias.arbitro.index')
@@ -41,13 +41,8 @@ class CategoriaArbitroController extends Controller
 
     public function toggleActiva(int $id): RedirectResponse
     {
-        $categoria = CategoriaArbitro::findOrFail($id);
-
-        abort_unless((int) $categoria->idColegio === $this->idColegioActivo(), 403);
-
-        $categoria->update(['activa' => ! $categoria->activa]);
-
-        $estado = $categoria->activa ? 'activada' : 'desactivada';
+        $categoria = $this->categoriaDelColegio($id);
+        $estado    = $this->categorias->alternarActiva($categoria);
 
         return redirect()
             ->route('categorias.arbitro.index')
@@ -56,22 +51,31 @@ class CategoriaArbitroController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
-        $categoria = CategoriaArbitro::withCount('arbitros')->findOrFail($id);
+        $categoria = $this->categoriaDelColegio($id);
 
-        abort_unless((int) $categoria->idColegio === $this->idColegioActivo(), 403);
-
-        if ($categoria->esPorDefecto) {
-            return back()->with('error', 'Las categorías por defecto no se pueden eliminar.');
+        try {
+            $this->categorias->eliminar($categoria);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        if ($categoria->arbitros_count > 0) {
-            return back()->with('error', 'No se puede eliminar una categoría con árbitros asignados.');
-        }
-
-        $categoria->delete();
 
         return redirect()
             ->route('categorias.arbitro.index')
             ->with('success', 'Categoría eliminada correctamente.');
+    }
+
+    // ── Helpers privados ──────────────────────────────────────────────────────
+
+    /**
+     * Resuelve una categoría por ID verificando que pertenezca al colegio activo.
+     * Centraliza lo que antes se repetía en toggleActiva() y destroy().
+     */
+    private function categoriaDelColegio(int $id): CategoriaArbitro
+    {
+        $categoria = CategoriaArbitro::findOrFail($id);
+
+        abort_unless((int) $categoria->idColegio === $this->idColegioActivo(), 403);
+
+        return $categoria;
     }
 }

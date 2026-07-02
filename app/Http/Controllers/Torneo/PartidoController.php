@@ -45,7 +45,7 @@ class PartidoController extends Controller
         $partidos = $query->orderBy('fechaPartido')->orderBy('horaPartido')
             ->paginate(20)->withQueryString();
 
-        $formatos = FormatoDesignacion::where('esActivo', true)->orderBy('orden')->get();
+        $formatos = FormatoDesignacion::activos()->get();
 
         return view('partidos.index', compact('torneo', 'partidos', 'formatos'));
     }
@@ -73,14 +73,7 @@ class PartidoController extends Controller
 
         $this->autorizarTorneo($partido->torneo);
 
-        $datos = collect($request->validated());
-
-        // Resultados solo se persisten cuando el partido está finalizado o se está finalizando.
-        if ($partido->estadoPartido !== Partido::ESTADO_FINALIZADO) {
-            $datos = $datos->except(['resultadoLocal', 'resultadoVisitante']);
-        }
-
-        $partido->update($datos->toArray());
+        $partido->update($request->validated());
 
         return back()->with('success', 'Partido actualizado correctamente.');
     }
@@ -91,15 +84,7 @@ class PartidoController extends Controller
 
         $this->autorizarTorneo($partido->torneo);
 
-        $datos  = $request->validated();
-        $update = ['estadoPartido' => $datos['estadoNuevo']];
-
-        if ($datos['estadoNuevo'] === Partido::ESTADO_FINALIZADO) {
-            $update['resultadoLocal']     = $datos['resultadoLocal'];
-            $update['resultadoVisitante'] = $datos['resultadoVisitante'];
-        }
-
-        $partido->update($update);
+        $partido->update(['estadoPartido' => $request->validated('estadoNuevo')]);
 
         return back()->with('success', 'Estado del partido actualizado correctamente.');
     }

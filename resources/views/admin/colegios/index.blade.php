@@ -81,8 +81,8 @@
                         <span class="badge badge--green">Activo</span>
                     @elseif($colegio->estadoColegio === 'suspendido')
                         <span class="badge badge--red">Suspendido</span>
-                    @elseif($colegio->estadoColegio === 'trial')
-                        <span class="badge badge--amber">Trial</span>
+                    @elseif($colegio->estadoColegio === 'prueba')
+                        <span class="badge badge--amber">Prueba</span>
                     @else
                         <span class="badge badge--gray">{{ ucfirst($colegio->estadoColegio) }}</span>
                     @endif

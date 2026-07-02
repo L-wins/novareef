@@ -65,7 +65,7 @@ class DisponibilidadArbitro extends Model
         return self::getFranjas()[$this->franjaHoraria] ?? $this->franjaHoraria;
     }
 
-    // ── Relaciones ────────────────────────────────────────────────────────────
+    // ── Relaciones ──
 
     public function arbitro(): BelongsTo
     {

@@ -25,7 +25,7 @@ class SlotDesignacion extends Model
         'numeroSlot' => 'integer',
     ];
 
-    // ── Inspectores ───────────────────────────────────────────────────────────
+    // ── Inspectores ─
 
     /** Verdadero cuando el slot no tiene designación asignada. */
     public function estaLibre(): bool
@@ -33,7 +33,7 @@ class SlotDesignacion extends Model
         return $this->idDesignacion === null;
     }
 
-    // ── Relaciones ────────────────────────────────────────────────────────────
+    // ── Relaciones ──
 
     public function partido(): BelongsTo
     {

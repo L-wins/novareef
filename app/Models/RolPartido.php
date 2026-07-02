@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -32,5 +33,11 @@ class RolPartido extends Model
     public function tarifas(): HasMany
     {
         return $this->hasMany(TarifaTorneo::class, 'idRol', 'idRol');
+    }
+
+    /** Roles activos ordenados para poblar selects — evita repetir el mismo query en cada controller. */
+    public function scopeActivos(Builder $query): Builder
+    {
+        return $query->where('esActivo', true)->orderBy('orden');
     }
 }

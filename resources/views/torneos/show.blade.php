@@ -210,11 +210,7 @@
                                 <td>
                                     <div class="equipos">
                                         <span>{{ $p->equipoLocal }}</span>
-                                        @if ($p->estadoPartido === 'finalizado' && $p->resultadoLocal !== null)
-                                            <span class="resultado">{{ $p->resultadoLocal }} - {{ $p->resultadoVisitante }}</span>
-                                        @else
-                                            <span class="vs">vs</span>
-                                        @endif
+                                        <span class="vs">vs</span>
                                         <span>{{ $p->equipoVisitante }}</span>
                                     </div>
                                 </td>

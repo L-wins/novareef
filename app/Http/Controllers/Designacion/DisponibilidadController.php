@@ -9,17 +9,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Designacion\IndisponibilidadExtraordinariaRequest;
 use App\Http\Requests\Designacion\MarcarNoDisponibleRequest;
 use App\Http\Requests\Designacion\StoreDisponibilidadRequest;
-use App\Models\Designacion;
+use App\Models\Arbitro;
+use App\Models\ConfiguracionColegio;
 use App\Models\DisponibilidadArbitro;
 use App\Models\IndisponibilidadExtraordinaria;
-use App\Services\DesignacionService;
+use App\Services\DisponibilidadService;
 use App\Support\SemanaNavegacion;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DisponibilidadController extends Controller
@@ -27,7 +25,7 @@ class DisponibilidadController extends Controller
     use ResuelveColegio;
 
     public function __construct(
-        private readonly DesignacionService $designaciones,
+        private readonly DisponibilidadService $disponibilidad,
     ) {}
 
     // ── index ─────────────────────────────────────────────────────────────────
@@ -54,9 +52,7 @@ class DisponibilidadController extends Controller
             ->get()
             ->groupBy(fn ($i) => $i->fechaAfectada->format('Y-m-d'));
 
-        $yaGuardo = DisponibilidadArbitro::where('idArbitro', $arbitro->idArbitro)
-            ->where('fechaDisponibilidad', '>=', $semana->lunes->toDateString())
-            ->exists();
+        $diaCiclo = ConfiguracionColegio::getDiaDisponibilidad($idColegio);
 
         return view('disponibilidad.index', [
             'arbitro'            => $arbitro,
@@ -64,11 +60,9 @@ class DisponibilidadController extends Controller
             'disponibilidades'   => $disponibilidades,
             'indisponibilidades' => $indisponibilidades,
             'franjas'            => DisponibilidadArbitro::getFranjas(),
-            'yaGuardo'           => $yaGuardo,
-            'diaCiclo'           => \App\Models\ConfiguracionColegio::getDiaDisponibilidad($idColegio),
-            'nombreDia'          => \App\Models\ConfiguracionColegio::getNombreDia(
-                \App\Models\ConfiguracionColegio::getDiaDisponibilidad($idColegio)
-            ),
+            'yaGuardo'           => $this->disponibilidad->yaReportoEstaSemana($arbitro),
+            'diaCiclo'           => $diaCiclo,
+            'nombreDia'          => ConfiguracionColegio::getNombreDia($diaCiclo),
         ]);
     }
 
@@ -76,35 +70,13 @@ class DisponibilidadController extends Controller
 
     public function store(StoreDisponibilidadRequest $request): JsonResponse
     {
-        $arbitro  = $this->arbitroAutenticado();
-        $inicioSemana = SemanaNavegacion::desde(null)->lunes;
+        $arbitro = $this->arbitroAutenticado();
 
-        if (DisponibilidadArbitro::where('idArbitro', $arbitro->idArbitro)
-            ->where('fechaDisponibilidad', '>=', $inicioSemana->toDateString())
-            ->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ya guardaste tu disponibilidad para esta semana. Podrás modificarla la próxima semana.',
-            ], 422);
+        try {
+            $this->disponibilidad->guardarSemana($arbitro, $request->validated('disponibilidades'));
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
-
-        DB::transaction(function () use ($request, $arbitro): void {
-            foreach ($request->validated('disponibilidades') as $item) {
-                $fecha  = $item['fecha'];
-                $franja = $item['franja'] ?? null;
-
-                if ($franja !== null && $franja !== '') {
-                    DisponibilidadArbitro::updateOrCreate(
-                        ['idArbitro' => $arbitro->idArbitro, 'fechaDisponibilidad' => $fecha],
-                        ['franjaHoraria' => $franja, 'motivo' => null],
-                    );
-                } else {
-                    DisponibilidadArbitro::where('idArbitro', $arbitro->idArbitro)
-                        ->where('fechaDisponibilidad', $fecha)
-                        ->delete();
-                }
-            }
-        });
 
         return response()->json(['success' => true, 'message' => 'Disponibilidad guardada correctamente.']);
     }
@@ -115,37 +87,21 @@ class DisponibilidadController extends Controller
     {
         $arbitro = $this->arbitroAutenticado();
 
-        DisponibilidadArbitro::where('idArbitro', $arbitro->idArbitro)
-            ->where('fechaDisponibilidad', $fecha)
-            ->delete();
+        $afecta = $this->disponibilidad->marcarNoDisponible(
+            $arbitro,
+            $fecha,
+            $request->validated('motivo'),
+            $this->idColegioActivo(),
+            Auth::id(),
+        );
 
-        $designacionesAfectadas = $this->designacionesConfirmadasEnFecha($arbitro->idArbitro, $fecha);
-
-        if ($designacionesAfectadas->isNotEmpty()) {
-            IndisponibilidadExtraordinaria::create([
-                'idArbitro'         => $arbitro->idArbitro,
-                'idColegio'         => $this->idColegioActivo(),
-                'fechaAfectada'     => $fecha,
-                'franjaAfectada'    => DisponibilidadArbitro::FRANJA_TODO_DIA,
-                'motivo'            => $request->validated('motivo'),
-                'idUsuarioRegistro' => Auth::id(),
-            ]);
-
-            $this->designaciones->notificarIndisponibilidad(
-                $arbitro, $fecha,
-                DisponibilidadArbitro::FRANJA_TODO_DIA,
-                $request->validated('motivo'),
-                $designacionesAfectadas,
-            );
-
-            return response()->json([
-                'success' => true,
-                'afecta'  => true,
-                'message' => 'Disponibilidad eliminada. Se notificó al designador por partidos confirmados en esa fecha.',
-            ]);
-        }
-
-        return response()->json(['success' => true, 'afecta' => false, 'message' => 'Disponibilidad eliminada.']);
+        return response()->json([
+            'success' => true,
+            'afecta'  => $afecta,
+            'message' => $afecta
+                ? 'Disponibilidad eliminada. Se notificó al designador por partidos confirmados en esa fecha.'
+                : 'Disponibilidad eliminada.',
+        ]);
     }
 
     // ── indisponibilidadExtraordinaria ────────────────────────────────────────
@@ -155,20 +111,16 @@ class DisponibilidadController extends Controller
         $datos   = $request->validated();
         $arbitro = $this->arbitroAutenticado();
 
-        IndisponibilidadExtraordinaria::create([
-            'idArbitro'         => $arbitro->idArbitro,
-            'idColegio'         => $this->idColegioActivo(),
-            'fechaAfectada'     => $datos['fechaAfectada'],
-            'franjaAfectada'    => $datos['franjaAfectada'],
-            'motivo'            => $datos['motivo'],
-            'idUsuarioRegistro' => Auth::id(),
-        ]);
+        $afecta = $this->disponibilidad->registrarIndisponibilidadExtraordinaria(
+            $arbitro,
+            $datos['fechaAfectada'],
+            $datos['franjaAfectada'],
+            $datos['motivo'],
+            $this->idColegioActivo(),
+            Auth::id(),
+        );
 
-        $designacionesAfectadas = $this->designacionesConfirmadasEnFecha($arbitro->idArbitro, $datos['fechaAfectada']);
-
-        $this->designaciones->notificarIndisponibilidad($arbitro, $datos['fechaAfectada'], $datos['franjaAfectada'], $datos['motivo'], $designacionesAfectadas);
-
-        $sufijo = $designacionesAfectadas->isNotEmpty() ? ' El designador fue notificado.' : '';
+        $sufijo = $afecta ? ' El designador fue notificado.' : '';
 
         return back()->with('success', 'Indisponibilidad extraordinaria registrada correctamente.' . $sufijo);
     }
@@ -177,54 +129,17 @@ class DisponibilidadController extends Controller
 
     public function verDisponibilidad(int $arbitroId): JsonResponse
     {
-        $arbitro = \App\Models\Arbitro::with('usuario')
+        $arbitro = Arbitro::with('usuario')
             ->where('idArbitro', $arbitroId)
             ->where('idColegio', $this->idColegioActivo())
             ->firstOrFail();
 
-        $hoy    = Carbon::today();
-        $limite = $hoy->copy()->addWeeks(2)->endOfWeek(Carbon::SUNDAY);
-        $rango  = [$hoy->toDateString(), $limite->toDateString()];
-
-        $disponibilidades = DisponibilidadArbitro::where('idArbitro', $arbitroId)
-            ->whereBetween('fechaDisponibilidad', $rango)
-            ->orderBy('fechaDisponibilidad')
-            ->get()
-            ->map(fn ($d) => [
-                'fecha'       => $d->fechaDisponibilidad->format('Y-m-d'),
-                'franja'      => $d->franjaHoraria,
-                'franjaLabel' => $d->franjaLegible(),
-            ]);
-
-        $indisponibilidades = IndisponibilidadExtraordinaria::where('idArbitro', $arbitroId)
-            ->whereBetween('fechaAfectada', $rango)
-            ->orderBy('fechaAfectada')
-            ->get()
-            ->map(fn ($i) => [
-                'fecha'  => $i->fechaAfectada->format('Y-m-d'),
-                'franja' => $i->franjaAfectada,
-                'motivo' => $i->motivo,
-            ]);
+        $resumen = $this->disponibilidad->resumenParaDesignador($arbitroId);
 
         return response()->json([
             'arbitro'            => ['idArbitro' => $arbitro->idArbitro, 'nombre' => $arbitro->usuario?->nombreUsuario ?? '—'],
-            'disponibilidad'     => $disponibilidades,
-            'indisponibilidades' => $indisponibilidades,
+            'disponibilidad'     => $resumen['disponibilidades'],
+            'indisponibilidades' => $resumen['indisponibilidades'],
         ]);
-    }
-
-    // ── Helper privado ────────────────────────────────────────────────────────
-
-    /**
-     * Retorna las designaciones confirmadas del árbitro en una fecha dada.
-     * Centraliza la query usada en marcarNoDisponible e indisponibilidadExtraordinaria.
-     */
-    private function designacionesConfirmadasEnFecha(int $idArbitro, string $fecha): \Illuminate\Database\Eloquent\Collection
-    {
-        return Designacion::where('idArbitro', $idArbitro)
-            ->where('estadoDesignacion', Designacion::ESTADO_CONFIRMADA)
-            ->whereHas('partido', fn ($q) => $q->whereDate('fechaPartido', $fecha))
-            ->with('partido.torneo')
-            ->get();
     }
 }

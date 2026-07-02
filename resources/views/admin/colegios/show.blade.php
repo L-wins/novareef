@@ -21,8 +21,8 @@
             <span class="badge badge--green" style="padding:5px 11px;font-size:0.75rem;">Activo</span>
         @elseif($colegio->estadoColegio === 'suspendido')
             <span class="badge badge--red" style="padding:5px 11px;font-size:0.75rem;">Suspendido</span>
-        @elseif($colegio->estadoColegio === 'trial')
-            <span class="badge badge--amber" style="padding:5px 11px;font-size:0.75rem;">Trial</span>
+        @elseif($colegio->estadoColegio === 'prueba')
+            <span class="badge badge--amber" style="padding:5px 11px;font-size:0.75rem;">Prueba</span>
         @else
             <span class="badge badge--gray" style="padding:5px 11px;font-size:0.75rem;">{{ ucfirst($colegio->estadoColegio) }}</span>
         @endif
@@ -44,8 +44,7 @@
                          background:var(--bg-navbar);border:1px solid var(--border-color);
                          border-radius:10px;min-width:160px;z-index:50;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
                 @foreach(['activo' => ['label'=>'Activo','class'=>'badge--green'],
-                           'suspendido' => ['label'=>'Suspendido','class'=>'badge--red'],
-                           'inactivo' => ['label'=>'Inactivo','class'=>'badge--gray']] as $estado => $opts)
+                           'suspendido' => ['label'=>'Suspendido','class'=>'badge--red']] as $estado => $opts)
                 @if($colegio->estadoColegio !== $estado)
                 <form method="POST" action="{{ route('admin.colegios.toggleEstado', $colegio->idColegio) }}">
                     @csrf

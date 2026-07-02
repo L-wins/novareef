@@ -51,7 +51,7 @@ class Partido extends Model
         'horaInicio'   => 'datetime',
     ];
 
-    // ── Accessors ─────────────────────────────────────────────────────────────
+    // ── Accessors ───
 
     /**
      * Verdadero cuando todas las designaciones del partido están confirmadas
@@ -77,7 +77,7 @@ class Partido extends Model
         return $this->fechaPartido->isPast() && !$this->estaCompleto();
     }
 
-    // ── Relaciones ────────────────────────────────────────────────────────────
+    // ── Relaciones ──
 
     public function torneo(): BelongsTo
     {

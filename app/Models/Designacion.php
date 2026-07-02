@@ -62,7 +62,7 @@ class Designacion extends Model
         return $this->estadoDesignacion === self::ESTADO_PENDIENTE;
     }
 
-    // ── Relaciones ────────────────────────────────────────────────────────────
+    // ── Relaciones ──
 
     public function partido(): BelongsTo
     {

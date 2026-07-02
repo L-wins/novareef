@@ -124,11 +124,7 @@
                         <td>
                             <div class="equipos">
                                 <span>{{ $p->equipoLocal }}</span>
-                                @if ($p->estadoPartido === 'finalizado' && $p->resultadoLocal !== null)
-                                    <span class="resultado">{{ $p->resultadoLocal }} - {{ $p->resultadoVisitante }}</span>
-                                @else
-                                    <span class="vs">vs</span>
-                                @endif
+                                <span class="vs">vs</span>
                                 <span>{{ $p->equipoVisitante }}</span>
                             </div>
                         </td>
@@ -144,7 +140,7 @@
                                 <div class="table-actions">
                                     <button type="button"
                                             class="btn-icon"
-                                            title="Cambiar estado / resultado"
+                                            title="Cambiar estado"
                                             data-open-modal="estado-partido-{{ $p->idPartido }}">
                                         <i class="fa-solid fa-arrows-rotate"></i>
                                     </button>
@@ -261,7 +257,7 @@
         <form method="POST" action="{{ route('partidos.estado', ['torneoId' => $torneo->idTorneo, 'id' => $p->idPartido]) }}"
               data-confirm-submit
               data-confirm-title="¿Actualizar el partido?"
-              data-confirm-text="Se guardarán el nuevo estado y, si aplica, el resultado.">
+              data-confirm-text="Se guardará el nuevo estado.">
             @csrf
             @method('PUT')
             <div class="modal-header">
@@ -273,7 +269,7 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label">Nuevo estado <span class="req">*</span></label>
-                    <select name="estadoNuevo" required class="form-select estado-partido-select"
+                    <select name="estadoNuevo" required class="form-select"
                             data-partido="{{ $p->idPartido }}">
                         @foreach (['programado', 'en_curso', 'finalizado', 'aplazado', 'cancelado'] as $val)
                             <option value="{{ $val }}" {{ $p->estadoPartido === $val ? 'selected' : '' }}>
@@ -281,19 +277,6 @@
                             </option>
                         @endforeach
                     </select>
-                </div>
-                <div class="form-grid form-grid-2 resultado-fields-{{ $p->idPartido }}"
-                     style="display:{{ $p->estadoPartido === 'finalizado' ? 'grid' : 'none' }};">
-                    <div class="form-group">
-                        <label class="form-label">Goles {{ $p->equipoLocal }}</label>
-                        <input type="number" name="resultadoLocal" min="0"
-                               value="{{ $p->resultadoLocal }}" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Goles {{ $p->equipoVisitante }}</label>
-                        <input type="number" name="resultadoVisitante" min="0"
-                               value="{{ $p->resultadoVisitante }}" class="form-input">
-                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -310,14 +293,4 @@
 
 @push('scripts')
     @vite(['resources/js/torneos/torneos.js'])
-    <script>
-        // Mostrar/ocultar campos de resultado según el estado seleccionado
-        document.querySelectorAll('.estado-partido-select').forEach(function (sel) {
-            sel.addEventListener('change', function () {
-                var pid = sel.dataset.partido;
-                var wrap = document.querySelector('.resultado-fields-' + pid);
-                if (wrap) wrap.style.display = sel.value === 'finalizado' ? 'grid' : 'none';
-            });
-        });
-    </script>
 @endpush

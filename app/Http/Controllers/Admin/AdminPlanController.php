@@ -7,17 +7,21 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdatePlan;
 use App\Models\Plan;
+use App\Services\PlanService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AdminPlanController extends Controller
 {
+    public function __construct(
+        private readonly PlanService $planes,
+    ) {}
+
     public function index(): View
     {
         $planes = Plan::orderBy('orden')
             ->withCount([
-                'suscripciones as colegios_suscritos' => fn ($q) => $q->whereIn('estado', ['activa', 'trial']),
+                'suscripciones as colegios_suscritos' => fn ($q) => $q->activas(),
             ])
             ->get();
 
@@ -28,8 +32,8 @@ class AdminPlanController extends Controller
     {
         // withCount hace los conteos en BD — no se carga toda la colección en memoria.
         $plan = Plan::withCount([
-                'suscripciones as total_activas'   => fn ($q) => $q->whereIn('estado', ['activa', 'trial']),
-                'suscripciones as total_trial'     => fn ($q) => $q->where('estado', 'trial'),
+                'suscripciones as total_activas'   => fn ($q) => $q->activas(),
+                'suscripciones as total_trial'     => fn ($q) => $q->enTrial(),
                 'suscripciones as total_historico',
             ])
             ->findOrFail($id);
@@ -68,24 +72,21 @@ class AdminPlanController extends Controller
             ->with('success', 'Plan actualizado correctamente.');
     }
 
-    public function toggle(Request $request, int $id): RedirectResponse
+    public function toggleVisible(int $id): RedirectResponse
     {
-        $campo = $request->input('campo');
+        return $this->toggleCampo($id, 'esVisible');
+    }
 
-        // Solo se permiten los campos booleanos de visibilidad/estado.
-        if (! in_array($campo, ['esVisible', 'esActivo'], true)) {
-            abort(422, 'Campo de toggle no permitido.');
-        }
+    public function toggleActivo(int $id): RedirectResponse
+    {
+        return $this->toggleCampo($id, 'esActivo');
+    }
 
-        $plan = Plan::findOrFail($id);
+    private function toggleCampo(int $id, string $campo): RedirectResponse
+    {
+        $plan  = Plan::findOrFail($id);
+        $label = $this->planes->alternarCampo($plan, $campo);
 
-        $plan->update([$campo => ! $plan->{$campo}]);
-
-        $etiquetas = [
-            'esVisible' => [$plan->esVisible ? 'visible' : 'oculto'],
-            'esActivo'  => [$plan->esActivo  ? 'activo'  : 'inactivo'],
-        ];
-
-        return back()->with('success', "Plan marcado como {$etiquetas[$campo][0]}.");
+        return back()->with('success', "Plan marcado como {$label}.");
     }
 }

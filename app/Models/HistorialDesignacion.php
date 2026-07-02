@@ -49,7 +49,7 @@ class HistorialDesignacion extends Model
         });
     }
 
-    // ── Relaciones ────────────────────────────────────────────────────────────
+    // ── Relaciones ──
 
     public function partido(): BelongsTo
     {

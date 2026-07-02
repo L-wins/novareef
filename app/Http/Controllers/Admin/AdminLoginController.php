@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Services\AdminTwoFactorService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,11 +14,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
-use PragmaRX\Google2FA\Google2FA;
 
 class AdminLoginController extends Controller
 {
-    public function __construct(private readonly Google2FA $google2fa) {}
+    public function __construct(private readonly AdminTwoFactorService $twoFactor) {}
 
     public function showLogin(): View|RedirectResponse
     {
@@ -95,10 +95,7 @@ class AdminLoginController extends Controller
             return redirect()->route('admin.login');
         }
 
-        $valido = $this->google2fa->verifyKey(
-            $admin->getRawOriginal('google2fa_secret') ?? '',
-            $request->input('code'),
-        );
+        $valido = $this->twoFactor->verificarCodigo($admin, $request->input('code'));
 
         $this->registrarLog($request, $admin->email, $valido);
 

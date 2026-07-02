@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -39,5 +40,11 @@ class FormatoDesignacion extends Model
     public function partidos(): HasMany
     {
         return $this->hasMany(Partido::class, 'idFormato', 'idFormato');
+    }
+
+    /** Formatos activos ordenados para poblar selects — evita repetir el mismo query en cada controller. */
+    public function scopeActivos(Builder $query): Builder
+    {
+        return $query->where('esActivo', true)->orderBy('orden');
     }
 }
