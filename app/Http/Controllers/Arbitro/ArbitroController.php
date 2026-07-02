@@ -78,9 +78,8 @@ class ArbitroController extends Controller
                 'usuario', 'categoria', 'colegio', 'documentos',
                 'estado', 'historialEstados.usuarioCambio', 'historialEstados.estadoNuevoModel',
             ])
+            ->where('idColegio', $this->idColegioActivo())
             ->findOrFail($id);
-
-        $this->autorizarAcceso($arbitro);
 
         return view('arbitros.show', [
             'arbitro' => $arbitro,
@@ -136,9 +135,9 @@ class ArbitroController extends Controller
 
     public function edit(int $id): View
     {
-        $arbitro = Arbitro::with('usuario')->findOrFail($id);
-
-        abort_unless((int) $arbitro->idColegio === $this->idColegioActivo(), 403);
+        $arbitro = Arbitro::with('usuario')
+            ->where('idColegio', $this->idColegioActivo())
+            ->findOrFail($id);
 
         return view('arbitros.edit', [
             'arbitro'    => $arbitro,
@@ -148,9 +147,9 @@ class ArbitroController extends Controller
 
     public function update(UpdateArbitroRequest $request, int $id): RedirectResponse
     {
-        $arbitro = Arbitro::with('usuario')->findOrFail($id);
-
-        abort_unless((int) $arbitro->idColegio === $this->idColegioActivo(), 403);
+        $arbitro = Arbitro::with('usuario')
+            ->where('idColegio', $this->idColegioActivo())
+            ->findOrFail($id);
 
         $datos = $request->validated();
 
@@ -262,14 +261,6 @@ class ArbitroController extends Controller
     private function estados(): \Illuminate\Database\Eloquent\Collection
     {
         return EstadoArbitro::where('esActivo', true)->orderBy('orden')->get();
-    }
-
-    private function autorizarAcceso(Arbitro $arbitro): void
-    {
-        $esPropietario = (int) $arbitro->idUsuario === (int) Auth::id();
-        $mismoColegio  = (int) $arbitro->idColegio === $this->idColegioActivo();
-
-        abort_unless($mismoColegio || $esPropietario, 403, 'No tienes acceso a este árbitro.');
     }
 
     /**

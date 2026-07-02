@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Designacion;
 
+use App\Actions\CalcularAdvertenciasDesignacion;
 use App\Events\DesignacionActualizadaEvent;
 use App\Events\PartidoActualizadoEvent;
 use App\Exceptions\OptimisticLockException;
@@ -26,7 +27,6 @@ use App\Models\Torneo;
 use App\Models\User;
 use App\StateMachines\PartidoStateMachine;
 use App\Support\SemanaNavegacion;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,6 +38,10 @@ use Illuminate\View\View;
 class DesignacionController extends Controller
 {
     use ResuelveColegio;
+
+    public function __construct(
+        private readonly CalcularAdvertenciasDesignacion $calcularAdvertencias,
+    ) {}
 
     // ── Designador / Ejecutivo ────────────────────────────────────────────────
 
@@ -320,7 +324,7 @@ class DesignacionController extends Controller
 
                 abort_if($slot === null, 422, 'No hay slots disponibles para este rol.');
 
-                $advertencias = $this->calcularAdvertencias($arbitro, $partido);
+                $advertencias = $this->calcularAdvertencias->ejecutar($arbitro, $partido);
 
                 $designacion = Designacion::create([
                     'idPartido'          => $partido->idPartido,
@@ -475,17 +479,10 @@ class DesignacionController extends Controller
         // IDs ya asignados en este partido
         $yaAsignados = $partido->designaciones()->pluck('idArbitro')->flip();
 
-        // Designaciones ese día (para detectar partidos cercanos)
-        $designacionesDia = Designacion::whereHas('partido', fn ($q) => $q->where('fechaPartido', $fecha)
-                ->where('idColegio', $idColegio)
-                ->where('idPartido', '!=', $partido->idPartido))
-            ->with('partido:idPartido,horaPartido')
-            ->get()
-            ->groupBy('idArbitro');
+        // Choques de horario para todos los árbitros con una sola query
+        $advertenciasPorArbitro = $this->calcularAdvertencias->paraLista($arbitros, $partido);
 
-        $horaPartido = Carbon::createFromFormat('H:i', substr($partido->horaPartido ?? '00:00', 0, 5));
-
-        $resultado = $arbitros->map(function (Arbitro $a) use ($franjaNeed, $yaAsignados, $designacionesDia, $horaPartido): array {
+        $resultado = $arbitros->map(function (Arbitro $a) use ($franjaNeed, $yaAsignados, $advertenciasPorArbitro): array {
             $disponibilidad = $a->disponibilidades->first();
             $extraordinaria = $a->indisponibilidadesExtraordinarias->first();
 
@@ -503,20 +500,7 @@ class DesignacionController extends Controller
                 $franjaLabel = DisponibilidadArbitro::getFranjas()[$franjaDisp] ?? $franjaDisp;
             }
 
-            $advertenciaTiempo       = false;
-            $minutosAlPartidoCercano = null;
-
-            if (isset($designacionesDia[$a->idArbitro])) {
-                foreach ($designacionesDia[$a->idArbitro] as $otraDesig) {
-                    $otraHora = Carbon::createFromFormat('H:i', substr($otraDesig->partido->horaPartido ?? '00:00', 0, 5));
-                    $diff     = abs($horaPartido->diffInMinutes($otraHora));
-                    if ($diff < 60) {
-                        $advertenciaTiempo       = true;
-                        $minutosAlPartidoCercano = $diff;
-                        break;
-                    }
-                }
-            }
+            $advertencias = $advertenciasPorArbitro[$a->idArbitro];
 
             return [
                 'idArbitro'              => $a->idArbitro,
@@ -526,8 +510,8 @@ class DesignacionController extends Controller
                 'disponibilidad'         => $dispEstado,
                 'franjaDisponible'       => $franjaDisp,
                 'franjaLabel'            => $franjaLabel,
-                'advertenciaTiempo'      => $advertenciaTiempo,
-                'minutosAlPartidoCercano'=> $minutosAlPartidoCercano,
+                'advertenciaTiempo'      => $advertencias['advertenciaTiempo'],
+                'minutosAlPartidoCercano'=> $advertencias['minutosAlPartidoCercano'],
                 'yaAsignado'             => isset($yaAsignados[$a->idArbitro]),
                 'esSuspendido'           => $a->estadoArbitro === 'suspendido',
                 'estadoArbitro'          => $a->estadoArbitro,
@@ -911,49 +895,6 @@ class DesignacionController extends Controller
     }
 
     // ── Helpers privados ──────────────────────────────────────────────────────
-
-    private function calcularAdvertencias(Arbitro $arbitro, Partido $partido): array
-    {
-        $fecha = $partido->fechaPartido;
-        $horaPartido = Carbon::createFromFormat('H:i', substr($partido->horaPartido ?? '00:00', 0, 5));
-
-        $disponibilidad = $arbitro->disponibilidades->first();
-        $extraordinaria = $arbitro->indisponibilidadesExtraordinarias
-            ->where('fechaAfectada', $fecha->toDateString())
-            ->first();
-
-        $sinDisponibilidad   = $disponibilidad === null;
-        $tieneExtraordinaria = $extraordinaria !== null;
-        $esSuspendido        = $arbitro->estadoArbitro === 'suspendido';
-
-        // Partidos cercanos del mismo árbitro ese día
-        $advertenciaTiempo       = false;
-        $minutosAlPartidoCercano = null;
-
-        $otrasDesig = Designacion::where('idArbitro', $arbitro->idArbitro)
-            ->whereHas('partido', fn ($q) => $q->where('fechaPartido', $fecha)
-                ->where('idPartido', '!=', $partido->idPartido))
-            ->with('partido:idPartido,horaPartido')
-            ->get();
-
-        foreach ($otrasDesig as $otra) {
-            $otraHora = Carbon::createFromFormat('H:i', substr($otra->partido->horaPartido ?? '00:00', 0, 5));
-            $diff = abs($horaPartido->diffInMinutes($otraHora));
-            if ($diff < 60) {
-                $advertenciaTiempo       = true;
-                $minutosAlPartidoCercano = $diff;
-                break;
-            }
-        }
-
-        return [
-            'sinDisponibilidad'      => $sinDisponibilidad,
-            'tieneExtraordinaria'    => $tieneExtraordinaria,
-            'advertenciaTiempo'      => $advertenciaTiempo,
-            'minutosAlPartidoCercano'=> $minutosAlPartidoCercano,
-            'esSuspendido'           => $esSuspendido,
-        ];
-    }
 
     private function franjaDesdeHora(string $hora): string
     {
