@@ -1,6 +1,9 @@
 @import "tailwindcss";
-@import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
-@import "./vendor/fontawesome-fonts.css";
+/* layer(base): sin esto, el .fa-solid{display:inline-block} de FontAwesome
+   (CSS sin layer) le gana a las utilidades de Tailwind como `.hidden` o
+   `lg:flex`, sin importar el orden de los @import. */
+@import "@fortawesome/fontawesome-free/css/fontawesome.min.css" layer(base);
+@import "./vendor/fontawesome-fonts.css" layer(base);
 /* Choices y Flatpickr dentro de un @layer para que nuestros overrides sin layer siempre ganen */
 @layer vendor {
     @import "choices.js/public/assets/styles/choices.min.css";
@@ -993,7 +996,7 @@ input[data-filter-date].flatpickr-input { display: none !important; }
 .page-heading      { font-size: 1.5rem; font-weight: 700; color: var(--c-text-primary); margin: 0; }
 .page-subheading   { font-size: 0.875rem; color: var(--c-text-muted); margin: 0; }
 
-/* ── Botones ──────────────────────────────────────────────────────────── */
+/* ── Botones ── */
 .btn {
     display:         inline-flex;
     align-items:     center;

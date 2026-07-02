@@ -35,4 +35,12 @@ export default defineConfig({
             vue: 'vue/dist/vue.esm-bundler.js',
         },
     },
+    server: {
+        host: '127.0.0.1',
+        // Fuerza también el host que Laravel inyecta en @vite() — evita que el
+        // navegador intente conectar por [::1] (IPv6) cuando localhost resuelve ahí primero.
+        hmr: {
+            host: '127.0.0.1',
+        },
+    },
 });

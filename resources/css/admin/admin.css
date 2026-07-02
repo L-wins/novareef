@@ -50,7 +50,17 @@ ul, ol { list-style: none; padding: 0; margin: 0; }
 button { cursor: pointer; border: none; background: none; font: inherit; color: inherit; }
 input, textarea { font: inherit; }
 
-/* 
+/*
+   Utilidad para dropdowns/menús que se muestran vía JS (classList.toggle).
+   Este bundle no usa Tailwind (a diferencia de login/welcome/app), así que
+   no hay .hidden ya generado — y sí hay un .hidden{visibility:hidden} que
+   viene de una librería vendor (flatpickr/choices.js) que hay que ganarle.
+   NO mover esta regla a un archivo compartido con bundles Tailwind: choca
+   con su utilidad `hidden` + variantes responsive (`lg:flex`, etc).
+   */
+.hidden { display: none !important; }
+
+/*
    SIDEBAR NAVBAR
     */
 
