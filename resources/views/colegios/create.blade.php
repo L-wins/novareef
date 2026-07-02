@@ -1,0 +1,249 @@
+@extends('layouts.app')
+
+@section('titulo', 'Nuevo Colegio')
+@section('seccion', 'Colegios')
+
+@push('styles')
+    @vite(['resources/css/colegios/colegios.css'])
+@endpush
+
+@section('contenido')
+<div class="container">
+
+    {{-- Volver --}}
+    <a href="{{ route('colegios.index') }}" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i>
+        Volver a colegios
+    </a>
+
+    {{-- Cabecera --}}
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1 class="page-heading">Nuevo Colegio</h1>
+            <p class="page-subheading">Completa los datos para registrar un nuevo colegio de árbitros</p>
+        </div>
+    </div>
+
+    {{-- Formulario --}}
+    <form method="POST" action="{{ route('colegios.store') }}" novalidate>
+        @csrf
+
+        <div class="form-card">
+
+            {{-- Sección 1: Información básica --}}
+            <div class="form-section">
+                <p class="form-section-title">Información del colegio</p>
+                <div class="form-grid form-grid-2">
+
+                    <div class="form-group span-2">
+                        <label for="nombreColegio" class="form-label">
+                            Nombre del colegio <span class="req">*</span>
+                        </label>
+                        <input type="text" id="nombreColegio" name="nombreColegio"
+                               value="{{ old('nombreColegio') }}"
+                               placeholder="Ej. Colegio de Árbitros de Cundinamarca"
+                               class="form-input {{ $errors->has('nombreColegio') ? 'is-invalid' : '' }}">
+                        @error('nombreColegio')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="codigoColegio" class="form-label">
+                            Código <span class="req">*</span>
+                        </label>
+                        <input type="text" id="codigoColegio" name="codigoColegio"
+                               value="{{ old('codigoColegio') }}"
+                               placeholder="Ej. CAC-001"
+                               maxlength="20"
+                               class="form-input {{ $errors->has('codigoColegio') ? 'is-invalid' : '' }}">
+                        @error('codigoColegio')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailColegio" class="form-label">
+                            Correo electrónico <span class="req">*</span>
+                        </label>
+                        <input type="email" id="emailColegio" name="emailColegio"
+                               value="{{ old('emailColegio') }}"
+                               placeholder="contacto@colegio.com"
+                               class="form-input {{ $errors->has('emailColegio') ? 'is-invalid' : '' }}">
+                        @error('emailColegio')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telefonoColegio" class="form-label">Teléfono</label>
+                        <input type="text" id="telefonoColegio" name="telefonoColegio"
+                               value="{{ old('telefonoColegio') }}"
+                               placeholder="Ej. 3001234567"
+                               maxlength="20"
+                               class="form-input {{ $errors->has('telefonoColegio') ? 'is-invalid' : '' }}">
+                        @error('telefonoColegio')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="form-group span-2">
+                        <label for="logoColegio" class="form-label">URL del logo</label>
+                        <input type="url" id="logoColegio" name="logoColegio"
+                               value="{{ old('logoColegio') }}"
+                               placeholder="https://ejemplo.com/logo.png"
+                               class="form-input {{ $errors->has('logoColegio') ? 'is-invalid' : '' }}">
+                        @error('logoColegio')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- Sección 2: Ubicación --}}
+            <div class="form-section">
+                <p class="form-section-title">Ubicación</p>
+                <div class="form-grid form-grid-2">
+
+                    <div class="form-group">
+                        <label for="paisColegio" class="form-label">
+                            País <span class="req">*</span>
+                        </label>
+                        <input type="text" id="paisColegio" name="paisColegio"
+                               value="{{ old('paisColegio', 'Colombia') }}"
+                               placeholder="Colombia"
+                               class="form-input {{ $errors->has('paisColegio') ? 'is-invalid' : '' }}">
+                        @error('paisColegio')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="departamentoColegio" class="form-label">Departamento</label>
+                        <input type="text" id="departamentoColegio" name="departamentoColegio"
+                               value="{{ old('departamentoColegio') }}"
+                               placeholder="Ej. Cundinamarca"
+                               maxlength="100"
+                               class="form-input {{ $errors->has('departamentoColegio') ? 'is-invalid' : '' }}">
+                        @error('departamentoColegio')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ciudadColegio" class="form-label">Ciudad</label>
+                        <input type="text" id="ciudadColegio" name="ciudadColegio"
+                               value="{{ old('ciudadColegio') }}"
+                               placeholder="Ej. Bogotá"
+                               maxlength="100"
+                               class="form-input {{ $errors->has('ciudadColegio') ? 'is-invalid' : '' }}">
+                        @error('ciudadColegio')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="form-group span-2">
+                        <label for="direccionColegio" class="form-label">Dirección</label>
+                        <textarea id="direccionColegio" name="direccionColegio"
+                                  placeholder="Calle, número, barrio…"
+                                  class="form-textarea {{ $errors->has('direccionColegio') ? 'is-invalid' : '' }}">{{ old('direccionColegio') }}</textarea>
+                        @error('direccionColegio')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- Sección 3: Plan de suscripción --}}
+            <div class="form-section">
+                <p class="form-section-title">Plan de suscripción</p>
+                <div class="form-grid form-grid-2">
+
+                    <div class="form-group span-2">
+                        <label for="idPlan" class="form-label">
+                            Plan <span class="req">*</span>
+                        </label>
+                        <select id="idPlan" name="idPlan"
+                                data-nova-select data-placeholder="Selecciona un plan"
+                                class="form-select {{ $errors->has('idPlan') ? 'is-invalid' : '' }}">
+                            <option value="">Seleccionar plan…</option>
+                            @foreach ($planes as $plan)
+                                <option value="{{ $plan->idPlan }}"
+                                        {{ old('idPlan') == $plan->idPlan ? 'selected' : '' }}>
+                                    {{ $plan->nombre }}
+                                    — ${{ number_format($plan->precio, 0, ',', '.') }} COP
+                                    / {{ $plan->periodicidad }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('idPlan')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- Sección 4: Administrador del colegio --}}
+            <div class="form-section">
+                <p class="form-section-title">Administrador del colegio</p>
+                <div class="form-grid form-grid-2">
+
+                    <div class="form-group">
+                        <label for="nombreAdmin" class="form-label">
+                            Nombre completo <span class="req">*</span>
+                        </label>
+                        <input type="text" id="nombreAdmin" name="nombreAdmin"
+                               value="{{ old('nombreAdmin') }}"
+                               placeholder="Ej. Juan Carlos Pérez"
+                               maxlength="150"
+                               class="form-input {{ $errors->has('nombreAdmin') ? 'is-invalid' : '' }}">
+                        @error('nombreAdmin')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailAdmin" class="form-label">
+                            Correo electrónico <span class="req">*</span>
+                        </label>
+                        <input type="email" id="emailAdmin" name="emailAdmin"
+                               value="{{ old('emailAdmin') }}"
+                               placeholder="admin@colegio.com"
+                               class="form-input {{ $errors->has('emailAdmin') ? 'is-invalid' : '' }}">
+                        @error('emailAdmin')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="form-group span-2">
+                        <p class="form-hint">
+                            <i class="fa-solid fa-circle-info" style="margin-right:4px;"></i>
+                            Se generará una contraseña automática y se enviará al correo ingresado.
+                            El administrador deberá cambiarla en su primer inicio de sesión.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- Footer --}}
+            <div class="form-footer">
+                <a href="{{ route('colegios.index') }}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-check"></i>
+                    Registrar colegio
+                </button>
+            </div>
+
+        </div>
+    </form>
+
+</div>
+@endsection
+
+@push('scripts')
+    @vite(['resources/js/colegios/colegios.js'])
+@endpush

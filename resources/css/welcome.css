@@ -1,0 +1,400 @@
+@import "tailwindcss";
+@import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
+@import "./vendor/fontawesome-fonts.css";
+
+/* ============================================================
+   NovaReef — Página pública
+   Tono: arbitraje profesional, premium, sobrio
+   Paleta: slate base · emerald primario · amber/red como acentos
+   ============================================================ */
+
+body {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "cv11", "ss01", "ss03";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+/*  Tipografía premium  */
+h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+}
+
+/* ═════════════════════════
+   HERO — fondo con gradientes + cancha
+   ═════════════════════════ */
+.hero-bg {
+    background-image:
+        radial-gradient(ellipse 75% 50% at 50% -10%, rgba(79, 142, 247, 0.18), transparent 70%),
+        radial-gradient(ellipse 45% 35% at 85% 95%, rgba(56, 189, 248, 0.10), transparent 70%),
+        radial-gradient(ellipse 35% 30% at 10% 80%, rgba(56, 189, 248, 0.05), transparent 70%);
+}
+
+/* Cuadrícula sutil tipo cancha */
+.grid-lines {
+    position: relative;
+}
+
+.grid-lines::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, black 50%, transparent 90%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 50%, transparent 90%);
+    pointer-events: none;
+}
+
+/* Líneas verticales de banda (referee stripes muy sutiles) */
+.referee-stripes {
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+        90deg,
+        transparent 0,
+        transparent 80px,
+        rgba(255, 255, 255, 0.012) 80px,
+        rgba(255, 255, 255, 0.012) 120px
+    );
+    pointer-events: none;
+}
+
+/*  Texto con degradado verde (título) ─ */
+.glow-text {
+    background: linear-gradient(135deg, #7aa8f9 0%, #60a5fa 60%, #bae6fd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+}
+
+.title-shadow {
+    text-shadow: 0 6px 32px rgba(79, 142, 247, 0.15);
+}
+
+/*  Navbar  */
+.navbar-scrolled {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    background-color: rgba(2, 6, 23, 0.92) !important;
+}
+
+/*  Menú móvil ─ */
+#mobile-menu {
+    display: none;
+}
+
+#mobile-menu.open {
+    display: block;
+}
+
+/* ═════════════════════════
+   TARJETAS con elevación al hover (módulos, roles, etc.)
+   ═════════════════════════ */
+.card-lift {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.3s ease;
+    position: relative;
+}
+
+.card-lift:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(79, 142, 247, 0.15);
+    border-color: rgba(79, 142, 247, 0.20);
+}
+
+/* Brillo superior sutil al hover */
+.card-lift::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+        135deg,
+        rgba(79, 142, 247, 0) 0%,
+        rgba(79, 142, 247, 0.04) 50%,
+        rgba(79, 142, 247, 0) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.card-lift:hover::before {
+    opacity: 1;
+}
+
+/* ═════════════════════════
+   MOCKUP — ventana de panel con animación sutil
+   ═════════════════════════ */
+.mockup-window {
+    background: linear-gradient(180deg, #1e293b 0%, #131c2e 100%);
+    box-shadow:
+        0 30px 60px -15px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mockup-window:hover {
+    transform: translateY(-4px) rotateX(2deg);
+}
+
+@keyframes mockupFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+
+.mockup-float {
+    animation: mockupFloat 5s ease-in-out infinite;
+}
+
+/* ═════════════════════════
+   TARJETAS DE ÁRBITRO — yellow/red cards decorativas
+   ═════════════════════════ */
+.ref-card {
+    width: 36px;
+    height: 50px;
+    border-radius: 4px;
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transition: transform 0.3s ease;
+}
+
+.ref-card--yellow {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.ref-card--red {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.ref-card-stack {
+    position: relative;
+    display: inline-block;
+}
+
+.ref-card-stack .ref-card:nth-child(1) {
+    position: relative;
+    transform: rotate(-8deg);
+    z-index: 1;
+}
+
+.ref-card-stack .ref-card:nth-child(2) {
+    position: absolute;
+    top: 0;
+    left: 12px;
+    transform: rotate(6deg);
+    z-index: 2;
+}
+
+/* ═════════════════════════
+   BADGE pulsante (Sesión activa, Plataforma SaaS, etc.)
+   ═════════════════════════ */
+@keyframes softPulse {
+    0%, 100% { opacity: 1;   transform: scale(1); }
+    50%      { opacity: 0.5; transform: scale(0.9); }
+}
+
+.pulse-dot {
+    animation: softPulse 2s ease-in-out infinite;
+}
+
+/* ═════════════════════════
+   STEPS / Cómo funciona — número con halo
+   ═════════════════════════ */
+.step-num {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(79, 142, 247, 0.18), rgba(79, 142, 247, 0.05));
+    border: 1px solid rgba(79, 142, 247, 0.30);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #7aa8f9;
+    font-size: 0.95rem;
+    box-shadow: 0 0 24px rgba(79, 142, 247, 0.08);
+}
+
+.step-line {
+    position: absolute;
+    left: 22px;
+    top: 52px;
+    bottom: -24px;
+    width: 1px;
+    background: linear-gradient(180deg, rgba(79, 142, 247, 0.3), transparent);
+}
+
+/* ═════════════════════════
+   CTA FINAL — silueta del campo
+   ═════════════════════════ */
+.cta-final {
+    background:
+        radial-gradient(ellipse 80% 70% at 50% 50%, rgba(79, 142, 247, 0.15), transparent 70%),
+        linear-gradient(135deg, #0b1320 0%, #0f1c2e 100%);
+    border: 1px solid rgba(79, 142, 247, 0.20);
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-final::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    pointer-events: none;
+}
+
+/* Círculo central de cancha */
+.cta-final::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 380px;
+    height: 380px;
+    border-radius: 50%;
+    border: 1px solid rgba(79, 142, 247, 0.10);
+    pointer-events: none;
+}
+
+/* ═════════════════════════
+   BOTONES con brillo al hover
+   ═════════════════════════ */
+.btn-primary {
+    background: linear-gradient(180deg, #4f8ef7 0%, #3b82f6 100%);
+    box-shadow:
+        0 10px 24px -6px rgba(79, 142, 247, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.18),
+        transparent
+    );
+    transition: left 0.6s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(180deg, #7aa8f9 0%, #4f8ef7 100%);
+    box-shadow:
+        0 14px 30px -6px rgba(79, 142, 247, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.btn-primary:hover::after {
+    left: 100%;
+}
+
+.btn-ghost {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+}
+
+.btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+}
+
+/* ═════════════════════════
+   ÍCONOS DECORATIVOS — silbato flotante
+   ═════════════════════════ */
+@keyframes whistleSway {
+    0%, 100% { transform: rotate(-6deg) translateY(0); }
+    50%      { transform: rotate(6deg) translateY(-8px); }
+}
+
+.whistle-deco {
+    animation: whistleSway 6s ease-in-out infinite;
+    transform-origin: center top;
+}
+
+/* ═════════════════════════
+   FADE-IN al cargar
+   ═════════════════════════ */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+    animation: fadeUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.fade-up-delay-1 { animation-delay: 0.1s; }
+.fade-up-delay-2 { animation-delay: 0.2s; }
+.fade-up-delay-3 { animation-delay: 0.3s; }
+.fade-up-delay-4 { animation-delay: 0.4s; }
+
+/* ═════════════════════════
+   TRUST BAR — divisor con gradiente
+   ═════════════════════════ */
+.divider-glow {
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(79, 142, 247, 0.4),
+        transparent
+    );
+}
+
+/* ═════════════════════════
+   SECCIÓN — etiqueta superior premium
+   ═════════════════════════ */
+.section-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    background: rgba(79, 142, 247, 0.08);
+    border: 1px solid rgba(79, 142, 247, 0.22);
+    color: #7aa8f9;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.section-eyebrow i {
+    font-size: 0.7rem;
+}
+
+/*  Scrollbar oscuro  */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #020617; }
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(79, 142, 247, 0.4); }

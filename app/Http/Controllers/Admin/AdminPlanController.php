@@ -1,0 +1,91 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdatePlan;
+use App\Models\Plan;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+class AdminPlanController extends Controller
+{
+    public function index(): View
+    {
+        $planes = Plan::orderBy('orden')
+            ->withCount([
+                'suscripciones as colegios_suscritos' => fn ($q) => $q->whereIn('estado', ['activa', 'trial']),
+            ])
+            ->get();
+
+        return view('admin.planes.index', compact('planes'));
+    }
+
+    public function show(int $id): View
+    {
+        // withCount hace los conteos en BD — no se carga toda la colección en memoria.
+        $plan = Plan::withCount([
+                'suscripciones as total_activas'   => fn ($q) => $q->whereIn('estado', ['activa', 'trial']),
+                'suscripciones as total_trial'     => fn ($q) => $q->where('estado', 'trial'),
+                'suscripciones as total_historico',
+            ])
+            ->findOrFail($id);
+
+        // Solo se paginan las suscripciones para la tabla de detalle.
+        $suscripciones = $plan->suscripciones()
+            ->with('colegio:idColegio,nombreColegio,codigoColegio')
+            ->orderByDesc('fechaInicio')
+            ->paginate(20);
+
+        return view('admin.planes.show', [
+            'plan'            => $plan,
+            'suscripciones'   => $suscripciones,
+            'totalActivas'    => (int) $plan->total_activas,
+            'totalTrial'      => (int) $plan->total_trial,
+            'totalHistorico'  => (int) $plan->total_historico,
+        ]);
+    }
+
+    public function edit(int $id): View
+    {
+        $plan = Plan::findOrFail($id);
+
+        return view('admin.planes.edit', compact('plan'));
+    }
+
+    public function update(UpdatePlan $request, int $id): RedirectResponse
+    {
+        $plan = Plan::findOrFail($id);
+
+        // prepareForValidation() ya renombró 'modulos' → 'modulosJSON' y casteó los booleanos.
+        $plan->update($request->validated());
+
+        return redirect()
+            ->route('admin.planes.show', $id)
+            ->with('success', 'Plan actualizado correctamente.');
+    }
+
+    public function toggle(Request $request, int $id): RedirectResponse
+    {
+        $campo = $request->input('campo');
+
+        // Solo se permiten los campos booleanos de visibilidad/estado.
+        if (! in_array($campo, ['esVisible', 'esActivo'], true)) {
+            abort(422, 'Campo de toggle no permitido.');
+        }
+
+        $plan = Plan::findOrFail($id);
+
+        $plan->update([$campo => ! $plan->{$campo}]);
+
+        $etiquetas = [
+            'esVisible' => [$plan->esVisible ? 'visible' : 'oculto'],
+            'esActivo'  => [$plan->esActivo  ? 'activo'  : 'inactivo'],
+        ];
+
+        return back()->with('success', "Plan marcado como {$etiquetas[$campo][0]}.");
+    }
+}
