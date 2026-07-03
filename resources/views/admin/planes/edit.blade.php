@@ -90,16 +90,16 @@
                     @enderror
                 </div>
 
-                {{-- Límite roles --}}
+                {{-- Límite cuentas admin --}}
                 <div class="admin-form-group">
-                    <label class="admin-form-label" for="limiteRoles">
-                        Límite roles
+                    <label class="admin-form-label" for="limiteCuentasAdmin">
+                        Límite cuentas admin
                         <span class="admin-form-hint">Dejar vacío = ilimitado</span>
                     </label>
-                    <input type="number" id="limiteRoles" name="limiteRoles"
-                           class="admin-input {{ $errors->has('limiteRoles') ? 'admin-input--error' : '' }}"
-                           value="{{ old('limiteRoles', $plan->limiteRoles) }}" min="1" placeholder="Ilimitado">
-                    @error('limiteRoles')
+                    <input type="number" id="limiteCuentasAdmin" name="limiteCuentasAdmin"
+                           class="admin-input {{ $errors->has('limiteCuentasAdmin') ? 'admin-input--error' : '' }}"
+                           value="{{ old('limiteCuentasAdmin', $plan->limiteCuentasAdmin) }}" min="1" placeholder="Ilimitado">
+                    @error('limiteCuentasAdmin')
                         <p class="admin-form-error">{{ $message }}</p>
                     @enderror
                 </div>

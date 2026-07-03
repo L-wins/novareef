@@ -116,8 +116,8 @@
                 <span class="admin-detail-field__value">{{ $plan->limiteArbitrosTexto }}</span>
             </div>
             <div class="admin-detail-field">
-                <span class="admin-detail-field__label">Límite roles</span>
-                <span class="admin-detail-field__value">{{ $plan->limiteRolesTexto }}</span>
+                <span class="admin-detail-field__label">Límite cuentas admin</span>
+                <span class="admin-detail-field__value">{{ $plan->limiteCuentasAdminTexto }}</span>
             </div>
             <div class="admin-detail-field">
                 <span class="admin-detail-field__label">Incluye página web</span>

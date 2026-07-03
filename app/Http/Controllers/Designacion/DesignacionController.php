@@ -8,6 +8,7 @@ use App\Exceptions\OptimisticLockException;
 use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
 use App\Models\Arbitro;
+use App\Models\ConfiguracionColegio;
 use App\Models\Designacion;
 use App\Models\DisponibilidadArbitro;
 use App\Models\FormatoDesignacion;
@@ -569,8 +570,12 @@ class DesignacionController extends Controller
      */
     public function disponibilidadGeneral(Request $request): View
     {
-        $semana    = SemanaNavegacion::desde($request->query('semana'));
         $idColegio = $this->idColegioActivo();
+        $semana    = SemanaNavegacion::desde(
+            $request->query('semana'),
+            ConfiguracionColegio::getDiaDisponibilidad($idColegio),
+            recortarAHoy: false,
+        );
 
         $arbitros = Arbitro::where('idColegio', $idColegio)
             ->where('estadoArbitro', 'activo')

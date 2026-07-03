@@ -33,8 +33,9 @@ class DisponibilidadController extends Controller
     public function index(): View
     {
         $arbitro   = $this->arbitroAutenticado();
-        $semana    = SemanaNavegacion::desde(null);
         $idColegio = $this->idColegioActivo();
+        $diaCiclo  = ConfiguracionColegio::getDiaDisponibilidad($idColegio);
+        $semana    = SemanaNavegacion::desde(null, $diaCiclo);
 
         $disponibilidades = DisponibilidadArbitro::where('idArbitro', $arbitro->idArbitro)
             ->whereBetween('fechaDisponibilidad', [
@@ -51,8 +52,6 @@ class DisponibilidadController extends Controller
             ])
             ->get()
             ->groupBy(fn ($i) => $i->fechaAfectada->format('Y-m-d'));
-
-        $diaCiclo = ConfiguracionColegio::getDiaDisponibilidad($idColegio);
 
         return view('disponibilidad.index', [
             'arbitro'            => $arbitro,

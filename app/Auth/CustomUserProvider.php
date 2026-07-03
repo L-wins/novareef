@@ -15,6 +15,23 @@ use Illuminate\Contracts\Auth\Authenticatable as UserContract;
  */
 class CustomUserProvider extends EloquentUserProvider
 {
+    /**
+     * Cuentas con estadoUsuario distinto de 'activo' (revocadas/suspendidas) no
+     * deben poder iniciar sesión. Se intercepta aquí, antes de crear la sesión,
+     * para que el mensaje de error sea el mismo genérico de "credenciales
+     * inválidas" que un password incorrecto — no revela que la cuenta existe.
+     */
+    public function retrieveByCredentials(#[\SensitiveParameter] array $credentials): ?UserContract
+    {
+        $user = parent::retrieveByCredentials($credentials);
+
+        if ($user !== null && $user->estadoUsuario !== 'activo') {
+            return null;
+        }
+
+        return $user;
+    }
+
     public function validateCredentials(UserContract $user, #[\SensitiveParameter] array $credentials): bool
     {
         $passwordKey = $user->getAuthPasswordName();

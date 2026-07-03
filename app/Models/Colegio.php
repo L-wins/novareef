@@ -63,7 +63,7 @@ class Colegio extends Model
         return $this->hasOne(Suscripcion::class, 'idColegio', 'idColegio')
             ->ofMany(
                 ['fechaVencimiento' => 'max'],
-                fn ($query) => $query->where('estado', 'activa'),
+                fn ($query) => $query->whereIn('estado', Suscripcion::ESTADOS_VIGENTES),
             );
     }
 
@@ -76,7 +76,7 @@ class Colegio extends Model
             'idPlan',
             'idColegio',
             'idPlan',
-        )->where('suscripciones.estado', 'activa')
+        )->whereIn('suscripciones.estado', Suscripcion::ESTADOS_VIGENTES)
          ->orderByDesc('suscripciones.fechaVencimiento');
     }
 

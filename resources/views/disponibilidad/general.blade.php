@@ -84,13 +84,21 @@
                                     $esHoyC = $dia->isToday();
                                 @endphp
                                 <td class="{{ $esHoyC ? 'col-hoy' : '' }}">
-                                    @if ($disp)
+                                    @if ($disp && $disp->esDisponible())
                                         <span class="disp-cell-disponible">
                                             <i class="fa-solid fa-circle" style="font-size:0.4rem;"></i>
                                             {{ $franjas[$disp->franjaHoraria] ?? $disp->franjaHoraria }}
                                         </span>
+                                    @elseif ($disp)
+                                        <span class="disp-cell-nodisp-explicito">
+                                            <i class="fa-solid fa-circle-xmark" style="font-size:0.55rem;"></i>
+                                            No disponible
+                                        </span>
                                     @else
-                                        <span class="disp-cell-nodisp">—</span>
+                                        <span class="disp-cell-nodisp" title="Aún no reportó su disponibilidad">
+                                            <i class="fa-solid fa-clock" style="font-size:0.6rem;"></i>
+                                            Sin reporte
+                                        </span>
                                     @endif
                                     @foreach ($extras as $ext)
                                         <span class="disp-cell-extraordinaria"
@@ -109,7 +117,7 @@
 
         <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.85rem;">
             <i class="fa-solid fa-circle-info" style="color:var(--accent);margin-right:0.3rem;"></i>
-            Verde = disponible. "—" = sin reporte (no disponible). "Extraord." = indisponibilidad extraordinaria registrada.
+            Verde = disponible. Rojo = marcó "No disponible". "—" = aún no reportó esta semana. "Extraord." = indisponibilidad extraordinaria registrada.
         </p>
     @endif
 

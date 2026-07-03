@@ -66,10 +66,13 @@ class ConfiguracionColegio extends Model
      */
     public static function diasSemana(): array
     {
-        return array_map(
-            fn (int $i) => static::getNombreDia($i),
-            range(1, 7),
-        );
+        $dias = [];
+
+        foreach (range(1, 7) as $i) {
+            $dias[$i] = static::getNombreDia($i);
+        }
+
+        return $dias;
     }
 
     /**

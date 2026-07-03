@@ -98,8 +98,20 @@
         <div class="modules-grid">
 
             @foreach ($modulos as $modulo)
+                @php $incluidoEnPlan = in_array($modulo['key'], $modulosPlan ?? [], true); @endphp
                 @can($modulo['permiso'])
-                    @if ($modulo['activo'] && $modulo['ruta'])
+                    @if (! $incluidoEnPlan)
+                        <div class="module-card module-card--locked">
+                            <div class="mod-icon-box {{ $modulo['color'] }}" style="opacity:0.35;">
+                                <i class="fa-solid {{ $modulo['icono'] }}"></i>
+                            </div>
+                            <div class="mod-info">
+                                <div class="mod-name" style="opacity:0.4;">{{ $modulo['nombre'] }}</div>
+                                <div class="mod-desc" style="opacity:0.3;">{{ $modulo['desc'] }}</div>
+                            </div>
+                            <span class="mod-badge badge-locked">No incluido en tu plan</span>
+                        </div>
+                    @elseif ($modulo['activo'] && $modulo['ruta'])
                         <a href="{{ route($modulo['ruta']) }}" class="module-card module-card--link">
                             <div class="mod-icon-box {{ $modulo['color'] }}">
                                 <i class="fa-solid {{ $modulo['icono'] }}"></i>

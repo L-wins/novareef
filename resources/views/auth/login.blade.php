@@ -140,32 +140,32 @@
                  data-has-error="{{ $errors->isNotEmpty() ? 'true' : 'false' }}">
 
                 {{-- Error de credenciales --}}
-                @if ($errors->has('emailUsuario'))
+                @if ($errors->has('identificador'))
                     <div class="alert-error mb-6" role="alert">
                         <i class="fa-solid fa-triangle-exclamation w-4 h-4 mt-0.5 shrink-0"></i>
-                        <span>{{ $errors->first('emailUsuario') }}</span>
+                        <span>{{ $errors->first('identificador') }}</span>
                     </div>
                 @endif
 
                 <form id="login-form" method="POST" action="{{ route('login') }}" novalidate>
                     @csrf
 
-                    {{-- Correo --}}
+                    {{-- Usuario o correo --}}
                     <div class="mb-5">
-                        <label for="emailUsuario"
+                        <label for="identificador"
                                class="block text-sm font-medium text-slate-300 mb-1.5">
-                            Correo electrónico
+                            Usuario o correo
                         </label>
-                        <input type="email"
-                               id="emailUsuario"
-                               name="emailUsuario"
-                               value="{{ old('emailUsuario') }}"
+                        <input type="text"
+                               id="identificador"
+                               name="identificador"
+                               value="{{ old('identificador') }}"
                                required
-                               autocomplete="email"
+                               autocomplete="username"
                                autofocus
-                               placeholder="tu@correo.com"
-                               class="field-input {{ $errors->has('emailUsuario') ? 'has-error' : '' }}">
-                        @error('emailUsuario')
+                               placeholder="tu@correo.com o tu usuario"
+                               class="field-input {{ $errors->has('identificador') ? 'has-error' : '' }}">
+                        @error('identificador')
                             <p class="mt-1.5 text-xs text-red-400">{{ $message }}</p>
                         @enderror
                     </div>

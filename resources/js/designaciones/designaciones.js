@@ -18,6 +18,14 @@ if (typeof window.Echo === 'undefined') {
         wssPort:            import.meta.env.VITE_REVERB_PORT       ?? 8080,
         forceTLS:           false,
         enabledTransports:  ['ws'],
+        // La app vive en un subdirectorio (/novareef/public) — el default de Echo
+        // ('/broadcasting/auth' relativo a la raíz del dominio) apunta mal ahí.
+        authEndpoint: window.broadcastAuthEndpoint ?? '/broadcasting/auth',
+        auth: {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+            },
+        },
     });
 }
 

@@ -16,7 +16,7 @@ class GuardarPerfilTorneoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reglamentoPDF' => ['nullable', 'file', 'mimes:pdf', 'max:61440'],
+            'reglamentoPDF' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
         ];
     }
 
@@ -24,7 +24,7 @@ class GuardarPerfilTorneoRequest extends FormRequest
     {
         return [
             'reglamentoPDF.mimes' => 'El reglamento debe ser un archivo PDF.',
-            'reglamentoPDF.max'   => 'El reglamento no puede superar los 60 MB.',
+            'reglamentoPDF.max'   => 'El reglamento no puede superar los 20 MB.',
         ];
     }
 }

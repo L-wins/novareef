@@ -103,6 +103,7 @@
                 </a>
                 @endcan
 
+                @if (in_array('torneos', $modulosPlan ?? [], true))
                 @can('ver-torneos')
                 <a href="{{ route('torneos.index') }}"
                    class="sidebar-link {{ request()->routeIs('torneos.*') || request()->routeIs('partidos.*') ? 'active' : '' }}">
@@ -110,7 +111,9 @@
                     <span>Torneos</span>
                 </a>
                 @endcan
+                @endif
 
+                @if (in_array('designaciones', $modulosPlan ?? [], true))
                 @can('ver-designaciones')
                 <a href="{{ route('designaciones.index') }}"
                    class="sidebar-link {{ request()->routeIs('designaciones.*') ? 'active' : '' }}">
@@ -118,7 +121,9 @@
                     <span>Designaciones</span>
                 </a>
                 @endcan
+                @endif
 
+                @if (in_array('finanzas', $modulosPlan ?? [], true))
                 @can('ver-finanzas')
                 <a href="{{ route('finanzas.index') }}"
                    class="sidebar-link {{ request()->routeIs('finanzas.*') ? 'active' : '' }}">
@@ -126,7 +131,9 @@
                     <span>Finanzas</span>
                 </a>
                 @endcan
+                @endif
 
+                @if (in_array('academico', $modulosPlan ?? [], true))
                 @can('ver-academico')
                 <a href="{{ route('academico.index') }}"
                    class="sidebar-link {{ request()->routeIs('academico.*') ? 'active' : '' }}">
@@ -134,7 +141,9 @@
                     <span>Académico</span>
                 </a>
                 @endcan
+                @endif
 
+                @if (in_array('sanciones', $modulosPlan ?? [], true))
                 @can('ver-sanciones')
                 <a href="{{ route('sanciones.index') }}"
                    class="sidebar-link {{ request()->routeIs('sanciones.*') ? 'active' : '' }}">
@@ -142,13 +151,22 @@
                     <span>Sanciones</span>
                 </a>
                 @endcan
+                @endif
 
                 @can('editar-arbitros')
                 <div class="sidebar-divider"></div>
                 <a href="{{ route('configuracion.index') }}"
-                   class="sidebar-link {{ request()->routeIs('configuracion.*') ? 'active' : '' }}">
+                   class="sidebar-link {{ request()->routeIs('configuracion.index') ? 'active' : '' }}">
                     <i class="fa-solid fa-gear"></i>
                     <span>Configuración</span>
+                </a>
+                @endcan
+
+                @can('gestionar-cuentas-admin')
+                <a href="{{ route('configuracion.cuentas-admin.index') }}"
+                   class="sidebar-link sidebar-link--sub {{ request()->routeIs('configuracion.cuentas-admin.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>Cuentas Admin</span>
                 </a>
                 @endcan
 

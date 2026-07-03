@@ -21,7 +21,7 @@ class Plan extends Model
         'periodicidad',
         'limiteArbitros',
         'modulosJSON',
-        'limiteRoles',
+        'limiteCuentasAdmin',
         'incluyePaginaWeb',
         'incluyeOnboarding',
         'esVisible',
@@ -48,9 +48,9 @@ class Plan extends Model
         return $this->limiteArbitros === null ? 'Ilimitado' : (string) $this->limiteArbitros;
     }
 
-    public function getLimiteRolesTextoAttribute(): string
+    public function getLimiteCuentasAdminTextoAttribute(): string
     {
-        return $this->limiteRoles === null ? 'Ilimitado' : (string) $this->limiteRoles;
+        return $this->limiteCuentasAdmin === null ? 'Ilimitado' : (string) $this->limiteCuentasAdmin;
     }
 
     /**

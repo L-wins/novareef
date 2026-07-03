@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Colegio\ColegioController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Configuracion\ConfiguracionController;
+use App\Http\Controllers\Configuracion\CuentaAdminController;
 use App\Http\Controllers\Designacion\CalificacionController;
 use App\Http\Controllers\Designacion\DesignacionController;
 use App\Http\Controllers\Designacion\DisponibilidadController;
@@ -79,7 +80,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     });
 
     //  Torneos 
-    Route::prefix('torneos')->name('torneos.')->middleware('permission:ver-torneos')->group(function () {
+    Route::prefix('torneos')->name('torneos.')->middleware(['permission:ver-torneos', 'modulo:torneos'])->group(function () {
         Route::get('/',              [TorneoController::class, 'index'])->name('index');
         Route::get('/crear',         [TorneoController::class, 'create'])->middleware('permission:crear-torneos')->name('create');
         Route::post('/',             [TorneoController::class, 'store'])->middleware('permission:crear-torneos')->name('store');
@@ -127,7 +128,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         });
 
     //  Partidos de un torneo ─
-    Route::prefix('torneos/{torneoId}/partidos')->name('partidos.')->middleware('permission:ver-torneos')->group(function () {
+    Route::prefix('torneos/{torneoId}/partidos')->name('partidos.')->middleware(['permission:ver-torneos', 'modulo:torneos'])->group(function () {
         Route::get('/',           [PartidoController::class, 'index'])->name('index');
         Route::post('/',          [PartidoController::class, 'store'])->middleware('permission:crear-torneos')->name('store');
         Route::put('/{id}',       [PartidoController::class, 'update'])->middleware('permission:editar-torneos')->name('update');
@@ -135,7 +136,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     });
 
     //  Designaciones — M04 Bloque 3
-    Route::prefix('designaciones')->name('designaciones.')->middleware('permission:ver-designaciones')->group(function () {
+    Route::prefix('designaciones')->name('designaciones.')->middleware(['permission:ver-designaciones', 'modulo:designaciones'])->group(function () {
         Route::get('/',         [DesignacionController::class, 'index'])->name('index');
         Route::get('/crear',    [DesignacionController::class, 'crearPartido'])->middleware('permission:crear-designaciones')->name('create');
         Route::post('/',        [DesignacionController::class, 'guardarPartido'])->middleware('permission:crear-designaciones')->name('store');
@@ -197,21 +198,21 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         ->middleware('permission:crear-designaciones');
 
     //  Finanzas ─
-    Route::prefix('finanzas')->name('finanzas.')->middleware('permission:ver-finanzas')->group(function () {
+    Route::prefix('finanzas')->name('finanzas.')->middleware(['permission:ver-finanzas', 'modulo:finanzas'])->group(function () {
         Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
         Route::get('/crear', fn () => redirect()->route('dashboard'))->middleware('permission:crear-finanzas')->name('create');
         Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-finanzas')->name('store');
     });
 
     //  Académico 
-    Route::prefix('academico')->name('academico.')->middleware('permission:ver-academico')->group(function () {
+    Route::prefix('academico')->name('academico.')->middleware(['permission:ver-academico', 'modulo:academico'])->group(function () {
         Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
         Route::get('/crear', fn () => redirect()->route('dashboard'))->middleware('permission:crear-academico')->name('create');
         Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-academico')->name('store');
     });
 
     //  Sanciones 
-    Route::prefix('sanciones')->name('sanciones.')->middleware('permission:ver-sanciones')->group(function () {
+    Route::prefix('sanciones')->name('sanciones.')->middleware(['permission:ver-sanciones', 'modulo:sanciones'])->group(function () {
         Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
         Route::get('/crear', fn () => redirect()->route('dashboard'))->middleware('permission:crear-sanciones')->name('create');
         Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-sanciones')->name('store');
@@ -222,6 +223,18 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::get('/',  [ConfiguracionController::class, 'index'])->name('index');
         Route::put('/',  [ConfiguracionController::class, 'update'])->name('update');
     });
+
+    //  Cuentas admin (tesorero, designador, sanciones, tecnico, veedor, co-ejecutivo)
+    Route::prefix('configuracion/cuentas-admin')->name('configuracion.cuentas-admin.')
+        ->middleware('permission:gestionar-cuentas-admin')->group(function () {
+            Route::get('/',            [CuentaAdminController::class, 'index'])->name('index');
+            Route::get('/crear',       [CuentaAdminController::class, 'create'])->name('create');
+            Route::post('/',           [CuentaAdminController::class, 'store'])->name('store');
+            Route::get('/{id}/editar', [CuentaAdminController::class, 'edit'])->name('edit');
+            Route::put('/{id}',        [CuentaAdminController::class, 'update'])->name('update');
+            Route::put('/{id}/revocar',  [CuentaAdminController::class, 'revocar'])->name('revocar');
+            Route::put('/{id}/reactivar',[CuentaAdminController::class, 'reactivar'])->name('reactivar');
+        });
 
     //  Colegios — solo superadmin
     Route::prefix('colegios')->name('colegios.')->middleware('solo.superadmin')->group(function () {

@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Mail\IndisponibilidadExtraordinariaMail;
 use App\Models\Arbitro;
+use App\Models\ConfiguracionColegio;
 use App\Models\Designacion;
 use App\Models\DisponibilidadArbitro;
 use App\Models\IndisponibilidadExtraordinaria;
@@ -24,8 +25,10 @@ final class DisponibilidadService
      */
     public function yaReportoEstaSemana(Arbitro $arbitro): bool
     {
+        $diaInicio = ConfiguracionColegio::getDiaDisponibilidad($arbitro->idColegio);
+
         return DisponibilidadArbitro::where('idArbitro', $arbitro->idArbitro)
-            ->where('fechaDisponibilidad', '>=', SemanaNavegacion::desde(null)->lunes->toDateString())
+            ->where('fechaDisponibilidad', '>=', SemanaNavegacion::desde(null, $diaInicio)->lunes->toDateString())
             ->exists();
     }
 

@@ -74,8 +74,8 @@
                 <span class="plan-mgmt-stat__label">Árbitros</span>
             </div>
             <div class="plan-mgmt-stat">
-                <span class="plan-mgmt-stat__value">{{ $plan->limiteRolesTexto }}</span>
-                <span class="plan-mgmt-stat__label">Roles</span>
+                <span class="plan-mgmt-stat__value">{{ $plan->limiteCuentasAdminTexto }}</span>
+                <span class="plan-mgmt-stat__label">Cuentas admin</span>
             </div>
         </div>
 

@@ -15,10 +15,11 @@ class CredencialesColegioMail extends Mailable
     use Queueable, SerializesModels;
 
     public function __construct(
-        public readonly string $nombreColegio,
-        public readonly string $urlAcceso,
-        public readonly string $emailAdmin,
-        public readonly string $passwordGenerado,
+        public readonly string  $nombreColegio,
+        public readonly string  $urlAcceso,
+        public readonly ?string $emailAdmin,
+        public readonly string  $passwordGenerado,
+        public readonly ?string $usernameUsuario = null,
     ) {}
 
     public function envelope(): Envelope

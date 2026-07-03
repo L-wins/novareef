@@ -26,6 +26,9 @@ class DisponibilidadArbitro extends Model
     public const FRANJA_PM_NOCHE  = 'pm_noche';
     public const FRANJA_TODO_DIA  = 'todo_el_dia';
 
+    /** Marca explícita de "no disponible" — distinta de no tener ningún registro (sin reportar). */
+    public const FRANJA_NO_DISPONIBLE = 'no_disponible';
+
     protected $fillable = [
         'idArbitro',
         'fechaDisponibilidad',
@@ -58,11 +61,25 @@ class DisponibilidadArbitro extends Model
     }
 
     /**
-     * Devuelve la etiqueta legible de la franja actual.
+     * Devuelve la etiqueta legible de la franja actual (incluye "No disponible",
+     * que no forma parte del catálogo de franjas seleccionables de getFranjas()).
      */
     public function franjaLegible(): string
     {
+        if ($this->franjaHoraria === self::FRANJA_NO_DISPONIBLE) {
+            return 'No disponible';
+        }
+
         return self::getFranjas()[$this->franjaHoraria] ?? $this->franjaHoraria;
+    }
+
+    /**
+     * Falso si el árbitro marcó explícitamente "no disponible" para este día.
+     * Distinto de que no exista ningún registro (ese caso no es una instancia).
+     */
+    public function esDisponible(): bool
+    {
+        return $this->franjaHoraria !== self::FRANJA_NO_DISPONIBLE;
     }
 
     // ── Relaciones ──

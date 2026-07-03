@@ -24,6 +24,7 @@ class User extends Authenticatable
         'idColegio',
         'nombreUsuario',
         'emailUsuario',
+        'usernameUsuario',
         'passwordUsuario',
         'telefonoUsuario',
         'rolUsuario',

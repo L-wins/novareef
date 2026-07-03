@@ -172,8 +172,8 @@
 
             {{-- Usuario --}}
             <div class="credential-row">
-                <p class="section-label">Usuario (correo electrónico)</p>
-                <p class="credential-value">{{ $emailAdmin }}</p>
+                <p class="section-label">Usuario ({{ $usernameUsuario ? 'nombre de usuario' : 'correo electrónico' }})</p>
+                <p class="credential-value">{{ $usernameUsuario ?? $emailAdmin }}</p>
             </div>
 
             {{-- Contraseña — {!! !!} evita que & se convierta en &amp; en el HTML del email --}}

@@ -358,6 +358,7 @@
 
 <script>
 window.colegioId   = {{ Auth::user()->idColegio }};
+window.broadcastAuthEndpoint = "{{ url('/broadcasting/auth') }}";
 window.partidoId   = {{ $partido->idPartido }};
 window.partidoVersion = {{ $partido->version }};
 window.asignarUrl  = "{{ route('designaciones.asignar', $partido->idPartido) }}";

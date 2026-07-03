@@ -7,7 +7,7 @@
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    //  Secciones colapsables del perfil 
+    //  Secciones colapsables del perfil
     document.querySelectorAll('.perfil-step-head').forEach(function (head) {
         head.addEventListener('click', function (e) {
             // No colapsar si el click viene de un botón dentro del head
@@ -15,6 +15,45 @@ document.addEventListener('DOMContentLoaded', function () {
             head.closest('.perfil-step')?.classList.toggle('is-open');
         });
     });
+
+    //  Recordar qué sección estaba abierta y el scroll al crear/eliminar
+    //  sedes, divisiones, tarifas o reglamento — cada acción recarga la
+    //  página completa (form.submit() normal), lo que perdía ese estado.
+    //  beforeunload cubre tanto el submit nativo como el programático
+    //  (los botones de eliminar usan formulario.submit() por JS, que no
+    //  dispara el evento 'submit').
+    (function () {
+        var pasos = document.querySelectorAll('.perfil-step');
+        if (!pasos.length) return;
+
+        var storageKey = 'novareef:perfilTorneo:' + location.pathname;
+
+        window.addEventListener('beforeunload', function () {
+            var abiertas = Array.prototype.filter.call(pasos, function (paso) {
+                return paso.classList.contains('is-open');
+            }).map(function (paso) { return paso.id; });
+
+            sessionStorage.setItem(storageKey, JSON.stringify({
+                abiertas: abiertas,
+                scrollY: window.scrollY,
+            }));
+        });
+
+        var guardado = sessionStorage.getItem(storageKey);
+        if (!guardado) return;
+
+        sessionStorage.removeItem(storageKey); // se consume una sola vez
+
+        try {
+            var estado = JSON.parse(guardado);
+            pasos.forEach(function (paso) {
+                paso.classList.toggle('is-open', estado.abiertas.indexOf(paso.id) !== -1);
+            });
+            window.scrollTo(0, estado.scrollY);
+        } catch (e) {
+            // Estado corrupto — se ignora, queda el comportamiento por defecto.
+        }
+    })();
 
     //  Eliminar (botones genéricos: divisiones, sedes, tarifas) 
     //    data-delete-form="formulario-id" + data-confirm-title + data-confirm-text

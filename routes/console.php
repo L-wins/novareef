@@ -16,9 +16,16 @@ Artisan::command('inspire', function () {
 // Se ejecuta a las 06:00 todos los días para alertar antes del inicio de jornada.
 Schedule::command('novareef:marcar-criticos')->dailyAt('06:00');
 
-// Limpia disponibilidades de semanas anteriores al inicio de cada semana.
-// weeklyOn(1) = lunes. El comando también verifica el día para proteger ejecuciones manuales.
-Schedule::command('novareef:habilitar-disponibilidad')->weeklyOn(1, '00:01');
+// Registra en el log qué colegios abren su ciclo de disponibilidad hoy, según
+// el día que cada uno configuró (ConfiguracionColegio::DIA_DISPONIBILIDAD).
+// El cálculo real del ciclo es dinámico (SemanaNavegacion) — este comando no
+// modifica datos, solo deja evidencia en el log para observabilidad.
+Schedule::command('novareef:habilitar-disponibilidad')->dailyAt('00:01');
+
+// Pasa los torneos de "próximo" a "activo" y de "activo" a "finalizado" según
+// fechaInicio/fechaFin — antes estadoTorneo era 100% manual y podía quedar
+// desactualizado indefinidamente. Nunca toca 'cancelado' ni un 'finalizado' ya puesto.
+Schedule::command('novareef:actualizar-estados-torneo')->dailyAt('00:03');
 
 // Finaliza automáticamente partidos en_curso que lleven más de 150 minutos.
 Schedule::job(new FinalizarPartidosAutomaticoJob)->everyFiveMinutes();

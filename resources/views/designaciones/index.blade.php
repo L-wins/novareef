@@ -256,6 +256,9 @@
 @endsection
 
 @push('scripts')
-<script>window.colegioId = {{ Auth::user()->idColegio }};</script>
+<script>
+window.colegioId = {{ Auth::user()->idColegio }};
+window.broadcastAuthEndpoint = "{{ url('/broadcasting/auth') }}";
+</script>
 @vite(['resources/js/designaciones/designaciones.js'])
 @endpush

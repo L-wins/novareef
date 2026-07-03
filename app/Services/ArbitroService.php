@@ -20,12 +20,16 @@ final class ArbitroService
     /** Campos de autoservicio (MiPerfilRequest) que pertenecen al modelo User, no al Arbitro. */
     private const CAMPOS_PERFIL_USUARIO = ['telefonoUsuario'];
 
+    public function __construct(
+        private readonly LimiteService $limites,
+    ) {}
+
     /**
      * Registra el árbitro completo: crea su usuario con credenciales
      * (delegado a registrarConCredenciales) y el registro de árbitro asociado.
      *
      * @throws \InvalidArgumentException  Si el rol 'arbitro' no existe en Spatie.
-     * @throws \RuntimeException          Si el email ya está en uso.
+     * @throws \RuntimeException          Si el email ya está en uso o se alcanzó el límite del plan.
      */
     public function registrar(
         int     $idColegio,
@@ -40,6 +44,8 @@ final class ArbitroService
         string  $fechaIngresoColegio,
         ?string $lugarExpedicionCC,
     ): Arbitro {
+        $this->limites->asegurarPuedeCrearArbitro($idColegio);
+
         return DB::transaction(function () use (
             $idColegio, $nombreColegio, $urlAcceso, $nombreUsuario, $emailUsuario,
             $telefonoUsuario, $idCategoria, $tipoDocumento, $numeroDocumento,
@@ -151,9 +157,13 @@ final class ArbitroService
      * Restaura a un árbitro archivado: revierte el soft-delete, reactiva su cuenta
      * de usuario y lo deja en 'inactivo' — requiere revisión antes de volver a
      * quedar disponible para designaciones.
+     *
+     * @throws \RuntimeException  Si no hay cupo disponible para reactivar el árbitro.
      */
     public function restaurar(Arbitro $arbitro): void
     {
+        $this->limites->asegurarPuedeReactivarArbitro($arbitro->idColegio);
+
         DB::transaction(function () use ($arbitro): void {
             $arbitro->restore();
             $arbitro->update(['estadoArbitro' => 'inactivo']);
@@ -172,21 +182,40 @@ final class ArbitroService
      *   - El mail se despacha solo si TODAS las transacciones anidadas confirman.
      *   - Un fallo de mail no hace rollback del usuario ya creado.
      *
-     * @throws \InvalidArgumentException  Si el rol no existe en Spatie (guard web).
-     * @throws \RuntimeException          Si el email ya está en uso (incluyendo soft-deleted).
+     * @throws \InvalidArgumentException  Si el rol no existe en Spatie, o si no hay ningún
+     *                                     destino (email propio ni de notificación) para
+     *                                     avisarle las credenciales al usuario nuevo.
+     * @throws \RuntimeException          Si el email o el username ya están en uso (incluyendo soft-deleted).
      */
     public function registrarConCredenciales(
-        int    $idColegio,
-        string $nombre,
-        string $email,
-        string $telefono,
-        string $rol,
-        string $nombreColegio,
-        string $urlAcceso,
+        int     $idColegio,
+        string  $nombre,
+        ?string $email,
+        string  $telefono,
+        string  $rol,
+        string  $nombreColegio,
+        string  $urlAcceso,
+        ?string $usernameUsuario = null,
+        ?string $emailNotificacion = null,
     ): User {
         // ── Validaciones previas (antes de tocar la BD) ───────────────────────
         $this->validarRol($rol);
-        $this->validarEmailUnico($email);
+
+        if ($email !== null) {
+            $this->validarEmailUnico($email);
+        }
+
+        if ($usernameUsuario !== null) {
+            $this->validarUsernameUnico($usernameUsuario);
+        }
+
+        $destinoNotificacion = $emailNotificacion ?? $email;
+
+        if ($destinoNotificacion === null) {
+            throw new \InvalidArgumentException(
+                'No hay ningún destino de correo para enviar las credenciales (ni email propio ni email de notificación).'
+            );
+        }
 
         // ── Generar contraseña una sola vez ───────────────────────────────────
         $passwordPlano = PasswordGenerator::generate();
@@ -196,13 +225,14 @@ final class ArbitroService
         // transacción activa en el caller (ArbitroController, ColegioController).
         // DB::afterCommit() espera a que TODAS las transacciones externas confirmen.
         return DB::transaction(function () use (
-            $idColegio, $nombre, $email, $telefono, $rol,
-            $nombreColegio, $urlAcceso, $passwordPlano,
+            $idColegio, $nombre, $email, $telefono, $rol, $usernameUsuario,
+            $nombreColegio, $urlAcceso, $passwordPlano, $destinoNotificacion,
         ): User {
             $usuario = User::create([
                 'idColegio'            => $idColegio,
                 'nombreUsuario'        => $nombre,
                 'emailUsuario'         => $email,
+                'usernameUsuario'      => $usernameUsuario,
                 'passwordUsuario'      => $passwordPlano, // cast 'hashed' lo hashea automáticamente
                 'telefonoUsuario'      => $telefono,
                 'rolUsuario'           => $rol,
@@ -212,21 +242,22 @@ final class ArbitroService
 
             $usuario->assignRole($rol);
 
-            DB::afterCommit(function () use ($email, $passwordPlano, $nombreColegio, $urlAcceso, $usuario): void {
+            DB::afterCommit(function () use ($destinoNotificacion, $email, $usernameUsuario, $passwordPlano, $nombreColegio, $urlAcceso, $usuario): void {
                 try {
-                    Mail::to($email)->send(
+                    Mail::to($destinoNotificacion)->send(
                         new CredencialesColegioMail(
                             nombreColegio:    $nombreColegio,
                             urlAcceso:        $urlAcceso,
                             emailAdmin:       $email,
                             passwordGenerado: $passwordPlano,
+                            usernameUsuario:  $usernameUsuario,
                         )
                     );
                 } catch (\Throwable $e) {
                     // El usuario ya existe — no hacer rollback. Solo registrar el fallo.
                     Log::error('No se pudo enviar email de credenciales', [
                         'idUsuario' => $usuario->idUsuario,
-                        'email'     => $email,
+                        'destino'   => $destinoNotificacion,
                         'error'     => $e->getMessage(),
                     ]);
                 }
@@ -261,6 +292,19 @@ final class ArbitroService
         if ($existe) {
             throw new \RuntimeException(
                 "El email '{$email}' ya está registrado en el sistema."
+            );
+        }
+    }
+
+    private function validarUsernameUnico(string $usernameUsuario): void
+    {
+        $existe = User::withTrashed()
+                      ->where('usernameUsuario', $usernameUsuario)
+                      ->exists();
+
+        if ($existe) {
+            throw new \RuntimeException(
+                "El nombre de usuario '{$usernameUsuario}' ya está en uso."
             );
         }
     }

@@ -24,18 +24,17 @@ class LoginController extends Controller
 
     public function login(LoginRequest $request): RedirectResponse
     {
-        $credentials = $request->validated();
-        $remember    = $request->boolean('remember');
+        $remember = $request->boolean('remember');
 
-        if (Auth::attempt($credentials, $remember)) {
+        if (Auth::attempt($request->credenciales(), $remember)) {
             $request->session()->regenerate();
 
             return redirect()->intended(route('dashboard'));
         }
 
         return back()
-            ->withErrors(['emailUsuario' => 'Las credenciales ingresadas no son válidas.'])
-            ->withInput($request->only('emailUsuario', 'remember'));
+            ->withErrors(['identificador' => 'Las credenciales ingresadas no son válidas.'])
+            ->withInput($request->only('identificador', 'remember'));
     }
 
     public function logout(Request $request): RedirectResponse

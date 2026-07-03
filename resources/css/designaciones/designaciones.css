@@ -513,8 +513,29 @@
 }
 
 .disp-cell-nodisp {
-  font-size: 0.78rem;
-  color:     var(--disp-text-2);
+  display:     inline-flex;
+  align-items: center;
+  gap:         0.2rem;
+  background:  rgba(255, 255, 255, 0.04);
+  color:       var(--disp-text-2);
+  font-size:   0.72rem;
+  font-weight: 600;
+  padding:     3px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.disp-cell-nodisp-explicito {
+  display:     inline-flex;
+  align-items: center;
+  gap:         0.2rem;
+  background:  rgba(239, 68, 68, 0.10);
+  color:       #ef4444;
+  font-size:   0.72rem;
+  font-weight: 700;
+  padding:     3px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
 }
 
 .disp-cell-extraordinaria {

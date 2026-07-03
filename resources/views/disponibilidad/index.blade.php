@@ -96,13 +96,14 @@
                     $esHoy        = $dia->isToday();
                     $dispDia      = $disponibilidades[$key] ?? null;
                     $extrasDia    = $indisponibilidades[$key] ?? collect();
-                    $franjaActual = $dispDia?->franjaHoraria;
-                    $bloqueado    = $yaGuardo || $esPasado;
+                    $franjaActual   = $dispDia?->franjaHoraria;
+                    $disponibleReal = $franjaActual && $franjaActual !== \App\Models\DisponibilidadArbitro::FRANJA_NO_DISPONIBLE;
+                    $bloqueado      = $yaGuardo || $esPasado;
 
                     $clases = ['disp-day-card'];
                     if ($esHoy)                          $clases[] = 'is-today';
                     if ($esPasado)                       $clases[] = 'is-past';
-                    if ($franjaActual && !$esPasado)     $clases[] = 'is-available';
+                    if ($disponibleReal && !$esPasado)   $clases[] = 'is-available';
                     if ($extrasDia->isNotEmpty())        $clases[] = 'is-extraordinary';
                 @endphp
 
@@ -155,7 +156,7 @@
                                     data-nova-select
                                     data-placeholder="No disponible"
                                     {{ $bloqueado ? 'disabled' : '' }}>
-                                <option value="">No disponible</option>
+                                <option value="{{ \App\Models\DisponibilidadArbitro::FRANJA_NO_DISPONIBLE }}">No disponible</option>
                                 @foreach ($franjas as $clave => $etiqueta)
                                     <option value="{{ $clave }}"
                                         {{ $franjaActual === $clave ? 'selected' : '' }}>
@@ -175,7 +176,7 @@
                     {{-- Estado actual --}}
                     @if (!$esPasado)
                         <div class="disp-day-status" data-state-badge>
-                            @if ($franjaActual)
+                            @if ($disponibleReal)
                                 <i class="fa-solid fa-circle-check" style="color:#22c55e;font-size:0.8rem;"></i>
                                 <span style="color:#22c55e;">{{ $franjas[$franjaActual] }}</span>
                             @else
