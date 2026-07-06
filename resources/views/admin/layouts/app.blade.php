@@ -1,9 +1,12 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme-pref="{{ Auth::guard('admin')->user()->temaPreferencia ?? 'dark' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#020617">
     <title>@yield('titulo', 'Panel') — NovaReef Admin</title>
+    @include('layouts.partials.theme-boot')
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet">
     @vite(['resources/css/admin/admin.css', 'resources/js/admin/admin.js'])
@@ -108,6 +111,23 @@
             <h1 class="admin-header__title">@yield('titulo', 'Panel')</h1>
 
             <div class="admin-header__right">
+                {{-- Selector de tema --}}
+                <div class="theme-switch" role="radiogroup" aria-label="Tema de la interfaz"
+                     data-theme-endpoint="{{ route('admin.preferencias.tema') }}">
+                    <button type="button" class="theme-switch__btn" data-theme-set="light"
+                            title="Tema claro" aria-label="Tema claro">
+                        <i class="fa-solid fa-sun"></i>
+                    </button>
+                    <button type="button" class="theme-switch__btn" data-theme-set="dark"
+                            title="Tema oscuro" aria-label="Tema oscuro">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <button type="button" class="theme-switch__btn" data-theme-set="system"
+                            title="Según el sistema" aria-label="Tema según el sistema">
+                        <i class="fa-solid fa-desktop"></i>
+                    </button>
+                </div>
+
                 @if(Auth::guard('admin')->user()->two_factor_enabled)
                     <span class="badge badge--2fa-on">
                         <i class="fa-solid fa-lock"></i>

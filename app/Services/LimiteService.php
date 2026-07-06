@@ -73,9 +73,26 @@ final class LimiteService
         return round(($this->cuentasAdminActivas($idColegio) / $limite) * 100, 1);
     }
 
+    public function porcentajeUsoArbitros(int $idColegio): float
+    {
+        $limite = $this->limiteArbitros($idColegio);
+
+        if ($limite === null || $limite === 0) {
+            return 0.0;
+        }
+
+        return round(($this->arbitrosActivos($idColegio) / $limite) * 100, 1);
+    }
+
     public function moduloHabilitado(int $idColegio, string $modulo): bool
     {
-        return in_array($modulo, $this->plan($idColegio)?->modulosJSON ?? [], true);
+        return in_array($modulo, $this->modulosHabilitados($idColegio), true);
+    }
+
+    /** @return list<string> Módulos habilitados por el plan vigente del colegio (vacío si no hay plan resoluble). */
+    public function modulosHabilitados(int $idColegio): array
+    {
+        return $this->plan($idColegio)?->modulosJSON ?? [];
     }
 
     /** @throws \RuntimeException  Si el colegio ya alcanzó el límite de árbitros de su plan. */

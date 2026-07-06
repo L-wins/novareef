@@ -1,6 +1,6 @@
 /*  Variables heredadas de app.css ─ */
 :root {
-    --bg-base:     #0b0f1a;
+    --bg-base:     var(--nv-bg);
     --bg-card:     var(--nv-card-alt);
     --bg-hover:    var(--nv-card-hover);
     --border:      var(--nv-border);
@@ -912,3 +912,48 @@ img.avatar { background: var(--bg-card); }
     .container   { padding: 1.25rem 1rem; }
     .detail-grid { grid-template-columns: 1fr; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Tema claro — los pasteles pensados para fondo oscuro (dark)
+   pierden contraste sobre fondo blanco; se oscurecen aquí.
+   ═══════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] .flash-success { color: #15803d; }
+:root[data-theme="light"] .flash-error   { color: #dc2626; }
+
+:root[data-theme="light"] .btn-warning      { color: #b45309; }
+:root[data-theme="light"] .btn-danger       { color: #dc2626; }
+:root[data-theme="light"] .btn-icon-edit    { color: #7c3aed; }
+:root[data-theme="light"] .btn-icon-estado  { color: #b45309; }
+
+:root[data-theme="light"] .td-code   { color: #7c3aed; }
+:root[data-theme="light"] .doc-item a { color: #1d4ed8; }
+
+:root[data-theme="light"] .status-activo          { color: #15803d; }
+:root[data-theme="light"] .status-suspendido      { color: #dc2626; }
+:root[data-theme="light"] .status-retirado        { color: #92400e; }
+:root[data-theme="light"] .status-aprendiz        { color: #1d4ed8; }
+:root[data-theme="light"] .status-proceso_ingreso { color: #b45309; }
+
+:root[data-theme="light"] .profile-progress-value[data-color="yellow"] { color: #b45309; }
+:root[data-theme="light"] .profile-progress-value[data-color="red"]    { color: #dc2626; }
+
+:root[data-theme="light"] .estado-pill[data-color="green"]  { color: #15803d; }
+:root[data-theme="light"] .estado-pill[data-color="blue"]   { color: #1d4ed8; }
+:root[data-theme="light"] .estado-pill[data-color="red"]    { color: #dc2626; }
+:root[data-theme="light"] .estado-pill[data-color="yellow"] { color: #b45309; }
+
+:root[data-theme="light"] .badge-green { color: #15803d; }
+:root[data-theme="light"] .badge-red   { color: #dc2626; }
+:root[data-theme="light"] .badge-blue  { color: #1d4ed8; }
+
+:root[data-theme="light"] .archive-warning-title { color: #dc2626; }
+:root[data-theme="light"] .archive-warning-text  { color: #475569; }
+
+:root[data-theme="light"] .req                { color: #dc2626; }
+:root[data-theme="light"] .field-error        { color: #dc2626; }
+:root[data-theme="light"] .btn-danger:hover   { color: #b91c1c; }
+:root[data-theme="light"] .btn-icon-view      { color: #1d4ed8; }
+:root[data-theme="light"] .cat-badge          { color: #7c3aed; }
+:root[data-theme="light"] .profile-progress-value[data-color="green"] { color: #15803d; }
+:root[data-theme="light"] .profile-progress-value[data-color="blue"]  { color: #1d4ed8; }
+:root[data-theme="light"] .estado-pill[data-color="black"] { color: #334155; }

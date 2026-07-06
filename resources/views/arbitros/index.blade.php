@@ -17,6 +17,9 @@
             <p class="page-subheading">
                 {{ $arbitros->total() }} árbitro{{ $arbitros->total() === 1 ? '' : 's' }}
                 {{ $arbitros->total() === 1 ? 'encontrado' : 'encontrados' }}
+                <span class="plan-limite-contador">
+                    · {{ $limiteUsados }} {{ $limite === null ? '(ilimitado)' : "de {$limite}" }} en tu plan
+                </span>
             </p>
         </div>
         @can('crear-arbitros')
@@ -26,6 +29,13 @@
         </a>
         @endcan
     </div>
+
+    @include('partials.limite-plan-banner', [
+        'recurso'    => 'árbitros',
+        'usados'     => $limiteUsados,
+        'limite'     => $limite,
+        'porcentaje' => $limitePorcentaje,
+    ])
 
     {{-- Barra de búsqueda + filtros --}}
     <form method="GET" action="{{ route('arbitros.index') }}" class="filter-bar filter-bar-grid" data-auto-filter>

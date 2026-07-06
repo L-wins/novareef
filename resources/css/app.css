@@ -521,7 +521,98 @@ svg  { display: block; }
 .val-purple  { color: #a78bfa; }
 .val-teal    { color: #38bdf8; }
 
-/* 
+/*
+   Uso de plan (barra de progreso)
+    */
+.plan-usage { max-width: 480px; margin-bottom: 24px; }
+.plan-usage-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.plan-usage-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.plan-usage-label i { font-size: 12px; }
+.plan-usage-value { font-size: 0.875rem; font-weight: 700; }
+.plan-usage-value[data-color="green"]  { color: var(--accent-light); }
+.plan-usage-value[data-color="yellow"] { color: #fcd34d; }
+.plan-usage-value[data-color="red"]    { color: #fca5a5; }
+
+.plan-usage-bar {
+    height: 6px;
+    background: var(--nv-border);
+    border-radius: 999px;
+    overflow: hidden;
+}
+.plan-usage-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+.plan-usage-fill[data-color="green"]  { background: var(--accent); }
+.plan-usage-fill[data-color="yellow"] { background: #f59e0b; }
+.plan-usage-fill[data-color="red"]    { background: #ef4444; }
+
+/*
+   Banner de límite de plan (con CTA)
+    */
+.plan-limite-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 24px;
+}
+.plan-limite-banner--advertencia {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.25);
+}
+.plan-limite-banner--critico {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.25);
+}
+.plan-limite-banner__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 15px;
+}
+.plan-limite-banner--advertencia .plan-limite-banner__icon { background: rgba(245,158,11,0.14); color: #fbbf24; }
+.plan-limite-banner--critico .plan-limite-banner__icon     { background: rgba(239,68,68,0.14);  color: #fca5a5; }
+.plan-limite-banner__body { flex: 1; min-width: 0; }
+.plan-limite-banner__title {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 4px;
+}
+.plan-limite-banner__text {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+.plan-limite-banner__cta { flex-shrink: 0; white-space: nowrap; }
+@media (max-width: 560px) {
+    .plan-limite-banner { flex-wrap: wrap; }
+    .plan-limite-banner__cta { width: 100%; justify-content: center; }
+}
+
+.plan-limite-contador { font-weight: 500; color: var(--text-muted); }
+
+/*
    Tarjetas de módulos
     */
 .modules-section { margin-bottom: 32px; }
@@ -1142,3 +1233,30 @@ input[data-filter-date].flatpickr-input { display: none !important; }
 
 .form-note--warn { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.20); }
 .form-note--warn i { color: #fbbf24; }
+
+/* ═══════════════════════════════════════════════════════════════
+   Tema claro — los pasteles pensados para fondo oscuro (dark)
+   pierden contraste sobre fondo blanco; se oscurecen aquí.
+   ═══════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] .btn-logout        { color: #dc2626; }
+:root[data-theme="light"] .btn-logout:hover  { color: #b91c1c; }
+:root[data-theme="light"] .badge-locked      { color: #dc2626; }
+:root[data-theme="light"] .ic-red            { color: #dc2626; }
+:root[data-theme="light"] .ic-teal           { color: #0369a1; }
+:root[data-theme="light"] .ic-amber          { color: #b45309; }
+:root[data-theme="light"] .ic-purple         { color: #7c3aed; }
+:root[data-theme="light"] .val-amber         { color: #b45309; }
+:root[data-theme="light"] .val-purple        { color: #7c3aed; }
+:root[data-theme="light"] .val-teal          { color: #0369a1; }
+:root[data-theme="light"] .btn-warning       { color: #b45309; }
+:root[data-theme="light"] .btn-danger        { color: #dc2626; }
+:root[data-theme="light"] .btn-danger:hover  { color: #b91c1c; }
+:root[data-theme="light"] .req               { color: #dc2626; }
+:root[data-theme="light"] .field-error       { color: #dc2626; }
+:root[data-theme="light"] .form-note--ok i   { color: #15803d; }
+:root[data-theme="light"] .form-note--warn i { color: #b45309; }
+
+:root[data-theme="light"] .plan-usage-value[data-color="yellow"] { color: #b45309; }
+:root[data-theme="light"] .plan-usage-value[data-color="red"]    { color: #dc2626; }
+:root[data-theme="light"] .plan-limite-banner--advertencia .plan-limite-banner__icon { color: #b45309; }
+:root[data-theme="light"] .plan-limite-banner--critico .plan-limite-banner__icon     { color: #dc2626; }

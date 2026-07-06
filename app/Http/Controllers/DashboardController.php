@@ -6,11 +6,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Arbitro;
 use App\Models\User;
+use App\Services\LimiteService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private readonly LimiteService $limites,
+    ) {}
+
     public function index(): View
     {
         $idColegio = Auth::user()->idColegio;
@@ -29,6 +34,10 @@ class DashboardController extends Controller
             'arbitrosActivos',
             'arbitrosProceso',
             'totalUsuarios',
-        ));
+        ) + [
+            'limiteArbitrosUsados'     => $arbitrosRegistrados,
+            'limiteArbitros'           => $this->limites->limiteArbitros($idColegio),
+            'limiteArbitrosPorcentaje' => $this->limites->porcentajeUsoArbitros($idColegio),
+        ]);
     }
 }

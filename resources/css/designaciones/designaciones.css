@@ -1806,3 +1806,91 @@
 .desi-torneo-card__count strong { color: var(--nv-text); }
 .desi-torneo-card__arrow { margin-left: auto; color: var(--nv-accent); font-size: .8rem; }
 
+/* ═══════════════════════════════════════════════════════════════
+   Tema claro — los pasteles pensados para fondo oscuro (dark)
+   pierden contraste sobre fondo blanco; se oscurecen aquí.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Verde (confirmado / activo / dirigido / disponible) */
+:root[data-theme="light"] .disp-status-badge.guardado,
+:root[data-theme="light"] .disp-saved-banner i,
+:root[data-theme="light"] .disp-badge.available,
+:root[data-theme="light"] .disp-cell-disponible,
+:root[data-theme="light"] .desi-estado--confirmado,
+:root[data-theme="light"] .desi-estado--en_curso,
+:root[data-theme="light"] .desi-arbitro-chip--confirmada .desi-chip-estado,
+:root[data-theme="light"] .partido-estado-badge.estado-confirmado,
+:root[data-theme="light"] .partido-estado-badge.estado-en_curso,
+:root[data-theme="light"] .partido-estado-badge.estado-confirmada,
+:root[data-theme="light"] .rol-chip.estado-confirmada,
+:root[data-theme="light"] .desig-estado-confirmada,
+:root[data-theme="light"] .badge-disponible,
+:root[data-theme="light"] .mis-stat--dirigidos .mis-stat__num,
+:root[data-theme="light"] .desi-torneo-card__estado--activo,
+:root[data-theme="light"] .banner-publicado,
+:root[data-theme="light"] .banner-publicado strong,
+:root[data-theme="light"] .pago-chip--campo,
+:root[data-theme="light"] .pago-card__valor { color: #15803d; }
+:root[data-theme="light"] .historial-dot--confirmado,
+:root[data-theme="light"] .partido-card.estado-en_curso,
+:root[data-theme="light"] .rol-card--confirmada,
+:root[data-theme="light"] .slot-card--confirmada { border-color: #15803d; }
+
+/* Rojo (crítico / rechazado / cancelado / hoy) */
+:root[data-theme="light"] .disp-badge.extraordinary,
+:root[data-theme="light"] .disp-cell-nodisp-explicito,
+:root[data-theme="light"] .disp-cell-extraordinaria,
+:root[data-theme="light"] .desi-alerta-critico,
+:root[data-theme="light"] .desi-hoy-badge,
+:root[data-theme="light"] .desi-estado--critico,
+:root[data-theme="light"] .desi-arbitro-chip--rechazada .desi-chip-estado,
+:root[data-theme="light"] .desig-critico-badge,
+:root[data-theme="light"] .partido-estado-badge.estado-critico,
+:root[data-theme="light"] .partido-estado-badge.estado-cancelado,
+:root[data-theme="light"] .partido-estado-badge.estado-rechazada,
+:root[data-theme="light"] .rol-chip.estado-rechazada,
+:root[data-theme="light"] .banner-critico,
+:root[data-theme="light"] .desig-estado-rechazada,
+:root[data-theme="light"] .rol-rechazo-motivo,
+:root[data-theme="light"] .badge-extraordinaria,
+:root[data-theme="light"] .badge-suspendido,
+:root[data-theme="light"] .req,
+:root[data-theme="light"] .etiqueta-hoy,
+:root[data-theme="light"] .mis-section-label--hoy,
+:root[data-theme="light"] .countdown-timer,
+:root[data-theme="light"] .mis-stat--hoy .mis-stat__num,
+:root[data-theme="light"] .mis-stat--rechazadas .mis-stat__num { color: #dc2626; }
+:root[data-theme="light"] .mis-section-label--hoy { color: #dc2626 !important; }
+:root[data-theme="light"] .historial-dot--rechazado,
+:root[data-theme="light"] .partido-card.es-critico,
+:root[data-theme="light"] .rol-card--rechazada,
+:root[data-theme="light"] .slot-card--rechazada { border-color: #dc2626; }
+
+/* Ámbar (pendiente / aplazado / mañana / advertencia) */
+:root[data-theme="light"] .desi-manana-badge,
+:root[data-theme="light"] .desi-estado--aplazado,
+:root[data-theme="light"] .desi-arbitro-chip--pendiente .desi-chip-estado,
+:root[data-theme="light"] .partido-estado-badge.estado-aplazado,
+:root[data-theme="light"] .partido-estado-badge.estado-pendiente,
+:root[data-theme="light"] .desig-estado-pendiente,
+:root[data-theme="light"] .badge-warn-tiempo,
+:root[data-theme="light"] .mis-partido-cuando-badge,
+:root[data-theme="light"] .mis-comet-reminder,
+:root[data-theme="light"] .etiqueta-manana,
+:root[data-theme="light"] .nota-stars,
+:root[data-theme="light"] .mis-stat--pendiente .mis-stat__num { color: #b45309; }
+:root[data-theme="light"] .mis-section-label--manana { color: #b45309 !important; }
+:root[data-theme="light"] .historial-dot--quitado,
+:root[data-theme="light"] .rol-card--pendiente,
+:root[data-theme="light"] .slot-card--pendiente { border-color: #b45309; }
+
+/* Morado / azul cielo (oficial / cambios de estado / cobertura emergente) */
+:root[data-theme="light"] .desi-oficial-badge { color: #7c3aed; }
+:root[data-theme="light"] .historial-dot--estado_partido_cambiado { border-color: #7c3aed; }
+:root[data-theme="light"] .historial-dot--emergente_cubrio        { border-color: #0369a1; }
+:root[data-theme="light"] .banner-borrador strong { color: #1d4ed8; }
+
+/* Gris neutro (cancelado / pasado) */
+:root[data-theme="light"] .desi-estado--cancelado { color: #475569; }
+:root[data-theme="light"] .etiqueta-pasado        { color: #475569; }
+

@@ -126,6 +126,22 @@ document.addEventListener('DOMContentLoaded', function () {
     initTheme();
 });
 
+/*
+   CTA "Actualizar plan" — todavía no existe autoservicio de upgrade,
+   así que el botón (data-plan-upgrade-cta) solo informa por ahora.
+   Reemplazar este listener por una navegación real cuando exista la ruta.
+    */
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-plan-upgrade-cta]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (window.novaAlert) {
+                novaAlert.success('Muy pronto podrás actualizar tu plan desde aquí. Mientras tanto, contacta a tu ejecutivo de cuenta.');
+            }
+        });
+    });
+});
+
 // Sombra en el navbar al hacer scroll
 (function () {
     document.addEventListener('DOMContentLoaded', function () {

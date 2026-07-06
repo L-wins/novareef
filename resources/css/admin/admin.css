@@ -6,32 +6,37 @@
 @import "../vendor/fontawesome-fonts.css";
 @import "choices.js/public/assets/styles/choices.min.css";
 @import "flatpickr/dist/flatpickr.min.css";
+/* Design tokens — única fuente de verdad del tema (dark/light) */
+@import "../tokens.css";
 
 /*  Variables  */
+/* Variables legacy — alias hacia los design tokens (tokens.css).
+   Panel admin sigue dark-only (consume el :root por defecto);
+   código nuevo puede usar directamente --nv-*. */
 :root {
   --border-radius: 10px;
   --spacer: 1rem;
-  --primary: #4f8ef7;
-  --primary-dim: rgba(79, 142, 247, 0.1);
+  --primary: var(--nv-accent);
+  --primary-dim: var(--nv-accent-bg);
   --primary-glow: rgba(79, 142, 247, 0.3);
-  --text: #8892a4;
-  --text-bright: #e2e8f0;
-  --text-muted: #3d4558;
+  --text: var(--nv-text-2);
+  --text-bright: var(--nv-text);
+  --text-muted: var(--nv-text-3);
   --link-height: 3.5rem;
   --timing: 250ms;
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --bg-navbar: #1a1f2e;
-  --bg-body: #0f1117;
-  --bg-card: #131927;
-  --bg-input: rgba(255, 255, 255, 0.04);
-  --border-color: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.12);
+  --bg-navbar: var(--nv-elevated);
+  --bg-body: var(--nv-bg);
+  --bg-card: var(--nv-card-alt);
+  --bg-input: var(--nv-fill);
+  --border-color: var(--nv-border);
+  --border-hover: var(--nv-border-2);
   --sidebar-w: 72px;
   --sidebar-w-open: 230px;
   --header-h: 64px;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  --success: var(--nv-success);
+  --warning: var(--nv-warning);
+  --danger: var(--nv-danger);
 }
 
 /*  Reset ─ */
@@ -311,7 +316,7 @@ input, textarea { font: inherit; }
   align-items: center;
   justify-content: space-between;
   padding: 0 2rem;
-  background: rgba(19, 25, 39, 0.9);
+  background: var(--nv-navbar-bg);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
@@ -328,6 +333,36 @@ input, textarea { font: inherit; }
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* Selector de tema (light / dark / system) */
+.theme-switch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+}
+.theme-switch__btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text);
+  font-size: 0.75rem;
+  transition: background var(--timing) var(--ease), color var(--timing) var(--ease);
+}
+.theme-switch__btn:hover {
+  color: var(--text-bright);
+  background: var(--nv-fill-2);
+}
+.theme-switch__btn.active {
+  background: var(--primary-dim);
+  color: var(--primary);
 }
 
 /*  Main Area  */
@@ -1772,95 +1807,95 @@ select.admin-input { cursor: pointer; appearance: none; background-image: url("d
    Flatpickr — tema oscuro (panel admin)
    ═════ */
 .flatpickr-calendar {
-    background: #1a1f2e !important;
-    border: 1px solid #2d3748 !important;
+    background: var(--bg-navbar) !important;
+    border: 1px solid var(--nv-border-strong) !important;
     border-radius: 12px !important;
     box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
-    color: #e2e8f0 !important;
+    color: var(--text-bright) !important;
 }
 .flatpickr-calendar.arrowTop:before,
 .flatpickr-calendar.arrowTop:after {
-    border-bottom-color: #2d3748 !important;
+    border-bottom-color: var(--nv-border-strong) !important;
 }
 .flatpickr-months {
-    background: #1a1f2e !important;
+    background: var(--bg-navbar) !important;
     border-radius: 12px 12px 0 0 !important;
     padding: 8px 0 !important;
 }
 .flatpickr-months .flatpickr-month {
     background: transparent !important;
-    color: #e2e8f0 !important;
-    fill: #e2e8f0 !important;
+    color: var(--text-bright) !important;
+    fill: var(--text-bright) !important;
     height: 44px !important;
 }
 .flatpickr-current-month {
-    color: #e2e8f0 !important;
+    color: var(--text-bright) !important;
     font-size: 1rem !important;
 }
 .flatpickr-current-month .flatpickr-monthDropdown-months {
-    background: #1a1f2e !important;
-    color: #e2e8f0 !important;
+    background: var(--bg-navbar) !important;
+    color: var(--text-bright) !important;
     border: none !important;
     font-weight: 600 !important;
 }
 .flatpickr-current-month .flatpickr-monthDropdown-months option {
-    background: #1a1f2e !important;
-    color: #e2e8f0 !important;
+    background: var(--bg-navbar) !important;
+    color: var(--text-bright) !important;
 }
 .flatpickr-current-month input.cur-year {
-    color: #e2e8f0 !important;
+    color: var(--text-bright) !important;
     font-weight: 600 !important;
 }
 .flatpickr-prev-month,
 .flatpickr-next-month {
-    color: #8892a4 !important;
-    fill: #8892a4 !important;
+    color: var(--text) !important;
+    fill: var(--text) !important;
 }
 .flatpickr-prev-month:hover,
 .flatpickr-next-month:hover {
-    color: #4f8ef7 !important;
-    fill: #4f8ef7 !important;
+    color: var(--primary) !important;
+    fill: var(--primary) !important;
 }
 .flatpickr-weekdays {
-    background: #1a1f2e !important;
+    background: var(--bg-navbar) !important;
 }
 span.flatpickr-weekday {
     background: transparent !important;
-    color: #4f8ef7 !important;
+    color: var(--primary) !important;
     font-weight: 600 !important;
     font-size: 0.8rem !important;
 }
 .flatpickr-days {
-    border-left: 1px solid #2d3748 !important;
-    border-right: 1px solid #2d3748 !important;
+    border-left: 1px solid var(--nv-border-strong) !important;
+    border-right: 1px solid var(--nv-border-strong) !important;
 }
 .dayContainer {
-    background: #1a1f2e !important;
+    background: var(--bg-navbar) !important;
 }
 .flatpickr-day {
-    color: #e2e8f0 !important;
+    color: var(--text-bright) !important;
     border-radius: 8px !important;
     border: none !important;
 }
 .flatpickr-day:hover {
-    background: #2d3748 !important;
-    color: #e2e8f0 !important;
+    background: var(--nv-border-strong) !important;
+    color: var(--text-bright) !important;
     border: none !important;
 }
 .flatpickr-day.selected,
 .flatpickr-day.selected:hover {
-    background: #4f8ef7 !important;
+    background: var(--primary) !important;
     color: #ffffff !important;
-    border-color: #4f8ef7 !important;
+    border-color: var(--primary) !important;
     border-radius: 8px !important;
 }
 .flatpickr-day.today {
-    border-color: #4f8ef7 !important;
-    color: #4f8ef7 !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
     font-weight: 700 !important;
 }
 .flatpickr-day.today:hover {
-    background: #2d3748 !important;
+    background: var(--nv-border-strong) !important;
 }
 .flatpickr-day.flatpickr-disabled,
 .flatpickr-day.prevMonthDay,
@@ -1871,14 +1906,14 @@ span.flatpickr-weekday {
     background: transparent !important;
 }
 .numInputWrapper:hover {
-    background: #2d3748 !important;
+    background: var(--nv-border-strong) !important;
 }
 .numInputWrapper span {
-    border-color: #2d3748 !important;
+    border-color: var(--nv-border-strong) !important;
 }
 .numInputWrapper span:after {
-    border-top-color: #8892a4 !important;
-    border-bottom-color: #8892a4 !important;
+    border-top-color: var(--text) !important;
+    border-bottom-color: var(--text) !important;
 }
 .flatpickr-input.a-input { display: none !important; }
 
@@ -1889,79 +1924,79 @@ span.flatpickr-weekday {
     margin-bottom: 0 !important;
 }
 .choices__inner {
-    background-color: #1e2536 !important;
-    border: 1px solid #2d3748 !important;
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--nv-border-strong) !important;
     border-radius: 8px !important;
-    color: #e2e8f0 !important;
+    color: var(--text-bright) !important;
     min-height: 44px !important;
     padding: 6px 12px !important;
     font-size: 0.95rem !important;
 }
 .choices__inner:focus-within {
-    border-color: #4f8ef7 !important;
+    border-color: var(--primary) !important;
     box-shadow: 0 0 0 3px rgba(79,142,247,0.15) !important;
 }
 .choices.is-open .choices__inner {
-    border-color: #4f8ef7 !important;
+    border-color: var(--primary) !important;
     border-radius: 8px 8px 0 0 !important;
 }
 .choices__input {
     background-color: transparent !important;
-    color: #e2e8f0 !important;
+    color: var(--text-bright) !important;
     font-size: 0.95rem !important;
 }
 .choices__input::placeholder {
-    color: #8892a4 !important;
+    color: var(--text) !important;
 }
 .choices__list--single .choices__item {
-    color: #e2e8f0 !important;
+    color: var(--text-bright) !important;
 }
 .choices__placeholder {
-    color: #8892a4 !important;
+    color: var(--text) !important;
     opacity: 1 !important;
 }
 .choices__list--dropdown,
 .choices__list[aria-expanded] {
-    background-color: #1a1f2e !important;
-    border: 1px solid #4f8ef7 !important;
+    background-color: var(--bg-navbar) !important;
+    border: 1px solid var(--primary) !important;
     border-top: none !important;
     border-radius: 0 0 8px 8px !important;
     z-index: 9999 !important;
 }
 .choices__list--dropdown .choices__item {
-    color: #e2e8f0 !important;
+    color: var(--text-bright) !important;
     padding: 10px 14px !important;
     font-size: 0.95rem !important;
 }
 .choices__list--dropdown .choices__item--selectable {
-    color: #e2e8f0 !important;
+    color: var(--text-bright) !important;
 }
 .choices__list--dropdown .choices__item--selectable.is-highlighted,
 .choices__list--dropdown .choices__item--selectable:hover {
-    background-color: #4f8ef7 !important;
+    background-color: var(--primary) !important;
     color: #ffffff !important;
 }
 .choices__list--dropdown .choices__item.is-selected {
     background-color: rgba(79,142,247,0.15) !important;
-    color: #4f8ef7 !important;
+    color: var(--primary) !important;
 }
 .choices__list--dropdown .choices__input {
-    background: #1e2536 !important;
-    border-bottom: 1px solid #2d3748 !important;
-    color: #e2e8f0 !important;
+    background: var(--bg-card) !important;
+    border-bottom: 1px solid var(--nv-border-strong) !important;
+    color: var(--text-bright) !important;
     padding: 10px 14px !important;
 }
 .choices__list--dropdown .choices__input::placeholder {
-    color: #8892a4 !important;
+    color: var(--text) !important;
 }
 .choices[data-type*='select-one']:after {
-    border-color: #8892a4 transparent transparent transparent !important;
+    border-color: var(--text) transparent transparent transparent !important;
 }
 .choices[data-type*='select-one'].is-open:after {
-    border-color: transparent transparent #4f8ef7 transparent !important;
+    border-color: transparent transparent var(--primary) transparent !important;
 }
 .choices__list--multiple .choices__item {
-    background-color: #4f8ef7 !important;
+    background-color: var(--primary) !important;
     border: 1px solid #3a7bd5 !important;
     color: #ffffff !important;
     border-radius: 4px !important;
@@ -1971,18 +2006,40 @@ span.flatpickr-weekday {
 /* Choices.js — scrollbar oscuro en lista desplegable */
 .choices__list--dropdown .choices__list {
     scrollbar-width: thin;
-    scrollbar-color: #4f8ef7 #1a1f2e;
+    scrollbar-color: var(--primary) var(--bg-navbar);
 }
 .choices__list--dropdown .choices__list::-webkit-scrollbar {
     width: 4px !important;
 }
 .choices__list--dropdown .choices__list::-webkit-scrollbar-track {
-    background: #1a1f2e !important;
+    background: var(--bg-navbar) !important;
 }
 .choices__list--dropdown .choices__list::-webkit-scrollbar-thumb {
-    background: #4f8ef7 !important;
+    background: var(--primary) !important;
     border-radius: 2px !important;
 }
 .choices__list--dropdown .choices__list::-webkit-scrollbar-thumb:hover {
-    background: #7aa8f9 !important;
+    background: var(--nv-accent-2) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Tema claro — los pasteles pensados para fondo oscuro (dark)
+   pierden contraste sobre fondo blanco; se oscurecen aquí.
+   ═══════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] .admin-flash--success,
+:root[data-theme="light"] .admin-alert--success { color: #15803d; }
+:root[data-theme="light"] .admin-flash--danger,
+:root[data-theme="light"] .admin-alert--danger,
+:root[data-theme="light"] .a-alert--danger { color: #dc2626; }
+:root[data-theme="light"] .admin-flash--warning { color: #b45309; }
+
+:root[data-theme="light"] .badge--gray,
+:root[data-theme="light"] .badge--inactivo,
+:root[data-theme="light"] .badge--plan-rookie { color: #475569; }
+:root[data-theme="light"] .badge--plan-zenith,
+:root[data-theme="light"] .stat-card.purple .stat-card__icon svg { color: #7c3aed; }
+:root[data-theme="light"] .badge--plan-godmode { color: #b45309; }
+
+:root[data-theme="light"] .plan-card[data-plan="rookie"]  { --plan-color: #475569; }
+:root[data-theme="light"] .plan-card[data-plan="zenith"]  { --plan-color: #7c3aed; }
+:root[data-theme="light"] .plan-card[data-plan="godmode"] { --plan-color: #b45309; }

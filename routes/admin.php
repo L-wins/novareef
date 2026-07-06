@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminColegioController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminLoginController;
 use App\Http\Controllers\Admin\AdminPlanController;
+use App\Http\Controllers\Admin\AdminPreferenciaController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix(config('admin.prefix', 'novareef-panel'))->name('admin.')->group(function (): void {
@@ -21,6 +22,10 @@ Route::prefix(config('admin.prefix', 'novareef-panel'))->name('admin.')->group(f
     // Protegidas
     Route::middleware(['admin.auth'])->group(function (): void {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+        // Preferencia de tema — disponible para el superadmin autenticado
+        Route::patch('/preferencias/tema', [AdminPreferenciaController::class, 'actualizarTema'])
+            ->name('preferencias.tema');
 
         Route::prefix('colegios')->name('colegios.')->group(function (): void {
             Route::get('/',            [AdminColegioController::class, 'index'])->name('index');

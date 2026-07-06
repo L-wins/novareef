@@ -14,6 +14,7 @@ use App\Models\Arbitro;
 use App\Models\CategoriaArbitro;
 use App\Models\EstadoArbitro;
 use App\Services\ArbitroService;
+use App\Services\LimiteService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,6 +34,7 @@ class ArbitroController extends Controller
 
     public function __construct(
         private readonly ArbitroService $arbitros,
+        private readonly LimiteService  $limites,
     ) {}
 
     public function index(Request $request): View
@@ -67,7 +69,11 @@ class ArbitroController extends Controller
         $categorias = $this->categorias($idColegio);
         $estados    = $this->estados();
 
-        return view('arbitros.index', compact('arbitros', 'categorias', 'estados'));
+        return view('arbitros.index', compact('arbitros', 'categorias', 'estados') + [
+            'limiteUsados'     => $this->limites->arbitrosActivos($idColegio),
+            'limite'           => $this->limites->limiteArbitros($idColegio),
+            'limitePorcentaje' => $this->limites->porcentajeUsoArbitros($idColegio),
+        ]);
     }
 
     public function show(int $id): View
@@ -83,10 +89,18 @@ class ArbitroController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(): View|RedirectResponse
     {
+        $idColegio = $this->idColegioActivo();
+
+        if (! $this->limites->puedeCrearArbitro($idColegio)) {
+            return redirect()
+                ->route('arbitros.index')
+                ->with('error', $this->mensajeLimiteAlcanzado($idColegio));
+        }
+
         return view('arbitros.create', [
-            'categorias' => $this->categorias($this->idColegioActivo()),
+            'categorias' => $this->categorias($idColegio),
         ]);
     }
 
@@ -113,12 +127,20 @@ class ArbitroController extends Controller
                 lugarExpedicionCC:   $datos['lugarExpedicionCC'] ?? null,
             );
         } catch (\RuntimeException $e) {
-            return back()->withInput()->withErrors(['emailUsuario' => $e->getMessage()]);
+            return back()->withInput()->with('error', $e->getMessage());
         }
 
         return redirect()
             ->route('arbitros.show', $arbitro->idArbitro)
             ->with('success', "Árbitro registrado correctamente. Carné: {$arbitro->codigoCarnet}");
+    }
+
+    /** Mensaje consistente con el que lanza LimiteService::asegurarPuedeCrearArbitro(). */
+    private function mensajeLimiteAlcanzado(int $idColegio): string
+    {
+        $limite = $this->limites->limiteArbitros($idColegio);
+
+        return "Alcanzaste el límite de árbitros de tu plan actual ({$limite}). Actualiza tu plan para registrar más árbitros.";
     }
 
     public function edit(int $id): View

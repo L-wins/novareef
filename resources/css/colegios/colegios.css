@@ -400,3 +400,21 @@
     font-size: 0.875rem;
     color: var(--accent-light);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Tema claro — los pasteles pensados para fondo oscuro (dark)
+   pierden contraste sobre fondo blanco; se oscurecen aquí.
+   ═══════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] .flash-success       { color: #15803d; }
+:root[data-theme="light"] .flash-error         { color: #dc2626; }
+:root[data-theme="light"] .btn-danger          { color: #dc2626; }
+:root[data-theme="light"] .btn-danger:hover    { color: #b91c1c; }
+:root[data-theme="light"] .btn-success         { color: #15803d; }
+:root[data-theme="light"] .btn-success:hover   { color: #15803d; }
+:root[data-theme="light"] .status-prueba       { color: #b45309; }
+:root[data-theme="light"] .status-suspendido   { color: #dc2626; }
+:root[data-theme="light"] .plan-enterprise     { color: #7c3aed; }
+:root[data-theme="light"] .plan-profesional    { color: #1d4ed8; }
+:root[data-theme="light"] .field-error         { color: #dc2626; }
+:root[data-theme="light"] .btn-icon-view:hover    { color: #1d4ed8; }
+:root[data-theme="light"] .btn-icon-suspend:hover { color: #dc2626; }

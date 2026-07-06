@@ -89,6 +89,40 @@
 
     </div>
 
+    {{-- === USO DEL PLAN === --}}
+    <div class="section-head">
+        <span class="section-label">Uso de tu plan</span>
+        <div class="section-rule"></div>
+    </div>
+
+    @php
+        $colorUso = $limiteArbitrosPorcentaje >= 100 ? 'red' : ($limiteArbitrosPorcentaje >= 80 ? 'yellow' : 'green');
+    @endphp
+    <div class="plan-usage">
+        <div class="plan-usage-head">
+            <span class="plan-usage-label">
+                <i class="fa-solid fa-users"></i>
+                Árbitros
+            </span>
+            <span class="plan-usage-value" data-color="{{ $limiteArbitros === null ? 'green' : $colorUso }}">
+                {{ $limiteArbitrosUsados }} {{ $limiteArbitros === null ? '(ilimitado)' : "/ {$limiteArbitros}" }}
+            </span>
+        </div>
+        @if ($limiteArbitros !== null)
+            <div class="plan-usage-bar">
+                <div class="plan-usage-fill" data-color="{{ $colorUso }}"
+                     style="width: {{ min($limiteArbitrosPorcentaje, 100) }}%;"></div>
+            </div>
+        @endif
+    </div>
+
+    @include('partials.limite-plan-banner', [
+        'recurso'    => 'árbitros',
+        'usados'     => $limiteArbitrosUsados,
+        'limite'     => $limiteArbitros,
+        'porcentaje' => $limiteArbitrosPorcentaje,
+    ])
+
     {{-- === MÓDULOS === --}}
     <section class="modules-section">
         <div class="section-head">
