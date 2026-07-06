@@ -3,7 +3,7 @@
  * Echo + Reverb + lógica de asignación, confirmación, rechazo y estado.
  */
 
-// ── Laravel Echo + Reverb ─────────────────────────────────────────────────────
+// ── Laravel Echo + Reverb ─────────────────
 import Echo   from 'laravel-echo';
 import Pusher from 'pusher-js';
 
@@ -29,7 +29,7 @@ if (typeof window.Echo === 'undefined') {
     });
 }
 
-// ── Suscripción en tiempo real ────────────────────────────────────────────────
+// ── Suscripción en tiempo real ────────────
 document.addEventListener('DOMContentLoaded', function () {
 
     window.initNovaSelects?.();
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // ── Búsqueda de árbitros (show.blade) ────────────────────────────────────
+    // ── Búsqueda de árbitros (show.blade) 
     document.querySelectorAll('.arbitro-search').forEach(function (wrap) {
         const input      = wrap.querySelector('.arbitro-search__input');
         const results    = wrap.querySelector('.arbitro-search__results');
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ── Preview de roles según formato ───────────────────────────────────────
+    // ── Preview de roles según formato ───
     const selFormato = document.getElementById('sel-formato');
     if (selFormato) {
         selFormato.addEventListener('change', mostrarPreviewFormato);
@@ -101,11 +101,11 @@ document.addEventListener('DOMContentLoaded', function () {
         cargarDivisionesYSedes(selTorneo.value);
     }
 
-    // ── Contadores de textarea ────────────────────────────────────────────────
+    // ── Contadores de textarea ────────────
     configurarContador('obs-textarea', 'obs-counter');
     configurarContador('rechazo-motivo', 'rechazo-counter');
 
-    // ── Botón confirmar rechazo ───────────────────────────────────────────────
+    // ── Botón confirmar rechazo ───────────
     const btnConfRechazo = document.getElementById('btn-confirmar-rechazo');
     if (btnConfRechazo) {
         btnConfRechazo.addEventListener('click', function () {
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// ── Búsqueda de árbitros con debounce ────────────────────────────────────────
+// ── Búsqueda de árbitros con debounce ────
 async function buscarArbitros(partidoId, query, rolId, resultsEl) {
     if (!window.buscarUrl) return;
 
@@ -178,7 +178,7 @@ function buildBadges(a) {
     return badges.join('');
 }
 
-// ── Asignar árbitro con manejo de advertencias ────────────────────────────────
+// ── Asignar árbitro con manejo de advertencias ────────
 async function asignarArbitro(partidoId, arbitro, rolId) {
     const advertencias = [];
     if (arbitro.esSuspendido)           advertencias.push('⚠️ Este árbitro está <strong>suspendido</strong>.');
@@ -223,7 +223,7 @@ async function asignarArbitro(partidoId, arbitro, rolId) {
     }
 }
 
-// ── Quitar designación ────────────────────────────────────────────────────────
+// ── Quitar designación ────────────────────
 async function quitarDesignacion(desigId, rolId) {
     const result = await novaAlert.confirm({
         titulo:         'Quitar designación',
@@ -255,7 +255,7 @@ async function quitarDesignacion(desigId, rolId) {
 }
 window.quitarDesignacion = quitarDesignacion;
 
-// ── Cambiar estado del partido ────────────────────────────────────────────────
+// ── Cambiar estado del partido ────────────
 async function cambiarEstado(partidoId, version) {
     const estadoNuevo = document.getElementById('estado-nuevo')?.value;
     const detalle     = document.getElementById('estado-detalle')?.value ?? '';
@@ -297,7 +297,7 @@ async function cambiarEstado(partidoId, version) {
 }
 window.cambiarEstado = cambiarEstado;
 
-// ── Confirmar designación (árbitro) ───────────────────────────────────────────
+// ── Confirmar designación (árbitro) ───────
 async function confirmarDesignacion(desigId) {
     const result = await novaAlert.confirm({
         titulo:         '¿Confirmar asistencia?',
@@ -328,7 +328,7 @@ async function confirmarDesignacion(desigId) {
 }
 window.confirmarDesignacion = confirmarDesignacion;
 
-// ── Modal de rechazo ─────────────────────────────────────────────────────────
+// ── Modal de rechazo ─────────────────────
 let desigIdParaRechazar = null;
 
 function abrirModalRechazo(desigId) {
@@ -378,7 +378,7 @@ async function rechazarDesignacion(desigId, motivo) {
     }
 }
 
-// ── Carga dinámica torneos → divisiones y sedes ───────────────────────────────
+// ── Carga dinámica torneos → divisiones y sedes ───────
 // Destruye la instancia Choices existente, repuebla el <select> nativo y la recrea.
 async function cargarDivisionesYSedes(torneoId) {
     const selDiv  = document.getElementById('sel-division');
@@ -458,7 +458,7 @@ async function cargarDivisionesYSedes(torneoId) {
     }
 }
 
-// ── Preview de roles según formato ───────────────────────────────────────────
+// ── Preview de roles según formato ───────
 function mostrarPreviewFormato() {
     const sel     = document.getElementById('sel-formato');
     const preview = document.getElementById('formato-preview');
@@ -479,7 +479,7 @@ function mostrarPreviewFormato() {
     preview.style.display = 'block';
 }
 
-// ── Actualizar cards en tiempo real (Reverb) ──────────────────────────────────
+// ── Actualizar cards en tiempo real (Reverb) 
 function actualizarCardPartido(partido) {
     const card = document.querySelector(`.partido-card[data-partido="${partido.idPartido}"]`);
     if (!card) return;
@@ -508,7 +508,7 @@ function actualizarRolCard(designacion) {
     }
 }
 
-// ── Publicar partido (borrador → programado) ─────────────────────────────────
+// ── Publicar partido (borrador → programado) ─────────
 async function publicarPartido(partidoId) {
     const result = await novaAlert.confirm({
         titulo:         '¿Publicar partido?',
@@ -576,7 +576,7 @@ async function finalizarPartido(partidoId) {
 }
 window.finalizarPartido = finalizarPartido;
 
-// ── Revertir finalizado → programado (solo ejecutivo) ────────────────────────
+// ── Revertir finalizado → programado (solo ejecutivo) 
 async function revertirFinalizado(partidoId, version) {
     const result = await novaAlert.confirm({
         titulo:         '¿Revertir a programado?',
@@ -612,7 +612,7 @@ async function revertirFinalizado(partidoId, version) {
 }
 window.revertirFinalizado = revertirFinalizado;
 
-// ── Asignar veedor al partido ─────────────────────────────────────────────────
+// ── Asignar veedor al partido ─────────────
 async function asignarVeedor(partidoId) {
     const sel = document.getElementById('veedor-select');
     const idVeedor = sel ? (sel._choicesInstance?.getValue(true) ?? sel.value) : null;

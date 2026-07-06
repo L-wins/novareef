@@ -52,7 +52,7 @@ class ArbitrosTestSeeder extends Seeder
             for ($n = 1; $n <= self::ARBITROS_POR_COLEGIO; $n++) {
                 $email = "arbitro{$n}.{$prefijoEmail}@test.com";
 
-                // ── Usuario ──────────────────────────────────────────────────
+                // ── Usuario ──────────────
                 $usuario = User::withTrashed()->updateOrCreate(
                     ['emailUsuario' => $email],
                     [
@@ -71,7 +71,7 @@ class ArbitrosTestSeeder extends Seeder
                     $usuario->assignRole('arbitro');
                 }
 
-                // ── Árbitro ───────────────────────────────────────────────────
+                // ── Árbitro ───────────────
                 $tieneVehiculo = ($n % 2 === 0);
                 $categoria     = $categorias->get(($n - 1) % $categorias->count());
 

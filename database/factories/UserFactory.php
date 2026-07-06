@@ -19,7 +19,7 @@ class UserFactory extends Factory
             'telefonoUsuario' => fake()->optional()->numerify('3#########'),
             'rolUsuario'      => 'arbitro',
             'estadoUsuario'   => 'activo',
-            'temaPreferencia' => 'oscuro',
+            'temaPreferencia' => 'dark',
             'remember_token'  => Str::random(10),
         ];
     }

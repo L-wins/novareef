@@ -1,6 +1,10 @@
 // NovaReef — Panel Admin JS
 
+import { initAutoFilter } from '../shared/auto-filter.js';
+
 document.addEventListener('DOMContentLoaded', function () {
+
+    initAutoFilter();
 
     //  OTP Inputs 
     const digits  = document.querySelectorAll('.otp-digit');

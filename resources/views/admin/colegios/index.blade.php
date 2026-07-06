@@ -1,3 +1,4 @@
+
 @extends('admin.layouts.app')
 
 @section('titulo', 'Colegios')
@@ -22,7 +23,7 @@
 
 {{-- Buscador --}}
 <div class="admin-card" style="padding:0.875rem 1.25rem;margin-bottom:1rem;">
-    <form method="GET" action="{{ route('admin.colegios.index') }}">
+    <form method="GET" action="{{ route('admin.colegios.index') }}" data-auto-filter>
         <div class="admin-search-bar">
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" name="q" value="{{ request('q') }}"

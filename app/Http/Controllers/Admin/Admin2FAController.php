@@ -73,7 +73,7 @@ class Admin2FAController extends Controller
             ->with('success', '2FA desactivado correctamente.');
     }
 
-    // ── Helpers privados ──────────────────────────────────────────────────────
+    // ── Helpers privados ──────────────────
 
     private function adminAutenticado(): Admin
     {

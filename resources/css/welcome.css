@@ -5,11 +5,11 @@
 @import "@fortawesome/fontawesome-free/css/fontawesome.min.css" layer(base);
 @import "./vendor/fontawesome-fonts.css" layer(base);
 
-/* ============================================================
+/* 
    NovaReef — Página pública
    Tono: arbitraje profesional, premium, sobrio
    Paleta: slate base · emerald primario · amber/red como acentos
-   ============================================================ */
+    */
 
 body {
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;

@@ -17,7 +17,7 @@ class DisponibilidadArbitro extends Model
     protected $keyType      = 'int';
     public    $incrementing = true;
 
-    // ── Franjas horarias disponibles ──────────────────────────────────────────
+    // ── Franjas horarias disponibles ──────
     public const FRANJA_AM        = 'am';
     public const FRANJA_PM        = 'pm';
     public const FRANJA_NOCHE     = 'noche';
@@ -40,7 +40,7 @@ class DisponibilidadArbitro extends Model
         'fechaDisponibilidad' => 'date',
     ];
 
-    // ── Catálogo legible en español ───────────────────────────────────────────
+    // ── Catálogo legible en español ───────
 
     /**
      * Retorna todas las franjas con su etiqueta en español.

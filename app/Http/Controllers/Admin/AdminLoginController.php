@@ -118,7 +118,7 @@ class AdminLoginController extends Controller
         return redirect()->route('welcome');
     }
 
-    // ── Helpers privados ──────────────────────────────────────────────────────
+    // ── Helpers privados ──────────────────
 
     /**
      * Clave única de throttle por IP + email — identifica al atacante, no al admin.

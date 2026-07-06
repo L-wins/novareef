@@ -142,7 +142,7 @@ final class DisponibilidadService
         return compact('disponibilidades', 'indisponibilidades');
     }
 
-    // ── Helpers privados ──────────────────────────────────────────────────────
+    // ── Helpers privados ──────────────────
 
     private function registrarExtraordinariaSiAfecta(
         Arbitro $arbitro,

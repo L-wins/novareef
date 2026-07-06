@@ -25,7 +25,7 @@ class LimiteServiceTest extends TestCase
         $this->limites = app(LimiteService::class);
     }
 
-    // ── Árbitros ──────────────────────────────────────────────────────────────
+    // ── Árbitros ──
 
     public function test_plan_ilimitado_siempre_permite_crear_arbitros(): void
     {
@@ -83,7 +83,7 @@ class LimiteServiceTest extends TestCase
         $this->assertFalse($this->limites->puedeCrearArbitro($colegio->idColegio));
     }
 
-    // ── Cuentas admin ─────────────────────────────────────────────────────────
+    // ── Cuentas admin ─────────────────────
 
     public function test_cuenta_admin_activas_no_incluye_arbitros_ni_cuentas_revocadas(): void
     {
@@ -120,7 +120,7 @@ class LimiteServiceTest extends TestCase
         $this->assertTrue($this->limites->puedeCrearCuentaAdmin($colegio->idColegio));
     }
 
-    // ── Módulos por plan ──────────────────────────────────────────────────────
+    // ── Módulos por plan ──────────────────
 
     public function test_modulo_habilitado_respeta_el_catalogo_del_plan(): void
     {

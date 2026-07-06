@@ -1768,9 +1768,9 @@ select.admin-input { cursor: pointer; appearance: none; background-image: url("d
 .admin-alert--success { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: #6ee7b7; }
 .admin-alert--danger  { background: rgba(239,68,68,0.08);  border: 1px solid rgba(239,68,68,0.2);  color: #fca5a5; }
 
-/* ═══════════════════════════════════════════════════════════════
+/* ═════
    Flatpickr — tema oscuro (panel admin)
-   ═══════════════════════════════════════════════════════════════ */
+   ═════ */
 .flatpickr-calendar {
     background: #1a1f2e !important;
     border: 1px solid #2d3748 !important;
@@ -1882,9 +1882,9 @@ span.flatpickr-weekday {
 }
 .flatpickr-input.a-input { display: none !important; }
 
-/* ═══════════════════════════════════════════════════════════════
+/* ═════
    Choices.js — tema oscuro (panel admin)
-   ═══════════════════════════════════════════════════════════════ */
+   ═════ */
 .choices {
     margin-bottom: 0 !important;
 }

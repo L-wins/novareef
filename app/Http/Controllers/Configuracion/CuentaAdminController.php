@@ -31,7 +31,8 @@ class CuentaAdminController extends Controller
         $cuentas = User::where('idColegio', $idColegio)
             ->whereIn('rolUsuario', LimiteService::ROLES_ADMIN)
             ->orderBy('nombreUsuario')
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         return view('configuracion.cuentas-admin.index', [
             'cuentas'    => $cuentas,

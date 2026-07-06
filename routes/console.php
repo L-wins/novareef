@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\FinalizarPartidosAutomaticoJob;
+use App\Jobs\IniciarPartidosAutomaticoJob;
 use App\Jobs\VerificarConfirmacionesJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -10,7 +11,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
-// ── Scheduler NovaReef ────────────────────────────────────────────────────────
+// ── Scheduler NovaReef ────────────────────
 
 // Marca como CRÍTICOS los partidos del día sin designaciones completas.
 // Se ejecuta a las 06:00 todos los días para alertar antes del inicio de jornada.
@@ -26,6 +27,9 @@ Schedule::command('novareef:habilitar-disponibilidad')->dailyAt('00:01');
 // fechaInicio/fechaFin — antes estadoTorneo era 100% manual y podía quedar
 // desactualizado indefinidamente. Nunca toca 'cancelado' ni un 'finalizado' ya puesto.
 Schedule::command('novareef:actualizar-estados-torneo')->dailyAt('00:03');
+
+// Inicia automáticamente partidos confirmados cuya hora ya llegó (asigna horaInicio).
+Schedule::job(new IniciarPartidosAutomaticoJob)->everyFiveMinutes();
 
 // Finaliza automáticamente partidos en_curso que lleven más de 150 minutos.
 Schedule::job(new FinalizarPartidosAutomaticoJob)->everyFiveMinutes();

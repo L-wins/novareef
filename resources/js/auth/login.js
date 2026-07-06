@@ -1,6 +1,6 @@
-/* ================================================
+/* 
    login.js — Lógica del formulario de autenticación
-   ================================================ */
+    */
 
 document.addEventListener('DOMContentLoaded', () => {
     initPasswordToggle();

@@ -42,7 +42,8 @@ class AdminPlanController extends Controller
         $suscripciones = $plan->suscripciones()
             ->with('colegio:idColegio,nombreColegio,codigoColegio')
             ->orderByDesc('fechaInicio')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         return view('admin.planes.show', [
             'plan'            => $plan,

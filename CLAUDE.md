@@ -228,6 +228,28 @@ En `bootstrap/app.php`:
 - `window.novaAlert.confirm({ titulo, texto, icono, confirmColor, confirmarTexto, iconColor })` — confirmación destructiva
 - Flash messages del servidor se disparan automáticamente desde `layouts/app.blade.php`
 
+### Auto-filter (formularios de filtros GET)
+- Módulo global: `resources/js/shared/auto-filter.js` (importado en `app.js` y `admin/admin.js`)
+- Marcar el `<form method="GET">` con `data-auto-filter` — NUNCA en formularios de acciones (POST/PUT/DELETE)
+- select / `data-nova-date` / checkbox / radio → submit al cambiar; inputs de texto → debounce 450 ms
+- Botón "Filtrar" con `data-auto-filter-hide`: se oculta con JS activo (queda como fallback sin JS)
+- Campos vacíos se excluyen del querystring; el foco del buscador se restaura tras recargar
+- Backend sin cambios: el controlador lee `Request` y las listas paginadas usan `->withQueryString()` (obligatorio para no perder filtros al paginar)
+
+### Sistema de temas (light / dark / system)
+- **Tokens**: `resources/css/tokens.css` — única fuente de verdad. Dark = default (`:root`), light via `:root[data-theme="light"]`
+- **Regla**: componentes consumen tokens `--nv-*` (o los alias legacy `--bg-*`/`--text-*`/`--c-*` ya mapeados) — **NUNCA hex directos** en CSS de componentes
+- **BD**: `usuarios.temaPreferencia` VARCHAR(10) — valores `light|dark|system` (default `dark`)
+- **Anti-FOUC**: `layouts/partials/theme-boot.blade.php` — único JS inline permitido del proyecto (render-blocking, resuelve `system` → `data-theme` antes del primer paint)
+- **Lógica**: `resources/js/shared/theme.js` — cambia `data-theme`, persiste via `PATCH /preferencias/tema`, sigue `prefers-color-scheme` en vivo cuando la preferencia es `system`
+- **Selector**: botones `[data-theme-set="light|dark|system"]` en el navbar del layout usuario
+- El panel admin (admin.css) sigue dark-only — pendiente de migrar a tokens
+
+### Separación de capas (regla dura)
+- No mezclar JS/CSS inline en Blade: JS va en `resources/js/` (módulos), CSS en `resources/css/`
+- Blade solo puede tender "puentes de datos" al JS: atributos `data-*` o `window.x = "{{ ... }}"` — datos, no lógica
+- Única excepción documentada: `theme-boot` (ver arriba)
+
 ---
 
 ## Panel Admin — assets

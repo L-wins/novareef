@@ -28,7 +28,7 @@
     </div>
 
     {{-- Barra de búsqueda + filtros --}}
-    <form method="GET" action="{{ route('arbitros.index') }}" class="filter-bar filter-bar-grid">
+    <form method="GET" action="{{ route('arbitros.index') }}" class="filter-bar filter-bar-grid" data-auto-filter>
         <div class="filter-group filter-grow">
             <label class="filter-label">Buscar</label>
             <input type="text" name="buscar"
@@ -82,7 +82,7 @@
         </div>
 
         <div class="filter-group filter-actions">
-            <button type="submit" class="btn btn-primary btn-sm">
+            <button type="submit" class="btn btn-primary btn-sm" data-auto-filter-hide>
                 <i class="fa-solid fa-magnifying-glass"></i>
                 Buscar
             </button>

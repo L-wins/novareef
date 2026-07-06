@@ -64,7 +64,7 @@ class CategoriaArbitroController extends Controller
             ->with('success', 'Categoría eliminada correctamente.');
     }
 
-    // ── Helpers privados ──────────────────────────────────────────────────────
+    // ── Helpers privados ──────────────────
 
     /**
      * Resuelve una categoría por ID verificando que pertenezca al colegio activo.

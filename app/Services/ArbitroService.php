@@ -217,10 +217,10 @@ final class ArbitroService
             );
         }
 
-        // ── Generar contraseña una sola vez ───────────────────────────────────
+        // ── Generar contraseña una sola vez ─
         $passwordPlano = PasswordGenerator::generate();
 
-        // ── Transacción propia ────────────────────────────────────────────────
+        // ── Transacción propia ────────────
         // DB::transaction() anida automáticamente con savepoints si ya hay una
         // transacción activa en el caller (ArbitroController, ColegioController).
         // DB::afterCommit() espera a que TODAS las transacciones externas confirmen.
@@ -267,7 +267,7 @@ final class ArbitroService
         });
     }
 
-    // ── Helpers privados ──────────────────────────────────────────────────────
+    // ── Helpers privados ──────────────────
 
     private function validarRol(string $rol): void
     {

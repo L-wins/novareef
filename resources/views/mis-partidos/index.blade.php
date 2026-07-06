@@ -7,27 +7,6 @@
     @vite(['resources/css/designaciones/designaciones.css'])
 @endpush
 
-@php
-    /**
-     * Chip de compensación según modalidad de pago y tarifa.
-     * campo + tarifa → valor COP · nomina → nómina · sin tarifa → consultar
-     */
-    $renderPago = function ($desig) {
-        $pago = $desig->pago ?? ['valor' => null, 'modalidad' => null];
-
-        if (($pago['modalidad'] ?? null) === 'nomina') {
-            return '<span class="pago-chip pago-chip--nomina"><i class="fa-solid fa-file-invoice-dollar"></i> Nómina</span>';
-        }
-
-        if ($pago['valor'] !== null) {
-            $valor = '$' . number_format($pago['valor'], 0, ',', '.') . ' COP';
-            return '<span class="pago-chip pago-chip--campo"><i class="fa-solid fa-coins"></i> ' . $valor . '</span>';
-        }
-
-        return '<span class="pago-chip pago-chip--consultar"><i class="fa-regular fa-circle-question"></i> Consultar con designador</span>';
-    };
-@endphp
-
 @section('contenido')
 <div class="container">
 
@@ -38,7 +17,7 @@
             <h1 class="mis-hero__saludo">
                 Hola, {{ \Illuminate\Support\Str::of($arbitro->usuario?->nombreUsuario ?? 'Árbitro')->before(' ') }}
             </h1>
-            <p class="mis-hero__sub">Tus designaciones activas e historial de partidos.</p>
+            <p class="mis-hero__sub">Tus designaciones pendientes y próximos partidos.</p>
         </div>
         <div class="mis-hero__stats">
             <div class="mis-stat {{ $hoyPartidos->isNotEmpty() ? 'mis-stat--hoy' : '' }}">
@@ -53,6 +32,9 @@
                 <span class="mis-stat__num">{{ $proximos->count() + $mananaPartidos->count() }}</span>
                 <span class="mis-stat__label">Próximos</span>
             </div>
+            <a href="{{ route('mis-partidos.historial') }}" class="btn btn-ghost btn-sm mis-hero__historial">
+                <i class="fa-solid fa-clock-rotate-left"></i> Ver historial
+            </a>
         </div>
     </div>
 
@@ -67,8 +49,7 @@
         @foreach($hoyPartidos as $desig)
         @php
             $partido = $desig->partido;
-            $totalDesig = $partido->designaciones->count();
-            $todosConfirmados = $totalDesig > 0 && $partido->designaciones->every(fn($d) => $d->estaConfirmada());
+            $puedeVerDetalle = $desig->estaConfirmada();
             $soyCentral = $desig->rol?->nombre === 'Central';
             $enCurso = $partido->estadoPartido === 'en_curso';
         @endphp
@@ -100,9 +81,9 @@
             </div>
 
             <div class="mis-card-acciones">
-                {!! $renderPago($desig) !!}
+                @include('mis-partidos.partials.pago-chip', ['pago' => $desig->pago])
 
-                @if($todosConfirmados)
+                @if($puedeVerDetalle)
                 <a href="{{ route('mis-partidos.detalle', $partido->idPartido) }}" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-arrow-right"></i> Gestionar partido
                 </a>
@@ -156,8 +137,7 @@
         @foreach($mananaPartidos as $desig)
         @php
             $partido = $desig->partido;
-            $totalDesig = $partido->designaciones->count();
-            $todosConfirmados = $totalDesig > 0 && $partido->designaciones->every(fn($d) => $d->estaConfirmada());
+            $puedeVerDetalle = $desig->estaConfirmada();
         @endphp
         <div class="mis-partido-card mis-partido-card--manana"
              id="desig-card-{{ $desig->idDesignacion }}"
@@ -198,9 +178,9 @@
             @endif
 
             <div class="mis-card-acciones">
-                {!! $renderPago($desig) !!}
+                @include('mis-partidos.partials.pago-chip', ['pago' => $desig->pago])
 
-                @if($todosConfirmados)
+                @if($puedeVerDetalle)
                 <a href="{{ route('mis-partidos.detalle', $partido->idPartido) }}" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-arrow-right"></i> Gestionar partido
                 </a>
@@ -227,8 +207,7 @@
         @foreach($proximos as $desig)
         @php
             $partido = $desig->partido;
-            $totalDesig = $partido->designaciones->count();
-            $todosConfirmados = $totalDesig > 0 && $partido->designaciones->every(fn($d) => $d->estaConfirmada());
+            $puedeVerDetalle = $desig->estaConfirmada();
         @endphp
         <div class="mis-partido-card"
              id="desig-card-{{ $desig->idDesignacion }}"
@@ -268,9 +247,9 @@
             @endif
 
             <div class="mis-card-acciones">
-                {!! $renderPago($desig) !!}
+                @include('mis-partidos.partials.pago-chip', ['pago' => $desig->pago])
 
-                @if($todosConfirmados)
+                @if($puedeVerDetalle)
                 <a href="{{ route('mis-partidos.detalle', $partido->idPartido) }}" class="btn btn-primary btn-sm">
                     <i class="fa-solid fa-arrow-right"></i> Gestionar partido
                 </a>
@@ -286,52 +265,7 @@
     </div>
     @endif
 
-    {{-- ═══ HISTORIAL ═══ --}}
-    @if($historial->isNotEmpty())
-    <div class="mis-partidos-section">
-        <div class="mis-section-label">
-            <i class="fa-solid fa-history"></i>
-            Historial
-        </div>
-        <div class="table-card">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Partido</th>
-                        <th>Fecha</th>
-                        <th>Rol</th>
-                        <th>Pago</th>
-                        <th>Mi estado</th>
-                        <th>Estado partido</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($historial as $desig)
-                    @php $partido = $desig->partido; @endphp
-                    <tr>
-                        <td>{{ $partido->equipoLocal }} vs {{ $partido->equipoVisitante }}</td>
-                        <td>{{ $partido->fechaPartido?->locale('es')->isoFormat('D/M/YYYY') }}</td>
-                        <td>{{ $desig->rol?->nombre ?? '—' }}</td>
-                        <td>{!! $renderPago($desig) !!}</td>
-                        <td>
-                            <span class="partido-estado-badge estado-{{ $desig->estadoDesignacion }}" style="font-size:.72rem">
-                                {{ ucfirst($desig->estadoDesignacion) }}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="partido-estado-badge estado-{{ $partido->estadoPartido }}" style="font-size:.72rem">
-                                {{ ucfirst(str_replace('_', ' ', $partido->estadoPartido)) }}
-                            </span>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
-    @endif
-
-    @if($hoyPartidos->isEmpty() && $mananaPartidos->isEmpty() && $proximos->isEmpty() && $historial->isEmpty())
+    @if($hoyPartidos->isEmpty() && $mananaPartidos->isEmpty() && $proximos->isEmpty())
     <div class="empty-state">
         <i class="fa-solid fa-futbol" style="font-size:2.5rem;color:var(--text-muted);margin-bottom:1rem"></i>
         <p class="empty-state__title">Sin designaciones</p>
@@ -375,7 +309,7 @@ window.confirmarBase = "{{ url('/mis-partidos') }}";
 window.rechazarBase  = "{{ url('/mis-partidos') }}";
 window.finalizarBase = "{{ url('/designaciones/partido') }}";
 
-// ── Etiquetas dinámicas ──────────────────────────────────────────────────────
+// ── Etiquetas dinámicas ──────────────────
 function calcularEtiqueta(fechaPartido) {
     const hoy    = new Date(); hoy.setHours(0,0,0,0);
     const partido= new Date(fechaPartido + 'T00:00:00');

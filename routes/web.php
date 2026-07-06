@@ -34,6 +34,10 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/mi-perfil/completar',  [ArbitroPerfilController::class, 'completar'])->name('arbitros.completar-perfil');
     Route::post('/mi-perfil/completar', [ArbitroPerfilController::class, 'guardar'])->name('arbitros.guardar-perfil');
+
+    // Preferencia de tema — disponible para cualquier usuario autenticado
+    Route::patch('/preferencias/tema', [\App\Http\Controllers\Configuracion\PreferenciaController::class, 'actualizarTema'])
+        ->name('preferencias.tema');
 });
 
 // Rutas privadas (requieren autenticación)
@@ -160,6 +164,8 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     //  Mis partidos (árbitro)
     Route::prefix('mis-partidos')->name('mis-partidos.')->group(function () {
         Route::get('/',           [DesignacionController::class, 'misPartidos'])->name('index');
+        Route::get('/historial',  [DesignacionController::class, 'historialPartidos'])->name('historial');
+        Route::get('/historial/pdf', [DesignacionController::class, 'historialPdf'])->name('historial.pdf');
         Route::get('/{id}',       [DesignacionController::class, 'detallePartido'])->name('detalle');
         Route::post('/{id}/confirmar', [DesignacionController::class, 'confirmarDesignacion'])->name('confirmar');
         Route::post('/{id}/rechazar',  [DesignacionController::class, 'rechazarDesignacion'])->name('rechazar');

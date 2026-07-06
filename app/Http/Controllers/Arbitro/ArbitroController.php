@@ -142,7 +142,7 @@ class ArbitroController extends Controller
             ->with('success', 'Árbitro actualizado correctamente.');
     }
 
-    // ── Gestión de estados ────────────────────────────────────────────────────
+    // ── Gestión de estados ────────────────
 
     public function toggleEstado(ToggleEstadoArbitroRequest $request, int $id): RedirectResponse
     {
@@ -192,12 +192,13 @@ class ArbitroController extends Controller
             ->with(['usuario', 'categoria'])
             ->where('idColegio', $this->idColegioActivo())
             ->orderByDesc('deleted_at')
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         return view('arbitros.archivados', compact('arbitros'));
     }
 
-    // ── Helpers privados ──────────────────────────────────────────────────────
+    // ── Helpers privados ──────────────────
 
     /**
      * Resuelve un árbitro por ID dentro del colegio activo — centraliza el

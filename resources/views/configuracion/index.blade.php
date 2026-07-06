@@ -17,7 +17,7 @@
         @csrf
         @method('PUT')
 
-        {{-- ── Día de reporte de disponibilidad ──────────────────────────── --}}
+        {{-- ── Día de reporte de disponibilidad ──── --}}
         <div class="detail-card" style="max-width:640px;">
             <div class="detail-card-header">
                 <div class="detail-card-title">
@@ -60,7 +60,7 @@
             </div>
         </div>
 
-        {{-- ── Confirmación de designaciones ─────────────────────────────── --}}
+        {{-- ── Confirmación de designaciones ─────── --}}
         <div class="detail-card" style="max-width:640px;margin-top:1.5rem;">
             <div class="detail-card-header">
                 <div class="detail-card-title">

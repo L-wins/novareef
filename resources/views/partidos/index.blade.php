@@ -41,7 +41,7 @@
     @endif
 
     {{-- FILTROS --}}
-    <form method="GET" action="{{ route('partidos.index', $torneo->idTorneo) }}" class="filter-bar-grid">
+    <form method="GET" action="{{ route('partidos.index', $torneo->idTorneo) }}" class="filter-bar-grid" data-auto-filter>
         <div class="filter-group">
             <label class="filter-label">Estado</label>
             <select name="estado" class="filter-select"
@@ -72,7 +72,7 @@
                    value="{{ request('fecha') }}" class="filter-input">
         </div>
         <div class="filter-group filter-actions">
-            <button type="submit" class="btn btn-primary btn-sm">
+            <button type="submit" class="btn btn-primary btn-sm" data-auto-filter-hide>
                 <i class="fa-solid fa-magnifying-glass"></i>
                 Filtrar
             </button>

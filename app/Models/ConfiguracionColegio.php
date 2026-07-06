@@ -14,7 +14,7 @@ class ConfiguracionColegio extends Model
     protected $keyType    = 'int';
     public    $incrementing = true;
 
-    // ── Claves de configuración ───────────────────────────────────────────────
+    // ── Claves de configuración ───────────
     public const DIA_DISPONIBILIDAD        = 'dia_disponibilidad';
     public const HORAS_LIMITE_CONFIRMACION = 'horas_limite_confirmacion';
 
@@ -30,7 +30,7 @@ class ConfiguracionColegio extends Model
         'descripcion',
     ];
 
-    // ── Métodos estáticos ─────────────────────────────────────────────────────
+    // ── Métodos estáticos ─────────────────
 
     /**
      * Obtiene el valor de una clave para un colegio, o retorna el default.

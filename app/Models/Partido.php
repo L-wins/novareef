@@ -18,7 +18,7 @@ class Partido extends Model
     protected $keyType      = 'int';
     public    $incrementing = true;
 
-    // ── Estados del partido ───────────────────────────────────────────────────
+    // ── Estados del partido ───────────────
     public const ESTADO_BORRADOR   = 'borrador';
     public const ESTADO_PROGRAMADO = 'programado';
     public const ESTADO_EN_CURSO   = 'en_curso';

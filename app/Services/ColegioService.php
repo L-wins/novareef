@@ -156,7 +156,7 @@ final class ColegioService
         return self::ESTADO_LABELS[$estadoFinal];
     }
 
-    // ── Helpers privados ──────────────────────────────────────────────────────
+    // ── Helpers privados ──────────────────
 
     private function crearSuscripcion(Colegio $colegio, Plan $plan): void
     {

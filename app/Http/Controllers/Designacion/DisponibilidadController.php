@@ -28,7 +28,7 @@ class DisponibilidadController extends Controller
         private readonly DisponibilidadService $disponibilidad,
     ) {}
 
-    // ── index ─────────────────────────────────────────────────────────────────
+    // ── index ─────
 
     public function index(): View
     {
@@ -65,7 +65,7 @@ class DisponibilidadController extends Controller
         ]);
     }
 
-    // ── store (AJAX) ──────────────────────────────────────────────────────────
+    // ── store (AJAX) ──────────────────────
 
     public function store(StoreDisponibilidadRequest $request): JsonResponse
     {
@@ -80,7 +80,7 @@ class DisponibilidadController extends Controller
         return response()->json(['success' => true, 'message' => 'Disponibilidad guardada correctamente.']);
     }
 
-    // ── marcarNoDisponible (AJAX DELETE) ──────────────────────────────────────
+    // ── marcarNoDisponible (AJAX DELETE) ──
 
     public function marcarNoDisponible(MarcarNoDisponibleRequest $request, string $fecha): JsonResponse
     {
@@ -103,7 +103,7 @@ class DisponibilidadController extends Controller
         ]);
     }
 
-    // ── indisponibilidadExtraordinaria ────────────────────────────────────────
+    // ── indisponibilidadExtraordinaria ────
 
     public function indisponibilidadExtraordinaria(IndisponibilidadExtraordinariaRequest $request): RedirectResponse
     {
@@ -124,7 +124,7 @@ class DisponibilidadController extends Controller
         return back()->with('success', 'Indisponibilidad extraordinaria registrada correctamente.' . $sufijo);
     }
 
-    // ── verDisponibilidad (AJAX — para designador) ────────────────────────────
+    // ── verDisponibilidad (AJAX — para designador) ────
 
     public function verDisponibilidad(int $arbitroId): JsonResponse
     {

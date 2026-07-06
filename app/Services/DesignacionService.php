@@ -487,7 +487,7 @@ final class DesignacionService
         })->all();
     }
 
-    // ── Helpers privados ──────────────────────────────────────────────────────
+    // ── Helpers privados ──────────────────
 
     private function franjaDesdeHora(string $hora): string
     {

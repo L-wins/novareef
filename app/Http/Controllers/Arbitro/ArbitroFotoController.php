@@ -35,7 +35,7 @@ class ArbitroFotoController extends Controller
         return back()->with('success', 'Foto de perfil eliminada.');
     }
 
-    // ── Helpers privados ──────────────────────────────────────────────────────
+    // ── Helpers privados ──────────────────
 
     /**
      * Resuelve el árbitro por ID verificando que el usuario autenticado pueda

@@ -3,7 +3,11 @@ import Swal from 'sweetalert2';
 import Choices from 'choices.js';
 import flatpickr from 'flatpickr';
 import { Spanish } from 'flatpickr/dist/l10n/es.js';
+import { initAutoFilter } from './shared/auto-filter.js';
+import { initTheme } from './shared/theme.js';
 import '../css/app.css';
+
+window.initAutoFilter = initAutoFilter;
 
 // Librerías globales
 window.Swal      = Swal;
@@ -68,7 +72,7 @@ window.novaAlert = {
     */
 window.initNovaSelects = function (container = document) {
 
-    // ── Choices.js ───────────────────────────────────────────────────────
+    // ── Choices.js ───────────────────
     container.querySelectorAll('select[data-nova-select]').forEach(function (el) {
         if (el.dataset.choicesInit === '1') return;
 
@@ -90,7 +94,7 @@ window.initNovaSelects = function (container = document) {
 
     });
 
-    // ── Flatpickr ────────────────────────────────────────────────────────
+    // ── Flatpickr ────────────────────
     container.querySelectorAll('input[data-nova-date]').forEach(function (el) {
         if (el._flatpickr) return;
 
@@ -118,6 +122,8 @@ window.initNovaSelects = function (container = document) {
 // Inicialización automática
 document.addEventListener('DOMContentLoaded', function () {
     window.initNovaSelects();
+    window.initAutoFilter();
+    initTheme();
 });
 
 // Sombra en el navbar al hacer scroll

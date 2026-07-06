@@ -13,6 +13,7 @@ use App\Models\Designacion;
 use App\Models\DisponibilidadArbitro;
 use App\Models\FormatoDesignacion;
 use App\Models\Partido;
+use App\Models\RolPartido;  
 use App\Models\SedeTorneo;
 use App\Models\SlotDesignacion;
 use App\Models\Torneo;
@@ -36,16 +37,39 @@ class DesignacionController extends Controller
         private readonly SlotDesignacionService $slots,
     ) {}
 
-    // ── Designador / Ejecutivo ────────────────────────────────────────────────
+    // ── Designador / Ejecutivo ────────────
 
     /**
-     * Lista de partidos del colegio con sus designaciones.
+     * Sin ?torneo=: grid de torneos con conteo de partidos.
+     * Con ?torneo=X: lista de partidos de ese torneo (con filtros de estado/fecha/división).
      */
     public function index(Request $request): View
     {
         $idColegio = $this->idColegioActivo();
 
+        if (! $request->filled('torneo')) {
+            $torneos = Torneo::where('idColegio', $idColegio)
+                ->withCount([
+                    'partidos',
+                    'partidos as partidos_criticos_count' => fn ($q) => $q->where('estadoPartido', 'critico'),
+                    'partidos as partidos_hoy_count' => fn ($q) => $q->whereDate('fechaPartido', now()->toDateString()),
+                ])
+                ->orderByDesc('temporada')
+                ->orderBy('nombreTorneo')
+                ->get();
+
+            $criticosCount = Partido::where('idColegio', $idColegio)
+                ->where('estadoPartido', 'critico')
+                ->count();
+
+            return view('designaciones.index', compact('torneos', 'criticosCount'));
+        }
+
+        $torneo = Torneo::where('idColegio', $idColegio)
+            ->findOrFail($request->integer('torneo'));
+
         $query = Partido::where('idColegio', $idColegio)
+            ->where('idTorneo', $torneo->idTorneo)
             ->with([
                 'torneo',
                 'division',
@@ -55,10 +79,6 @@ class DesignacionController extends Controller
                 'designaciones.rol',
             ])
             ->orderBy('fechaPartido', 'asc');
-
-        if ($request->filled('torneo')) {
-            $query->where('idTorneo', $request->integer('torneo'));
-        }
 
         if ($request->filled('estado')) {
             $query->where('estadoPartido', $request->string('estado'));
@@ -74,16 +94,12 @@ class DesignacionController extends Controller
 
         $partidos = $query->paginate(20)->withQueryString();
 
-        $torneos = Torneo::where('idColegio', $idColegio)
-            ->whereIn('estadoTorneo', ['activo', 'proximo'])
-            ->orderByDesc('temporada')
-            ->get();
-
         $criticosCount = Partido::where('idColegio', $idColegio)
+            ->where('idTorneo', $torneo->idTorneo)
             ->where('estadoPartido', 'critico')
             ->count();
 
-        return view('designaciones.index', compact('partidos', 'torneos', 'criticosCount'));
+        return view('designaciones.partidos-torneo', compact('partidos', 'torneo', 'criticosCount'));
     }
 
     /**
@@ -468,12 +484,148 @@ class DesignacionController extends Controller
         $hoyPartidos    = $base->filter(fn ($d) => $d->partido->fechaPartido->isToday());
         $mananaPartidos = $base->filter(fn ($d) => $d->partido->fechaPartido->isTomorrow());
         $proximos       = $base->filter(fn ($d) => $d->partido->fechaPartido->gt($manana->copy()->endOfDay()));
-        $historial      = $base->filter(fn ($d) => $d->partido->fechaPartido->lt($hoy))
-                               ->sortByDesc(fn ($d) => $d->partido->fechaPartido);
 
         $pendientesCount = $base->filter(fn ($d) => $d->estaPendiente() && ! $d->partido->fechaPartido->isPast())->count();
 
-        return view('mis-partidos.index', compact('hoyPartidos', 'mananaPartidos', 'proximos', 'historial', 'pendientesCount', 'arbitro'));
+        return view('mis-partidos.index', compact('hoyPartidos', 'mananaPartidos', 'proximos', 'pendientesCount', 'arbitro'));
+    }
+
+    /**
+     * Historial paginado de designaciones pasadas del árbitro autenticado,
+     * con filtros (torneo, rol, estado, rango de fechas) y estadísticas de carrera.
+     */
+    public function historialPartidos(Request $request): View
+    {
+        $arbitro = $this->arbitroAutenticado();
+
+        $historial = $this->queryHistorial($arbitro, $request)
+            ->with(['partido.torneo', 'partido.sede', 'partido.division', 'partido.formato', 'rol'])
+            ->paginate(20)
+            ->withQueryString();
+
+        $historial->getCollection()
+            ->each(fn (Designacion $d) => $d->setAttribute('pago', $this->designaciones->calcularPago($d)));
+
+        // Opciones de filtros: solo torneos donde el árbitro tuvo designaciones
+        $torneos = Torneo::whereIn('idTorneo', function ($q) use ($arbitro) {
+            $q->select('partidos.idTorneo')
+                ->from('designaciones')
+                ->join('partidos', 'partidos.idPartido', '=', 'designaciones.idPartido')
+                ->where('designaciones.idArbitro', $arbitro->idArbitro);
+        })->orderByDesc('temporada')->get();
+
+        $roles = RolPartido::activos()->get();
+
+        return view('mis-partidos.historial', [
+            'historial' => $historial,
+            'arbitro'   => $arbitro,
+            'stats'     => $this->statsHistorial($arbitro),
+            'torneos'   => $torneos,
+            'roles'     => $roles,
+        ]);
+    }
+
+    /**
+     * Exporta el historial (con los filtros activos) a PDF.
+     */
+    public function historialPdf(Request $request): mixed
+    {
+        $arbitro = $this->arbitroAutenticado();
+
+        $historial = $this->queryHistorial($arbitro, $request)
+            ->with(['partido.torneo', 'partido.sede', 'rol'])
+            ->get()
+            ->each(fn (Designacion $d) => $d->setAttribute('pago', $this->designaciones->calcularPago($d)));
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('pdf.historial-arbitro', [
+            'historial' => $historial,
+            'arbitro'   => $arbitro,
+            'stats'     => $this->statsHistorial($arbitro),
+        ]);
+        $pdf->setPaper('a4', 'portrait');
+
+        $nombre = 'historial-partidos-' . now()->format('Y-m-d') . '.pdf';
+
+        return $pdf->download($nombre);
+    }
+
+    /**
+     * Query base del historial: designaciones pasadas del árbitro con filtros de request.
+     * Join con partidos para poder ordenar y filtrar por columnas del partido.
+     */
+    private function queryHistorial(Arbitro $arbitro, Request $request): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Designacion::query()
+            ->select('designaciones.*')
+            ->join('partidos', 'partidos.idPartido', '=', 'designaciones.idPartido')
+            ->where('designaciones.idArbitro', $arbitro->idArbitro)
+            ->where('partidos.estadoPartido', '!=', Partido::ESTADO_BORRADOR)
+            ->whereDate('partidos.fechaPartido', '<', now()->toDateString())
+            ->orderByDesc('partidos.fechaPartido')
+            ->orderByDesc('partidos.horaPartido');
+
+        if ($request->filled('torneo')) {
+            $query->where('partidos.idTorneo', $request->integer('torneo'));
+        }
+
+        if ($request->filled('rol')) {
+            $query->where('designaciones.idRol', $request->integer('rol'));
+        }
+
+        if ($request->filled('estado')) {
+            $query->where('designaciones.estadoDesignacion', $request->string('estado'));
+        }
+
+        if ($request->filled('desde')) {
+            $query->whereDate('partidos.fechaPartido', '>=', $request->string('desde'));
+        }
+
+        if ($request->filled('hasta')) {
+            $query->whereDate('partidos.fechaPartido', '<=', $request->string('hasta'));
+        }
+
+        return $query;
+    }
+
+    /**
+     * Estadísticas de carrera del árbitro (independientes de los filtros de la tabla).
+     * "Dirigido" = designación confirmada en partido pasado que sí se jugó
+     * (se excluyen borrador, cancelado y aplazado).
+     */
+    private function statsHistorial(Arbitro $arbitro): array
+    {
+        $dirigidos = Designacion::query()
+            ->join('partidos', 'partidos.idPartido', '=', 'designaciones.idPartido')
+            ->join('roles_partido', 'roles_partido.idRol', '=', 'designaciones.idRol')
+            ->where('designaciones.idArbitro', $arbitro->idArbitro)
+            ->where('designaciones.estadoDesignacion', Designacion::ESTADO_CONFIRMADA)
+            ->whereNotIn('partidos.estadoPartido', [Partido::ESTADO_BORRADOR, 'cancelado', 'aplazado'])
+            ->whereDate('partidos.fechaPartido', '<', now()->toDateString());
+
+        $porRol = (clone $dirigidos)
+            ->groupBy('roles_partido.nombre', 'roles_partido.orden')
+            ->orderBy('roles_partido.orden')
+            ->selectRaw('roles_partido.nombre as rol, COUNT(*) as total')
+            ->pluck('total', 'rol');
+
+        $torneosDistintos = (clone $dirigidos)
+            ->distinct('partidos.idTorneo')
+            ->count('partidos.idTorneo');
+
+        $rechazadas = Designacion::query()
+            ->join('partidos', 'partidos.idPartido', '=', 'designaciones.idPartido')
+            ->where('designaciones.idArbitro', $arbitro->idArbitro)
+            ->where('designaciones.estadoDesignacion', Designacion::ESTADO_RECHAZADA)
+            ->whereDate('partidos.fechaPartido', '<', now()->toDateString())
+            ->count();
+
+        return [
+            'totalDirigidos' => $porRol->sum(),
+            'porRol'         => $porRol,
+            'torneos'        => $torneosDistintos,
+            'rechazadas'     => $rechazadas,
+        ];
     }
 
     /**

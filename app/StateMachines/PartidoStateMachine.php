@@ -58,14 +58,21 @@ class PartidoStateMachine
         self::validarPermisosEspeciales($partido->estadoPartido, $estadoNuevo, $usuario);
 
         DB::transaction(function () use ($partido, $estadoNuevo, $usuario, $detalle): void {
+            $cambios = [
+                'estadoPartido' => $estadoNuevo,
+                'version'       => $partido->version + 1,
+                'updated_at'    => now(),
+            ];
+
+            // horaInicio alimenta la finalización automática (150 min después)
+            if ($estadoNuevo === Partido::ESTADO_EN_CURSO && $partido->horaInicio === null) {
+                $cambios['horaInicio'] = now();
+            }
+
             $afectadas = DB::table('partidos')
                 ->where('idPartido', $partido->idPartido)
                 ->where('version', $partido->version)
-                ->update([
-                    'estadoPartido' => $estadoNuevo,
-                    'version'       => $partido->version + 1,
-                    'updated_at'    => now(),
-                ]);
+                ->update($cambios);
 
             if ($afectadas === 0) {
                 throw new OptimisticLockException();
@@ -75,6 +82,10 @@ class PartidoStateMachine
 
             $partido->estadoPartido = $estadoNuevo;
             $partido->version       = $partido->version + 1;
+
+            if (isset($cambios['horaInicio'])) {
+                $partido->horaInicio = $cambios['horaInicio'];
+            }
 
             HistorialDesignacion::create([
                 'idPartido'      => $partido->idPartido,
