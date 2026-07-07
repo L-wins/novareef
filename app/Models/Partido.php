@@ -21,7 +21,6 @@ class Partido extends Model
     // ── Estados del partido ───────────────
     public const ESTADO_BORRADOR   = 'borrador';
     public const ESTADO_PROGRAMADO = 'programado';
-    public const ESTADO_EN_CURSO   = 'en_curso';
     public const ESTADO_CONFIRMADO = 'confirmado';
     public const ESTADO_CRITICO    = 'critico';
     public const ESTADO_APLAZADO   = 'aplazado';
@@ -43,12 +42,10 @@ class Partido extends Model
         'modalidadPago',
         'observaciones',
         'idVeedor',
-        'horaInicio',
     ];
 
     protected $casts = [
         'fechaPartido' => 'date',
-        'horaInicio'   => 'datetime',
     ];
 
     // ── Accessors ───
@@ -66,15 +63,6 @@ class Partido extends Model
         }
 
         return $this->designacionesConfirmadas()->count() >= $maxArbitros;
-    }
-
-    /**
-     * Verdadero cuando la fecha del partido es anterior a hoy y el partido
-     * no tiene todas las designaciones confirmadas.
-     */
-    public function esCritico(): bool
-    {
-        return $this->fechaPartido->isPast() && !$this->estaCompleto();
     }
 
     // ── Relaciones ──

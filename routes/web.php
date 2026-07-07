@@ -149,8 +149,10 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         // AJAX — requieren permiso crear-designaciones
         Route::post('/{id}/asignar',           [DesignacionController::class, 'asignarArbitro'])->middleware('permission:crear-designaciones')->name('asignar');
         Route::delete('/designacion/{id}',     [DesignacionController::class, 'quitarDesignacion'])->middleware('permission:crear-designaciones')->name('quitar');
+        Route::put('/designacion/{id}/reasignar', [DesignacionController::class, 'reasignarArbitro'])->middleware('permission:crear-designaciones')->name('reasignar');
         Route::put('/{id}/estado',             [DesignacionController::class, 'cambiarEstadoPartido'])->middleware('permission:crear-designaciones')->name('estado');
         Route::post('/partido/{id}/publicar',  [DesignacionController::class, 'publicarPartido'])->middleware('permission:crear-designaciones')->name('partido.publicar');
+        Route::delete('/partido/{id}',         [DesignacionController::class, 'eliminarPartido'])->middleware('permission:crear-designaciones')->name('partido.eliminar');
         Route::put('/partido/{id}/veedor',     [DesignacionController::class, 'asignarVeedor'])->middleware('permission:crear-designaciones')->name('partido.veedor');
         Route::get('/partido/{id}/acta',       [DesignacionController::class, 'generarActa'])->middleware('permission:ver-designaciones')->name('partido.acta');
         Route::get('/partido/{id}/calificaciones', [CalificacionController::class, 'index'])->middleware('permission:crear-calificaciones')->name('calificaciones.index');

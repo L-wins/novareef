@@ -47,7 +47,7 @@
             <select name="estado" class="filter-select"
                     data-nova-select data-placeholder="Estado">
                 <option value="">Todos</option>
-                @foreach (['programado', 'en_curso', 'finalizado', 'aplazado', 'cancelado'] as $val)
+                @foreach (['programado', 'finalizado', 'aplazado', 'cancelado'] as $val)
                     <option value="{{ $val }}" {{ request('estado') === $val ? 'selected' : '' }}>
                         {{ str_replace('_', ' ', ucfirst($val)) }}
                     </option>
@@ -271,7 +271,7 @@
                     <label class="form-label">Nuevo estado <span class="req">*</span></label>
                     <select name="estadoNuevo" required class="form-select"
                             data-partido="{{ $p->idPartido }}">
-                        @foreach (['programado', 'en_curso', 'finalizado', 'aplazado', 'cancelado'] as $val)
+                        @foreach (['programado', 'finalizado', 'aplazado', 'cancelado'] as $val)
                             <option value="{{ $val }}" {{ $p->estadoPartido === $val ? 'selected' : '' }}>
                                 {{ str_replace('_', ' ', ucfirst($val)) }}
                             </option>

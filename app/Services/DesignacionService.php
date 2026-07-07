@@ -6,6 +6,8 @@ namespace App\Services;
 
 use App\Events\DesignacionActualizadaEvent;
 use App\Events\PartidoActualizadoEvent;
+use App\Jobs\NotificarCriticoJob;
+use App\Jobs\NotificarDesignacionJob;
 use App\Jobs\NotificarRechazoJob;
 use App\Models\Arbitro;
 use App\Models\Designacion;
@@ -22,7 +24,7 @@ use Illuminate\Support\Facades\DB;
 
 final class DesignacionService
 {
-    private const MINUTOS_MARGEN_PARTIDO_CERCANO = 60;
+    private const MINUTOS_MARGEN_PARTIDO_CERCANO = 120;
 
     public function __construct(
         private readonly SlotDesignacionService $slots,
@@ -92,6 +94,35 @@ final class DesignacionService
         }
 
         PartidoStateMachine::transicionarCon($partido, Partido::ESTADO_PROGRAMADO, $usuario, 'Partido publicado');
+    }
+
+    /**
+     * Elimina un partido en borrador junto con sus designaciones, slots e
+     * historial. Solo permitido en borrador: una vez publicado, el partido
+     * ya fue notificado a los árbitros y debe cancelarse/aplazarse en vez
+     * de borrarse (deja rastro en el historial).
+     *
+     * @throws \RuntimeException  Si el partido no está en borrador.
+     */
+    public function eliminarPartido(Partido $partido, int $idColegio): void
+    {
+        if ($partido->estadoPartido !== Partido::ESTADO_BORRADOR) {
+            throw new \RuntimeException('Solo se pueden eliminar partidos en borrador. Un partido publicado debe cancelarse o aplazarse.');
+        }
+
+        DB::transaction(function () use ($partido, $idColegio): void {
+            // Orden obligatorio por las llaves foráneas (restrict en historial/designaciones,
+            // cascade en slots_designacion -> se borran solos al borrar el partido).
+            HistorialDesignacion::where('idPartido', $partido->idPartido)
+                ->where('idColegio', $idColegio)
+                ->delete();
+
+            Designacion::where('idPartido', $partido->idPartido)
+                ->where('idColegio', $idColegio)
+                ->delete();
+
+            $partido->delete();
+        });
     }
 
     /**
@@ -206,6 +237,101 @@ final class DesignacionService
     }
 
     /**
+     * Reemplaza el árbitro de un rol ya publicado (partido en programado,
+     * confirmado o crítico) por otro árbitro. A diferencia de un rechazo del
+     * propio árbitro (que escala el partido a crítico), esta acción la toma
+     * el designador/ejecutivo deliberadamente: el estado del partido NO se
+     * toca — sigue en el mismo estado hasta que el Central o el designador
+     * lo finalicen, o hasta una acción manual del admin (cancelar/aplazar),
+     * no por esta reasignación puntual. Solo se notifica al árbitro nuevo.
+     *
+     * @return array{designacion: Designacion, advertencias: array}
+     * @throws \RuntimeException  Si el partido está en borrador (ahí se usa
+     *                             asignarArbitro/quitarDesignacion normal), ya
+     *                             terminó (finalizado/cancelado), o si el
+     *                             árbitro nuevo ya está en el partido.
+     */
+    public function reasignarArbitro(Designacion $designacionVieja, int $idArbitroNuevo, int $idColegio, int $idUsuarioAccion): array
+    {
+        return DB::transaction(function () use ($designacionVieja, $idArbitroNuevo, $idColegio, $idUsuarioAccion): array {
+            $partido = Partido::lockForUpdate()->where('idColegio', $idColegio)->findOrFail($designacionVieja->idPartido);
+
+            if ($partido->estadoPartido === Partido::ESTADO_BORRADOR) {
+                throw new \RuntimeException('El partido aún no se ha publicado — usa la asignación normal desde el borrador.');
+            }
+
+            if (in_array($partido->estadoPartido, [Partido::ESTADO_FINALIZADO, Partido::ESTADO_CANCELADO], true)) {
+                throw new \RuntimeException('No se puede reasignar un árbitro en un partido finalizado o cancelado.');
+            }
+
+            $arbitroNuevo = Arbitro::where('idArbitro', $idArbitroNuevo)
+                ->where('idColegio', $idColegio)
+                ->with('usuario', 'disponibilidades', 'indisponibilidadesExtraordinarias')
+                ->firstOrFail();
+
+            $yaDesignado = Designacion::where('idPartido', $partido->idPartido)
+                ->where('idArbitro', $arbitroNuevo->idArbitro)
+                ->where('idDesignacion', '!=', $designacionVieja->idDesignacion)
+                ->exists();
+
+            if ($yaDesignado) {
+                throw new \RuntimeException('Este árbitro ya está designado en este partido.');
+            }
+
+            $idRol = $designacionVieja->idRol;
+            $slot  = SlotDesignacion::where('idDesignacion', $designacionVieja->idDesignacion)->lockForUpdate()->first();
+
+            $advertencias = $this->calcularAdvertencias($arbitroNuevo, $partido);
+
+            HistorialDesignacion::create([
+                'idDesignacion'   => $designacionVieja->idDesignacion,
+                'idPartido'       => $partido->idPartido,
+                'idArbitro'       => $designacionVieja->idArbitro,
+                'idColegio'       => $idColegio,
+                'idUsuarioAccion' => $idUsuarioAccion,
+                'tipoAccion'      => HistorialDesignacion::TIPO_QUITADO,
+                'detalle'         => 'Reemplazado por reasignación',
+            ]);
+
+            $designacionVieja->delete();
+
+            $designacionNueva = Designacion::create([
+                'idPartido'           => $partido->idPartido,
+                'idArbitro'           => $arbitroNuevo->idArbitro,
+                'idRol'               => $idRol,
+                'idColegio'           => $idColegio,
+                'estadoDesignacion'   => Designacion::ESTADO_PENDIENTE,
+                'idUsuarioDesignador' => $idUsuarioAccion,
+            ]);
+
+            if ($slot) {
+                $slot->update(['idDesignacion' => $designacionNueva->idDesignacion]);
+            }
+
+            HistorialDesignacion::create([
+                'idDesignacion'   => $designacionNueva->idDesignacion,
+                'idPartido'       => $partido->idPartido,
+                'idArbitro'       => $arbitroNuevo->idArbitro,
+                'idColegio'       => $idColegio,
+                'idUsuarioAccion' => $idUsuarioAccion,
+                'tipoAccion'      => HistorialDesignacion::TIPO_ASIGNADO,
+                'detalle'         => 'Reasignación de árbitro',
+            ]);
+
+            $designacionNueva->load(['arbitro.usuario', 'rol', 'partido.torneo', 'partido.division', 'partido.sede']);
+
+            NotificarDesignacionJob::dispatch($designacionNueva);
+            broadcast(new DesignacionActualizadaEvent($designacionNueva))->toOthers();
+            broadcast(new PartidoActualizadoEvent($partido))->toOthers();
+
+            return [
+                'designacion'  => $designacionNueva,
+                'advertencias' => $advertencias,
+            ];
+        });
+    }
+
+    /**
      * Asigna (o remueve, si $idVeedor es null) el veedor de un partido.
      *
      * @throws \RuntimeException  Si el veedor no pertenece al colegio del partido.
@@ -308,15 +434,21 @@ final class DesignacionService
                 'detalle'         => $motivo,
             ]);
 
-            // Si el partido estaba confirmado → regresa a programado
+            // Un rechazo deja un rol sin cubrir de forma urgente: escala a crítico
+            // de inmediato (no espera al job de horas límite), salvo que el
+            // partido ya esté en un estado terminal/manual (finalizado, cancelado,
+            // aplazado, en curso) donde una designación pendiente no debería
+            // seguir existiendo de todas formas.
             $partido = Partido::find($designacion->idPartido);
-            if ($partido && $partido->estadoPartido === Partido::ESTADO_CONFIRMADO) {
+            if ($partido && PartidoStateMachine::puedeTransicionar($partido->estadoPartido, Partido::ESTADO_CRITICO)) {
                 PartidoStateMachine::transicionarCon(
                     $partido,
-                    Partido::ESTADO_PROGRAMADO,
+                    Partido::ESTADO_CRITICO,
                     $usuario,
                     "Árbitro rechazó designación: {$motivo}"
                 );
+
+                NotificarCriticoJob::dispatch($partido, "Árbitro rechazó designación: {$motivo}");
             }
 
             NotificarRechazoJob::dispatch($designacion->load(['partido', 'arbitro.usuario', 'designador']));
@@ -405,6 +537,8 @@ final class DesignacionService
                 'franjaLabel'             => $franjaLabel,
                 'advertenciaTiempo'       => $advertencias['advertenciaTiempo'],
                 'minutosAlPartidoCercano' => $advertencias['minutosAlPartidoCercano'],
+                'horaPartidoCercano'      => $advertencias['horaPartidoCercano'],
+                'partidosHoy'             => $advertencias['partidosHoy'],
                 'yaAsignado'              => isset($yaAsignados[$a->idArbitro]),
                 'esSuspendido'            => $a->estadoArbitro === 'suspendido',
                 'estadoArbitro'           => $a->estadoArbitro,
@@ -433,7 +567,9 @@ final class DesignacionService
      *     tieneExtraordinaria: bool,
      *     advertenciaTiempo: bool,
      *     minutosAlPartidoCercano: int|null,
+     *     horaPartidoCercano: string|null,
      *     esSuspendido: bool,
+     *     partidosHoy: int,
      * }
      */
     public function calcularAdvertencias(Arbitro $arbitro, Partido $partido): array
@@ -443,9 +579,11 @@ final class DesignacionService
             ->where('fechaAfectada', $partido->fechaPartido->toDateString())
             ->first();
 
-        [$advertenciaTiempo, $minutosAlPartidoCercano] = $this->detectarPartidoCercano(
+        $otrasDesignacionesDelDia = $this->designacionesDelDia($partido, $arbitro->idArbitro);
+
+        [$advertenciaTiempo, $minutosAlPartidoCercano, $horaPartidoCercano] = $this->detectarPartidoCercano(
             $partido,
-            $this->designacionesDelDia($partido, $arbitro->idArbitro)
+            $otrasDesignacionesDelDia
         );
 
         return [
@@ -453,7 +591,9 @@ final class DesignacionService
             'tieneExtraordinaria'     => $extraordinaria !== null,
             'advertenciaTiempo'       => $advertenciaTiempo,
             'minutosAlPartidoCercano' => $minutosAlPartidoCercano,
+            'horaPartidoCercano'      => $horaPartidoCercano,
             'esSuspendido'            => $arbitro->estadoArbitro === 'suspendido',
+            'partidosHoy'             => $otrasDesignacionesDelDia->count(),
         ];
     }
 
@@ -462,12 +602,14 @@ final class DesignacionService
      * los choques de horario con una sola query en lugar de una por árbitro.
      *
      * @param  Collection<int, Arbitro>  $arbitros
-     * @return array<int, array{advertenciaTiempo: bool, minutosAlPartidoCercano: int|null}>
+     * @return array<int, array{advertenciaTiempo: bool, minutosAlPartidoCercano: int|null,
+     *         horaPartidoCercano: string|null, partidosHoy: int}>
      *         indexado por idArbitro
      */
     public function advertenciasPorLista(Collection $arbitros, Partido $partido): array
     {
         $designacionesDia = Designacion::whereIn('idArbitro', $arbitros->pluck('idArbitro'))
+            ->whereIn('estadoDesignacion', [Designacion::ESTADO_PENDIENTE, Designacion::ESTADO_CONFIRMADA])
             ->whereHas('partido', fn ($q) => $q->where('fechaPartido', $partido->fechaPartido)
                 ->where('idPartido', '!=', $partido->idPartido))
             ->with('partido:idPartido,horaPartido')
@@ -475,14 +617,18 @@ final class DesignacionService
             ->groupBy('idArbitro');
 
         return $arbitros->mapWithKeys(function (Arbitro $arbitro) use ($partido, $designacionesDia): array {
-            [$advertenciaTiempo, $minutosAlPartidoCercano] = $this->detectarPartidoCercano(
+            $otrasDelDia = $designacionesDia->get($arbitro->idArbitro, collect());
+
+            [$advertenciaTiempo, $minutosAlPartidoCercano, $horaPartidoCercano] = $this->detectarPartidoCercano(
                 $partido,
-                $designacionesDia->get($arbitro->idArbitro, collect())
+                $otrasDelDia
             );
 
             return [$arbitro->idArbitro => [
                 'advertenciaTiempo'       => $advertenciaTiempo,
                 'minutosAlPartidoCercano' => $minutosAlPartidoCercano,
+                'horaPartidoCercano'      => $horaPartidoCercano,
+                'partidosHoy'             => $otrasDelDia->count(),
             ]];
         })->all();
     }
@@ -515,9 +661,16 @@ final class DesignacionService
         return in_array($franjaPartido, $mapa[$franjaArbitro] ?? [], true);
     }
 
+    /**
+     * Designaciones activas (pendiente o confirmada) del árbitro en la MISMA
+     * fecha del partido, excluyendo este mismo partido. Una designación
+     * rechazada no representa un compromiso real y no debe contar ni como
+     * choque de horario ni como sobrecarga del día.
+     */
     private function designacionesDelDia(Partido $partido, int $idArbitro): Collection
     {
         return Designacion::where('idArbitro', $idArbitro)
+            ->whereIn('estadoDesignacion', [Designacion::ESTADO_PENDIENTE, Designacion::ESTADO_CONFIRMADA])
             ->whereHas('partido', fn ($q) => $q->where('fechaPartido', $partido->fechaPartido)
                 ->where('idPartido', '!=', $partido->idPartido))
             ->with('partido:idPartido,horaPartido')
@@ -526,21 +679,22 @@ final class DesignacionService
 
     /**
      * @param  Collection<int, Designacion>  $otrasDesignacionesDelDia
-     * @return array{0: bool, 1: int|null}
+     * @return array{0: bool, 1: int|null, 2: string|null}
      */
     private function detectarPartidoCercano(Partido $partido, Collection $otrasDesignacionesDelDia): array
     {
         $horaPartido = Carbon::createFromFormat('H:i', substr($partido->horaPartido ?? '00:00', 0, 5));
 
         foreach ($otrasDesignacionesDelDia as $otra) {
-            $otraHora = Carbon::createFromFormat('H:i', substr($otra->partido->horaPartido ?? '00:00', 0, 5));
-            $diff     = abs($horaPartido->diffInMinutes($otraHora));
+            $otraHoraRaw = substr($otra->partido->horaPartido ?? '00:00', 0, 5);
+            $otraHora    = Carbon::createFromFormat('H:i', $otraHoraRaw);
+            $diff        = abs($horaPartido->diffInMinutes($otraHora));
 
             if ($diff < self::MINUTOS_MARGEN_PARTIDO_CERCANO) {
-                return [true, $diff];
+                return [true, $diff, $otraHora->format('g:i A')];
             }
         }
 
-        return [false, null];
+        return [false, null, null];
     }
 }

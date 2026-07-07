@@ -346,7 +346,7 @@
 @can('editar-torneos')
 <div class="modal" id="modal-cambio-estado-torneo" role="dialog" aria-modal="true">
     <div class="modal-overlay" data-close-modal></div>
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog--fit">
         <form method="POST" action="{{ route('torneos.estado', $torneo->idTorneo) }}"
               data-confirm-submit
               data-confirm-title="¿Cambiar estado del torneo?"

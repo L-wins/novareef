@@ -16,7 +16,7 @@ class CambiarEstadoPartidoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'estadoNuevo' => ['required', 'in:programado,en_curso,finalizado,aplazado,cancelado'],
+            'estadoNuevo' => ['required', 'in:programado,finalizado,aplazado,cancelado'],
         ];
     }
 

@@ -229,6 +229,27 @@ class DesignacionController extends Controller
     }
 
     /**
+     * Elimina un partido en borrador junto con designaciones/slots/historial.
+     */
+    public function eliminarPartido(int $id): JsonResponse
+    {
+        $idColegio = $this->idColegioActivo();
+
+        $partido = Partido::where('idColegio', $idColegio)->findOrFail($id);
+
+        try {
+            $this->designaciones->eliminarPartido($partido, $idColegio);
+
+            return response()->json([
+                'success' => true,
+                'mensaje' => 'Partido eliminado correctamente.',
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
      * Asigna un árbitro a un rol en el partido con optimistic locking.
      */
     public function asignarArbitro(Request $request, int $partidoId): JsonResponse
@@ -282,6 +303,41 @@ class DesignacionController extends Controller
     }
 
     /**
+     * Reemplaza el árbitro de un rol en un partido ya publicado (programado,
+     * confirmado o crítico) sin afectar el estado del partido ni las demás
+     * designaciones. Solo se notifica al árbitro nuevo.
+     */
+    public function reasignarArbitro(Request $request, int $designacionId): JsonResponse
+    {
+        $idColegio = $this->idColegioActivo();
+
+        $validated = $request->validate([
+            'idArbitro' => 'required|integer',
+        ]);
+
+        $designacion = Designacion::where('idDesignacion', $designacionId)
+            ->where('idColegio', $idColegio)
+            ->firstOrFail();
+
+        try {
+            $result = $this->designaciones->reasignarArbitro(
+                $designacion,
+                (int) $validated['idArbitro'],
+                $idColegio,
+                Auth::id(),
+            );
+
+            return response()->json([
+                'success'      => true,
+                'advertencias' => $result['advertencias'],
+                'designacion'  => $result['designacion'],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
      * Cambia el estado del partido usando la state machine.
      */
     public function cambiarEstadoPartido(Request $request, int $id): JsonResponse
@@ -289,17 +345,30 @@ class DesignacionController extends Controller
         $idColegio = $this->idColegioActivo();
 
         $validated = $request->validate([
-            'estadoNuevo' => 'required|string|in:programado,confirmado,critico,aplazado,en_curso,finalizado,cancelado',
+            'estadoNuevo' => 'required|string|in:programado,aplazado,finalizado,cancelado',
             'detalle'     => 'nullable|string|max:500',
         ]);
 
         $partido = Partido::where('idColegio', $idColegio)->findOrFail($id);
 
-        // Verificar permisos según estado destino
+        // 'programado' solo es un destino manual válido para reactivar un
+        // aplazado o revertir un finalizado — nunca para "deshacer" un
+        // confirmado/crítico sin resolver la causa real (eso lo hace el
+        // propio sistema al reasignar y confirmar el rol pendiente).
+        if ($validated['estadoNuevo'] === 'programado'
+            && ! in_array($partido->estadoPartido, ['aplazado', 'finalizado'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede revertir manualmente a programado desde este estado.',
+            ], 422);
+        }
+
+        // Verificar permisos según estado destino: cancelar es exclusivo de
+        // ejecutivo/admin; finalizar y aplazar los puede hacer también el designador.
         $user = Auth::user();
-        if (in_array($validated['estadoNuevo'], ['finalizado', 'cancelado'], true)) {
+        if ($validated['estadoNuevo'] === 'cancelado') {
             abort_unless($user->hasRole('ejecutivo') || $user->rolUsuario === 'superadmin', 403);
-        } elseif ($validated['estadoNuevo'] === 'aplazado') {
+        } elseif (in_array($validated['estadoNuevo'], ['finalizado', 'aplazado'], true)) {
             abort_unless(
                 $user->hasRole('ejecutivo') || $user->hasRole('designador') || $user->rolUsuario === 'superadmin',
                 403
@@ -629,7 +698,9 @@ class DesignacionController extends Controller
     }
 
     /**
-     * El árbitro Central finaliza el partido en curso.
+     * El árbitro Central finaliza un partido confirmado. No existe estado
+     * "en curso": el partido queda en 'confirmado' hasta que el Central o el
+     * designador lo finalizan manualmente.
      */
     public function finalizarPartido(int $id): JsonResponse
     {
@@ -646,10 +717,10 @@ class DesignacionController extends Controller
 
         abort_unless($esCentral, 403, 'Solo el árbitro Central puede finalizar el partido.');
 
-        if ($partido->estadoPartido !== Partido::ESTADO_EN_CURSO) {
+        if ($partido->estadoPartido !== Partido::ESTADO_CONFIRMADO) {
             return response()->json([
                 'success' => false,
-                'message' => 'Solo se puede finalizar un partido en curso.',
+                'message' => 'Solo se puede finalizar un partido confirmado.',
             ], 422);
         }
 

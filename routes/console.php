@@ -1,7 +1,5 @@
 <?php
 
-use App\Jobs\FinalizarPartidosAutomaticoJob;
-use App\Jobs\IniciarPartidosAutomaticoJob;
 use App\Jobs\VerificarConfirmacionesJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -27,12 +25,6 @@ Schedule::command('novareef:habilitar-disponibilidad')->dailyAt('00:01');
 // fechaInicio/fechaFin — antes estadoTorneo era 100% manual y podía quedar
 // desactualizado indefinidamente. Nunca toca 'cancelado' ni un 'finalizado' ya puesto.
 Schedule::command('novareef:actualizar-estados-torneo')->dailyAt('00:03');
-
-// Inicia automáticamente partidos confirmados cuya hora ya llegó (asigna horaInicio).
-Schedule::job(new IniciarPartidosAutomaticoJob)->everyFiveMinutes();
-
-// Finaliza automáticamente partidos en_curso que lleven más de 150 minutos.
-Schedule::job(new FinalizarPartidosAutomaticoJob)->everyFiveMinutes();
 
 // Marca como CRÍTICOS los partidos programados con designaciones pendientes
 // cuyo plazo de confirmación (configurable por colegio) ya venció.

@@ -23,15 +23,21 @@ class VerificarConfirmacionesJob implements ShouldQueue
     public int $tries = 1;
 
     /**
-     * Marca como CRÍTICOS los partidos programados con designaciones pendientes
-     * cuyo plazo de confirmación (configurable por colegio) ya venció.
+     * Marca como CRÍTICOS los partidos con designaciones pendientes cuyo plazo
+     * de confirmación (configurable por colegio) ya venció. Cubre tanto los
+     * partidos 'programado' recién publicados como los 'confirmado' que
+     * quedaron con un slot pendiente por una reasignación posterior (esa
+     * reasignación no cambia el estado del partido, así que su plazo de
+     * confirmación solo lo vigila este job).
      * El plazo corre desde el momento más tardío entre la asignación del árbitro
      * y la publicación del partido (antes de publicar el árbitro no ve nada).
      */
     public function handle(): void
     {
+        $estadosVigilados = [Partido::ESTADO_PROGRAMADO, Partido::ESTADO_CONFIRMADO];
+
         $pendientes = Designacion::where('estadoDesignacion', Designacion::ESTADO_PENDIENTE)
-            ->whereHas('partido', fn ($q) => $q->where('estadoPartido', Partido::ESTADO_PROGRAMADO))
+            ->whereHas('partido', fn ($q) => $q->whereIn('estadoPartido', $estadosVigilados))
             ->with('partido')
             ->get();
 
@@ -43,7 +49,7 @@ class VerificarConfirmacionesJob implements ShouldQueue
             $partido = $grupo->first()->partido;
 
             // Pudo haber cambiado de estado por una transición previa en este mismo ciclo
-            if ($partido->estadoPartido !== Partido::ESTADO_PROGRAMADO) {
+            if (! in_array($partido->estadoPartido, $estadosVigilados, true)) {
                 continue;
             }
 

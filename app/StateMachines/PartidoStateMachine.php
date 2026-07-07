@@ -18,13 +18,20 @@ use Illuminate\Support\Facades\DB;
 
 class PartidoStateMachine
 {
+    // confirmado->critico y critico->confirmado deben existir juntas: un rechazo
+    // o una designación reasignada pendiente puede escalar un partido confirmado
+    // a crítico, y confirmarDesignacion() intenta volver a 'confirmado' apenas
+    // el último slot pendiente se confirma, sin importar el estado previo.
+    //
+    // No existe estado "en_curso": el partido queda en 'confirmado' hasta que
+    // el árbitro Central o el designador lo finalizan manualmente — no hay
+    // transición automática por horario.
     const TRANSICIONES = [
         'borrador'   => ['programado', 'cancelado'],
         'programado' => ['confirmado', 'critico', 'aplazado', 'cancelado'],
-        'confirmado' => ['programado', 'en_curso', 'aplazado', 'cancelado'],
-        'critico'    => ['programado', 'cancelado'],
+        'confirmado' => ['programado', 'critico', 'finalizado', 'aplazado', 'cancelado'],
+        'critico'    => ['programado', 'confirmado', 'cancelado'],
         'aplazado'   => ['programado', 'cancelado'],
-        'en_curso'   => ['finalizado', 'cancelado'],
         'finalizado' => ['programado'], // reversible solo por ejecutivo
         'cancelado'  => [],
     ];
@@ -32,6 +39,28 @@ class PartidoStateMachine
     public static function puedeTransicionar(string $desde, string $hacia): bool
     {
         return in_array($hacia, self::TRANSICIONES[$desde] ?? [], true);
+    }
+
+    /**
+     * Subconjunto de TRANSICIONES ofrecido en el selector manual de "Cambiar
+     * estado". 'critico' y 'confirmado' nunca son destinos manuales — los
+     * activa el propio sistema (rechazo/vencimiento de confirmación, o
+     * cuando el último árbitro pendiente confirma). 'programado' solo es
+     * manual para reactivar un aplazado o revertir un finalizado (ejecutivo);
+     * nunca para "deshacer" un confirmado o crítico sin resolver la causa real.
+     *
+     * @return list<string>
+     */
+    public static function transicionesManuales(string $desde): array
+    {
+        return array_values(array_filter(
+            self::TRANSICIONES[$desde] ?? [],
+            fn (string $hacia) => match ($hacia) {
+                'critico', 'confirmado' => false,
+                'programado'            => in_array($desde, ['aplazado', 'finalizado'], true),
+                default                 => true,
+            }
+        ));
     }
 
     public static function validarTransicion(string $desde, string $hacia): void
@@ -64,11 +93,6 @@ class PartidoStateMachine
                 'updated_at'    => now(),
             ];
 
-            // horaInicio alimenta la finalización automática (150 min después)
-            if ($estadoNuevo === Partido::ESTADO_EN_CURSO && $partido->horaInicio === null) {
-                $cambios['horaInicio'] = now();
-            }
-
             $afectadas = DB::table('partidos')
                 ->where('idPartido', $partido->idPartido)
                 ->where('version', $partido->version)
@@ -82,10 +106,6 @@ class PartidoStateMachine
 
             $partido->estadoPartido = $estadoNuevo;
             $partido->version       = $partido->version + 1;
-
-            if (isset($cambios['horaInicio'])) {
-                $partido->horaInicio = $cambios['horaInicio'];
-            }
 
             HistorialDesignacion::create([
                 'idPartido'      => $partido->idPartido,
