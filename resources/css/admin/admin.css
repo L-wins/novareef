@@ -2007,6 +2007,10 @@ span.flatpickr-weekday {
 .choices__list--dropdown .choices__list {
     scrollbar-width: thin;
     scrollbar-color: var(--primary) var(--bg-navbar);
+    /* Sin esto, un dropdown dentro de un modal con overflow-y:auto hace
+       scroll-chaining: si la lista es corta y no necesita scroll propio,
+       el gesto de rueda del mouse se propaga al modal completo. */
+    overscroll-behavior: contain;
 }
 .choices__list--dropdown .choices__list::-webkit-scrollbar {
     width: 4px !important;

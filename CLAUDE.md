@@ -243,7 +243,7 @@ En `bootstrap/app.php`:
 - **Anti-FOUC**: `layouts/partials/theme-boot.blade.php` — único JS inline permitido del proyecto (render-blocking, resuelve `system` → `data-theme` antes del primer paint)
 - **Lógica**: `resources/js/shared/theme.js` — cambia `data-theme`, persiste via `PATCH /preferencias/tema`, sigue `prefers-color-scheme` en vivo cuando la preferencia es `system`
 - **Selector**: botones `[data-theme-set="light|dark|system"]` en el navbar del layout usuario
-- El panel admin (admin.css) sigue dark-only — pendiente de migrar a tokens
+- El panel admin también tiene toggle completo (`admins.temaPreferencia`, ruta propia bajo guard `admin`, `AdminPreferenciaController`) — no reutiliza el controlador del guard web
 
 ### Separación de capas (regla dura)
 - No mezclar JS/CSS inline en Blade: JS va en `resources/js/` (módulos), CSS en `resources/css/`
@@ -324,6 +324,13 @@ En `bootstrap/app.php`:
 - Vistas usuario: `resources/views/` — extienden `layouts.app`
 - Multi-tenant: siempre filtrar por `Auth::user()->idColegio` en queries, `abort_unless` checks en controladores
 - Archivado suave: `SoftDeletes` en `Arbitro` y `Torneo`; árbitros archivados muestran banner de advertencia
+
+### Tamaño de archivos (regla dura)
+- Ningún archivo de código (PHP, JS, Blade, CSS) debe superar ~600-700 líneas. Al acercarse a ese umbral, dividir por responsabilidad **antes** de seguir agregando código, no después.
+- Patrón para CSS (ya aplicado en `app.css`, `designaciones.css`, `arbitros.css`): el archivo original queda como manifiesto de solo `@import`, apuntando a archivos hermanos en su propia subcarpeta — un `variables.css` con los alias/tokens locales, y uno por dominio o sección (ej. `layout.css`, `forms.css`, `table.css`). Cada archivo de dominio lleva su propio bloque de overrides de tema claro al final (`:root[data-theme="light"] ...`) — nunca un archivo catch-all separado para eso.
+- Antes de dividir un archivo grande, buscar selectores/bloques duplicados (mismo selector redefinido dos veces — normalmente resto de un rediseño que nunca reemplazó al bloque anterior) y **fusionarlos** en el archivo nuevo, no copiarlos duplicados. Fusionar propiedad por propiedad (la declaración más reciente en el archivo original gana esa propiedad; lo que no toca se hereda de la más vieja), no "borrar el primer bloque a lo bruto".
+- Aplica igual a PHP: si un Controller o Service crece demasiado, extraer lógica a Services/Actions por dominio (ya se hizo con `app/Actions` → `app/Services`).
+- Después de dividir, verificar contra el CSS/código compilado (build de Vite, o el autoload de PHP) que ningún selector/método se perdió — no basta con que compile sin errores.
 
 ---
 

@@ -36,6 +36,20 @@
                 <span class="brand-section">@yield('seccion', 'Panel de control')</span>
             </div>
 
+            {{-- Reloj en vivo — columna central propia (ver .nav-inner en grid),
+                 fijo a America/Bogota. La app corre en UTC (config/app.php),
+                 así que hay que convertir explícitamente, no usar now() tal
+                 cual. Valor inicial en servidor (sin flash de vacío) + epoch
+                 para que reloj.js corrija cualquier reloj de equipo
+                 desincronizado. --}}
+            @php($ahoraBogota = now()->setTimezone('America/Bogota'))
+            <div id="nav-reloj" class="nav-reloj" aria-live="off"
+                 data-server-epoch="{{ now()->getPreciseTimestamp(3) }}">
+                <i class="fa-regular fa-clock nav-reloj__icon"></i>
+                <span class="nav-reloj__fecha">{{ ucfirst($ahoraBogota->locale('es')->isoFormat('ddd DD MMM')) }}</span>
+                <span class="nav-reloj__hora">{{ $ahoraBogota->format('h:i:s A') }}</span>
+            </div>
+
             {{-- Acciones --}}
             <div class="nav-actions">
 
