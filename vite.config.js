@@ -24,6 +24,7 @@ export default defineConfig({
                 'resources/css/designaciones/designaciones.css',
                 'resources/js/designaciones/designaciones.js',
                 'resources/js/disponibilidad/disponibilidad.js',
+                'resources/js/configuracion/configuracion.js',
             ],
             refresh: true,
         }),

@@ -226,8 +226,10 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
 
     //  Configuración del colegio — solo ejecutivo
     Route::prefix('configuracion')->name('configuracion.')->middleware('permission:editar-arbitros')->group(function () {
-        Route::get('/',  [ConfiguracionController::class, 'index'])->name('index');
-        Route::put('/',  [ConfiguracionController::class, 'update'])->name('update');
+        Route::get('/',        [ConfiguracionController::class, 'index'])->name('index');
+        Route::put('/',        [ConfiguracionController::class, 'update'])->name('update');
+        Route::post('/logo',   [ConfiguracionController::class, 'actualizarLogo'])->name('logo.actualizar');
+        Route::delete('/logo', [ConfiguracionController::class, 'eliminarLogo'])->name('logo.eliminar');
     });
 
     //  Cuentas admin (tesorero, designador, sanciones, tecnico, veedor, co-ejecutivo)
@@ -235,6 +237,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         ->middleware('permission:gestionar-cuentas-admin')->group(function () {
             Route::get('/',            [CuentaAdminController::class, 'index'])->name('index');
             Route::get('/crear',       [CuentaAdminController::class, 'create'])->name('create');
+            Route::get('/verificar-username', [CuentaAdminController::class, 'verificarUsername'])->name('verificar-username');
             Route::post('/',           [CuentaAdminController::class, 'store'])->name('store');
             Route::get('/{id}/editar', [CuentaAdminController::class, 'edit'])->name('edit');
             Route::put('/{id}',        [CuentaAdminController::class, 'update'])->name('update');

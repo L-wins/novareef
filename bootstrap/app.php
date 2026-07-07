@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AdminAuth;
 use App\Http\Middleware\BlockResendWebhook;
+use App\Http\Middleware\ProtegerEscrituraMasiva;
 use App\Http\Middleware\SoloSuperAdmin;
 use App\Http\Middleware\VerificarCambioContrasena;
 use App\Http\Middleware\VerificarEstadoColegio;
@@ -41,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->web(append: [
             VerificarCambioContrasena::class,
+            ProtegerEscrituraMasiva::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

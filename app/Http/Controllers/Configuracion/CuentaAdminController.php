@@ -11,7 +11,9 @@ use App\Http\Requests\Configuracion\UpdateCuentaAdminRequest;
 use App\Models\User;
 use App\Services\CuentaAdminService;
 use App\Services\LimiteService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -83,8 +85,16 @@ class CuentaAdminController extends Controller
     public function update(UpdateCuentaAdminRequest $request, int $id): RedirectResponse
     {
         $cuenta = $this->cuentaDelColegio($id);
+        $datos  = $request->validated();
 
-        $this->cuentasAdmin->actualizar($cuenta, $request->validated());
+        // Mismo principio que la auto-revocación: cambiar tu propio rol te
+        // dejaría sin acceso a esta pantalla para revertirlo.
+        if ((int) $cuenta->idUsuario === (int) Auth::id() && $datos['rolUsuario'] !== $cuenta->rolUsuario) {
+            return back()->withInput()
+                ->with('error', 'No puedes cambiar tu propio rol. Pídele a otro ejecutivo que lo haga.');
+        }
+
+        $this->cuentasAdmin->actualizar($cuenta, $datos);
 
         return redirect()
             ->route('configuracion.cuentas-admin.index')
@@ -94,6 +104,12 @@ class CuentaAdminController extends Controller
     public function revocar(int $id): RedirectResponse
     {
         $cuenta = $this->cuentaDelColegio($id);
+
+        // Un usuario no puede revocarse a sí mismo: dejaría al colegio sin
+        // acceso a esta pantalla para revertirlo.
+        if ((int) $cuenta->idUsuario === (int) Auth::id()) {
+            return back()->with('error', 'No puedes revocar tu propia cuenta. Pídele a otro ejecutivo que lo haga.');
+        }
 
         $this->cuentasAdmin->revocar($cuenta);
 
@@ -111,6 +127,30 @@ class CuentaAdminController extends Controller
         }
 
         return back()->with('success', 'Cuenta reactivada correctamente.');
+    }
+
+    /**
+     * Consulta AJAX de disponibilidad del nombre de usuario (usado por el
+     * indicador en vivo del formulario de edición). `ignorar` excluye a la
+     * propia cuenta para que su username actual no cuente como "ocupado".
+     * withTrashed(): la regla unique de los FormRequest también cuenta
+     * usuarios archivados — el indicador debe coincidir con la validación.
+     */
+    public function verificarUsername(Request $request): JsonResponse
+    {
+        $username = trim((string) $request->query('username'));
+        $ignorar  = (int) $request->query('ignorar', 0);
+
+        if ($username === '' || ! preg_match('/^[\pL\pM\pN_-]+$/u', $username) || mb_strlen($username) > 60) {
+            return response()->json(['valido' => false, 'disponible' => false]);
+        }
+
+        $ocupado = User::withTrashed()
+            ->where('usernameUsuario', $username)
+            ->when($ignorar > 0, fn ($q) => $q->where('idUsuario', '!=', $ignorar))
+            ->exists();
+
+        return response()->json(['valido' => true, 'disponible' => ! $ocupado]);
     }
 
     private function cuentaDelColegio(int $id): User

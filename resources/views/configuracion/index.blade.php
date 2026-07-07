@@ -3,6 +3,10 @@
 @section('titulo', 'Configuración')
 @section('seccion', 'Configuración')
 
+@push('scripts')
+    @vite(['resources/js/configuracion/configuracion.js'])
+@endpush
+
 @section('contenido')
 <div class="container">
 
@@ -13,7 +17,66 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ route('configuracion.update') }}">
+    {{-- ── Identidad del colegio (logo) ──────── --}}
+    <div class="detail-card" style="max-width:640px;margin-bottom:1.5rem;">
+        <div class="detail-card-header">
+            <div class="detail-card-title">
+                <i class="fa-solid fa-shield-halved" style="color:var(--accent);margin-right:0.5rem;"></i>
+                Identidad del colegio
+            </div>
+        </div>
+        <div class="detail-card-body">
+
+            <div class="logo-colegio-row">
+                <div class="logo-colegio-preview">
+                    @if ($colegio?->logoUrl)
+                        <img src="{{ $colegio->logoUrl }}" alt="Logo de {{ $colegio->nombreColegio }}">
+                    @else
+                        <i class="fa-solid fa-building-columns"></i>
+                    @endif
+                </div>
+                <div class="logo-colegio-info">
+                    <p class="td-primary" style="margin:0;">{{ $colegio?->nombreColegio }}</p>
+                    <p class="td-secondary" style="margin:0.25rem 0 0;">
+                        El logo aparece en la barra superior para todos los usuarios del colegio.
+                    </p>
+                </div>
+            </div>
+
+            <div class="logo-colegio-actions" style="margin-top:1rem;display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+                <form method="POST" action="{{ route('configuracion.logo.actualizar') }}" enctype="multipart/form-data" style="display:flex;gap:0.75rem;align-items:center;">
+                    @csrf
+                    <label class="btn btn-secondary" style="cursor:pointer;margin:0;">
+                        <i class="fa-solid fa-image"></i>
+                        {{ $colegio?->logoUrl ? 'Cambiar logo' : 'Subir logo' }}
+                        <input type="file" name="logo" accept=".jpg,.jpeg,.png,.webp"
+                               style="display:none;" data-submit-on-change>
+                    </label>
+                </form>
+                @if ($colegio?->logoUrl)
+                    <form method="POST" action="{{ route('configuracion.logo.eliminar') }}">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-secondary" style="color:var(--nv-danger);">
+                            <i class="fa-solid fa-trash-can"></i>
+                            Quitar logo
+                        </button>
+                    </form>
+                @endif
+            </div>
+            @error('logo')
+                <span class="form-error" style="display:block;margin-top:0.5rem;">{{ $message }}</span>
+            @enderror
+
+            <div class="form-note form-note--info" style="margin-top:1rem;">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Formatos: JPG, PNG o WebP · máximo 2 MB. Se recomienda una imagen cuadrada.</span>
+            </div>
+
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('configuracion.update') }}" data-edit-mode>
         @csrf
         @method('PUT')
 
@@ -98,10 +161,18 @@
             </div>
         </div>
 
-        <div style="margin-top:1.5rem;">
-            <button type="submit" class="btn btn-primary">
+        <div style="margin-top:1.5rem;display:flex;gap:0.75rem;">
+            <button type="button" class="btn btn-primary" data-edit-btn>
+                <i class="fa-solid fa-pen-to-square"></i>
+                Editar
+            </button>
+            <button type="submit" class="btn btn-primary" data-edit-save hidden>
                 <i class="fa-solid fa-floppy-disk"></i>
                 Guardar configuración
+            </button>
+            <button type="button" class="btn btn-secondary" data-edit-cancel hidden>
+                <i class="fa-solid fa-xmark"></i>
+                Cancelar
             </button>
         </div>
 

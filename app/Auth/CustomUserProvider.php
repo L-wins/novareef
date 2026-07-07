@@ -17,9 +17,11 @@ class CustomUserProvider extends EloquentUserProvider
 {
     /**
      * Cuentas con estadoUsuario distinto de 'activo' (revocadas/suspendidas) no
-     * deben poder iniciar sesión. Se intercepta aquí, antes de crear la sesión,
-     * para que el mensaje de error sea el mismo genérico de "credenciales
-     * inválidas" que un password incorrecto — no revela que la cuenta existe.
+     * deben poder iniciar sesión: se filtran aquí, antes de crear la sesión.
+     * Ante terceros el error sigue siendo el genérico de "credenciales inválidas"
+     * (no revela que la cuenta existe); solo cuando la contraseña es correcta,
+     * LoginController detecta el caso y muestra el mensaje veraz de cuenta
+     * desactivada.
      */
     public function retrieveByCredentials(#[\SensitiveParameter] array $credentials): ?UserContract
     {

@@ -45,18 +45,28 @@
                                name="nueva_password"
                                autocomplete="new-password"
                                placeholder="Mínimo 8 caracteres"
+                               data-password-strength
                                class="field-input {{ $errors->has('nueva_password') ? 'has-error' : '' }}">
-                        <button type="button" id="toggle-nueva"
+                        <button type="button" data-password-toggle="nueva_password"
                                 class="toggle-password" aria-label="Mostrar contraseña">
                             <i data-icon="show" class="fa-solid fa-eye"></i>
                             <i data-icon="hide" class="fa-solid fa-eye-slash hidden"></i>
                         </button>
                     </div>
+
+                    {{-- Medidor de fortaleza (lo maneja login.js) --}}
+                    <div class="strength-meter" data-strength-meter hidden aria-live="polite">
+                        <div class="strength-meter__bars">
+                            <span></span><span></span><span></span><span></span>
+                        </div>
+                        <p class="strength-meter__label" data-strength-label></p>
+                    </div>
+
                     @error('nueva_password')
                         <p class="mt-1.5 text-xs text-red-400">{{ $message }}</p>
                     @else
                         <p class="mt-1.5 text-xs text-slate-500">
-                            Mínimo 8 caracteres. Usa letras y números para mayor seguridad.
+                            Mínimo 8 caracteres. Combina mayúsculas, números y símbolos para una contraseña fuerte.
                         </p>
                     @enderror
                 </div>
@@ -74,7 +84,7 @@
                                autocomplete="new-password"
                                placeholder="Repite la contraseña"
                                class="field-input {{ $errors->has('nueva_password_confirmation') ? 'has-error' : '' }}">
-                        <button type="button" id="toggle-confirmar"
+                        <button type="button" data-password-toggle="nueva_password_confirmation"
                                 class="toggle-password" aria-label="Mostrar contraseña">
                             <i data-icon="show" class="fa-solid fa-eye"></i>
                             <i data-icon="hide" class="fa-solid fa-eye-slash hidden"></i>
@@ -88,6 +98,7 @@
                 {{-- Botón principal --}}
                 <button type="submit"
                         class="btn-login"
+                        data-strength-submit
                         style="background:#3b82f6;box-shadow:0 4px 20px rgb(59 130 246/.25);">
                     <span class="btn-text flex items-center gap-2">
                         <i class="fa-solid fa-lock"></i>
@@ -111,28 +122,5 @@
         </div>
 
     </div>
-
-    <script>
-    (function () {
-        function initToggle(btnId, inputId) {
-            var btn   = document.getElementById(btnId);
-            var input = document.getElementById(inputId);
-            if (!btn || !input) return;
-            var show = btn.querySelector('[data-icon="show"]');
-            var hide = btn.querySelector('[data-icon="hide"]');
-            btn.addEventListener('click', function () {
-                var isPwd = input.type === 'password';
-                input.type = isPwd ? 'text' : 'password';
-                show.classList.toggle('hidden', isPwd);
-                hide.classList.toggle('hidden', !isPwd);
-                btn.setAttribute('aria-label', isPwd ? 'Ocultar contraseña' : 'Mostrar contraseña');
-            });
-        }
-        document.addEventListener('DOMContentLoaded', function () {
-            initToggle('toggle-nueva',     'nueva_password');
-            initToggle('toggle-confirmar', 'nueva_password_confirmation');
-        });
-    }());
-    </script>
 
 @endsection

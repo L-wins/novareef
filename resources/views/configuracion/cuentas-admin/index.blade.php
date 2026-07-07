@@ -88,7 +88,11 @@
                                    class="btn-icon btn-icon-edit" title="Editar">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </a>
-                                @if ($cuenta->estadoUsuario === 'activo')
+                                @if ((int) $cuenta->idUsuario === (int) Auth::id())
+                                    <span class="btn-icon" title="No puedes revocar tu propia cuenta" style="opacity:.35;cursor:not-allowed;">
+                                        <i class="fa-solid fa-user-lock"></i>
+                                    </span>
+                                @elseif ($cuenta->estadoUsuario === 'activo')
                                     <form method="POST" action="{{ route('configuracion.cuentas-admin.revocar', $cuenta->idUsuario) }}" style="display:inline">
                                         @csrf
                                         @method('PUT')

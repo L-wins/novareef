@@ -19,12 +19,19 @@
     <header class="navbar" id="navbar">
         <div class="nav-inner">
 
-            {{-- Marca --}}
+            {{-- Marca: logo y nombre del colegio si existen; NovaReef como fallback --}}
+            @php($colegioNav = Auth::user()->colegio)
             <div class="nav-brand">
-                <div class="brand-icon">
-                    <i class="fa-solid fa-futbol"></i>
+                <div class="brand-icon {{ $colegioNav?->logoUrl ? 'brand-icon--logo' : '' }}">
+                    @if ($colegioNav?->logoUrl)
+                        <img src="{{ $colegioNav->logoUrl }}" alt="Logo de {{ $colegioNav->nombreColegio }}">
+                    @else
+                        <i class="fa-solid fa-futbol"></i>
+                    @endif
                 </div>
-                <span class="brand-name">NovaReef</span>
+                <span class="brand-name" title="{{ $colegioNav?->nombreColegio ?? 'NovaReef' }}">
+                    {{ $colegioNav?->nombreColegio ?? 'NovaReef' }}
+                </span>
                 <span class="brand-sep"></span>
                 <span class="brand-section">@yield('seccion', 'Panel de control')</span>
             </div>

@@ -3,6 +3,10 @@
 @section('titulo', 'Editar cuenta admin')
 @section('seccion', 'Configuración')
 
+@push('scripts')
+    @vite(['resources/js/configuracion/configuracion.js'])
+@endpush
+
 @section('contenido')
 <div class="container">
 
@@ -40,8 +44,17 @@
                 </div>
 
                 <div class="form-group" style="margin-top:1rem;">
-                    <label class="form-label">Nombre de usuario</label>
-                    <input type="text" class="form-input" value="{{ $cuenta->usernameUsuario ?? '—' }}" disabled>
+                    <label class="form-label" for="usernameUsuario">Nombre de usuario</label>
+                    <input type="text" name="usernameUsuario" id="usernameUsuario" class="form-input"
+                           value="{{ old('usernameUsuario', $cuenta->usernameUsuario) }}"
+                           maxlength="60" required autocomplete="off"
+                           data-username-check
+                           data-endpoint="{{ route('configuracion.cuentas-admin.verificar-username') }}"
+                           data-ignorar="{{ $cuenta->idUsuario }}">
+                    <span class="username-check" data-username-status aria-live="polite"></span>
+                    @error('usernameUsuario')
+                        <span class="form-error">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div class="form-group" style="margin-top:1rem;">
