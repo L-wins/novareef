@@ -30,6 +30,18 @@ class DisponibilidadServiceTest extends TestCase
         $this->disponibilidad = app(DisponibilidadService::class);
     }
 
+    /**
+     * Red de seguridad para cualquier test que congele Carbon::setTestNow():
+     * si una excepción (esperada o no) corta la ejecución antes del reset
+     * manual, este tearDown evita que el "ahora" congelado se filtre a los
+     * tests siguientes de la suite.
+     */
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
+    }
+
     public function test_guarda_una_franja_real_para_el_dia_reportado(): void
     {
         $colegio = $this->crearColegio($this->crearPlan());
@@ -96,6 +108,10 @@ class DisponibilidadServiceTest extends TestCase
 
     public function test_no_deja_reportar_dos_veces_en_el_mismo_ciclo(): void
     {
+        // Ancla la fecha "actual" (mismo día que usa el test de más abajo) para que
+        // la ventana de reporte no dependa de en qué día real se corra el suite.
+        Carbon::setTestNow('2026-07-03'); // viernes
+
         $colegio = $this->crearColegio($this->crearPlan());
         $arbitro = $this->crearArbitro($colegio);
 

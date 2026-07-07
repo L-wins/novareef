@@ -12,8 +12,13 @@ use Tests\TestCase;
 /**
  * El login acepta tanto emailUsuario como usernameUsuario en el mismo campo
  * (detección automática por formato), y bloquea cuentas con estadoUsuario
- * distinto de 'activo' (revocadas) con el mismo mensaje genérico que una
- * contraseña incorrecta — sin revelar que la cuenta existe.
+ * distinto de 'activo' (revocadas). El mensaje depende de si la contraseña
+ * ingresada es correcta:
+ * - Password correcta + cuenta revocada → mensaje específico ("tu cuenta fue
+ *   desactivada"), porque acertar la contraseña ya es una señal fuerte de que
+ *   quien la ingresa es el dueño legítimo de la cuenta.
+ * - Password incorrecta (exista o no la cuenta) → mensaje genérico idéntico,
+ *   para no revelarle a un tercero que adivina credenciales si la cuenta existe.
  */
 class LoginDualTest extends TestCase
 {
@@ -83,17 +88,33 @@ class LoginDualTest extends TestCase
         $this->assertGuest('web');
     }
 
-    public function test_cuenta_revocada_y_password_incorrecto_dan_el_mismo_mensaje(): void
+    public function test_cuenta_revocada_con_password_correcta_muestra_mensaje_especifico(): void
     {
-        // No debe filtrarse si la cuenta existe pero está revocada, vs. credenciales
-        // simplemente inválidas — ambos casos deben dar exactamente el mismo mensaje.
         $this->crearUsuario(['estadoUsuario' => 'inactivo']);
 
         $this->post('/login', [
             'identificador'   => 'usuario_prueba',
             'passwordUsuario' => 'Prueba123!',
         ]);
-        $revocada = session('errors')->first('identificador');
+
+        $this->assertStringContainsString(
+            'desactivada',
+            (string) session('errors')->first('identificador'),
+        );
+        $this->assertGuest('web');
+    }
+
+    public function test_cuenta_revocada_con_password_incorrecta_no_revela_su_existencia(): void
+    {
+        // Con password incorrecta, una cuenta revocada debe dar el mismo mensaje
+        // genérico que un identificador que no existe — sin filtrar que la cuenta existe.
+        $this->crearUsuario(['estadoUsuario' => 'inactivo']);
+
+        $this->post('/login', [
+            'identificador'   => 'usuario_prueba',
+            'passwordUsuario' => 'password-equivocado',
+        ]);
+        $revocadaPasswordMala = session('errors')->first('identificador');
 
         $this->post('/login', [
             'identificador'   => 'no-existe-nadie-con-este-usuario',
@@ -101,6 +122,6 @@ class LoginDualTest extends TestCase
         ]);
         $noExiste = session('errors')->first('identificador');
 
-        $this->assertSame($noExiste, $revocada);
+        $this->assertSame($noExiste, $revocadaPasswordMala);
     }
 }
