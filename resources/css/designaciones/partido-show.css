@@ -1,0 +1,481 @@
+/*
+   MÓDULO DESIGNACIONES — index, show, crear
+    */
+
+/* ── Hero Designaciones  */
+.desig-hero {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem;
+  padding-bottom: 1.5rem; border-bottom: 1px solid var(--disp-border);
+}
+.desig-hero__label {
+  display: block; font-size: .68rem; font-weight: 700; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--nv-accent); margin-bottom: .5rem;
+}
+.desig-hero__title { font-size: 2rem; font-weight: 800; color: var(--nv-text); margin: 0 0 .3rem; }
+.desig-hero__subtitle { font-size: .95rem; color: var(--disp-text-2); margin: 0; }
+
+.desig-critico-badge {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: .75rem;
+  background: rgba(239,68,68,.15); color: #ef4444; font-size: .75rem;
+  font-weight: 700; padding: 4px 12px; border-radius: 20px;
+  border: 1px solid rgba(239,68,68,.3);
+  animation: criticoPulse 2s ease-in-out infinite;
+}
+
+/* ── Partido card — index  */
+.partido-card {
+  background: var(--disp-bg-card); border: 2px solid var(--disp-border);
+  border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1rem;
+  transition: border-color 220ms, box-shadow 220ms;
+}
+.partido-card:hover { border-color: var(--nv-border-2); box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+
+.partido-card.es-critico {
+  animation: criticoPulse 2s ease-in-out infinite;
+  border-color: #ef4444;
+}
+
+.partido-card.estado-finalizado { opacity: .65; }
+.partido-card.estado-cancelado  { opacity: .5; }
+
+@keyframes criticoPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+  50%       { box-shadow: 0 0 0 8px rgba(239,68,68,.2); }
+}
+@keyframes pulso {
+  0%, 100% { opacity: 1; } 50% { opacity: .3; }
+}
+
+.partido-card__header {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem;
+}
+
+.partido-estado-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .73rem; font-weight: 700; padding: 4px 12px; border-radius: 20px;
+}
+.partido-estado-badge.estado-borrador     { background: rgba(79,142,247,.1);   color: var(--nv-accent-2); border: 1px dashed rgba(79,142,247,.4); }
+.partido-estado-badge.estado-programado  { background: rgba(79,142,247,.12); color: var(--nv-accent); }
+.partido-estado-badge.estado-confirmado  { background: rgba(34,197,94,.12);  color: #22c55e; }
+.partido-estado-badge.estado-critico     { background: rgba(239,68,68,.15);  color: #ef4444; }
+.partido-estado-badge.estado-aplazado    { background: rgba(245,158,11,.12); color: #f59e0b; }
+.partido-estado-badge.estado-finalizado  { background: rgba(100,116,139,.18);color: var(--nv-text-3); }
+.partido-estado-badge.estado-cancelado   { background: rgba(239,68,68,.08);  color: #ef4444; }
+.partido-estado-badge.estado-pendiente   { background: rgba(245,158,11,.12); color: #f59e0b; }
+.partido-estado-badge.estado-confirmada  { background: rgba(34,197,94,.12);  color: #22c55e; }
+.partido-estado-badge.estado-rechazada   { background: rgba(239,68,68,.12);  color: #ef4444; }
+.partido-estado-badge--lg { font-size: .85rem; padding: 8px 18px; }
+
+.partido-fecha-chip { font-size: .8rem; color: var(--disp-text-2); display: flex; align-items: center; gap: 6px; }
+
+.partido-card__match {
+  display: flex; align-items: center; gap: 1rem; margin-bottom: .75rem;
+}
+.partido-equipo { font-size: 1.1rem; font-weight: 800; color: var(--nv-text); }
+.partido-vs     { font-size: .85rem; font-weight: 700; color: var(--disp-text-2); }
+
+.partido-card__meta {
+  display: flex; flex-wrap: wrap; gap: .35rem .75rem;
+  font-size: .8rem; color: var(--disp-text-2); margin-bottom: .75rem;
+}
+.partido-card__meta span { display: flex; align-items: center; gap: 5px; }
+
+.partido-card__roles { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .75rem; }
+
+.rol-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .76rem; font-weight: 600; padding: 4px 10px;
+  border-radius: 20px; background: rgba(45,55,72,.5);
+  border: 1px solid var(--disp-border); color: var(--disp-text-2);
+}
+.rol-chip.estado-confirmada  { background: rgba(34,197,94,.1);  border-color: rgba(34,197,94,.3);  color: #22c55e; }
+.rol-chip.estado-rechazada   { background: rgba(239,68,68,.1);  border-color: rgba(239,68,68,.3);  color: #ef4444; }
+.rol-chip.sin-designaciones  { opacity: .55; }
+.rol-chip__estado { opacity: .75; }
+
+.partido-card__footer { display: flex; justify-content: flex-end; }
+
+/* ── Breadcrumb ──────── */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .82rem;
+  color: var(--disp-text-2);
+  margin-bottom: 1.25rem;
+}
+.breadcrumb a { color: var(--nv-accent); text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb i { font-size: .6rem; }
+
+.banner-critico {
+  display: flex; align-items: center; gap: .75rem;
+  background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3);
+  border-left: 4px solid #ef4444; border-radius: 12px;
+  padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+  font-size: .9rem; color: #ef4444; line-height: 1.5;
+  animation: criticoPulse 2s ease-in-out infinite;
+}
+
+.show-header {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+}
+.show-match-title {
+  font-size: 1.7rem; font-weight: 800; color: var(--nv-text); margin-bottom: .5rem;
+}
+.show-vs { color: var(--disp-text-2); font-size: 1rem; font-weight: 600; }
+.show-meta-chips {
+  display: flex; flex-wrap: wrap; gap: .35rem .75rem;
+  font-size: .85rem; color: var(--disp-text-2);
+}
+.show-meta-chips span { display: flex; align-items: center; gap: 6px; }
+
+.show-grid {
+  display: grid; grid-template-columns: 1fr 340px; gap: 2rem;
+  align-items: start;
+}
+@media (max-width: 900px) { .show-grid { grid-template-columns: 1fr; } }
+
+.show-section-title {
+  font-size: .8rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--disp-text-2);
+  margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;
+}
+
+/* ── Rol cards — show ── */
+.rol-card {
+  background: var(--nv-card); border: 2px solid var(--disp-border);
+  border-radius: 14px; padding: 1.25rem; margin-bottom: .75rem;
+  transition: border-color 220ms;
+}
+.rol-card--confirmada { border-color: #22c55e; }
+.rol-card--pendiente  { border-color: #f59e0b; }
+.rol-card--rechazada  { border-color: #ef4444; }
+.rol-card--vacio      { border-style: dashed; }
+
+.rol-card__header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: .75rem;
+}
+.rol-card__name {
+  font-size: .9rem; font-weight: 700; color: var(--disp-text);
+  display: flex; align-items: center; gap: 8px;
+}
+
+.rol-card__arbitro {
+  display: flex; align-items: center; gap: .75rem;
+}
+.rol-arbitro-avatar {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--nv-border-strong);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .9rem; font-weight: 700; color: var(--nv-accent); flex-shrink: 0;
+}
+.rol-arbitro-nombre { font-size: .9rem; font-weight: 700; color: var(--disp-text); }
+.rol-arbitro-meta   { font-size: .76rem; color: var(--disp-text-2); margin-top: 2px; }
+
+.desig-estado-pill {
+  margin-left: auto; font-size: .72rem; font-weight: 700;
+  padding: 4px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+}
+.desig-estado-confirmada { background: rgba(34,197,94,.12); color: #22c55e; }
+.desig-estado-pendiente  { background: rgba(245,158,11,.12); color: #f59e0b; }
+.desig-estado-rechazada  { background: rgba(239,68,68,.12);  color: #ef4444; }
+
+.rol-rechazo-motivo {
+  font-size: .8rem; color: #ef4444; font-style: italic; margin-top: .5rem;
+  padding: .5rem .75rem; background: rgba(239,68,68,.06); border-radius: 8px;
+}
+
+/* ── Buscador árbitro ── */
+.arbitro-search { position: relative; }
+.arbitro-search__results {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+  background: var(--nv-elevated); border: 1px solid var(--disp-border);
+  border-radius: 10px; margin-top: 4px; max-height: 300px;
+  overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+
+.arbitro-result {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .75rem 1rem; cursor: pointer; border-radius: 0;
+  transition: background 150ms; border-bottom: 1px solid var(--disp-border);
+}
+.arbitro-result:last-child { border-bottom: none; }
+.arbitro-result:hover { background: var(--nv-card-hover); }
+.arbitro-result.ya-asignado { opacity: .45; cursor: default; pointer-events: none; }
+
+.arbitro-result__avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: var(--nv-border-strong);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; font-weight: 700; color: var(--nv-accent); flex-shrink: 0;
+}
+.arbitro-result__info { flex: 1; min-width: 0; }
+.arbitro-result__nombre-row {
+  display: flex; align-items: center; gap: 6px; min-width: 0;
+}
+.arbitro-result__nombre {
+  font-size: .85rem; font-weight: 700; color: var(--disp-text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+.arbitro-result__meta   { font-size: .75rem; color: var(--disp-text-2); margin-top: 2px; }
+.arbitro-result__badges { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.arbitro-result__badge  {
+  font-size: .68rem; font-weight: 700; padding: 2px 8px; border-radius: 12px;
+}
+.badge-disponible   { background: rgba(34,197,94,.14); color: #22c55e; }
+.badge-warn-tiempo  { background: rgba(245,158,11,.14); color: #f59e0b; }
+.badge-sin-reporte  { background: rgba(100,116,139,.18); color: var(--nv-text-2); }
+.badge-extraordinaria{ background: rgba(239,68,68,.14); color: #ef4444; }
+.badge-suspendido   { background: rgba(239,68,68,.08); color: #ef4444; }
+.badge-sobrecarga   { background: rgba(139,92,246,.14); color: #8b5cf6; }
+
+/* Estado de disponibilidad: es el dato más importante para decidir a quién
+   asignar — se le da más peso visual (ícono + borde) que a las demás badges
+   secundarias, para que no se camufle entre advertencias de menor prioridad. */
+.arbitro-result__badge--disponibilidad {
+  display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+  font-size: .74rem; font-weight: 800; padding: 3px 10px; white-space: nowrap;
+  border: 1px solid currentColor;
+}
+.arbitro-result__badge--disponibilidad i { font-size: .7rem; }
+
+/* ── Info card — side ── */
+.info-card {
+  background: var(--disp-bg-card); border: 1px solid var(--disp-border);
+  border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem;
+}
+.info-card__title {
+  font-size: .75rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--disp-text-2); margin-bottom: 1rem;
+}
+.info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .4rem 0; border-bottom: 1px solid var(--disp-border);
+  font-size: .82rem;
+}
+.info-row:last-of-type { border-bottom: none; }
+.info-row span { color: var(--disp-text-2); }
+.info-row strong { color: var(--disp-text); text-align: right; max-width: 55%; }
+.info-obs { margin-top: 1rem; }
+.info-obs__label { font-size: .72rem; font-weight: 700; text-transform: uppercase; color: var(--disp-text-2); margin-bottom: .35rem; }
+.info-obs__text  { font-size: .83rem; color: var(--disp-text); line-height: 1.55; }
+
+/* ── Historial timeline ─ */
+.historial-timeline { position: relative; padding-left: 1.5rem; }
+.historial-timeline::before {
+  content: ''; position: absolute; left: 7px; top: 0; bottom: 0;
+  width: 2px; background: var(--disp-border);
+}
+.historial-item { position: relative; margin-bottom: 1.25rem; }
+.historial-item--oculto { display: none; }
+.historial-timeline.mostrar-todo .historial-item--oculto { display: block; }
+.historial-dot {
+  position: absolute; left: -1.5rem; top: 4px;
+  width: 14px; height: 14px; border-radius: 50%; border: 2px solid;
+  background: var(--nv-card);
+}
+.historial-dot--asignado               { border-color: var(--nv-accent); }
+.historial-dot--confirmado             { border-color: #22c55e; }
+.historial-dot--rechazado              { border-color: #ef4444; }
+.historial-dot--quitado                { border-color: #f59e0b; }
+.historial-dot--partido_creado         { border-color: var(--nv-text-2); }
+.historial-dot--estado_partido_cambiado{ border-color: #a78bfa; }
+.historial-dot--emergente_cubrio       { border-color: #38bdf8; }
+
+.historial-body { padding-left: .25rem; }
+.historial-accion { font-size: .85rem; font-weight: 700; color: var(--disp-text); }
+.historial-arbitro { font-size: .8rem; color: var(--nv-accent); margin-top: 2px; }
+.historial-transicion {
+  display: flex; align-items: center; gap: .5rem; margin-top: .3rem; font-size: .75rem;
+}
+.estado-chip {
+  background: var(--nv-border); padding: 2px 8px; border-radius: 6px;
+  color: var(--disp-text-2);
+}
+.estado-chip--nuevo { color: var(--nv-accent); }
+.historial-detalle { font-size: .78rem; color: var(--disp-text-2); font-style: italic; margin-top: .3rem; }
+.historial-meta    { font-size: .72rem; color: var(--disp-text-2); margin-top: .3rem; }
+
+/* ── Partido crear form  */
+.form-card-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+  margin-bottom: 2rem;
+  /* Permitir que los dropdowns de Choices escapen el grid */
+  align-items: start;
+  overflow: visible;
+}
+@media (max-width: 768px) { .form-card-grid { grid-template-columns: 1fr; } }
+
+.form-col {
+  display: flex; flex-direction: column; gap: 1.25rem;
+  /* Crítico: sin overflow:hidden para que el dropdown Choices sea visible */
+  overflow: visible;
+}
+
+.form-group { display: flex; flex-direction: column; gap: .4rem; }
+.form-group-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+.formato-preview {
+  background: rgba(79,142,247,.06); border: 1px solid rgba(79,142,247,.2);
+  border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;
+}
+.formato-preview__title { font-size: .8rem; font-weight: 700; color: var(--nv-accent); margin-bottom: .75rem; display: flex; align-items: center; gap: 8px; }
+.formato-roles-list { display: flex; flex-wrap: wrap; gap: .5rem; }
+.formato-rol-item {
+  background: rgba(79,142,247,.1); color: var(--nv-accent-2); border: 1px solid rgba(79,142,247,.2);
+  border-radius: 20px; padding: 4px 12px; font-size: .8rem; font-weight: 600;
+}
+
+.form-actions { display: flex; justify-content: flex-end; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--disp-border); }
+
+/* ═
+   Borrador / Publicación / Slots
+   ═ */
+
+/* ── Banners borrador / publicado ── */
+.banner-borrador,
+.banner-publicado {
+  display: flex; align-items: flex-start; gap: .85rem;
+  border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+  font-size: .9rem; line-height: 1.5;
+}
+.banner-borrador {
+  background: rgba(79,142,247,.08); border: 1px solid rgba(79,142,247,.3);
+  border-left: 4px solid var(--nv-accent); color: var(--nv-accent-2);
+}
+.banner-borrador > i { font-size: 1.2rem; margin-top: 2px; }
+.banner-borrador strong { color: #a5c4fb; }
+.banner-borrador__sub { font-size: .8rem; color: var(--disp-text-2); margin-top: 2px; }
+
+.banner-publicado {
+  background: rgba(34,197,94,.07); border: 1px solid rgba(34,197,94,.25);
+  border-left: 4px solid #22c55e; color: #4ade80;
+}
+.banner-publicado > i { font-size: 1.2rem; margin-top: 2px; }
+.banner-publicado strong { color: #86efac; }
+.banner-publicado__sub { font-size: .8rem; color: var(--disp-text-2); margin-top: 2px; }
+
+/* ── Botón publicar ──── */
+.info-card--publicar {
+  border-color: rgba(34,197,94,.35) !important;
+  background: linear-gradient(160deg, rgba(34,197,94,.06), transparent 55%) , var(--nv-card);
+}
+.publicar-nota {
+  font-size: .82rem; color: var(--disp-text-2); line-height: 1.5;
+  margin-bottom: .9rem;
+}
+.btn-publicar {
+  display: flex; align-items: center; justify-content: center; gap: .6rem;
+  width: 100%; padding: .9rem 1.25rem; border: none; cursor: pointer;
+  border-radius: 12px; font-size: 1rem; font-weight: 800; letter-spacing: .01em;
+  color: #fff; background: linear-gradient(135deg, #16a34a, #22c55e);
+  box-shadow: 0 6px 18px rgba(34,197,94,.3);
+  transition: transform 160ms, box-shadow 160ms, filter 160ms;
+}
+.btn-publicar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(34,197,94,.4);
+  filter: brightness(1.05);
+}
+.btn-publicar:active { transform: translateY(0); }
+
+/* ── Botón finalizar (solo Central, en curso) ────────────── */
+.btn-finalizar {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .55rem 1.1rem; border: none; cursor: pointer;
+  border-radius: 10px; font-size: .85rem; font-weight: 700;
+  color: #fff; background: linear-gradient(135deg, #2563eb, var(--nv-accent));
+  box-shadow: 0 4px 14px rgba(79,142,247,.3);
+  transition: transform 160ms, box-shadow 160ms;
+}
+.btn-finalizar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(79,142,247,.4);
+}
+
+/* ── Slot cards (reemplazan rol-card) ────────────────────── */
+.slot-card {
+  background: var(--nv-card); border: 2px solid var(--disp-border);
+  border-radius: 14px; padding: 1.25rem; margin-bottom: .75rem;
+  transition: border-color 220ms;
+}
+.slot-card--confirmada { border-color: #22c55e; }
+.slot-card--pendiente  { border-color: #f59e0b; }
+.slot-card--rechazada  { border-color: #ef4444; }
+.slot-card--vacio      { border-style: dashed; }
+.slot-card[data-slot="2"] { border-left-width: 6px; }
+
+.slot-card__header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: .75rem;
+}
+.slot-card__name {
+  font-size: .9rem; font-weight: 700; color: var(--disp-text);
+  display: flex; align-items: center; gap: 8px;
+}
+.slot-card__arbitro {
+  display: flex; align-items: center; gap: .75rem;
+}
+.slot-card__bloqueado {
+  display: flex; align-items: center; gap: .5rem;
+  font-size: .82rem; color: var(--disp-text-2);
+  padding: .6rem .25rem;
+}
+
+.show-formato-chip {
+  margin-left: auto; font-size: .7rem; font-weight: 700;
+  text-transform: none; letter-spacing: 0;
+  padding: 3px 10px; border-radius: 20px;
+  background: rgba(79,142,247,.1); color: var(--nv-accent-2);
+  border: 1px solid rgba(79,142,247,.25);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Tema claro — los pasteles pensados para fondo oscuro (dark)
+   pierden contraste sobre fondo blanco; se oscurecen aquí.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Verde */
+:root[data-theme="light"] .rol-chip.estado-confirmada,
+:root[data-theme="light"] .desig-estado-confirmada,
+:root[data-theme="light"] .partido-estado-badge.estado-confirmado,
+:root[data-theme="light"] .partido-estado-badge.estado-confirmada,
+:root[data-theme="light"] .banner-publicado,
+:root[data-theme="light"] .banner-publicado strong { color: #15803d; }
+:root[data-theme="light"] .rol-card--confirmada,
+:root[data-theme="light"] .slot-card--confirmada,
+:root[data-theme="light"] .historial-dot--confirmado { border-color: #15803d; }
+
+/* Rojo */
+:root[data-theme="light"] .desig-critico-badge,
+:root[data-theme="light"] .banner-critico,
+:root[data-theme="light"] .rol-chip.estado-rechazada,
+:root[data-theme="light"] .desig-estado-rechazada,
+:root[data-theme="light"] .rol-rechazo-motivo,
+:root[data-theme="light"] .badge-extraordinaria,
+:root[data-theme="light"] .badge-suspendido,
+:root[data-theme="light"] .partido-estado-badge.estado-critico,
+:root[data-theme="light"] .partido-estado-badge.estado-cancelado,
+:root[data-theme="light"] .partido-estado-badge.estado-rechazada { color: #dc2626; }
+:root[data-theme="light"] .partido-card.es-critico,
+:root[data-theme="light"] .rol-card--rechazada,
+:root[data-theme="light"] .slot-card--rechazada,
+:root[data-theme="light"] .historial-dot--rechazado { border-color: #dc2626; }
+
+/* Ámbar */
+:root[data-theme="light"] .desig-estado-pendiente,
+:root[data-theme="light"] .badge-warn-tiempo,
+:root[data-theme="light"] .partido-estado-badge.estado-aplazado,
+:root[data-theme="light"] .partido-estado-badge.estado-pendiente { color: #b45309; }
+:root[data-theme="light"] .rol-card--pendiente,
+:root[data-theme="light"] .slot-card--pendiente,
+:root[data-theme="light"] .historial-dot--quitado { border-color: #b45309; }
+
+/* Morado / azul cielo */
+:root[data-theme="light"] .banner-borrador strong { color: #1d4ed8; }
+:root[data-theme="light"] .historial-dot--estado_partido_cambiado { border-color: #7c3aed; }
+:root[data-theme="light"] .historial-dot--emergente_cubrio        { border-color: #0369a1; }
+:root[data-theme="light"] .badge-sobrecarga { color: #6d28d9; }

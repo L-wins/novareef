@@ -1,0 +1,58 @@
+/*
+   Utilidades compartidas del módulo Designaciones/Disponibilidad
+    */
+
+/* ── Botones extra ───── */
+.btn-success { background: linear-gradient(135deg, #16a34a, #15803d); color: #fff; }
+.btn-success:hover { opacity: .9; }
+.btn-danger  { background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; }
+.btn-danger:hover  { opacity: .9; }
+.btn-lg  { padding: 14px 24px; font-size: 1rem; }
+.btn-xs  { padding: 4px 10px; font-size: .72rem; }
+
+/* ── Modal rechazo ───── */
+.nova-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.nova-modal {
+  background: var(--nv-elevated); border: 1px solid var(--disp-border); border-radius: 16px;
+  width: 100%; max-width: 520px; margin: 1rem; box-shadow: 0 24px 48px rgba(0,0,0,.5);
+}
+.nova-modal__header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--disp-border);
+}
+.nova-modal__header h2 { font-size: 1.1rem; font-weight: 700; color: var(--nv-text); }
+.nova-modal__close { background: none; border: none; color: var(--disp-text-2); cursor: pointer; font-size: 1rem; padding: 4px; }
+.nova-modal__body  { padding: 1.5rem; }
+.nova-modal__footer {
+  display: flex; justify-content: flex-end; gap: .75rem;
+  padding: 1rem 1.5rem; border-top: 1px solid var(--disp-border);
+}
+
+/* ── Textarea con altura fija ────── */
+.textarea-fixed {
+  resize: vertical;
+  min-height: 80px;
+  max-height: 160px;
+}
+
+/* ── Misc ─────────────── */
+.req { color: #ef4444; }
+.text-right { text-align: right; }
+.filter-group--btn { display: flex; align-items: flex-end; gap: .5rem; }
+.pagination-wrap { margin-top: 2rem; display: flex; justify-content: center; }
+.empty-state {
+  text-align: center; padding: 4rem 2rem;
+  border: 2px dashed var(--disp-border); border-radius: 16px;
+}
+.empty-state__title { font-size: 1.1rem; font-weight: 700; color: var(--disp-text); margin-bottom: .5rem; }
+.empty-state__sub   { font-size: .9rem; color: var(--disp-text-2); }
+
+/* ═══════════════════════════════════════════════════════════════
+   Tema claro — los pasteles pensados para fondo oscuro (dark)
+   pierden contraste sobre fondo blanco; se oscurecen aquí.
+   ═══════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] .req { color: #dc2626; }

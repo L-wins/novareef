@@ -1,0 +1,415 @@
+/*
+   MIS PARTIDOS (árbitro) — hero, cards, historial
+    */
+
+.mis-hero {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 1.25rem;
+  background: linear-gradient(150deg, rgba(79,142,247,.09), transparent 60%), var(--nv-card);
+  border: 1px solid var(--disp-border); border-radius: 18px;
+  padding: 1.75rem 2rem; margin-bottom: 2rem;
+}
+.mis-hero__label {
+  font-size: .72rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .12em; color: var(--nv-accent-2); margin-bottom: .35rem;
+}
+.mis-hero__saludo {
+  font-size: clamp(1.4rem, 3.5vw, 2rem); font-weight: 800;
+  color: var(--nv-text); letter-spacing: -.02em;
+}
+.mis-hero__sub { font-size: .88rem; color: var(--disp-text-2); margin-top: .25rem; }
+
+.mis-hero__stats { display: flex; align-items: center; gap: .75rem; }
+.mis-hero__historial { white-space: nowrap; }
+.mis-stat {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 92px; padding: .85rem 1rem;
+  background: var(--nv-fill); border: 1px solid var(--disp-border);
+  border-radius: 14px;
+}
+.mis-stat__num { font-size: 1.6rem; font-weight: 900; color: var(--nv-text); line-height: 1; }
+.mis-stat__label {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--disp-text-2); margin-top: .4rem;
+}
+.mis-stat--hoy { border-color: rgba(239,68,68,.4); }
+.mis-stat--hoy .mis-stat__num { color: #ef4444; }
+.mis-stat--pendiente { border-color: rgba(245,158,11,.4); }
+.mis-stat--pendiente .mis-stat__num { color: #f59e0b; }
+.mis-stat--dirigidos { border-color: rgba(34,197,94,.4); }
+.mis-stat--dirigidos .mis-stat__num { color: #22c55e; }
+.mis-stat--rechazadas { border-color: rgba(239,68,68,.3); }
+.mis-stat--rechazadas .mis-stat__num { color: #ef4444; }
+
+/* ── Strip de estadísticas por rol (historial) ───────────── */
+.mis-roles-strip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem;
+  background: var(--nv-surface); border: 1px solid var(--disp-border);
+  border-radius: 14px; padding: .85rem 1.25rem; margin-bottom: 1.5rem;
+}
+.mis-roles-strip__label {
+  font-size: .72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--disp-text-2);
+  display: flex; align-items: center; gap: 6px;
+}
+.mis-rol-stat {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(79,142,247,.08); border: 1px solid rgba(79,142,247,.2);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: .8rem; color: var(--disp-text);
+}
+.mis-rol-stat strong { color: var(--nv-accent); font-weight: 800; }
+
+/* ── Secciones mis-partidos ──────── */
+.mis-partidos-section { margin-bottom: 2.5rem; }
+.mis-partidos-section--destacada {
+  background: rgba(79,142,247,.03); border: 1px solid rgba(79,142,247,.15);
+  border-radius: 16px; padding: 1.5rem; margin-bottom: 2.5rem;
+}
+.mis-partidos-section--hoy {
+  border-left: 4px solid #ef4444;
+  padding-left: 1.25rem;
+  margin-left: -1.25rem;
+}
+.mis-partidos-section--manana {
+  border-left: 4px solid #f59e0b;
+  padding-left: 1.25rem;
+  margin-left: -1.25rem;
+}
+
+/* ── Sección HOY/MAÑANA - label ──── */
+.mis-section-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--disp-text-2);
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: 1rem;
+  /* Sticky bajo el navbar fijo (--navbar-h, definido en app.css) mientras
+     se hace scroll dentro de su grupo de fecha. */
+  position: sticky;
+  top: var(--navbar-h, 64px);
+  z-index: 20;
+  background: var(--bg-base);
+  padding: .75rem 0;
+}
+.mis-section-label--hoy    { color: #ef4444 !important; }
+.mis-section-label--manana { color: #f59e0b !important; }
+
+/* ── DateDivider genérico — separador sticky entre grupos de fecha
+   (partidos-torneo). El texto lo recalcula date-divider.js cada minuto,
+   nunca se hardcodea "Hoy"/"Mañana" en el servidor. ──────────────── */
+.date-divider {
+  position: sticky;
+  top: var(--navbar-h, 64px);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .6rem 0;
+  margin: 1.5rem 0 .75rem;
+  background: var(--bg-base);
+}
+.date-divider:first-child { margin-top: 0; }
+.date-divider__label {
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--nv-accent);
+  white-space: nowrap;
+}
+.date-divider__line {
+  flex: 1;
+  height: 1px;
+  background: var(--disp-border);
+}
+
+/* ── Card de partido — mis-partidos (base fusionada, ver nota abajo) ── */
+.mis-partido-card {
+  background: var(--disp-bg-card);
+  border: 1px solid var(--disp-border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  transition: border-color 200ms, box-shadow 200ms;
+}
+.mis-partido-card:hover { border-color: #4a5568; }
+.mis-partido-card--grande { padding: 1.5rem !important; }
+
+/* Card HOY — borde parpadeante */
+.mis-partido-card--hoy {
+  border-color: rgba(239,68,68,0.5) !important;
+  box-shadow: 0 0 0 1px rgba(239,68,68,.15), 0 4px 20px rgba(239,68,68,.08);
+  animation: borderGlow 2.5s ease-in-out infinite;
+}
+@keyframes borderGlow {
+  0%,100% { box-shadow: 0 0 0 1px rgba(239,68,68,.15), 0 4px 20px rgba(239,68,68,.08); }
+  50%      { box-shadow: 0 0 0 1px rgba(239,68,68,.4),  0 4px 24px rgba(239,68,68,.18); }
+}
+.mis-partido-card--manana {
+  border-color: rgba(245,158,11,0.4) !important;
+}
+
+.mis-partido-card__topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: .75rem; flex-wrap: wrap; margin-bottom: .5rem;
+}
+.mis-partido-card__header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 1rem; flex-wrap: wrap;
+}
+.mis-partido-cuando-badge {
+  font-size: .72rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .08em; padding: 3px 10px; border-radius: 20px;
+  background: rgba(239,68,68,.15); color: #ef4444;
+  border: 1px solid rgba(239,68,68,.3);
+}
+
+.mis-match-title {
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-weight: 900;
+  color: var(--disp-text);
+  margin: .75rem 0;
+  line-height: 1.2;
+}
+.mis-match-name {
+  font-weight: 700;
+  color: var(--disp-text);
+  font-size: .95rem;
+  margin-bottom: .35rem;
+}
+.mis-match-meta {
+  display: flex; flex-wrap: wrap; gap: .5rem;
+  font-size: .78rem; color: var(--disp-text-2); margin-top: .25rem;
+}
+.mis-match-meta span { display: flex; align-items: center; gap: 5px; }
+
+.mis-meta-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: .4rem .75rem;
+  font-size: .82rem; color: var(--disp-text-2); margin-bottom: .75rem;
+}
+.mis-meta-grid div { display: flex; align-items: center; gap: 8px; }
+
+.mis-rol-chip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  background: rgba(79,142,247,.12); color: var(--nv-accent);
+  border: 1px solid rgba(79,142,247,.25); border-radius: 20px;
+  padding: 4px 12px; font-size: .8rem; font-weight: 600;
+  margin-bottom: .5rem;
+}
+
+/* Recordatorio COMET — acento izquierdo restaurado: se había perdido
+   porque un bloque duplicado más nuevo pisaba el border-left con un
+   `border` shorthand genérico (bug real encontrado al consolidar). */
+.mis-comet-reminder {
+  display: flex; align-items: flex-start; gap: .75rem;
+  background: rgba(245,158,11,.1);
+  border: 1px solid rgba(245,158,11,.25);
+  border-left: 4px solid #d97706;
+  border-radius: 10px; padding: .75rem 1rem; margin-top: .75rem;
+  font-size: .82rem; color: #d97706; line-height: 1.5;
+}
+
+.mis-acciones {
+  display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1rem;
+}
+.mis-acciones--compact { flex-wrap: wrap; margin-top: .75rem; }
+
+/* ── Fila de acciones por card ───── */
+.mis-card-acciones {
+  display: flex; gap: .75rem; flex-wrap: wrap; align-items: center;
+  margin-top: .85rem;
+}
+
+@media (max-width: 640px) {
+  .mis-hero { padding: 1.25rem; }
+  .mis-hero__stats { width: 100%; justify-content: space-between; }
+  .mis-stat { flex: 1; min-width: 0; }
+  .btn-publicar { font-size: .92rem; }
+}
+
+/* ── is-mi-designacion highlight ── */
+.es-mi-designacion {
+  background: rgba(79,142,247,.07);
+  border-radius: 8px;
+  padding: .5rem .75rem;
+}
+
+/* ── Cuenta regresiva ── */
+.countdown-timer {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ef4444;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+.countdown-timer.urgente {
+  animation: timerPulse 1s ease-in-out infinite;
+}
+@keyframes timerPulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* ── Etiquetas dinámicas ─ */
+.etiqueta-dinamica {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.etiqueta-hoy    { background:rgba(239,68,68,0.15);  color:#ef4444; border:1px solid rgba(239,68,68,0.3); }
+.etiqueta-manana { background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); }
+.etiqueta-pronto { background:rgba(79,142,247,0.15); color:var(--nv-accent); border:1px solid rgba(79,142,247,0.3); }
+.etiqueta-futuro { background:rgba(74,85,104,0.2);   color:var(--nv-text-2); border:1px solid rgba(74,85,104,0.3); }
+.etiqueta-pasado { background:rgba(74,85,104,0.1);   color:#4a5568; border:1px solid transparent; }
+
+/* ── Calificación con estrellas ──── */
+.nota-stars { color: #f59e0b; }
+
+.nota-btn {
+  padding: 7px 13px;
+  border-radius: 8px;
+  border: 2px solid var(--nv-border-strong);
+  background: var(--nv-card);
+  color: var(--nv-text-2);
+  cursor: pointer;
+  transition: all 180ms;
+  font-weight: 700;
+  font-size: .82rem;
+}
+.nota-btn:hover { background: var(--nv-accent); border-color: var(--nv-accent); color: #fff; }
+.nota-btn.selected   { border-color: var(--nv-accent); color: #fff; }
+.nota-btn.selected-5 { background: #22c55e; border-color: #22c55e; }
+.nota-btn.selected-4 { background: var(--nv-accent); border-color: var(--nv-accent); }
+.nota-btn.selected-3 { background: #f59e0b; border-color: #f59e0b; color: #000; }
+.nota-btn.selected-2 { background: #ef4444; border-color: #ef4444; }
+.nota-btn.selected-1 { background: #7f1d1d; border-color: #ef4444; color:#fff; }
+
+/* ── Equipo arbitral ─── */
+.equipo-arbitral-card {
+  background: var(--disp-bg-card);
+  border: 1px solid var(--disp-border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  transition: border-color 200ms;
+}
+.equipo-arbitral-card:hover { border-color: var(--nv-accent); }
+
+.arbitro-item {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .7rem 0;
+  border-bottom: 1px solid var(--disp-border);
+}
+.arbitro-item:last-child { border-bottom: none; }
+
+.arbitro-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--nv-border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: .85rem;
+  color: var(--nv-accent);
+  flex-shrink: 0;
+}
+
+/* ── Pago chips (mis-partidos index) ─────────────────────── */
+.pago-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .78rem; font-weight: 700;
+  padding: 5px 12px; border-radius: 20px; white-space: nowrap;
+}
+.pago-chip--campo {
+  background: rgba(34,197,94,.1); color: #4ade80;
+  border: 1px solid rgba(34,197,94,.25);
+}
+.pago-chip--nomina {
+  background: rgba(79,142,247,.1); color: var(--nv-accent-2);
+  border: 1px solid rgba(79,142,247,.25);
+}
+.pago-chip--consultar {
+  background: rgba(148,163,184,.08); color: var(--disp-text-2);
+  border: 1px dashed rgba(148,163,184,.3);
+}
+
+/* ── Pago card (mis-partidos detalle) ────────────────────── */
+.pago-card { border-color: rgba(34,197,94,.25) !important; }
+.pago-card__body { text-align: center; padding: .75rem 0 .35rem; }
+.pago-card__valor {
+  font-size: 2rem; font-weight: 900; color: #4ade80; letter-spacing: -.02em;
+}
+.pago-card__valor--nomina {
+  font-size: 1.4rem; color: var(--nv-accent-2);
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+}
+.pago-card__moneda { font-size: .9rem; font-weight: 700; color: var(--disp-text-2); }
+.pago-card__nota { font-size: .8rem; color: var(--disp-text-2); margin-top: .4rem; }
+
+/* ── Tabla historial (table-card / data-table) ───────────── */
+.table-card {
+  background: var(--nv-card);
+  border: 1px solid var(--disp-border);
+  border-radius: 14px;
+  overflow: hidden;
+  overflow-x: auto;
+  margin-bottom: 1.25rem;
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .86rem;
+}
+.data-table thead th {
+  text-align: left;
+  padding: .85rem 1rem;
+  background: var(--nv-fill);
+  color: var(--disp-text-2);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: .72rem;
+  letter-spacing: .04em;
+  border-bottom: 1px solid var(--disp-border);
+  white-space: nowrap;
+}
+.data-table tbody td {
+  padding: .85rem 1rem;
+  color: var(--disp-text);
+  border-bottom: 1px solid var(--disp-border);
+  vertical-align: middle;
+}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover         { background: var(--nv-fill); }
+
+/* ═══════════════════════════════════════════════════════════════
+   Tema claro — los pasteles pensados para fondo oscuro (dark)
+   pierden contraste sobre fondo blanco; se oscurecen aquí.
+   ═══════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] .etiqueta-hoy,
+:root[data-theme="light"] .mis-section-label--hoy,
+:root[data-theme="light"] .countdown-timer,
+:root[data-theme="light"] .mis-stat--hoy .mis-stat__num,
+:root[data-theme="light"] .mis-stat--rechazadas .mis-stat__num { color: #dc2626; }
+:root[data-theme="light"] .mis-section-label--hoy { color: #dc2626 !important; }
+
+:root[data-theme="light"] .mis-partido-cuando-badge,
+:root[data-theme="light"] .mis-comet-reminder,
+:root[data-theme="light"] .etiqueta-manana,
+:root[data-theme="light"] .nota-stars,
+:root[data-theme="light"] .mis-stat--pendiente .mis-stat__num { color: #b45309; }
+:root[data-theme="light"] .mis-section-label--manana { color: #b45309 !important; }
+
+:root[data-theme="light"] .mis-stat--dirigidos .mis-stat__num,
+:root[data-theme="light"] .pago-chip--campo,
+:root[data-theme="light"] .pago-card__valor { color: #15803d; }

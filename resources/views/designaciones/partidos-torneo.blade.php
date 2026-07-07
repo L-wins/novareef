@@ -54,7 +54,7 @@
             <label class="desi-filter-label">Estado</label>
             <select name="estado" class="filter-select" data-nova-select data-placeholder="Todos">
                 <option value="">Todos</option>
-                @foreach(['borrador'=>'Borrador','programado'=>'Programado','confirmado'=>'Confirmado','critico'=>'Crítico','aplazado'=>'Aplazado','en_curso'=>'En curso','finalizado'=>'Finalizado','cancelado'=>'Cancelado'] as $v=>$l)
+                @foreach(['borrador'=>'Borrador','programado'=>'Programado','confirmado'=>'Confirmado','critico'=>'Crítico','aplazado'=>'Aplazado','finalizado'=>'Finalizado','cancelado'=>'Cancelado'] as $v=>$l)
                     <option value="{{ $v }}" {{ request('estado') === $v ? 'selected' : '' }}>{{ $l }}</option>
                 @endforeach
             </select>
@@ -80,18 +80,38 @@
 
     {{-- ═══ LISTA DE PARTIDOS ═══ --}}
     <div class="desi-list">
+        @php $fechaDivisorAnterior = null; @endphp
         @forelse($partidos as $partido)
+        @php
+            $fechaDelPartido = $partido->fechaPartido?->format('Y-m-d');
+        @endphp
+        @if($fechaDelPartido !== $fechaDivisorAnterior)
+        @php
+            // Etiqueta inicial calculada en servidor — evita el parpadeo vacío
+            // antes de que date-divider.js la recalcule (y la mantenga viva).
+            $labelDivisor = match(true) {
+                $partido->fechaPartido?->isToday()    => 'Hoy',
+                $partido->fechaPartido?->isTomorrow() => 'Mañana',
+                $partido->fechaPartido?->isYesterday()=> 'Ayer',
+                default => ucfirst($partido->fechaPartido?->locale('es')->isoFormat('dddd D [de] MMMM') ?? ''),
+            };
+        @endphp
+        <div class="date-divider" data-fecha="{{ $fechaDelPartido }}">
+            <span class="date-divider__label">{{ $labelDivisor }}</span>
+            <span class="date-divider__line"></span>
+        </div>
+        @php $fechaDivisorAnterior = $fechaDelPartido; @endphp
+        @endif
         @php
             $estado     = $partido->estadoPartido;
             $esCritico  = $estado === 'critico';
-            $esEnCurso  = $estado === 'en_curso';
             $esTerminal = in_array($estado, ['finalizado','cancelado']);
             $fechaHuman = $partido->fechaPartido?->locale('es')->isoFormat('ddd D [de] MMMM');
             $esHoy      = $partido->fechaPartido?->isToday();
             $esMañana   = $partido->fechaPartido?->isTomorrow();
 
             $estadoLabel = ['borrador'=>'Borrador','programado'=>'Programado','confirmado'=>'Confirmado',
-                            'critico'=>'Crítico','aplazado'=>'Aplazado','en_curso'=>'En curso',
+                            'critico'=>'Crítico','aplazado'=>'Aplazado',
                             'finalizado'=>'Finalizado','cancelado'=>'Cancelado'][$estado] ?? $estado;
 
             $totalRoles = $partido->formato?->maxArbitros ?? 0;
@@ -115,17 +135,22 @@
                         <span class="desi-estado-pill desi-estado--{{ $estado }}">
                             @if($esCritico)
                                 <i class="fa-solid fa-triangle-exclamation"></i>
-                            @elseif($esEnCurso)
-                                <span class="desi-live-dot"></span>
                             @endif
                             {{ $estadoLabel }}
                         </span>
 
-                        @if($esHoy)
-                        <span class="desi-hoy-badge"><i class="fa-solid fa-circle" style="font-size:.45rem"></i> HOY</span>
-                        @elseif($esMañana)
-                        <span class="desi-manana-badge"><i class="fa-solid fa-sun" style="font-size:.7rem"></i> Mañana</span>
-                        @endif
+                        {{-- data-fecha: date-divider.js recalcula esto cada minuto para que
+                             no quede contradiciendo al divisor sticky si la página sigue
+                             abierta después de medianoche. --}}
+                        <span class="desi-fecha-badge {{ $esHoy ? 'desi-hoy-badge' : ($esMañana ? 'desi-manana-badge' : '') }}"
+                              data-fecha="{{ $fechaDelPartido }}"
+                              @if(!$esHoy && !$esMañana) style="display:none" @endif>
+                            @if($esHoy)
+                                <i class="fa-solid fa-circle" style="font-size:.45rem"></i> HOY
+                            @elseif($esMañana)
+                                <i class="fa-solid fa-sun" style="font-size:.7rem"></i> Mañana
+                            @endif
+                        </span>
 
                         @if($partido->torneo?->tipoTorneo === 'oficial')
                         <span class="desi-oficial-badge"><i class="fa-solid fa-shield-halved"></i> Oficial</span>

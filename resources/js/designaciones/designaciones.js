@@ -6,6 +6,7 @@
 // ── Laravel Echo + Reverb ─────────────────
 import Echo   from 'laravel-echo';
 import Pusher from 'pusher-js';
+import { initDateDividers } from '../shared/date-divider.js';
 
 window.Pusher = Pusher;
 
@@ -33,6 +34,7 @@ if (typeof window.Echo === 'undefined') {
 document.addEventListener('DOMContentLoaded', function () {
 
     window.initNovaSelects?.();
+    initDateDividers();
 
     if (window.colegioId) {
         window.Echo.private(`colegio.${window.colegioId}.partidos`)
@@ -49,12 +51,13 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // ── Búsqueda de árbitros (show.blade) 
+    // ── Búsqueda de árbitros (show.blade)
     document.querySelectorAll('.arbitro-search').forEach(function (wrap) {
-        const input      = wrap.querySelector('.arbitro-search__input');
-        const results    = wrap.querySelector('.arbitro-search__results');
-        const rolId      = wrap.dataset.rol;
-        const partidoId  = wrap.dataset.partido;
+        const input        = wrap.querySelector('.arbitro-search__input');
+        const results      = wrap.querySelector('.arbitro-search__results');
+        const rolId        = wrap.dataset.rol;
+        const partidoId    = wrap.dataset.partido;
+        const desigReasignar = wrap.dataset.reasignar ?? null;
 
         let debounceTimer;
 
@@ -68,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            debounceTimer = setTimeout(() => buscarArbitros(partidoId, q, rolId, results), 300);
+            debounceTimer = setTimeout(() => buscarArbitros(partidoId, q, rolId, results, desigReasignar), 300);
         });
 
         // Cerrar al hacer clic fuera
@@ -123,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // ── Búsqueda de árbitros con debounce ────
-async function buscarArbitros(partidoId, query, rolId, resultsEl) {
+async function buscarArbitros(partidoId, query, rolId, resultsEl, desigReasignar = null) {
     if (!window.buscarUrl) return;
 
     try {
@@ -149,14 +152,23 @@ async function buscarArbitros(partidoId, query, rolId, resultsEl) {
             item.innerHTML = `
                 <div class="arbitro-result__avatar">${(a.nombreUsuario ?? '?')[0].toUpperCase()}</div>
                 <div class="arbitro-result__info">
-                    <div class="arbitro-result__nombre">${a.nombreUsuario ?? '—'}</div>
+                    <div class="arbitro-result__nombre-row">
+                        <span class="arbitro-result__nombre">${a.nombreUsuario ?? '—'}</span>
+                        ${buildBadgeDisponibilidad(a)}
+                    </div>
                     <div class="arbitro-result__meta">${a.codigoCarnet ?? ''} · ${a.nombreCategoria ?? ''}</div>
-                    <div class="arbitro-result__badges">${buildBadges(a)}</div>
+                    <div class="arbitro-result__badges">${buildBadgesSecundarios(a)}</div>
                 </div>
             `;
 
             if (!a.yaAsignado) {
-                item.addEventListener('click', () => asignarArbitro(partidoId, a, rolId));
+                item.addEventListener('click', () => {
+                    if (desigReasignar) {
+                        reasignarArbitro(desigReasignar, a);
+                    } else {
+                        asignarArbitro(partidoId, a, rolId);
+                    }
+                });
             }
 
             resultsEl.appendChild(item);
@@ -168,23 +180,151 @@ async function buscarArbitros(partidoId, query, rolId, resultsEl) {
     }
 }
 
-function buildBadges(a) {
+// ── Reasignar árbitro (partido ya publicado) ──
+function toggleReasignarBusqueda(desigId) {
+    const wrap = document.getElementById(`reasignar-search-${desigId}`);
+    if (!wrap) return;
+
+    const abrir = wrap.style.display === 'none';
+    wrap.style.display = abrir ? 'block' : 'none';
+
+    if (abrir) {
+        wrap.querySelector('.arbitro-search__input')?.focus();
+    } else {
+        wrap.querySelector('.arbitro-search__results').style.display = 'none';
+    }
+}
+window.toggleReasignarBusqueda = toggleReasignarBusqueda;
+
+async function reasignarArbitro(desigId, arbitro) {
+    const advertencias = construirAdvertencias(arbitro);
+
+    const result = await novaAlert.confirm({
+        titulo:         `Reasignar a ${arbitro.nombreUsuario}`,
+        texto:          advertencias.length ? '' : 'Se notificará solo al árbitro nuevo. Los demás roles no se ven afectados.',
+        icono:          advertencias.length ? 'warning' : 'question',
+        confirmarTexto: 'Sí, reasignar',
+        confirmColor:   '#4f8ef7',
+        iconColor:      advertencias.length ? '#f59e0b' : '#4f8ef7',
+        html:           renderAdvertenciasHtml(advertencias),
+    });
+    if (!result.isConfirmed) return;
+
+    try {
+        const r = await fetch(`${window.reasignarBase}/${desigId}/reasignar`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.csrfToken,
+                'Accept':       'application/json',
+            },
+            body: JSON.stringify({ idArbitro: arbitro.idArbitro }),
+        });
+
+        const data = await r.json();
+
+        if (data.success) {
+            novaAlert.success(`${arbitro.nombreUsuario} reasignado correctamente.`);
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            novaAlert.error(data.message ?? 'Error al reasignar árbitro.');
+        }
+    } catch (e) {
+        novaAlert.error('Error de red al reasignar árbitro.');
+    }
+}
+window.reasignarArbitro = reasignarArbitro;
+
+/**
+ * Advertencias de asignación: cada una lleva un "tipo" semántico (no un
+ * emoji) para que el confirm y los badges se pinten con los tokens de
+ * color del tema (--nv-warning/--nv-danger/--nv-text-3), no un carácter fijo.
+ */
+function construirAdvertencias(arbitro) {
+    const advertencias = [];
+
+    if (arbitro.esSuspendido) {
+        advertencias.push({ tipo: 'danger', texto: 'Este árbitro está <strong>suspendido</strong>.' });
+    }
+    if (arbitro.disponibilidad === 'extraordinaria') {
+        advertencias.push({ tipo: 'danger', texto: 'El árbitro reportó <strong>indisponibilidad extraordinaria</strong> para esta fecha.' });
+    }
+    if (arbitro.disponibilidad === 'sin_reporte') {
+        advertencias.push({ tipo: 'info', texto: 'El árbitro <strong>no reportó disponibilidad</strong> para esta semana.' });
+    }
+    if (arbitro.advertenciaTiempo) {
+        const horaEste = window.partidoHora ? ` (este partido es a las <strong>${window.partidoHora}</strong>)` : '';
+
+        advertencias.push({
+            tipo:  'warning',
+            texto: `Este árbitro ya tiene otro partido asignado a las <strong>${arbitro.horaPartidoCercano}</strong>${horaEste}, con ${formatearDuracion(arbitro.minutosAlPartidoCercano)} de diferencia. ¿Seguro que quieres asignarlo también aquí?`,
+        });
+    }
+    if (arbitro.partidosHoy > 0) {
+        advertencias.push({
+            tipo:  'info',
+            texto: `Este árbitro ya tiene <strong>${pluralizarPartidos(arbitro.partidosHoy)}</strong> asignado${arbitro.partidosHoy === 1 ? '' : 's'} este mismo día. `
+                 + `Con esta asignación tendría <strong>${pluralizarPartidos(arbitro.partidosHoy + 1)}</strong> hoy.`,
+        });
+    }
+
+    return advertencias;
+}
+
+function pluralizarPartidos(cantidad) {
+    return `${cantidad} partido${cantidad === 1 ? '' : 's'}`;
+}
+
+/** "45 min" si es menos de una hora, "1 h" / "1 h 30 min" en caso contrario. */
+function formatearDuracion(minutos) {
+    if (minutos < 60) return `${minutos} min`;
+
+    const horas = Math.floor(minutos / 60);
+    const resto = minutos % 60;
+
+    return resto === 0 ? `${horas} h` : `${horas} h ${resto} min`;
+}
+
+function renderAdvertenciasHtml(advertencias) {
+    if (!advertencias.length) return '';
+
+    const items = advertencias
+        .map(a => `<li class="nova-swal-advertencias__item nova-swal-advertencias__item--${a.tipo}">${a.texto}</li>`)
+        .join('');
+
+    return `<ul class="nova-swal-advertencias">${items}</ul>`;
+}
+
+/**
+ * Píldora de disponibilidad: va junto al nombre (no en la fila de badges
+ * secundarios) porque es el dato más importante para decidir a quién asignar.
+ */
+function buildBadgeDisponibilidad(a) {
+    if (a.disponibilidad === 'disponible') {
+        return `<span class="arbitro-result__badge badge-disponible arbitro-result__badge--disponibilidad"><i class="fa-solid fa-circle-check"></i>${a.franjaLabel ?? 'Disponible'}</span>`;
+    }
+    if (a.disponibilidad === 'extraordinaria') {
+        return `<span class="arbitro-result__badge badge-extraordinaria arbitro-result__badge--disponibilidad"><i class="fa-solid fa-circle-xmark"></i>Indisponible (extraordinaria)</span>`;
+    }
+    if (a.disponibilidad === 'sin_reporte') {
+        return `<span class="arbitro-result__badge badge-sin-reporte arbitro-result__badge--disponibilidad"><i class="fa-regular fa-circle-question"></i>Sin disponibilidad</span>`;
+    }
+    return '';
+}
+
+function buildBadgesSecundarios(a) {
     const badges = [];
-    if (a.disponibilidad === 'disponible')    badges.push(`<span class="arbitro-result__badge badge-disponible">${a.franjaLabel ?? 'Disponible'}</span>`);
-    if (a.disponibilidad === 'extraordinaria') badges.push(`<span class="arbitro-result__badge badge-extraordinaria">Indisponible (extraordinaria)</span>`);
-    if (a.disponibilidad === 'sin_reporte')    badges.push(`<span class="arbitro-result__badge badge-sin-reporte">Sin disponibilidad</span>`);
-    if (a.advertenciaTiempo)                   badges.push(`<span class="arbitro-result__badge badge-warn-tiempo">⚠️ Partido a ${a.minutosAlPartidoCercano} min</span>`);
-    if (a.esSuspendido)                        badges.push(`<span class="arbitro-result__badge badge-suspendido">Suspendido</span>`);
+
+    if (a.advertenciaTiempo)  badges.push(`<span class="arbitro-result__badge badge-warn-tiempo">Ya asignado a las ${a.horaPartidoCercano}</span>`);
+    if (a.partidosHoy > 0)    badges.push(`<span class="arbitro-result__badge badge-sobrecarga">${pluralizarPartidos(a.partidosHoy + 1)} este día</span>`);
+    if (a.esSuspendido)       badges.push(`<span class="arbitro-result__badge badge-suspendido">Suspendido</span>`);
+
     return badges.join('');
 }
 
 // ── Asignar árbitro con manejo de advertencias ────────
 async function asignarArbitro(partidoId, arbitro, rolId) {
-    const advertencias = [];
-    if (arbitro.esSuspendido)           advertencias.push('⚠️ Este árbitro está <strong>suspendido</strong>.');
-    if (arbitro.disponibilidad === 'extraordinaria') advertencias.push('⚠️ El árbitro reportó <strong>indisponibilidad extraordinaria</strong> para esta fecha.');
-    if (arbitro.disponibilidad === 'sin_reporte') advertencias.push('ℹ️ El árbitro <strong>no reportó disponibilidad</strong> para esta semana.');
-    if (arbitro.advertenciaTiempo) advertencias.push(`⚠️ Tiene otro partido a <strong>${arbitro.minutosAlPartidoCercano} minutos</strong> de diferencia.`);
+    const advertencias = construirAdvertencias(arbitro);
 
     if (advertencias.length > 0) {
         const result = await novaAlert.confirm({
@@ -194,7 +334,7 @@ async function asignarArbitro(partidoId, arbitro, rolId) {
             confirmarTexto: 'Sí, asignar igual',
             confirmColor:   '#f59e0b',
             iconColor:      '#f59e0b',
-            html:           advertencias.join('<br>'),
+            html:           renderAdvertenciasHtml(advertencias),
         });
         if (!result.isConfirmed) return;
     }
@@ -258,7 +398,6 @@ window.quitarDesignacion = quitarDesignacion;
 // ── Cambiar estado del partido ────────────
 async function cambiarEstado(partidoId, version) {
     const estadoNuevo = document.getElementById('estado-nuevo')?.value;
-    const detalle     = document.getElementById('estado-detalle')?.value ?? '';
 
     if (!estadoNuevo) { novaAlert.error('Selecciona un estado.'); return; }
 
@@ -281,7 +420,7 @@ async function cambiarEstado(partidoId, version) {
                 'X-CSRF-TOKEN': window.csrfToken,
                 'Accept':       'application/json',
             },
-            body: JSON.stringify({ estadoNuevo, detalle, version }),
+            body: JSON.stringify({ estadoNuevo, version }),
         });
         const data = await r.json();
 
@@ -377,6 +516,21 @@ async function rechazarDesignacion(desigId, motivo) {
         novaAlert.error('Error de red.');
     }
 }
+
+// ── Historial de acciones: "Ver más" / "Ver menos" ────
+function toggleHistorialCompleto() {
+    const timeline = document.getElementById('historial-timeline');
+    const btn       = document.getElementById('btn-historial-toggle');
+    if (!timeline || !btn) return;
+
+    const expandido = timeline.classList.toggle('mostrar-todo');
+    const restantes  = btn.dataset.restantes ?? '0';
+
+    btn.innerHTML = expandido
+        ? '<i class="fa-solid fa-chevron-up"></i> Ver menos'
+        : `<i class="fa-solid fa-chevron-down"></i> Ver ${restantes} más...`;
+}
+window.toggleHistorialCompleto = toggleHistorialCompleto;
 
 // ── Carga dinámica torneos → divisiones y sedes ───────
 // Destruye la instancia Choices existente, repuebla el <select> nativo y la recrea.
@@ -485,7 +639,7 @@ function actualizarCardPartido(partido) {
     if (!card) return;
 
     // Actualizar clase de estado
-    const estadoClasses = ['estado-programado','estado-confirmado','estado-critico','estado-aplazado','estado-en_curso','estado-finalizado','estado-cancelado'];
+    const estadoClasses = ['estado-programado','estado-confirmado','estado-critico','estado-aplazado','estado-finalizado','estado-cancelado'];
     card.classList.remove(...estadoClasses);
     card.classList.add(`estado-${partido.estadoPartido}`);
 
@@ -542,7 +696,41 @@ async function publicarPartido(partidoId) {
 }
 window.publicarPartido = publicarPartido;
 
-// ── Finalizar partido (solo árbitro Central, en_curso) ───────────────────────
+// ── Eliminar partido (solo borrador) ──────────────────
+async function eliminarPartido(partidoId) {
+    const result = await novaAlert.confirm({
+        titulo:         '¿Eliminar partido?',
+        texto:          'Se borrará el partido y todas sus designaciones. Esta acción no se puede deshacer.',
+        icono:          'warning',
+        confirmarTexto: 'Sí, eliminar',
+        confirmColor:   '#dc2626',
+        iconColor:      '#ef4444',
+    });
+    if (!result.isConfirmed) return;
+
+    try {
+        const r = await fetch(`${window.eliminarPartidoBase}/${partidoId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': window.csrfToken,
+                'Accept':       'application/json',
+            },
+        });
+        const data = await r.json();
+
+        if (data.success) {
+            novaAlert.success(data.mensaje ?? 'Partido eliminado.');
+            setTimeout(() => { location.href = window.designacionesIndexUrl; }, 1000);
+        } else {
+            novaAlert.error(data.message ?? 'Error al eliminar el partido.');
+        }
+    } catch (e) {
+        novaAlert.error('Error de red al eliminar el partido.');
+    }
+}
+window.eliminarPartido = eliminarPartido;
+
+// ── Finalizar partido (solo árbitro Central, partido confirmado) ────────────
 async function finalizarPartido(partidoId) {
     const result = await novaAlert.confirm({
         titulo:         '¿Finalizar partido?',

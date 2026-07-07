@@ -51,7 +51,7 @@
             $partido = $desig->partido;
             $puedeVerDetalle = $desig->estaConfirmada();
             $soyCentral = $desig->rol?->nombre === 'Central';
-            $enCurso = $partido->estadoPartido === 'en_curso';
+            $puedeFinalizar = $partido->estadoPartido === 'confirmado';
         @endphp
         <div class="mis-partido-card mis-partido-card--hoy"
              id="desig-card-{{ $desig->idDesignacion }}"
@@ -89,7 +89,7 @@
                 </a>
                 @endif
 
-                @if($soyCentral && $enCurso && $desig->estaConfirmada())
+                @if($soyCentral && $puedeFinalizar && $desig->estaConfirmada())
                 <button class="btn-finalizar" onclick="finalizarPartido({{ $partido->idPartido }})">
                     <i class="fa-solid fa-flag-checkered"></i> Finalizar partido
                 </button>
@@ -309,27 +309,9 @@ window.confirmarBase = "{{ url('/mis-partidos') }}";
 window.rechazarBase  = "{{ url('/mis-partidos') }}";
 window.finalizarBase = "{{ url('/designaciones/partido') }}";
 
-// ── Etiquetas dinámicas ──────────────────
-function calcularEtiqueta(fechaPartido) {
-    const hoy    = new Date(); hoy.setHours(0,0,0,0);
-    const partido= new Date(fechaPartido + 'T00:00:00');
-    const diff   = Math.round((partido - hoy) / (1000*60*60*24));
-    if (diff === 0) return { texto: '🔴 HOY',      clase: 'etiqueta-hoy',    urgente: true  };
-    if (diff === 1) return { texto: '⚡ MAÑANA',   clase: 'etiqueta-manana', urgente: true  };
-    if (diff === 2) return { texto: '📅 En 2 días',clase: 'etiqueta-pronto', urgente: false };
-    if (diff <  0) return { texto: 'Pasado',       clase: 'etiqueta-pasado', urgente: false };
-    return { texto: 'En ' + diff + ' días', clase: 'etiqueta-futuro', urgente: false };
-}
-
-function actualizarEtiquetas() {
-    document.querySelectorAll('.etiqueta-dinamica').forEach(function (el) {
-        const fecha = el.dataset.fecha;
-        if (!fecha) return;
-        const e = calcularEtiqueta(fecha);
-        el.textContent = e.texto;
-        el.className = 'etiqueta-dinamica ' + e.clase;
-    });
-}
+// Etiquetas dinámicas (HOY/MAÑANA/etc) y el divisor sticky de fecha:
+// resources/js/shared/date-divider.js (initDateDividers, cargado desde
+// designaciones.js). Aquí solo queda lo específico de esta página.
 
 // ── Countdown HOY ───
 function actualizarCountdowns() {
@@ -363,10 +345,8 @@ function actualizarCountdowns() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    actualizarEtiquetas();
     actualizarCountdowns();
-    setInterval(actualizarEtiquetas,   60000);
-    setInterval(actualizarCountdowns,  1000);
+    setInterval(actualizarCountdowns, 1000);
 });
 </script>
 @endsection

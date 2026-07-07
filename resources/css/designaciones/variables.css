@@ -1,0 +1,12 @@
+:root {
+  --disp-bg-card:          var(--nv-card);
+  --disp-bg-card-hover:    var(--nv-card-hover);
+  --disp-border:           var(--nv-border-strong);
+  --disp-day-today-border: var(--nv-accent);
+  --disp-available:        #22c55e;
+  --disp-extraordinary:    #ef4444;
+  --disp-warning:          #f59e0b;
+  --disp-text:             var(--nv-text);
+  --disp-text-2:           var(--nv-text-2);
+  --disp-radius:           16px;
+}

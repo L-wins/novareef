@@ -5,6 +5,7 @@ import flatpickr from 'flatpickr';
 import { Spanish } from 'flatpickr/dist/l10n/es.js';
 import { initAutoFilter } from './shared/auto-filter.js';
 import { initTheme } from './shared/theme.js';
+import { initReloj } from './shared/reloj.js';
 import '../css/app.css';
 
 window.initAutoFilter = initAutoFilter;
@@ -27,9 +28,6 @@ window.novaAlert = {
         timer: 3000,
         timerProgressBar: true,
         showConfirmButton: false,
-        background: '#1a1f2e',
-        color: '#e2e8f0',
-        iconColor: '#22c55e',
         customClass: { popup: 'nova-swal' },
     }),
 
@@ -37,25 +35,24 @@ window.novaAlert = {
         icon: 'error',
         title: 'Error',
         text: mensaje,
-        background: '#1a1f2e',
-        color: '#e2e8f0',
-        iconColor: '#ef4444',
         confirmButtonColor: '#4f8ef7',
         confirmButtonText: 'Entendido',
         customClass: { popup: 'nova-swal' },
     }),
 
+    // El fondo/texto del popup los define .nova-swal en CSS con tokens
+    // --nv-* (se adaptan solos a claro/oscuro). Aquí solo se parametrizan
+    // acentos puntuales (confirmColor/iconColor) que no dependen del tema.
     confirm: (opciones) => Swal.fire({
         title: opciones.titulo,
         text: opciones.texto,
+        html: opciones.html || undefined,
         icon: opciones.icono || 'warning',
         showCancelButton: true,
         confirmButtonColor: opciones.confirmColor || '#ef4444',
         cancelButtonColor: '#374151',
         confirmButtonText: opciones.confirmarTexto || 'Confirmar',
         cancelButtonText: 'Cancelar',
-        background: '#1a1f2e',
-        color: '#e2e8f0',
         iconColor: opciones.iconColor || '#f59e0b',
         reverseButtons: true,
         focusCancel: true,
@@ -124,6 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.initNovaSelects();
     window.initAutoFilter();
     initTheme();
+    initReloj();
 });
 
 /*

@@ -1,0 +1,336 @@
+/*
+   DESIGNACIONES INDEX — rediseño premium (desi-*)
+    */
+
+/* ── Hero ────────────── */
+.desi-hero {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  flex-wrap: wrap; gap: 1.25rem; margin-bottom: 2rem;
+  padding-bottom: 1.5rem; border-bottom: 1px solid var(--disp-border);
+}
+.desi-hero__eyebrow {
+  display: flex; align-items: center; gap: .75rem; margin-bottom: .5rem;
+}
+.desi-hero__label {
+  font-size: .68rem; font-weight: 700; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--disp-text-2);
+}
+.desi-hero__title {
+  font-size: 2rem; font-weight: 800; color: var(--nv-text); margin: 0 0 .25rem; line-height: 1.1;
+}
+.desi-hero__sub { font-size: .88rem; color: var(--disp-text-2); }
+.desi-btn-nuevo { white-space: nowrap; }
+
+.desi-alerta-critico {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(239,68,68,.15); color: #ef4444;
+  border: 1px solid rgba(239,68,68,.3); border-radius: 20px;
+  font-size: .72rem; font-weight: 700; padding: 4px 11px;
+  animation: criticoPulse 2s ease-in-out infinite;
+}
+
+/* ── Barra de filtros ── */
+.desi-filter-bar {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem 1.25rem;
+  background: var(--nv-surface); border: 1px solid var(--disp-border);
+  border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.75rem;
+}
+.desi-filter-item { display: flex; flex-direction: column; gap: .3rem; min-width: 160px; flex: 1; }
+.desi-filter-label {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--disp-text-2);
+}
+.desi-filter-actions { display: flex; align-items: flex-end; gap: .5rem; }
+
+/* ── Lista de partidos ─ */
+.desi-list { display: flex; flex-direction: column; gap: .75rem; }
+
+/* ── Card de partido — layout: [accent | body | cta] ─────── */
+.desi-card {
+  display: flex; align-items: stretch;
+  background: var(--nv-card-alt);
+  border: 1px solid var(--nv-border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 220ms, box-shadow 220ms, transform 180ms;
+  position: relative;
+}
+.desi-card:hover {
+  border-color: var(--nv-border-2);
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  transform: translateY(-1px);
+}
+
+/* Accent bar de estado */
+.desi-card__accent {
+  width: 4px; flex-shrink: 0;
+  background: var(--disp-border);
+  transition: background 200ms;
+}
+.desi-card--programado  .desi-card__accent { background: var(--nv-accent); }
+.desi-card--confirmado  .desi-card__accent { background: #22c55e; }
+.desi-card--critico     .desi-card__accent { background: #ef4444; }
+.desi-card--aplazado    .desi-card__accent { background: #f59e0b; }
+.desi-card--finalizado  .desi-card__accent { background: var(--nv-text-3); }
+.desi-card--cancelado   .desi-card__accent { background: #374151; }
+.desi-card--borrador .desi-card__accent { background: repeating-linear-gradient(45deg, var(--nv-accent) 0 6px, transparent 6px 12px); opacity: .55; }
+
+/* Card crítico: pulso */
+.desi-card--critico {
+  animation: desiCriticoPulse 2.5s ease-in-out infinite;
+}
+@keyframes desiCriticoPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+  50%      { box-shadow: 0 0 0 6px rgba(239,68,68,.15); }
+}
+
+/* Card finalizada / cancelada: dimmed */
+.desi-card--finalizado,
+.desi-card--cancelado { opacity: .6; }
+.desi-card--finalizado:hover,
+.desi-card--cancelado:hover { opacity: 1; }
+
+/* ── Body ────────────── */
+.desi-card__body {
+  flex: 1; padding: 1.1rem 1.25rem; display: flex; flex-direction: column; gap: .65rem;
+  min-width: 0;
+}
+
+/* Fila top: badges + fecha */
+.desi-card__toprow {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem;
+}
+.desi-card__badges { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+.desi-card__fecha {
+  font-size: .78rem; color: var(--disp-text-2);
+  display: flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.desi-hora {
+  background: var(--nv-fill); border: 1px solid var(--disp-border);
+  border-radius: 6px; padding: 2px 7px; font-weight: 700;
+  color: var(--disp-text); font-size: .75rem;
+}
+
+/* Pills de estado */
+.desi-estado-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .7rem; font-weight: 700; padding: 4px 11px;
+  border-radius: 20px; letter-spacing: .02em;
+}
+.desi-estado--borrador   { background: rgba(79,142,247,.1); color: var(--nv-accent-2); border: 1px dashed rgba(79,142,247,.4); }
+.desi-estado--programado { background: rgba(79,142,247,.12); color: var(--nv-accent); }
+.desi-estado--confirmado { background: rgba(34,197,94,.12);  color: #22c55e; }
+.desi-estado--critico    { background: rgba(239,68,68,.15);  color: #ef4444; }
+.desi-estado--aplazado   { background: rgba(245,158,11,.12); color: #f59e0b; }
+.desi-estado--finalizado { background: rgba(71,85,105,.18);  color: var(--nv-text-3); }
+.desi-estado--cancelado  { background: rgba(239,68,68,.06);  color: #6b7280; }
+
+/* Badges secundarios */
+.desi-hoy-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(239,68,68,.12); color: #ef4444;
+  border: 1px solid rgba(239,68,68,.3); border-radius: 20px;
+  font-size: .68rem; font-weight: 800; padding: 3px 9px;
+  letter-spacing: .06em;
+}
+.desi-manana-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(245,158,11,.1); color: #f59e0b;
+  border: 1px solid rgba(245,158,11,.25); border-radius: 20px;
+  font-size: .68rem; font-weight: 700; padding: 3px 9px;
+}
+.desi-oficial-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(139,92,246,.1); color: #a78bfa;
+  border: 1px solid rgba(139,92,246,.2); border-radius: 20px;
+  font-size: .66rem; font-weight: 700; padding: 3px 9px;
+}
+
+/* ── Match title ─────── */
+.desi-card__match {
+  display: flex; align-items: center; gap: .75rem;
+}
+.desi-equipo {
+  font-size: 1.05rem; font-weight: 800; color: var(--nv-text); white-space: nowrap;
+}
+.desi-vs {
+  font-size: .8rem; color: var(--disp-text-2); font-weight: 600;
+  background: var(--nv-fill); padding: 2px 9px;
+  border-radius: 6px; flex-shrink: 0;
+}
+
+/* ── Meta ────────────── */
+.desi-card__meta {
+  display: flex; flex-wrap: wrap; gap: .25rem .75rem;
+  font-size: .78rem; color: var(--disp-text-2);
+}
+.desi-meta-item { display: flex; align-items: center; gap: 5px; }
+.desi-meta-item i { font-size: .7rem; opacity: .7; }
+
+/* ── Bottom: árbitros + progreso ─── */
+.desi-card__bottom {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  padding-top: .5rem; border-top: 1px solid var(--nv-fill);
+}
+.desi-arbitros-row { display: flex; flex-wrap: wrap; gap: .4rem; flex: 1; }
+
+/* Chip de árbitro — nuevo diseño compacto */
+.desi-arbitro-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--nv-fill); border: 1px solid var(--nv-border);
+  border-radius: 8px; padding: 5px 10px 5px 5px;
+  font-size: .76rem; transition: border-color 180ms;
+}
+.desi-arbitro-chip--confirmada {
+  background: rgba(34,197,94,.07); border-color: rgba(34,197,94,.2);
+}
+.desi-arbitro-chip--rechazada {
+  background: rgba(239,68,68,.07); border-color: rgba(239,68,68,.2);
+}
+.desi-arbitro-chip--pendiente { border-color: rgba(245,158,11,.2); }
+
+.desi-arbitro-avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--nv-border-strong); display: flex; align-items: center;
+  justify-content: center; font-size: .68rem; font-weight: 700;
+  color: var(--nv-accent); flex-shrink: 0;
+}
+.desi-arbitro-info {
+  display: flex; flex-direction: column; line-height: 1.2;
+}
+.desi-arbitro-rol {
+  font-size: .65rem; font-weight: 600; color: var(--disp-text-2);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.desi-arbitro-nombre { font-size: .78rem; color: var(--disp-text); font-weight: 600; }
+.desi-chip-estado { font-size: .7rem; margin-left: 2px; }
+.desi-arbitro-chip--confirmada .desi-chip-estado { color: #22c55e; }
+.desi-arbitro-chip--rechazada  .desi-chip-estado { color: #ef4444; }
+.desi-arbitro-chip--pendiente  .desi-chip-estado { color: #f59e0b; }
+
+.desi-sin-arbitros {
+  font-size: .78rem; color: var(--disp-text-2); display: flex;
+  align-items: center; gap: 6px; opacity: .6; padding: 4px 0;
+}
+
+/* ── Barra de progreso de designación ────────────────────── */
+.desi-progress-wrap {
+  display: flex; align-items: center; gap: .5rem; flex-shrink: 0;
+}
+.desi-progress-bar {
+  width: 64px; height: 5px; background: var(--nv-fill-2);
+  border-radius: 99px; overflow: hidden;
+}
+.desi-progress-fill {
+  height: 100%; background: var(--nv-accent); border-radius: 99px;
+  transition: width 400ms ease;
+}
+.desi-progress-label {
+  font-size: .72rem; color: var(--disp-text-2); font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── CTA —  botón de flecha derecho  */
+.desi-card__cta {
+  display: flex; align-items: center; padding: 0 1rem;
+  border-left: 1px solid var(--nv-fill);
+  flex-shrink: 0;
+}
+.desi-gestionar-btn {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: rgba(79,142,247,.1); border: 1px solid rgba(79,142,247,.2);
+  color: var(--nv-accent); display: flex; align-items: center; justify-content: center;
+  font-size: .9rem; transition: all 180ms; text-decoration: none;
+}
+.desi-gestionar-btn:hover {
+  background: var(--nv-accent); border-color: var(--nv-accent); color: #fff;
+  box-shadow: 0 4px 14px rgba(79,142,247,.4);
+  transform: translateX(2px);
+}
+
+/* ── Responsive ──────── */
+@media (max-width: 700px) {
+  .desi-hero { flex-direction: column; align-items: flex-start; }
+  .desi-filter-bar { flex-direction: column; }
+  .desi-filter-item { min-width: 100%; }
+  .desi-equipo { font-size: .9rem; }
+  .desi-card__cta { padding: 0 .75rem; }
+  .desi-progress-wrap { display: none; }
+}
+
+/*
+   GRID DE TORNEOS — designaciones.index (nivel 1)
+    */
+
+.desi-torneos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.desi-torneo-card {
+  display: flex; flex-direction: column; gap: .85rem;
+  background: var(--nv-card-alt); border: 1px solid var(--nv-border); border-radius: 14px;
+  padding: 1.5rem; text-decoration: none;
+  transition: border-color 220ms, box-shadow 220ms, transform 180ms;
+}
+.desi-torneo-card:hover {
+  border-color: var(--nv-border-2);
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  transform: translateY(-2px);
+}
+
+.desi-torneo-card__top { display: flex; justify-content: space-between; align-items: center; }
+
+.desi-torneo-card__estado {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  padding: 3px 10px; border-radius: 20px;
+}
+.desi-torneo-card__estado--activo  { background: rgba(34,197,94,.12);  color: #22c55e; }
+.desi-torneo-card__estado--proximo { background: rgba(79,142,247,.12); color: var(--nv-accent); }
+.desi-torneo-card__estado--finalizado,
+.desi-torneo-card__estado--cerrado { background: rgba(100,116,139,.18); color: var(--nv-text-3); }
+
+.desi-torneo-card__nombre {
+  font-size: 1.15rem; font-weight: 800; color: var(--nv-text); line-height: 1.25; margin: 0;
+}
+
+.desi-torneo-card__meta {
+  display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+  font-size: .8rem; color: var(--disp-text-2);
+}
+
+.desi-torneo-card__bottom {
+  display: flex; align-items: center; gap: .75rem;
+  padding-top: .75rem; border-top: 1px solid var(--nv-fill);
+}
+.desi-torneo-card__count { font-size: .85rem; color: var(--disp-text); }
+.desi-torneo-card__count strong { color: var(--nv-text); }
+.desi-torneo-card__arrow { margin-left: auto; color: var(--nv-accent); font-size: .8rem; }
+
+/* ═══════════════════════════════════════════════════════════════
+   Tema claro — los pasteles pensados para fondo oscuro (dark)
+   pierden contraste sobre fondo blanco; se oscurecen aquí.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Verde */
+:root[data-theme="light"] .desi-estado--confirmado,
+:root[data-theme="light"] .desi-arbitro-chip--confirmada .desi-chip-estado,
+:root[data-theme="light"] .desi-torneo-card__estado--activo { color: #15803d; }
+
+/* Rojo */
+:root[data-theme="light"] .desi-alerta-critico,
+:root[data-theme="light"] .desi-hoy-badge,
+:root[data-theme="light"] .desi-estado--critico,
+:root[data-theme="light"] .desi-arbitro-chip--rechazada .desi-chip-estado { color: #dc2626; }
+
+/* Ámbar */
+:root[data-theme="light"] .desi-manana-badge,
+:root[data-theme="light"] .desi-estado--aplazado,
+:root[data-theme="light"] .desi-arbitro-chip--pendiente .desi-chip-estado { color: #b45309; }
+
+/* Morado (oficial) */
+:root[data-theme="light"] .desi-oficial-badge { color: #7c3aed; }
+
+/* Gris neutro (cancelado) */
+:root[data-theme="light"] .desi-estado--cancelado { color: #475569; }

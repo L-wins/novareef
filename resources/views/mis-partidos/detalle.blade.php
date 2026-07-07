@@ -19,7 +19,7 @@
 
     @php
         $estado     = $partido->estadoPartido;
-        $estadoMapa = ['programado'=>'Programado','confirmado'=>'Confirmado','critico'=>'Crítico','aplazado'=>'Aplazado','en_curso'=>'En curso','finalizado'=>'Finalizado','cancelado'=>'Cancelado'];
+        $estadoMapa = ['programado'=>'Programado','confirmado'=>'Confirmado','critico'=>'Crítico','aplazado'=>'Aplazado','finalizado'=>'Finalizado','cancelado'=>'Cancelado'];
         $fechaHuman = $partido->fechaPartido?->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY');
         $esHoy      = $partido->fechaPartido?->isToday();
         $esOficial  = $partido->torneo?->tipoTorneo === 'oficial';
@@ -54,7 +54,7 @@
                 <i class="fa-solid fa-user-tie"></i>
                 Mi rol: <strong>{{ $designacion->rol?->nombre }}</strong>
             </span>
-            @if($esCentral && $estado === 'en_curso')
+            @if($esCentral && $estado === 'confirmado')
             <button class="btn-finalizar" onclick="finalizarPartido({{ $partido->idPartido }})">
                 <i class="fa-solid fa-flag-checkered"></i> Finalizar partido
             </button>
