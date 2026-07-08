@@ -180,7 +180,9 @@ return [
 
     /*
      * Guards a los que aplica Spatie Permission.
-     * El guard 'admin' (tabla admins) NO usa Spatie — se excluye deliberadamente.
+     * El guard 'admin' (tabla admins) NO usa Spatie — solo existe (y va a
+     * existir) un único superadmin que cubre todas las funciones, sin
+     * distintos niveles de acceso que gestionar.
      */
     'guards' => ['web'],
 

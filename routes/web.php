@@ -38,6 +38,12 @@ Route::middleware('auth')->group(function () {
     // Preferencia de tema — disponible para cualquier usuario autenticado
     Route::patch('/preferencias/tema', [\App\Http\Controllers\Configuracion\PreferenciaController::class, 'actualizarTema'])
         ->name('preferencias.tema');
+
+    // Salir de una impersonación (ver AdminColegioController::impersonar) —
+    // sin verificar.colegio/verificar.perfil, para que funcione aunque el
+    // colegio impersonado esté suspendido o el perfil incompleto.
+    Route::post('/impersonacion/salir', [\App\Http\Controllers\ImpersonacionController::class, 'salir'])
+        ->name('impersonacion.salir');
 });
 
 // Rutas privadas (requieren autenticación)

@@ -65,7 +65,7 @@ php artisan permission:cache-reset
 - Modelo: `App\Models\Admin`
 - Provider: estándar Eloquent
 - Columnas: `email`, `password`, `nombre`, `two_factor_enabled`, `google2fa_secret`, `ultimo_acceso`, `activo`
-- Spatie Permission: **NO** (excluido en `config/permission.php` con `'guards' => ['web']`)
+- Spatie Permission: **NO** (excluido en `config/permission.php` con `'guards' => ['web']`). **Decisión de producto deliberada**: solo existe (y va a existir) un único superadmin (`admin@novareef.com`) que cubre todas las funciones del panel — no hay niveles de acceso ni rendición de cuentas entre varios admins que gestionar, así que no hay RBAC granular en este guard. `AdminAuth` solo exige sesión válida y `activo = true` (revalidado en cada request, no solo al login).
 
 ---
 
@@ -110,13 +110,37 @@ Prefix: `novareef-panel` (config `admin.prefix`)
 | POST `/2fa` | Verificar código TOTP |
 | POST `/logout` | Cerrar sesión |
 | GET `/` | Dashboard |
-| GET `/colegios` | Placeholder colegios |
-| GET `/planes` | Placeholder planes |
-| GET `/usuarios` | Placeholder usuarios |
-| GET `/logs` | Placeholder logs |
+| PATCH `/preferencias/tema` | Preferencia de tema del admin |
+| GET `/colegios` | Listado de colegios (CRUD completo) |
+| GET\|POST\|PUT `/colegios/*` (crear/editar/estado) | Alta y edición de colegios |
+| POST `/colegios/{id}/impersonar` | Entrar como la cuenta ejecutivo del colegio (ver abajo) |
+| GET `/planes` | Listado de planes (CRUD parcial — sin crear/eliminar, se siembran) |
+| GET\|PUT `/planes/{id}/*` (editar/visible/activo) | Edición de planes |
+| GET `/suscripciones` | Listado transversal de suscripciones (todos los colegios) |
+| PUT `/suscripciones/colegio/{id}/{plan\|extender\|cancelar}` | Cambiar plan, extender o cancelar la suscripción de un colegio |
+| GET `/usuarios` | Listado de cuentas de colegio (todos), con filtro por colegio/rol |
+| PUT `/usuarios/{id}/estado` | Activar/suspender una cuenta de colegio |
+| GET `/logs` | Accesos (`admin_login_logs`) + impersonaciones (`admin_action_logs`) |
 | GET `/2fa/configurar` | Config 2FA |
 | POST `/2fa/activar` | Activar 2FA |
 | POST `/2fa/desactivar` | Desactivar 2FA |
+
+Ninguna ruta admin lleva middleware `permission:` — no hay RBAC en este guard (ver nota en "Guard admin" más arriba). `AdminAuth` solo exige sesión válida y `activo = true`, revalidado en cada request.
+
+### Impersonación de colegio (`admin.colegios.impersonar`)
+
+El superadmin puede entrar como la cuenta `ejecutivo` principal de cualquier colegio (`ColegioService::adminPrincipal()`) — útil para soporte/depuración. Mecánica:
+
+- Hace login en el guard `web` con esa cuenta; la sesión del guard `admin` sigue viva en paralelo (son guards independientes sobre la misma sesión PHP) — no hace falta volver a loguearse al salir.
+- Guarda `impersonacion.idAdmin` / `impersonacion.idColegio` / `impersonacion.expira` (45 min) en sesión.
+- `TerminarImpersonacionExpirada` (middleware `web`, en `append`, **nunca** `prepend` — necesita la sesión ya iniciada) cierra la sesión del guard `web` sola si se cumplió el plazo.
+- `resources/views/layouts/app.blade.php` muestra un banner fijo con botón "Salir" (`POST /impersonacion/salir`, `ImpersonacionController@salir`) mientras dura.
+- Cada impersonación (entrada y salida) se registra en `admin_action_logs` vía `App\Services\AdminAuditService` — es el **único** caso que sigue dejando rastro en esa tabla. Es un registro de transparencia (el superadmin está viendo datos de un cliente), no de rendición de cuentas entre varios admins — solo existe uno.
+
+**⚠️ Lecciones de un bug real que se dio aquí** (por si se vuelve a tocar el guard admin o se agrega RBAC en el futuro):
+- Spatie's `PermissionMiddleware` hace `Auth::guard($guard)` — si el middleware se escribe como `'permission:xxx'` sin especificar guard, usa el guard **default** de Laravel (`'web'`), no el guard bajo el que corre la ruta. En una ruta admin eso siempre da 403 sin importar los permisos reales, porque nadie está logueado en `web` en una sesión de panel admin pura. Habría que escribir `'permission:xxx,admin'` siempre.
+- `actingAs($modelo, 'admin')` en tests llama internamente `Auth::shouldUse('admin')`, cambiando el guard *default* de Laravel para el resto del test — esto puede enmascarar el bug de arriba y dar falsos positivos. Para probar código bajo un guard no-`web`, forzar `Auth::shouldUse('web')` después de `actingAs()`.
+- `resources/views/errors/403.blade.php` se renderiza para cualquier 403 sin importar el guard — no puede asumir `Auth::user()` (guard web). Detecta `auth('admin')->check()` y extiende `admin.layouts.app` o `layouts.app` según corresponda.
 
 ---
 
@@ -357,6 +381,45 @@ ADMIN_BLOQUEO_SEGUNDOS=300
 GOOGLE2FA_SECRET=             # no se configura aquí — se genera por admin
 RESEND_API_KEY=               # para envío de emails (credenciales, bienvenida)
 ```
+
+---
+
+## Cache y sesión — `file` en dev, `redis` en producción
+
+**Diagnóstico real (detectado por lentitud reportada en cada acción del panel):**
+`SESSION_DRIVER` y `CACHE_STORE` estaban en `database`. Eso significa que, en
+cada request autenticado, además de las queries propias de la vista se suman:
+lectura/escritura de la sesión (tabla `sessions`), lectura del caché de
+permisos de Spatie (`permission.cache_store` usa el store por defecto), y
+lecturas/escrituras de `RateLimiter` (usado por `ProtegerEscrituraMasiva`) —
+todo contra MySQL. Con miles de usuarios concurrentes esto no escala: cada uno
+de esos puntos es un round-trip extra a la base de datos por request.
+
+**Estado actual:**
+- Dev local (`.env`): `SESSION_DRIVER=file`, `CACHE_STORE=file`,
+  `QUEUE_CONNECTION=database` (sin cambios — no hay servidor Redis local
+  corriendo, no tiene sentido moverlo sin uno).
+- `predis/predis` ya está instalado como cliente Redis (`REDIS_CLIENT=predis`
+  en `.env`/`.env.example`) — es 100% PHP, no requiere la extensión `phpredis`
+  compilada, así que es más portable entre distintos hosts de producción.
+
+**Recomendación para producción (cuando salga a miles de usuarios reales):**
+Cambiar únicamente en `.env` del servidor de producción — no requiere tocar
+código:
+```env
+SESSION_DRIVER=redis
+CACHE_STORE=redis
+QUEUE_CONNECTION=redis        # opcional, mismo razonamiento si las colas crecen
+REDIS_CLIENT=predis
+REDIS_HOST=<host-redis-produccion>
+REDIS_PASSWORD=<password>
+REDIS_PORT=6379
+```
+Redis resuelve sesión/caché en memoria (sub-milisegundo) en vez de una query
+MySQL por lectura/escritura, y es la opción estándar para cuando hay más de
+un servidor web (session/cache compartidos entre instancias, cosa que `file`
+no soporta). No hay razón para tocar `file` en dev local — ahí ya no hay
+problema de escala y evita depender de un servicio extra corriendo.
 
 ---
 

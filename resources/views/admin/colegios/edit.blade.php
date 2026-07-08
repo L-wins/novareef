@@ -178,7 +178,8 @@
             <div class="admin-form-group admin-form-col-2">
                 <div class="admin-form-hint">
                     <i class="fa-solid fa-circle-info"></i>
-                    El plan y la suscripción se gestionan desde el módulo de suscripciones.
+                    El plan y la suscripción se gestionan desde la
+                    <a href="{{ route('admin.colegios.show', $colegio->idColegio) }}">ficha del colegio</a>.
                     Esta pantalla solo modifica los datos del colegio.
                 </div>
             </div>

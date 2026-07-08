@@ -1,4 +1,14 @@
-@extends('layouts.app')
+{{--
+    Esta página se renderiza para CUALQUIER 403, sin importar el guard activo
+    (web o admin). No puede asumir que Auth::user() (guard web) exista —
+    si el 403 ocurre en el panel admin, layouts.app fallaría al leer
+    Auth::user()->colegio con el guard web vacío. Por eso elige el layout
+    (y el destino del botón) según qué guard esté realmente autenticado.
+--}}
+@php
+    $esGuardAdmin = auth('admin')->check();
+@endphp
+@extends($esGuardAdmin ? 'admin.layouts.app' : 'layouts.app')
 
 @section('titulo', 'Sin permiso')
 @section('seccion', 'Acceso denegado')
@@ -30,10 +40,14 @@
 
     <p style="color:#9ca3af;font-size:0.95rem;max-width:400px;margin:0 0 2rem;line-height:1.6;">
         No tienes permiso para acceder a esta sección.<br>
-        Contacta al administrador de tu colegio si crees que esto es un error.
+        @if($esGuardAdmin)
+            Contacta a un superadmin si crees que esto es un error.
+        @else
+            Contacta al administrador de tu colegio si crees que esto es un error.
+        @endif
     </p>
 
-    <a href="{{ route('dashboard') }}" style="
+    <a href="{{ $esGuardAdmin ? route('admin.dashboard') : route('dashboard') }}" style="
         display:inline-flex;align-items:center;gap:0.5rem;
         background:#2563eb;color:#fff;
         padding:0.6rem 1.4rem;border-radius:8px;

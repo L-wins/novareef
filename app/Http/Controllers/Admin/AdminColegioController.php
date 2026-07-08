@@ -9,15 +9,18 @@ use App\Http\Requests\Admin\StoreColegio;
 use App\Http\Requests\Admin\UpdateColegio;
 use App\Models\Colegio;
 use App\Models\Plan;
+use App\Services\AdminAuditService;
 use App\Services\ColegioService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class AdminColegioController extends Controller
 {
     public function __construct(
         private readonly ColegioService $colegios,
+        private readonly AdminAuditService $auditoria,
     ) {}
 
     public function index(Request $request): View
@@ -44,11 +47,12 @@ class AdminColegioController extends Controller
         $stats   = $this->colegios->estadisticasArbitros($id);
 
         return view('admin.colegios.show', [
-            'colegio'         => $colegio,
-            'admin'           => $this->colegios->adminPrincipal($colegio),
-            'totalArbitros'   => $stats['total'],
-            'arbitrosActivos' => $stats['activos'],
-            'arbitrosProceso' => $stats['enProceso'],
+            'colegio'          => $colegio,
+            'admin'            => $this->colegios->adminPrincipal($colegio),
+            'totalArbitros'    => $stats['total'],
+            'arbitrosActivos'  => $stats['activos'],
+            'arbitrosProceso'  => $stats['enProceso'],
+            'planesDisponibles' => Plan::where('esActivo', true)->orderBy('orden')->get(['idPlan', 'nombre']),
         ]);
     }
 
@@ -111,5 +115,41 @@ class AdminColegioController extends Controller
         $label   = $this->colegios->cambiarEstado($colegio, $request->input('estado'));
 
         return back()->with('success', "Colegio {$label} correctamente.");
+    }
+
+    /**
+     * Entra a la sesión del colegio como su cuenta ejecutivo principal —
+     * herramienta de soporte para reproducir/depurar un problema. La sesión
+     * de admin sigue viva en paralelo (guard distinto); no es necesario
+     * volver a loguearse al salir. Único punto que sigue dejando rastro en
+     * admin_action_logs — por transparencia, no por rendición de cuentas
+     * entre varios admins (solo existe un superadmin).
+     */
+    public function impersonar(Request $request, int $id): RedirectResponse
+    {
+        $colegio = Colegio::findOrFail($id);
+        $usuario = $this->colegios->adminPrincipal($colegio);
+
+        if ($usuario === null) {
+            return back()->with('error', 'Este colegio no tiene una cuenta ejecutivo para impersonar.');
+        }
+
+        $admin = Auth::guard('admin')->user();
+
+        Auth::guard('web')->login($usuario);
+
+        $request->session()->put('impersonacion.idAdmin', $admin->idAdmin);
+        $request->session()->put('impersonacion.idColegio', $colegio->idColegio);
+        $request->session()->put('impersonacion.expira', now()->addMinutes(45)->timestamp);
+
+        $this->auditoria->registrar(
+            $admin,
+            'impersonar',
+            'colegio',
+            $colegio->idColegio,
+            "Entró como \"{$usuario->nombreUsuario}\" ({$colegio->nombreColegio}).",
+        );
+
+        return redirect()->route('dashboard');
     }
 }

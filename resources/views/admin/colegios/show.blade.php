@@ -32,6 +32,15 @@
             Editar
         </a>
 
+        <form method="POST" action="{{ route('admin.colegios.impersonar', $colegio->idColegio) }}"
+              onsubmit="return confirm('¿Entrar como la cuenta ejecutivo de «{{ addslashes($colegio->nombreColegio) }}»? Se registrará en el log de impersonaciones.')">
+            @csrf
+            <button type="submit" class="a-btn a-btn--ghost" style="height:38px;font-size:0.8125rem;">
+                <i class="fa-solid fa-user-secret"></i>
+                Entrar como
+            </button>
+        </form>
+
         {{-- Cambiar estado --}}
         <div style="position:relative;display:inline-block;" x-data="{ open: false }">
             <button onclick="this.nextElementSibling.classList.toggle('hidden')"
@@ -201,6 +210,51 @@
         @else
         <p style="font-size:0.875rem;color:var(--text-muted);margin:0;">Este colegio no tiene suscripción activa.</p>
         @endif
+
+        {{-- Acciones de suscripción --}}
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-color);">
+
+            <form method="POST" action="{{ route('admin.suscripciones.cambiarPlan', $colegio->idColegio) }}"
+                  style="display:flex;gap:0.5rem;align-items:center;">
+                @csrf
+                @method('PUT')
+                <select name="idPlan" class="admin-input" style="min-width:160px;" required>
+                    <option value="">Cambiar a…</option>
+                    @foreach($planesDisponibles as $p)
+                        <option value="{{ $p->idPlan }}" {{ $planActual?->idPlan === $p->idPlan ? 'disabled' : '' }}>
+                            {{ $p->nombre }}
+                        </option>
+                    @endforeach
+                </select>
+                <button type="submit" class="a-btn a-btn--ghost"
+                        onclick="return confirm('¿Cambiar el plan de «{{ addslashes($colegio->nombreColegio) }}»? La suscripción actual queda como histórico.')">
+                    <i class="fa-solid fa-right-left"></i> Cambiar plan
+                </button>
+            </form>
+
+            <form method="POST" action="{{ route('admin.suscripciones.extender', $colegio->idColegio) }}"
+                  style="display:flex;gap:0.5rem;align-items:center;">
+                @csrf
+                @method('PUT')
+                <input type="number" name="dias" min="1" max="365" value="30" required
+                       class="admin-input" style="width:90px;" title="Días a extender">
+                <button type="submit" class="a-btn a-btn--ghost">
+                    <i class="fa-solid fa-calendar-plus"></i> Extender
+                </button>
+            </form>
+
+            @if($suscripcion && $suscripcion->estaVigente())
+            <form method="POST" action="{{ route('admin.suscripciones.cancelar', $colegio->idColegio) }}"
+                  onsubmit="return confirm('¿Cancelar la suscripción de «{{ addslashes($colegio->nombreColegio) }}»? El colegio perderá el acceso.')">
+                @csrf
+                @method('PUT')
+                <button type="submit" class="a-btn a-btn--danger-soft">
+                    <i class="fa-solid fa-ban"></i> Cancelar suscripción
+                </button>
+            </form>
+            @endif
+
+        </div>
     </div>
 </div>
 

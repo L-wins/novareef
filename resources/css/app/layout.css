@@ -1,9 +1,44 @@
 /*
+   Banner de impersonación (soporte admin viendo la sesión de un colegio)
+    */
+.impersonacion-banner {
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: var(--nv-warning);
+    color: #1a1206;
+    font-size: 0.82rem;
+    font-weight: 600;
+    z-index: 200;
+    padding: 0 1rem;
+}
+.impersonacion-banner__salir {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.18);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: inherit;
+    font-weight: 700;
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+.impersonacion-banner__salir:hover { background: rgba(0, 0, 0, 0.28); }
+
+/*
    Navbar
     */
 .navbar {
     position: fixed;
-    inset: 0 0 auto 0;
+    top: var(--banner-h, 0px);
+    left: 0;
+    right: 0;
     height: var(--navbar-h);
     background: var(--nv-navbar-bg);
     backdrop-filter: blur(18px);
@@ -255,24 +290,38 @@
     */
 .app-layout {
     display: flex;
-    padding-top: var(--navbar-h);
+    padding-top: calc(var(--navbar-h) + var(--banner-h, 0px));
     min-height: 100vh;
 }
 
 .sidebar {
-    width: 60px;
-    flex-shrink: 0;
+    --sidebar-w: 60px;
+    --sidebar-w-open: 220px;
+    /* El box mide SIEMPRE el ancho expandido — nunca cambia de tamaño. Lo
+       que se anima al hacer hover es cuánto se ve (clip-path), no su
+       "width" real: "width" dispara layout (reflow) en cada frame sin
+       excepción, sea cual sea el "contain" usado — es una limitación de
+       los motores de layout, no algo optimizable desde CSS. clip-path con
+       una forma simple (inset) no dispara layout, solo recorta lo ya
+       pintado: es la única garantía real de cero reflow. Fixed (no
+       sticky/flex-sibling): al estar fuera del flujo normal, esto ya no
+       reflowa ".main" tampoco (antes, siendo flex-sibling con .main
+       flex:1, cada frame reflowaba todo el contenido principal). ".main"
+       reserva el ancho colapsado con un margin-left fijo que no se anima
+       (ver más abajo). Mismo patrón que el navbar fixed del panel admin. */
+    width: var(--sidebar-w-open);
     background: var(--bg-surface);
     border-right: 1px solid var(--border);
     padding: 16px 0;
-    position: sticky;
-    top: var(--navbar-h);
-    height: calc(100vh - var(--navbar-h));
-    overflow: hidden;
-    transition: width 0.22s var(--ease);
+    position: fixed;
+    left: 0;
+    top: calc(var(--navbar-h) + var(--banner-h, 0px));
+    height: calc(100vh - var(--navbar-h) - var(--banner-h, 0px));
+    clip-path: inset(0 calc(var(--sidebar-w-open) - var(--sidebar-w)) 0 0);
+    transition: clip-path 0.22s var(--ease);
     z-index: 10;
 }
-.sidebar:hover { width: 220px; }
+.sidebar:hover { clip-path: inset(0 0 0 0); }
 
 .sidebar-nav {
     display: flex;
@@ -345,6 +394,7 @@
     */
 .main {
     flex: 1;
+    margin-left: 60px; /* debe igualar --sidebar-w (colapsado) de .sidebar arriba */
     padding: 40px 24px 72px;
     min-width: 0;
 }

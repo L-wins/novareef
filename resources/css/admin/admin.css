@@ -72,20 +72,30 @@ input, textarea { font: inherit; }
 .navbar {
   position: fixed;
   top: 0; left: 0; bottom: 0;
-  width: var(--sidebar-w);
+  /* El box del navbar mide SIEMPRE el ancho expandido — nunca cambia de
+     tamaño. Lo que se anima al hacer hover es cuánto se ve de esa caja
+     (clip-path), no su "width" real.
+     Por qué: "width" dispara layout (reflow) en cada frame de la
+     animación sin excepción — no importa el "contain" o el will-change
+     que se use, es una limitación de cómo funcionan los motores de layout
+     de los navegadores, no algo optimizable desde CSS. clip-path con una
+     forma simple (inset) no dispara layout, solo recorta lo ya pintado:
+     es la única garantía real de cero reflow, en cualquier hardware.
+     Contrapartida: se quitó el box-shadow decorativo del hover — clip-path
+     recorta también cualquier pintura que se salga de esta caja (incluido
+     un box-shadow propio), así que no pueden convivir. */
+  width: var(--sidebar-w-open);
   background: var(--bg-navbar);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  transition: width var(--timing) var(--ease), box-shadow var(--timing) var(--ease);
+  clip-path: inset(0 calc(var(--sidebar-w-open) - var(--sidebar-w)) 0 0);
+  transition: clip-path var(--timing) var(--ease);
   z-index: 200;
-  will-change: width;
 }
 
 .navbar:hover {
-  width: var(--sidebar-w-open);
-  box-shadow: 6px 0 32px rgba(0, 0, 0, 0.5);
+  clip-path: inset(0 0 0 0);
 }
 
 /* Logo */
@@ -174,14 +184,19 @@ input, textarea { font: inherit; }
   box-shadow: 0 0 12px var(--primary-glow);
 }
 
-/* "Gooey" blob — smooth pill indicator animado */
+/* "Gooey" blob — smooth pill indicator animado.
+   Antes usaba filter:blur(6px): como este pseudo-elemento estira al 100%
+   del ancho de .navbar__link, y ese ancho cambia en cada frame mientras
+   .navbar anima su "width" en hover, el navegador tenía que re-rasterizar
+   el blur en cada frame a un tamaño distinto — el causante real de que el
+   menú se sintiera trabado al abrir/cerrar. Un radial-gradient da el mismo
+   glow sin filtro, así que no hay nada que recalcular por frame. */
 .navbar__link.active::after {
   content: '';
   position: absolute;
   inset: 4px;
-  background: rgba(79, 142, 247, 0.06);
+  background: radial-gradient(ellipse at center, rgba(79, 142, 247, 0.14) 0%, rgba(79, 142, 247, 0) 72%);
   border-radius: 8px;
-  filter: blur(6px);
   pointer-events: none;
 }
 

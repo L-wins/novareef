@@ -4,6 +4,7 @@ use App\Http\Middleware\AdminAuth;
 use App\Http\Middleware\BlockResendWebhook;
 use App\Http\Middleware\ProtegerEscrituraMasiva;
 use App\Http\Middleware\SoloSuperAdmin;
+use App\Http\Middleware\TerminarImpersonacionExpirada;
 use App\Http\Middleware\VerificarCambioContrasena;
 use App\Http\Middleware\VerificarEstadoColegio;
 use App\Http\Middleware\VerificarModuloPlan;
@@ -41,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             BlockResendWebhook::class,
         ]);
         $middleware->web(append: [
+            TerminarImpersonacionExpirada::class,
             VerificarCambioContrasena::class,
             ProtegerEscrituraMasiva::class,
         ]);

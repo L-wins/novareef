@@ -13,7 +13,20 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 </head>
-<body>
+<body @if(session('impersonacion.idAdmin')) style="--banner-h: 40px;" @endif>
+
+    @if(session('impersonacion.idAdmin'))
+    <div class="impersonacion-banner">
+        <i class="fa-solid fa-user-secret"></i>
+        <span>Estás viendo NovaReef como <strong>{{ Auth::user()->nombreUsuario }}</strong> — sesión de soporte.</span>
+        <form method="POST" action="{{ route('impersonacion.salir') }}">
+            @csrf
+            <button type="submit" class="impersonacion-banner__salir">
+                <i class="fa-solid fa-right-from-bracket"></i> Salir
+            </button>
+        </form>
+    </div>
+    @endif
 
     {{-- ===== NAVBAR ===== --}}
     <header class="navbar" id="navbar">

@@ -55,6 +55,14 @@
             </li>
 
             <li class="navbar__item">
+                <a href="{{ route('admin.suscripciones.index') }}"
+                   class="navbar__link {{ request()->routeIs('admin.suscripciones.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Suscripciones</span>
+                </a>
+            </li>
+
+            <li class="navbar__item">
                 <a href="{{ route('admin.usuarios.index') }}"
                    class="navbar__link {{ request()->routeIs('admin.usuarios.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-users"></i>
@@ -75,8 +83,8 @@
             <li class="navbar__item">
                 <a href="{{ route('admin.2fa.config') }}"
                    class="navbar__link {{ request()->routeIs('admin.2fa.config') ? 'active' : '' }}">
-                    <i class="fa-solid fa-gear"></i>
-                    <span>Configuración</span>
+                    <i class="fa-solid fa-key"></i>
+                    <span>Seguridad</span>
                 </a>
             </li>
 

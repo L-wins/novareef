@@ -71,6 +71,11 @@
                 <i class="fa-solid fa-circle-exclamation"></i>
                 {{ $errors->first() }}
             </div>
+            @elseif (session('error'))
+            <div class="a-alert a-alert--danger">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                {{ session('error') }}
+            </div>
             @endif
 
             <form method="POST" action="{{ route('admin.login.post') }}" novalidate>
