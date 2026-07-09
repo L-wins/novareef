@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\VencerSancionesJob;
 use App\Jobs\VerificarConfirmacionesJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -29,3 +30,7 @@ Schedule::command('novareef:actualizar-estados-torneo')->dailyAt('00:03');
 // Marca como CRÍTICOS los partidos programados con designaciones pendientes
 // cuyo plazo de confirmación (configurable por colegio) ya venció.
 Schedule::job(new VerificarConfirmacionesJob)->everyFifteenMinutes();
+
+// Cierra automáticamente las sanciones activas/apeladas cuya fechaFinSancion
+// ya pasó, marcándolas como cumplidas. Las de fecha indefinida no se tocan.
+Schedule::job(new VencerSancionesJob)->daily();

@@ -16,6 +16,7 @@ use App\Models\HistorialDesignacion;
 use App\Models\Partido;
 use App\Models\SlotDesignacion;
 use App\Models\TarifaTorneo;
+use App\Models\Torneo;
 use App\Models\User;
 use App\StateMachines\PartidoStateMachine;
 use Carbon\Carbon;
@@ -41,6 +42,13 @@ final class DesignacionService
     public function crearPartido(int $idColegio, array $datos, int $idUsuarioAccion): Partido
     {
         return DB::transaction(function () use ($datos, $idColegio, $idUsuarioAccion): Partido {
+            // La modalidad de pago vive en el Torneo — se copia al partido tal
+            // como ya hace Torneo\PartidoController::store() en el flujo de M03.
+            // Sin esto todo partido creado desde /designaciones/crear quedaba
+            // en 'campo' (default de la migración) sin importar la modalidad
+            // real del torneo, y GenerarPagosJob nunca se disparaba.
+            $modalidadPago = Torneo::where('idTorneo', $datos['idTorneo'])->value('modalidadPago');
+
             $partido = Partido::create([
                 'idColegio'       => $idColegio,
                 'idTorneo'        => $datos['idTorneo'],
@@ -52,6 +60,7 @@ final class DesignacionService
                 'fechaPartido'    => $datos['fechaPartido'],
                 'horaPartido'     => $datos['horaPartido'],
                 'estadoPartido'   => Partido::ESTADO_BORRADOR,
+                'modalidadPago'   => $modalidadPago,
                 'version'         => 0,
                 'observaciones'   => $datos['observaciones'] ?? null,
             ]);

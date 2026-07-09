@@ -1,0 +1,20 @@
+/*
+   NovaReef — Módulo M06 Finanzas
+   Hereda de tokens.css (mismas vars: --nv-accent, --nv-card-alt, etc.)
+    */
+
+:root {
+    --fin-bg-card:   var(--nv-card-alt);
+    --fin-border:    var(--nv-border);
+    --fin-border-h:  var(--nv-fill-2);
+    --fin-text:      var(--nv-text);
+    --fin-text-2:    var(--nv-text-2);
+    --fin-text-mute: var(--nv-text-3);
+    --fin-accent:    var(--nv-accent);
+    --fin-accent-2:  var(--nv-accent-2);
+    --fin-radius:    0.75rem;
+    --fin-radius-sm: 0.5rem;
+
+    --fin-ingreso:   #34d399;
+    --fin-egreso:    #f87171;
+}

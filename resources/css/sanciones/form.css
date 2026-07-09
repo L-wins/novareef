@@ -1,0 +1,87 @@
+.form-card {
+    background: var(--san-bg-card);
+    border: 1px solid var(--san-border);
+    border-radius: var(--san-radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.form-section {
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--san-border);
+}
+.form-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.form-section-title {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--san-text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem;
+}
+
+.form-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+.form-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.span-2      { grid-column: span 2; }
+
+.form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+.form-label { font-size: 0.8rem; font-weight: 500; color: var(--san-text-2); }
+.req { color: #f87171; }
+.form-input,
+.form-select,
+.form-textarea {
+    background: var(--nv-fill);
+    border: 1px solid var(--san-border);
+    border-radius: var(--san-radius-sm);
+    padding: 0.6rem 0.85rem;
+    color: var(--san-text);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color .15s, background .15s, box-shadow .15s;
+}
+.form-textarea { min-height: 90px; resize: vertical; }
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    border-color: var(--san-accent);
+    background: rgba(79,142,247,0.04);
+    box-shadow: 0 0 0 3px rgba(79,142,247,.14);
+}
+.field-error { font-size: 0.74rem; color: #fca5a5; margin-top: 0.25rem; }
+.field-hint  { font-size: 0.72rem; color: var(--san-text-mute); margin-top: 0.25rem; }
+
+[data-campo-condicional] { display: none; }
+[data-campo-condicional].is-visible { display: flex; }
+
+/* ── Modal (cambiar estado) ───── */
+.nova-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.nova-modal-overlay[data-close-on-overlay] { cursor: pointer; }
+.nova-modal {
+  background: var(--nv-elevated); border: 1px solid var(--san-border); border-radius: 16px;
+  width: 100%; max-width: 520px; margin: 1rem; box-shadow: 0 24px 48px rgba(0,0,0,.5);
+  cursor: default;
+}
+.nova-modal__header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--san-border);
+}
+.nova-modal__header h2 {
+  display: flex; align-items: center; gap: .55rem;
+  font-size: 1.1rem; font-weight: 700; color: var(--san-text);
+}
+.nova-modal__header h2 i { color: var(--san-accent); font-size: .95em; }
+.nova-modal__close { background: none; border: none; color: var(--san-text-2); cursor: pointer; font-size: 1rem; padding: 4px; }
+.nova-modal__body  { padding: 1.5rem; max-height: 72vh; overflow-y: auto; }
+.nova-modal__footer {
+  display: flex; justify-content: flex-end; gap: .75rem;
+  padding: 1rem 1.5rem; border-top: 1px solid var(--san-border);
+}
+
+@media (max-width: 720px) {
+    .form-grid-2 { grid-template-columns: 1fr; }
+    .span-2      { grid-column: span 1; }
+}

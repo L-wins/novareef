@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Models\Partido;
+use App\Services\FinanzasService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
 class GenerarPagosJob implements ShouldQueue
 {
@@ -20,9 +20,8 @@ class GenerarPagosJob implements ShouldQueue
 
     public function __construct(public readonly Partido $partido) {}
 
-    public function handle(): void
+    public function handle(FinanzasService $finanzas): void
     {
-        // M06 completará esta lógica de nómina
-        Log::info("M06: Generar pagos para partido {$this->partido->idPartido}");
+        $finanzas->generarMovimientosPorFinalizacionPartido($this->partido);
     }
 }

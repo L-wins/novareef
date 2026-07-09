@@ -106,7 +106,7 @@ NovaReef tiene 8 módulos funcionales. Estado auditado contra el código real.
 
 ---
 
-## M04 — Designaciones ⚠️ CRÍTICO — 🚧 En desarrollo activo
+## M04 — Designaciones ⚠️ CRÍTICO — ✅ Implementado
 
 **Es el corazón del sistema.** Si esto falla, el producto no sirve.
 
@@ -149,15 +149,17 @@ Constraint: `UNIQUE(idPartido, idArbitro)` — un árbitro no puede tener dos ro
 
 | Constante | Valor |
 |---|---|
+| `ESTADO_BORRADOR` | `'borrador'` |
 | `ESTADO_PROGRAMADO` | `'programado'` |
-| `ESTADO_EN_CURSO` | `'en_curso'` |
 | `ESTADO_CONFIRMADO` | `'confirmado'` |
 | `ESTADO_CRITICO` | `'critico'` |
 | `ESTADO_APLAZADO` | `'aplazado'` |
 | `ESTADO_CANCELADO` | `'cancelado'` |
 | `ESTADO_FINALIZADO` | `'finalizado'` |
 
-**Nota:** `'confirmado'` y `'critico'` son constantes del modelo pero no están en el ENUM de la migration original — se calculan como lógica de negocio (`estaCompleto()`, `esCritico()`).
+**Nota:** ya **no existe** `'en_curso'` (se eliminó del ENUM y del modelo — migración `2026_07_07_000010_remove_en_curso_from_partidos.php`). El partido queda en `'confirmado'` hasta que el árbitro Central o el designador lo finalizan manualmente; no hay transición automática por horario. `'confirmado'` y `'critico'` sí están en el ENUM real de la tabla (a diferencia de lo que decía una versión anterior de esta nota) — se alcanzan tanto por lógica de negocio (`estaCompleto()`) como por jobs automáticos (`VerificarConfirmacionesJob`).
+
+**`modalidadPago`** (`'campo'` | `'nomina'`, vive en `Torneo` y se copia a cada `Partido` al crearlo): hasta antes de M06, `DesignacionService::crearPartido()` **no copiaba** este valor del torneo — todo partido creado desde `/designaciones/crear` quedaba en `'campo'` sin importar la modalidad real del torneo, lo que impedía que M06 generara pagos de nómina. Corregido: ahora se copia siempre desde `Torneo::modalidadPago`.
 
 ### Disponibilidad
 
@@ -217,27 +219,59 @@ GET  /api/partidos/{id}/arbitros-disponibles → AJAX
 
 ---
 
-## M06 — Finanzas ⬜ No implementado
+## M06 — Finanzas ✅ Implementado
 
-**Responsabilidad:** pagos a árbitros por partidos, tarifas, balance del colegio.
+**Responsabilidad:** libro contable del colegio — ingresos (torneos, mensualidad, multas, otros), egresos (nómina de árbitros, árbitros externos, gastos fijos/institucionales/varios), pagos parciales, estado de cuenta del árbitro, pago acumulado con neteo de deudas, y reportes por rango de fechas. NovaReef solo registra — no ejecuta pagos automáticos (transferencias reales, pasarelas, etc.).
 
-**Estado:** solo rutas placeholder. No hay migraciones ni modelos.
+**Entidades reales:**
 
-**Quien opera:** rol `'tesorero'` (permisos `ver-finanzas`, `crear-finanzas`).
+| Entidad | Tabla | Descripción |
+|---|---|---|
+| `MovimientoFinanciero` | `movimientos_financieros` | Ingreso o egreso unificado (discriminador `tipoMovimiento`+`categoria`) |
+| `AbonoMovimiento` | `abonos_movimiento` | Pagos parciales/totales sobre un movimiento; inmutables, se anulan pero no se editan |
+| `HistorialMovimientoFinanciero` | `historial_movimientos_financieros` | Auditoría (creado/abonado/anulado/compensado) |
 
-**Nota:** las `TarifaTorneo` de M03 son un precursor — definen cuánto paga cada torneo por división/formato.
+**Categorías** (`MovimientoFinanciero`, constantes de clase):
+- Ingreso: `ingreso_torneo`, `mensualidad`, `multa`, `otro_ingreso`
+- Egreso: `nomina_arbitro`, `arbitro_externo`, `gasto_fijo`, `gasto_institucional`, `gasto_vario`
+
+**Reglas de negocio clave:**
+1. **Sin margen del colegio**: el ingreso por torneo (modalidad nómina) es exactamente la suma de tarifas pagadas a los árbitros — passthrough contable, el colegio es intermediario.
+2. **Modalidad `campo` no se trackea**: solo los partidos en modalidad `nomina` generan movimientos al finalizar (`GenerarPagosJob` → `FinanzasService::generarMovimientosPorFinalizacionPartido()`, idempotente).
+3. **`DesignacionService::calcularPago()`** (M04) es el punto de cálculo del valor por designación vía `TarifaTorneo`.
+4. **Anulación**: solo se puede anular un movimiento sin abonos previos — si ya se pagó algo, queda como registro contable permanente.
+5. **Pago acumulado del tesorero** (`FinanzasService::pagarAcumuladoArbitro()`): salda varios egresos de nómina a la vez, netando primero contra deudas (mensualidad/multa) seleccionadas — siempre se saldan por completo, el sobrante se paga con el método real. Notificación por correo (`NotificarPagoArbitroJob`, Resend). WhatsApp no existe como canal en el proyecto.
+6. **Multa con origen desacoplado**: `tipoOrigenMulta` (`'sancion'|'academico'|'manual'`) + `idOrigenMulta` sin FK — permite que M07 (ya implementado) y un futuro M05 generen multas sin acoplarse a Finanzas.
+
+**Quien opera:** rol `'tesorero'` (`ver-finanzas`, `crear-finanzas`, `editar-finanzas`) y `'ejecutivo'` (todos).
+
+**Rutas:** `/finanzas` (índice, crear, detalle, abonar, anular), `/finanzas/pagos-arbitro` (pago acumulado), `/finanzas/reportes` (rango de fechas libre, sin período fijo obligatorio).
 
 ---
 
-## M07 — Sanciones ⬜ No implementado
+## M07 — Sanciones ✅ Implementado
 
-**Responsabilidad:** sanciones disciplinarias a árbitros, bloqueo de designaciones.
+**Responsabilidad:** registro disciplinario e histórico de faltas de los árbitros, con multa económica opcional enganchada a Finanzas.
 
-**Estado:** solo rutas placeholder. No hay migraciones ni modelos.
+**⚠️ Decisión de negocio explícita (revierte lo que decía una versión anterior de este archivo): Sanciones NO bloquea designaciones.** Un árbitro sancionado —incluso con sanción activa o multa pendiente— puede seguir siendo designado y confirmar sus partidos con total normalidad. Es un registro puro, disciplinario y/o económico. Si un colegio quiere sacar de circulación a un árbitro, usa el mecanismo ya existente de M02 (`Arbitro.estadoArbitro = 'suspendido'`, manual, que hoy solo genera una advertencia visual al designar — tampoco bloquea duro). No hay ninguna validación de M07 dentro de `DesignacionService` ni `PartidoStateMachine`.
 
-**Quien opera:** rol `'sanciones'` (permisos `ver-sanciones`, `crear-sanciones`).
+**Entidades reales:**
 
-**Cruce con M04:** un árbitro sancionado no puede recibir designaciones en el período de sanción. Pendiente implementar.
+| Entidad | Tabla | Descripción |
+|---|---|---|
+| `TipoSancion` | `tipos_sancion` | Catálogo **por colegio** (no global) — cada colegio define sus tipos de falta, con `severidad` (leve/moderada/grave) |
+| `Sancion` | `sanciones` | `estadoSancion`: `activa`\|`cumplida`\|`anulada`\|`apelada`. `tieneMultaEconomica` + `idMovimientoFinanciero` opcional |
+| `HistorialSancion` | `historial_sanciones` | Auditoría (impuesta/cumplida/anulada/apelada/apelacion_resuelta) |
+
+**`SancionService`:** `crearSancion` (genera la multa en Finanzas en la misma transacción si aplica), `cumplir`, `anular` (requiere motivo; también anula la multa asociada si aún no tiene abonos), `apelar`, `resolverApelacion` (`confirmada`→cumplida, `revocada`→anulada).
+
+**`VencerSancionesJob`** (diario): cierra automáticamente sanciones activas/apeladas con `fechaFinSancion` vencida → `cumplida`. Las de fecha indefinida (`fechaFinSancion = null`) quedan activas hasta resolución manual del Comité.
+
+**Quien opera:** rol `'sanciones'` (`ver-sanciones`, `crear-sanciones`, `editar-sanciones`) y `'ejecutivo'` (todos). El rol `'arbitro'` tiene `ver-sanciones` — ve únicamente su propio historial (`SancionController@index` filtra automáticamente por `rolUsuario === 'arbitro'`).
+
+**Permisos nuevos** (M06+M07): `editar-finanzas` (anular movimiento) y `editar-sanciones` (anular sanción / resolver apelación) — asignados a `ejecutivo` (ambos) y a `tesorero`/`sanciones` respectivamente. **Cuidado al re-sembrar `RolesPermisosSeeder` de forma aislada**: usa `syncPermissions()`, que reemplaza *todo* el set de permisos de cada rol — si se corre solo, sin `VeedorRolSeeder` y `CuentasAdminRolSeeder` después (que otorgan `crear-calificaciones` y `gestionar-cuentas-admin` a `ejecutivo` de forma aditiva), esos dos permisos se pierden. Siempre correr los tres en orden, o el `DatabaseSeeder` completo.
+
+**Rutas:** `/sanciones` (índice dual admin/árbitro, crear, detalle con acciones, cambiar estado), `/tipos-sancion` (catálogo, gestión).
 
 ---
 
@@ -269,10 +303,10 @@ Fase 0  (1-2)    → Config inicial, setup
 Fase 1  (3-4)    → Auth + M01 Colegios         ✅
 Fase 2  (5-6)    → M02 Árbitros                ✅
 Fase 3  (7-8)    → M03 Torneos                 ✅
-Fase 4  (9-11)   → M04 Designaciones ⚠️        🚧 en curso
+Fase 4  (9-11)   → M04 Designaciones ⚠️        ✅
 Fase 5  (12-13)  → M05 Académico               ⬜
-Fase 6  (14-15)  → M06 Finanzas                ⬜
-Fase 7  (16)     → M07 Sanciones               ⬜
+Fase 6  (14-15)  → M06 Finanzas                ✅
+Fase 7  (16)     → M07 Sanciones               ✅
 Fase 8  (17)     → M08 Superadmin completo      🚧 parcial
 Fase 9  (18)     → Activar Stancl subdominios + QA + Deploy
 ```

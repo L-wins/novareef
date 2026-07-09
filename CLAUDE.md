@@ -82,7 +82,7 @@ php artisan permission:cache-reset
 | `/colegios/*` | auth, verificar.colegio, solo.superadmin | CRUD colegios |
 | `/torneos/*` | auth, verificar.colegio, permission:ver-torneos | CRUD torneos |
 | `/torneos/{id}/partidos/*` | auth, verificar.colegio, permission:ver-torneos | CRUD partidos |
-| `/designaciones/*` | auth, verificar.colegio, permission:ver-designaciones | Placeholder |
+| `/designaciones/*` | auth, verificar.colegio, permission:ver-designaciones, modulo:designaciones | M04 completo: creación de partido, asignación/reasignación de árbitros, publicación, veedor, acta, historial |
 | `/finanzas/*` | auth, verificar.colegio, permission:ver-finanzas | Placeholder |
 | `/academico/*` | auth, verificar.colegio, permission:ver-academico | Placeholder |
 | `/sanciones/*` | auth, verificar.colegio, permission:ver-sanciones | Placeholder |

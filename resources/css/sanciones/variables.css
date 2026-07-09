@@ -1,0 +1,17 @@
+/*
+   NovaReef — Módulo M07 Sanciones
+   Hereda de tokens.css (mismas vars: --nv-accent, --nv-card-alt, etc.)
+    */
+
+:root {
+    --san-bg-card:   var(--nv-card-alt);
+    --san-border:    var(--nv-border);
+    --san-border-h:  var(--nv-fill-2);
+    --san-text:      var(--nv-text);
+    --san-text-2:    var(--nv-text-2);
+    --san-text-mute: var(--nv-text-3);
+    --san-accent:    var(--nv-accent);
+    --san-accent-2:  var(--nv-accent-2);
+    --san-radius:    0.75rem;
+    --san-radius-sm: 0.5rem;
+}

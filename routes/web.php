@@ -4,6 +4,7 @@ use App\Http\Controllers\Arbitro\ArbitroController;
 use App\Http\Controllers\Arbitro\ArbitroFotoController;
 use App\Http\Controllers\Arbitro\ArbitroPerfilController;
 use App\Http\Controllers\Arbitro\CategoriaArbitroController;
+use App\Http\Controllers\Arbitro\EstadoCuentaArbitroController;
 use App\Http\Controllers\Auth\CambioContrasenaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Colegio\ColegioController;
@@ -12,6 +13,12 @@ use App\Http\Controllers\Configuracion\ConfiguracionController;
 use App\Http\Controllers\Configuracion\CuentaAdminController;
 use App\Http\Controllers\Designacion\CalificacionController;
 use App\Http\Controllers\Designacion\DesignacionController;
+use App\Http\Controllers\Finanza\MovimientoFinancieroController;
+use App\Http\Controllers\Finanza\BalanceFinancieroController;
+use App\Http\Controllers\Finanza\PagoArbitroController;
+use App\Http\Controllers\Finanza\ReporteFinancieroController;
+use App\Http\Controllers\Sancion\SancionController;
+use App\Http\Controllers\Sancion\TipoSancionController;
 use App\Http\Controllers\Designacion\DisponibilidadController;
 use App\Http\Controllers\Torneo\DivisionTorneoController;
 use App\Http\Controllers\Torneo\EmergenteTorneoController;
@@ -58,6 +65,10 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     //  Mi perfil (árbitro autenticado)
     Route::get('/mi-perfil', [ArbitroPerfilController::class, 'show'])->name('arbitros.mi-perfil');
     Route::put('/mi-perfil', [ArbitroPerfilController::class, 'update'])->name('arbitros.mi-perfil.update');
+
+    //  Mi estado de cuenta — fuera del grupo finanzas: el árbitro no tiene
+    //  ver-finanzas, mismo criterio que finalizarPartido con ver-designaciones.
+    Route::get('/mi-estado-cuenta', [EstadoCuentaArbitroController::class, 'show'])->name('arbitros.estado-cuenta');
 
     // Foto de perfil — el árbitro siempre, y editores con permiso
     Route::post('/arbitros/{id}/foto',   [ArbitroFotoController::class, 'subir'])->name('arbitros.foto.subir');
@@ -212,11 +223,24 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         ->name('disponibilidad.arbitro')
         ->middleware('permission:crear-designaciones');
 
-    //  Finanzas ─
+    //  Finanzas — M06
     Route::prefix('finanzas')->name('finanzas.')->middleware(['permission:ver-finanzas', 'modulo:finanzas'])->group(function () {
-        Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
-        Route::get('/crear', fn () => redirect()->route('dashboard'))->middleware('permission:crear-finanzas')->name('create');
-        Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-finanzas')->name('store');
+        Route::get('/',      [MovimientoFinancieroController::class, 'index'])->name('index');
+        Route::get('/crear', [MovimientoFinancieroController::class, 'create'])->middleware('permission:crear-finanzas')->name('create');
+        Route::post('/',     [MovimientoFinancieroController::class, 'store'])->middleware('permission:crear-finanzas')->name('store');
+
+        // Pago acumulado al árbitro y reportes — antes de /{id} para que no los capture como id
+        Route::prefix('pagos-arbitro')->name('pagos-arbitro.')->group(function () {
+            Route::get('/',  [PagoArbitroController::class, 'index'])->name('index');
+            Route::post('/', [PagoArbitroController::class, 'store'])->middleware('permission:crear-finanzas')->name('store');
+        });
+
+        Route::get('/reportes', [ReporteFinancieroController::class, 'index'])->name('reportes.index');
+        Route::get('/balance',  [BalanceFinancieroController::class, 'index'])->name('balance.index');
+
+        Route::get('/{id}',  [MovimientoFinancieroController::class, 'show'])->name('show');
+        Route::post('/{id}/abonos', [MovimientoFinancieroController::class, 'abonar'])->middleware('permission:crear-finanzas')->name('abonar');
+        Route::put('/{id}/anular',  [MovimientoFinancieroController::class, 'anular'])->middleware('permission:editar-finanzas')->name('anular');
     });
 
     //  Académico 
@@ -226,11 +250,21 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-academico')->name('store');
     });
 
-    //  Sanciones 
+    //  Sanciones — M07
     Route::prefix('sanciones')->name('sanciones.')->middleware(['permission:ver-sanciones', 'modulo:sanciones'])->group(function () {
-        Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
-        Route::get('/crear', fn () => redirect()->route('dashboard'))->middleware('permission:crear-sanciones')->name('create');
-        Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-sanciones')->name('store');
+        Route::get('/',      [SancionController::class, 'index'])->name('index');
+        Route::get('/crear', [SancionController::class, 'create'])->middleware('permission:crear-sanciones')->name('create');
+        Route::post('/',     [SancionController::class, 'store'])->middleware('permission:crear-sanciones')->name('store');
+        Route::get('/{id}',  [SancionController::class, 'show'])->name('show');
+        Route::put('/{id}/estado', [SancionController::class, 'cambiarEstado'])->middleware('permission:crear-sanciones')->name('estado');
+    });
+
+    //  Catálogo de tipos de sanción — gestión, solo editar-sanciones
+    Route::prefix('tipos-sancion')->name('tipos-sancion.')->middleware(['permission:editar-sanciones', 'modulo:sanciones'])->group(function () {
+        Route::get('/',        [TipoSancionController::class, 'index'])->name('index');
+        Route::post('/',       [TipoSancionController::class, 'store'])->name('store');
+        Route::put('/{id}',    [TipoSancionController::class, 'toggleActivo'])->name('toggleActivo');
+        Route::delete('/{id}', [TipoSancionController::class, 'destroy'])->name('destroy');
     });
 
     //  Configuración del colegio — solo ejecutivo
