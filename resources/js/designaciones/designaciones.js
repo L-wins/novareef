@@ -126,6 +126,12 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // ── Búsqueda de árbitros con debounce ────
+
+/** Minúsculas y sin tildes/diacríticos, para comparar como escribe la gente. */
+function normalizarTexto(s) {
+    return (s ?? '').toString().toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+}
+
 async function buscarArbitros(partidoId, query, rolId, resultsEl, desigReasignar = null) {
     if (!window.buscarUrl) return;
 
@@ -135,10 +141,17 @@ async function buscarArbitros(partidoId, query, rolId, resultsEl, desigReasignar
 
         resultsEl.innerHTML = '';
 
-        const filtrados = data.filter(a =>
-            a.nombreUsuario?.toLowerCase().includes(query.toLowerCase()) ||
-            a.codigoCarnet?.toLowerCase().includes(query.toLowerCase())
-        );
+        // Cada palabra del query debe aparecer en algún campo del árbitro
+        // (nombre, carnet, documento o categoría), sin distinguir tildes ni
+        // mayúsculas — "jose ramirez" encuentra a "José RAMÍREZ".
+        const tokens = normalizarTexto(query).split(/\s+/).filter(Boolean);
+
+        const filtrados = data.filter(a => {
+            const haystack = normalizarTexto(
+                `${a.nombreUsuario ?? ''} ${a.codigoCarnet ?? ''} ${a.numeroDocumento ?? ''} ${a.nombreCategoria ?? ''}`
+            );
+            return tokens.every(t => haystack.includes(t));
+        });
 
         if (filtrados.length === 0) {
             resultsEl.innerHTML = '<div style="padding:.75rem 1rem;font-size:.82rem;color:var(--disp-text-2)">Sin resultados</div>';
@@ -249,6 +262,16 @@ function construirAdvertencias(arbitro) {
     if (arbitro.disponibilidad === 'extraordinaria') {
         advertencias.push({ tipo: 'danger', texto: 'El árbitro reportó <strong>indisponibilidad extraordinaria</strong> para esta fecha.' });
     }
+    if (arbitro.disponibilidad === 'no_disponible') {
+        advertencias.push({ tipo: 'danger', texto: 'El árbitro se declaró <strong>no disponible</strong> para este día.' });
+    }
+    if (arbitro.disponibilidad === 'otra_franja') {
+        const horaEste = window.partidoHora ? ` y este partido es a las <strong>${window.partidoHora}</strong>` : '';
+        advertencias.push({
+            tipo:  'warning',
+            texto: `El árbitro reportó disponibilidad en <strong>${arbitro.franjaLabel ?? 'otra franja'}</strong>${horaEste} — la franja no coincide.`,
+        });
+    }
     if (arbitro.disponibilidad === 'sin_reporte') {
         advertencias.push({ tipo: 'info', texto: 'El árbitro <strong>no reportó disponibilidad</strong> para esta semana.' });
     }
@@ -303,8 +326,14 @@ function buildBadgeDisponibilidad(a) {
     if (a.disponibilidad === 'disponible') {
         return `<span class="arbitro-result__badge badge-disponible arbitro-result__badge--disponibilidad"><i class="fa-solid fa-circle-check"></i>${a.franjaLabel ?? 'Disponible'}</span>`;
     }
+    if (a.disponibilidad === 'otra_franja') {
+        return `<span class="arbitro-result__badge badge-otra-franja arbitro-result__badge--disponibilidad"><i class="fa-solid fa-triangle-exclamation"></i>Disponible en ${a.franjaLabel ?? 'otra franja'}</span>`;
+    }
     if (a.disponibilidad === 'extraordinaria') {
         return `<span class="arbitro-result__badge badge-extraordinaria arbitro-result__badge--disponibilidad"><i class="fa-solid fa-circle-xmark"></i>Indisponible (extraordinaria)</span>`;
+    }
+    if (a.disponibilidad === 'no_disponible') {
+        return `<span class="arbitro-result__badge badge-extraordinaria arbitro-result__badge--disponibilidad"><i class="fa-solid fa-circle-xmark"></i>No disponible</span>`;
     }
     if (a.disponibilidad === 'sin_reporte') {
         return `<span class="arbitro-result__badge badge-sin-reporte arbitro-result__badge--disponibilidad"><i class="fa-regular fa-circle-question"></i>Sin disponibilidad</span>`;

@@ -189,6 +189,8 @@ final class DesignacionService
                 'tipoAccion'      => HistorialDesignacion::TIPO_ASIGNADO,
                 'detalle'         => implode(', ', array_filter([
                     $advertencias['sinDisponibilidad']   ? 'Sin disponibilidad reportada' : '',
+                    $advertencias['noDisponible']        ? 'Se declaró no disponible ese día' : '',
+                    $advertencias['otraFranja']          ? "Disponible en otra franja ({$advertencias['franjaReportada']})" : '',
                     $advertencias['tieneExtraordinaria'] ? 'Indisponibilidad extraordinaria' : '',
                     $advertencias['esSuspendido']        ? 'Árbitro suspendido' : '',
                     $advertencias['advertenciaTiempo']   ? "Partido cercano ({$advertencias['minutosAlPartidoCercano']} min)" : '',
@@ -518,11 +520,17 @@ final class DesignacionService
             if ($extraordinaria) {
                 $dispEstado = 'extraordinaria';
             } elseif ($disponibilidad) {
-                $dispEstado = $this->franjaCoincide($disponibilidad->franjaHoraria, $franjaNeed)
-                    ? 'disponible'
-                    : 'sin_reporte';
+                // Distinguir los tres casos reales: reportó y cubre la hora del
+                // partido (disponible), reportó otra franja (otra_franja — antes
+                // se mostraba como "sin disponibilidad", confundiendo al
+                // designador), o se declaró explícitamente no disponible.
+                $dispEstado = match (true) {
+                    $disponibilidad->franjaHoraria === DisponibilidadArbitro::FRANJA_NO_DISPONIBLE => 'no_disponible',
+                    $this->franjaCoincide($disponibilidad->franjaHoraria, $franjaNeed)             => 'disponible',
+                    default                                                                        => 'otra_franja',
+                };
                 $franjaDisp  = $disponibilidad->franjaHoraria;
-                $franjaLabel = DisponibilidadArbitro::getFranjas()[$franjaDisp] ?? $franjaDisp;
+                $franjaLabel = $disponibilidad->franjaLegible();
             }
 
             $advertencias = $advertenciasPorArbitro[$a->idArbitro];
@@ -531,6 +539,7 @@ final class DesignacionService
                 'idArbitro'               => $a->idArbitro,
                 'nombreUsuario'           => $a->usuario?->nombreUsuario,
                 'codigoCarnet'            => $a->codigoCarnet,
+                'numeroDocumento'         => $a->numeroDocumento,
                 'nombreCategoria'         => $a->categoria?->nombreCategoria,
                 'disponibilidad'          => $dispEstado,
                 'franjaDisponible'        => $franjaDisp,
@@ -545,16 +554,21 @@ final class DesignacionService
             ];
         });
 
-        // Ordenar: disponibles sin advertencias → disponibles con advertencias
-        //          → sin reporte → suspendidos al final
-        return $resultado->sortBy(fn ($r) => match (true) {
-            $r['yaAsignado']          => 99,
-            $r['esSuspendido']        => 4,
-            $r['disponibilidad'] === 'extraordinaria' => 3,
-            $r['disponibilidad'] === 'sin_reporte'     => 2,
-            $r['advertenciaTiempo']   => 1,
-            default                   => 0,
-        })->values();
+        // Los árbitros que se declararon no disponibles para esa fecha (franja
+        // explícita "no disponible" o indisponibilidad extraordinaria) NO son
+        // candidatos: se excluyen de la lista de asignación.
+        // Ordenar el resto: disponibles sin advertencias → con advertencias
+        //                   → otra franja → sin reporte → suspendidos al final
+        return $resultado
+            ->reject(fn ($r) => in_array($r['disponibilidad'], ['no_disponible', 'extraordinaria'], true))
+            ->sortBy(fn ($r) => match (true) {
+                $r['yaAsignado']                        => 99,
+                $r['esSuspendido']                      => 5,
+                $r['disponibilidad'] === 'sin_reporte'  => 3,
+                $r['disponibilidad'] === 'otra_franja'  => 2,
+                $r['advertenciaTiempo']                 => 1,
+                default                                 => 0,
+            })->values();
     }
 
     /**
@@ -564,6 +578,9 @@ final class DesignacionService
      *
      * @return array{
      *     sinDisponibilidad: bool,
+     *     noDisponible: bool,
+     *     otraFranja: bool,
+     *     franjaReportada: string|null,
      *     tieneExtraordinaria: bool,
      *     advertenciaTiempo: bool,
      *     minutosAlPartidoCercano: int|null,
@@ -574,10 +591,22 @@ final class DesignacionService
      */
     public function calcularAdvertencias(Arbitro $arbitro, Partido $partido): array
     {
-        $disponibilidad = $arbitro->disponibilidades->first();
+        // Comparar con isSameDay: las relaciones pueden venir cargadas sin
+        // filtro de fecha (asignar/reasignar) y ambas columnas son casts
+        // Carbon — un where() suelto contra string nunca coincide.
+        $disponibilidad = $arbitro->disponibilidades
+            ->first(fn (DisponibilidadArbitro $d) => $d->fechaDisponibilidad->isSameDay($partido->fechaPartido));
+
         $extraordinaria = $arbitro->indisponibilidadesExtraordinarias
-            ->where('fechaAfectada', $partido->fechaPartido->toDateString())
-            ->first();
+            ->first(fn ($i) => $i->fechaAfectada->isSameDay($partido->fechaPartido));
+
+        $noDisponible = $disponibilidad?->franjaHoraria === DisponibilidadArbitro::FRANJA_NO_DISPONIBLE;
+        $otraFranja   = $disponibilidad !== null
+            && ! $noDisponible
+            && ! $this->franjaCoincide(
+                $disponibilidad->franjaHoraria,
+                $this->franjaDesdeHora($partido->horaPartido ?? '00:00')
+            );
 
         $otrasDesignacionesDelDia = $this->designacionesDelDia($partido, $arbitro->idArbitro);
 
@@ -588,6 +617,9 @@ final class DesignacionService
 
         return [
             'sinDisponibilidad'       => $disponibilidad === null,
+            'noDisponible'            => $noDisponible,
+            'otraFranja'              => $otraFranja,
+            'franjaReportada'         => $disponibilidad?->franjaLegible(),
             'tieneExtraordinaria'     => $extraordinaria !== null,
             'advertenciaTiempo'       => $advertenciaTiempo,
             'minutosAlPartidoCercano' => $minutosAlPartidoCercano,

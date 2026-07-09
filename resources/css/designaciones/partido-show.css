@@ -227,6 +227,8 @@
 }
 .badge-disponible   { background: rgba(34,197,94,.14); color: #22c55e; }
 .badge-warn-tiempo  { background: rgba(245,158,11,.14); color: #f59e0b; }
+/* Reportó disponibilidad pero en una franja que no cubre la hora del partido */
+.badge-otra-franja  { background: rgba(245,158,11,.14); color: #f59e0b; }
 .badge-sin-reporte  { background: rgba(100,116,139,.18); color: var(--nv-text-2); }
 .badge-extraordinaria{ background: rgba(239,68,68,.14); color: #ef4444; }
 .badge-suspendido   { background: rgba(239,68,68,.08); color: #ef4444; }
@@ -468,6 +470,7 @@
 /* Ámbar */
 :root[data-theme="light"] .desig-estado-pendiente,
 :root[data-theme="light"] .badge-warn-tiempo,
+:root[data-theme="light"] .badge-otra-franja,
 :root[data-theme="light"] .partido-estado-badge.estado-aplazado,
 :root[data-theme="light"] .partido-estado-badge.estado-pendiente { color: #b45309; }
 :root[data-theme="light"] .rol-card--pendiente,

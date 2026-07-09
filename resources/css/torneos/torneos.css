@@ -237,6 +237,7 @@
 .t-badge[data-estado="cancelado"]  { background: rgba(239,68,68,.10);  color: #fca5a5; border-color: rgba(239,68,68,.25); }
 
 /* estadoPartido */
+.t-badge[data-estado-p="borrador"]   { background: rgba(148,163,184,.12); color: #cbd5e1; border-color: rgba(148,163,184,.30); }
 .t-badge[data-estado-p="programado"] { background: rgba(56,189,248,.12); color: #7dd3fc; border-color: rgba(56,189,248,.30); }
 .t-badge[data-estado-p="finalizado"] { background: rgba(16,185,129,.12); color: #6ee7b7; border-color: rgba(16,185,129,.30); }
 .t-badge[data-estado-p="aplazado"]   { background: rgba(168,85,247,.12); color: #d8b4fe; border-color: rgba(168,85,247,.30); }
@@ -765,6 +766,7 @@
 :root[data-theme="light"] .t-badge[data-estado="proximo"]      { color: #0369a1; }
 :root[data-theme="light"] .t-badge[data-estado="activo"]       { color: #15803d; }
 :root[data-theme="light"] .t-badge[data-estado="cancelado"]    { color: #dc2626; }
+:root[data-theme="light"] .t-badge[data-estado-p="borrador"]   { color: #475569; }
 :root[data-theme="light"] .t-badge[data-estado-p="programado"] { color: #0369a1; }
 :root[data-theme="light"] .t-badge[data-estado-p="finalizado"] { color: #15803d; }
 :root[data-theme="light"] .t-badge[data-estado-p="aplazado"]   { color: #7c3aed; }
