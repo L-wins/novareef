@@ -91,6 +91,19 @@
             @php
                 // Numerar visualmente solo cuando el rol tiene más de un slot
                 $conteoPorRol = $slots->groupBy('idRol')->map->count();
+
+                // Resumen para el modal de confirmación de publicación —
+                // mismos datos que ya se pintan en los slot-card, solo
+                // reordenados en un arreglo plano para pasarlos por
+                // window.partidoResumen (ver script al final del archivo).
+                $resumenRoles = $slots->map(function ($slot) use ($conteoPorRol) {
+                    $multiple = ($conteoPorRol[$slot->idRol] ?? 1) > 1;
+
+                    return [
+                        'rol'     => $slot->rol?->nombre . ($multiple ? " {$slot->numeroSlot}" : ''),
+                        'arbitro' => $slot->designacion?->arbitro?->usuario?->nombreUsuario,
+                    ];
+                })->values();
             @endphp
 
             @foreach($slots as $slot)
@@ -265,6 +278,11 @@
                     <i class="fa-solid fa-rocket"></i>
                     Publicar partido
                 </button>
+                <button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;margin-top:.6rem"
+                        onclick="abrirModalEditarPartido()">
+                    <i class="fa-solid fa-pen"></i>
+                    Editar partido
+                </button>
                 <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:.6rem;color:#fca5a5"
                         onclick="eliminarPartido({{ $partido->idPartido }})">
                     <i class="fa-solid fa-trash"></i>
@@ -392,12 +410,119 @@
 
 </div>
 
+{{-- Editar partido (solo borrador) --}}
+@can('crear-designaciones')
+@if($esBorrador)
+<div class="nova-modal-overlay" id="modal-editar-partido" data-close-on-overlay
+     style="display:{{ $errors->any() ? 'flex' : 'none' }}">
+    <div class="nova-modal nova-modal--form">
+        <form method="POST" action="{{ route('designaciones.partido.actualizar', $partido->idPartido) }}"
+              id="form-editar-partido">
+            @csrf
+            @method('PUT')
+            <div class="nova-modal__header">
+                <h2><i class="fa-solid fa-pen"></i> Editar partido</h2>
+                <button type="button" class="nova-modal__close" onclick="cerrarModalEditarPartido()" aria-label="Cerrar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="nova-modal__body">
+                <div class="form-grid form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Equipo local <span class="req">*</span></label>
+                        <input type="text" name="equipoLocal" maxlength="150" required class="form-input"
+                               value="{{ old('equipoLocal', $partido->equipoLocal) }}">
+                        @error('equipoLocal') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Equipo visitante <span class="req">*</span></label>
+                        <input type="text" name="equipoVisitante" maxlength="150" required class="form-input"
+                               value="{{ old('equipoVisitante', $partido->equipoVisitante) }}">
+                        @error('equipoVisitante') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">División <span class="req">*</span></label>
+                        <select name="idDivision" required class="form-select"
+                                data-nova-select data-placeholder="Selecciona división">
+                            <option value="">— Selecciona —</option>
+                            @foreach ($partido->torneo->divisiones as $div)
+                                <option value="{{ $div->idDivision }}" {{ (int) old('idDivision', $partido->idDivision) === $div->idDivision ? 'selected' : '' }}>
+                                    {{ $div->nombreDivision }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('idDivision') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sede</label>
+                        <select name="idSede" class="form-select"
+                                data-nova-select data-placeholder="Sin sede">
+                            <option value="">— Sin sede —</option>
+                            @foreach ($partido->torneo->sedes as $sedeOpcion)
+                                <option value="{{ $sedeOpcion->idSede }}" {{ (int) old('idSede', $partido->idSede) === $sedeOpcion->idSede ? 'selected' : '' }}>
+                                    {{ $sedeOpcion->nombreSede }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('idSede') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha <span class="req">*</span></label>
+                        <input type="text" name="fechaPartido" required
+                               data-nova-date placeholder="dd/mm/aaaa"
+                               value="{{ old('fechaPartido', $partido->fechaPartido->format('Y-m-d')) }}"
+                               class="form-input">
+                        @error('fechaPartido') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Hora <span class="req">*</span></label>
+                        <input type="time" name="horaPartido" required class="form-input"
+                               value="{{ old('horaPartido', substr($partido->horaPartido, 0, 5)) }}">
+                        @error('horaPartido') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group span-2">
+                        <label class="form-label">Formato</label>
+                        <input type="text" disabled class="form-input" value="{{ $partido->formato?->nombre ?? '—' }}">
+                        <input type="hidden" name="idFormato" value="{{ $partido->idFormato }}">
+                        <small class="field-hint">
+                            Define los roles/slots del equipo arbitral — cambiarlo aquí podría desincronizar a
+                            los árbitros ya asignados, así que no es editable desde este modal.
+                        </small>
+                    </div>
+                    <div class="form-group span-2">
+                        <label class="form-label">Observaciones</label>
+                        <textarea name="observaciones" rows="2" class="form-textarea textarea-fixed">{{ old('observaciones', $partido->observaciones) }}</textarea>
+                        @error('observaciones') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+            </div>
+            <div class="nova-modal__footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalEditarPartido()">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="btn-guardar-editar-partido">
+                    <i class="fa-solid fa-check"></i>
+                    Guardar cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+@endcan
+
 <script>
 window.colegioId   = {{ Auth::user()->idColegio }};
 window.broadcastAuthEndpoint = "{{ url('/broadcasting/auth') }}";
 window.partidoId   = {{ $partido->idPartido }};
 window.partidoVersion = {{ $partido->version }};
 window.partidoHora = "{{ \Carbon\Carbon::createFromFormat('H:i', substr($partido->horaPartido, 0, 5))->format('g:i A') }}";
+window.partidoResumen = {
+    equipoLocal:     @json($partido->equipoLocal),
+    equipoVisitante: @json($partido->equipoVisitante),
+    fecha:           @json(ucfirst($fechaHuman ?? '')),
+    hora:            window.partidoHora,
+    sede:            @json($partido->sede?->nombreSede ?? '—'),
+    roles:           @json($resumenRoles),
+};
 window.asignarUrl  = "{{ route('designaciones.asignar', $partido->idPartido) }}";
 window.quitarBase  = "{{ url('/designaciones/designacion') }}";
 window.reasignarBase = "{{ url('/designaciones/designacion') }}";

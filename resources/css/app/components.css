@@ -18,6 +18,17 @@
     --c-radius-sm:     0.5rem;
 }
 
+/* ── auto-filter.js modo AJAX: fade sutil mientras llega el fragmento
+   nuevo, para que el cambio no se sienta instantáneo/brusco. La región no
+   se bloquea del todo (pointer-events sigue activo) porque el reemplazo es
+   rápido — bloquearla parpadearía más de lo que ayuda. ── */
+[data-auto-filter-region] {
+    transition: opacity 0.15s ease;
+}
+[data-auto-filter-region].is-loading {
+    opacity: 0.55;
+}
+
 /* ── Layout base ──────────────────── */
 .container {
     max-width: 1200px;

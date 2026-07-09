@@ -89,6 +89,13 @@ class PartidoController extends Controller
 
         $this->autorizarTorneo($partido->torneo);
 
+        // Una vez publicado, la fecha/hora/sede ya se notificaron a los
+        // árbitros designados — editarlas en silencio los dejaría con datos
+        // desactualizados. Solo se puede editar mientras sigue en borrador.
+        if ($partido->estadoPartido !== Partido::ESTADO_BORRADOR) {
+            return back()->with('error', 'Solo se puede editar un partido mientras está en borrador.');
+        }
+
         $partido->update($request->validated());
 
         return back()->with('success', 'Partido actualizado correctamente.');

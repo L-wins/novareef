@@ -111,7 +111,8 @@ class DesignacionController extends Controller
 
         $partido = Partido::where('idColegio', $idColegio)
             ->with([
-                'torneo',
+                'torneo.divisiones',
+                'torneo.sedes',
                 'division',
                 'sede',
                 'formato',
@@ -139,7 +140,9 @@ class DesignacionController extends Controller
             ->orderBy('nombreUsuario')
             ->get();
 
-        return view('designaciones.show', compact('partido', 'slots', 'posiblesVeedores'));
+        $formatos = FormatoDesignacion::activos()->get();
+
+        return view('designaciones.show', compact('partido', 'slots', 'posiblesVeedores', 'formatos'));
     }
 
     /**
@@ -203,6 +206,63 @@ class DesignacionController extends Controller
         return redirect()
             ->route('designaciones.show', $partido->idPartido)
             ->with('success', 'Partido creado en borrador. Asigna los árbitros y publícalo.');
+    }
+
+    /**
+     * Edita fecha/hora/sede/equipos de un partido — solo mientras sigue en
+     * borrador (una vez publicado, esos datos ya se notificaron al árbitro).
+     */
+    public function actualizarPartido(Request $request, int $id): RedirectResponse
+    {
+        $idColegio = $this->idColegioActivo();
+
+        $partido = Partido::where('idColegio', $idColegio)->findOrFail($id);
+
+        if ($partido->estadoPartido !== Partido::ESTADO_BORRADOR) {
+            return back()->with('error', 'Solo se puede editar un partido mientras está en borrador.');
+        }
+
+        $validated = $request->validate([
+            'idDivision'      => 'required|integer',
+            'idSede'          => 'nullable|integer',
+            'idFormato'       => 'required|integer',
+            'equipoLocal'     => 'required|string|max:150',
+            'equipoVisitante' => 'required|string|max:150|different:equipoLocal',
+            'fechaPartido'    => 'required|date_format:Y-m-d',
+            'horaPartido'     => 'required|date_format:H:i',
+            'observaciones'   => 'nullable|string|max:1000',
+        ], [
+            'idDivision.required'      => 'Debes seleccionar una división.',
+            'equipoLocal.required'     => 'El equipo local es obligatorio.',
+            'equipoVisitante.required' => 'El equipo visitante es obligatorio.',
+            'equipoVisitante.different'=> 'El visitante no puede ser igual al local.',
+            'fechaPartido.required'    => 'La fecha del partido es obligatoria.',
+            'fechaPartido.date_format' => 'La fecha debe tener formato YYYY-MM-DD.',
+            'horaPartido.required'     => 'La hora del partido es obligatoria.',
+            'horaPartido.date_format'  => 'La hora debe tener formato HH:MM.',
+        ]);
+
+        abort_unless(
+            Torneo::where('idTorneo', $partido->idTorneo)
+                ->whereHas('divisiones', fn ($q) => $q->where('idDivision', $validated['idDivision']))
+                ->exists(),
+            403,
+            'La división no pertenece a este torneo.'
+        );
+
+        if (! empty($validated['idSede'])) {
+            abort_unless(
+                SedeTorneo::where('idSede', $validated['idSede'])
+                    ->where('idTorneo', $partido->idTorneo)
+                    ->exists(),
+                403,
+                'La sede no pertenece a este torneo.'
+            );
+        }
+
+        $partido->update($validated);
+
+        return back()->with('success', 'Partido actualizado correctamente.');
     }
 
     /**

@@ -14,7 +14,8 @@ use Tests\TestCase;
 
 /**
  * Reglas de publicación (nunca sin árbitros) y estados de disponibilidad de
- * los candidatos a asignar: no disponibles se excluyen, y "reportó otra
+ * los candidatos a asignar: ningún árbitro se excluye por su disponibilidad
+ * (el designador decide, con la advertencia visible), y "reportó otra
  * franja" se distingue de "no reportó".
  */
 class PublicarYDisponibilidadCandidatosTest extends TestCase
@@ -77,6 +78,122 @@ class PublicarYDisponibilidadCandidatosTest extends TestCase
         $this->assertSame(Partido::ESTADO_BORRADOR, $partido->fresh()->estadoPartido);
     }
 
+    // ── Edición de partido (solo mientras es borrador) ────────
+
+    public function test_un_borrador_se_puede_editar(): void
+    {
+        $ctx      = $this->prepararEscenario();
+        $partido  = $this->crearPartidoBorrador($ctx);
+        $division = $this->crearDivision($ctx['torneo']);
+        $gestor   = $this->crearGestorTorneos($ctx['colegio']);
+
+        $respuesta = $this->actingAs($gestor)->put(
+            route('partidos.update', ['torneoId' => $ctx['torneo']->idTorneo, 'id' => $partido->idPartido]),
+            [
+                'idDivision'      => $division->idDivision,
+                'idFormato'       => $ctx['formato']->idFormato,
+                'equipoLocal'     => 'Nuevo Local',
+                'equipoVisitante' => 'Nuevo Visitante',
+                'fechaPartido'    => today()->addDays(2)->format('Y-m-d'),
+                'horaPartido'     => '18:30',
+            ],
+        );
+
+        $respuesta->assertSessionHasNoErrors();
+        $respuesta->assertSessionHas('success');
+
+        $partido->refresh();
+        $this->assertSame('Nuevo Local', $partido->equipoLocal);
+        $this->assertSame('18:30', substr($partido->horaPartido, 0, 5));
+    }
+
+    public function test_un_partido_ya_publicado_no_se_puede_editar(): void
+    {
+        $ctx     = $this->prepararEscenario();
+        $partido = $this->crearPartidoBorrador($ctx);
+        $gestor  = $this->crearGestorTorneos($ctx['colegio']);
+
+        app(DesignacionService::class)->asignarArbitro(
+            $partido,
+            $ctx['arbitro']->idArbitro,
+            $this->idRolPorNombre('Central'),
+            $ctx['colegio']->idColegio,
+            $ctx['designador']->idUsuario,
+        );
+        app(DesignacionService::class)->publicarPartido($partido->fresh('formato'), $ctx['designador']);
+
+        $respuesta = $this->actingAs($gestor)->put(
+            route('partidos.update', ['torneoId' => $ctx['torneo']->idTorneo, 'id' => $partido->idPartido]),
+            [
+                'idDivision'      => $partido->idDivision,
+                'idFormato'       => $ctx['formato']->idFormato,
+                'equipoLocal'     => 'Intento de cambio',
+                'equipoVisitante' => $partido->equipoVisitante,
+                'fechaPartido'    => $partido->fechaPartido->format('Y-m-d'),
+                'horaPartido'     => substr($partido->horaPartido, 0, 5),
+            ],
+        );
+
+        $respuesta->assertSessionHas('error');
+        $this->assertNotSame('Intento de cambio', $partido->fresh()->equipoLocal);
+    }
+
+    public function test_un_borrador_se_puede_editar_desde_designaciones(): void
+    {
+        $ctx      = $this->prepararEscenario();
+        $partido  = $this->crearPartidoBorrador($ctx);
+        $division = $this->crearDivision($ctx['torneo']);
+
+        $respuesta = $this->actingAs($ctx['designador'])->put(
+            route('designaciones.partido.actualizar', $partido->idPartido),
+            [
+                'idDivision'      => $division->idDivision,
+                'idFormato'       => $ctx['formato']->idFormato,
+                'equipoLocal'     => 'Nuevo Local',
+                'equipoVisitante' => 'Nuevo Visitante',
+                'fechaPartido'    => today()->addDays(2)->format('Y-m-d'),
+                'horaPartido'     => '18:30',
+            ],
+        );
+
+        $respuesta->assertSessionHasNoErrors();
+        $respuesta->assertSessionHas('success');
+
+        $partido->refresh();
+        $this->assertSame('Nuevo Local', $partido->equipoLocal);
+        $this->assertSame('18:30', substr($partido->horaPartido, 0, 5));
+    }
+
+    public function test_un_partido_ya_publicado_no_se_puede_editar_desde_designaciones(): void
+    {
+        $ctx     = $this->prepararEscenario();
+        $partido = $this->crearPartidoBorrador($ctx);
+
+        app(DesignacionService::class)->asignarArbitro(
+            $partido,
+            $ctx['arbitro']->idArbitro,
+            $this->idRolPorNombre('Central'),
+            $ctx['colegio']->idColegio,
+            $ctx['designador']->idUsuario,
+        );
+        app(DesignacionService::class)->publicarPartido($partido->fresh('formato'), $ctx['designador']);
+
+        $respuesta = $this->actingAs($ctx['designador'])->put(
+            route('designaciones.partido.actualizar', $partido->idPartido),
+            [
+                'idDivision'      => $partido->idDivision,
+                'idFormato'       => $ctx['formato']->idFormato,
+                'equipoLocal'     => 'Intento de cambio',
+                'equipoVisitante' => $partido->equipoVisitante,
+                'fechaPartido'    => $partido->fechaPartido->format('Y-m-d'),
+                'horaPartido'     => substr($partido->horaPartido, 0, 5),
+            ],
+        );
+
+        $respuesta->assertSessionHas('error');
+        $this->assertNotSame('Intento de cambio', $partido->fresh()->equipoLocal);
+    }
+
     // ── Candidatos: estados de disponibilidad ─────────────────
 
     public function test_franja_reportada_que_no_cubre_el_partido_se_marca_otra_franja(): void
@@ -112,7 +229,7 @@ class PublicarYDisponibilidadCandidatosTest extends TestCase
         $this->assertSame('disponible', $datos['disponibilidad']);
     }
 
-    public function test_no_disponible_explicito_queda_fuera_de_los_candidatos(): void
+    public function test_no_disponible_explicito_sigue_apareciendo_como_candidato(): void
     {
         $ctx     = $this->prepararEscenario();
         $partido = $this->crearPartidoBorrador($ctx);
@@ -123,10 +240,13 @@ class PublicarYDisponibilidadCandidatosTest extends TestCase
             'franjaHoraria'       => DisponibilidadArbitro::FRANJA_NO_DISPONIBLE,
         ]);
 
-        $this->assertNull($this->datosCandidato($ctx, $partido), 'Un árbitro que se declaró no disponible no debe listarse.');
+        $datos = $this->datosCandidato($ctx, $partido);
+
+        $this->assertNotNull($datos, 'Un árbitro que se declaró no disponible debe seguir listado: el designador decide, no el sistema.');
+        $this->assertSame('no_disponible', $datos['disponibilidad']);
     }
 
-    public function test_indisponibilidad_extraordinaria_queda_fuera_de_los_candidatos(): void
+    public function test_indisponibilidad_extraordinaria_sigue_apareciendo_como_candidato(): void
     {
         $ctx     = $this->prepararEscenario();
         $partido = $this->crearPartidoBorrador($ctx);
@@ -140,7 +260,10 @@ class PublicarYDisponibilidadCandidatosTest extends TestCase
             'idUsuarioRegistro' => $ctx['designador']->idUsuario,
         ]);
 
-        $this->assertNull($this->datosCandidato($ctx, $partido));
+        $datos = $this->datosCandidato($ctx, $partido);
+
+        $this->assertNotNull($datos);
+        $this->assertSame('extraordinaria', $datos['disponibilidad']);
     }
 
     public function test_sin_registro_para_esa_fecha_sigue_siendo_sin_reporte(): void

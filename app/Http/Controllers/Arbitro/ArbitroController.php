@@ -15,6 +15,7 @@ use App\Models\CategoriaArbitro;
 use App\Models\EstadoArbitro;
 use App\Services\ArbitroService;
 use App\Services\LimiteService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -37,7 +38,7 @@ class ArbitroController extends Controller
         private readonly LimiteService  $limites,
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $idColegio = $this->idColegioActivo();
 
@@ -69,11 +70,24 @@ class ArbitroController extends Controller
         $categorias = $this->categorias($idColegio);
         $estados    = $this->estados();
 
-        return view('arbitros.index', compact('arbitros', 'categorias', 'estados') + [
+        $datos = compact('arbitros', 'categorias', 'estados') + [
             'limiteUsados'     => $this->limites->arbitrosActivos($idColegio),
             'limite'           => $this->limites->limiteArbitros($idColegio),
             'limitePorcentaje' => $this->limites->porcentajeUsoArbitros($idColegio),
-        ]);
+        ];
+
+        // auto-filter.js (modo AJAX): la lista/el contador se actualizan sin
+        // recargar toda la página — ver resources/js/shared/auto-filter.js.
+        if ($request->ajax()) {
+            return response()->json([
+                'regions' => [
+                    'contador'   => view('arbitros.partials.contador', $datos)->render(),
+                    'resultados' => view('arbitros.partials.resultados', $datos)->render(),
+                ],
+            ]);
+        }
+
+        return view('arbitros.index', $datos);
     }
 
     public function show(int $id): View

@@ -132,26 +132,63 @@ function normalizarTexto(s) {
     return (s ?? '').toString().toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
 }
 
+/**
+ * Qué tan bien coincide un candidato con lo escrito — menor es mejor.
+ * Sin esto, el orden que llega del backend (por disponibilidad, no por
+ * texto) decidía qué 10 quedaban visibles: un nombre casi exacto podía
+ * quedar fuera del top 10 detrás de coincidencias sueltas con mejor
+ * disponibilidad (ej. buscar "Arbitro Asocafa 1" mostraba "...11", "...21",
+ * "...41" antes que el "1" exacto, porque el token "1" también matchea
+ * cualquier carné/documento que lo contenga en cualquier posición).
+ */
+function relevancia(a, queryNorm) {
+    const nombre = normalizarTexto(a.nombreUsuario ?? '');
+    const carnet = normalizarTexto(a.codigoCarnet ?? '');
+    const doc    = normalizarTexto(a.numeroDocumento ?? '');
+
+    if (nombre === queryNorm) return 0;
+    if (nombre.startsWith(queryNorm)) return 1;
+    if (nombre.includes(queryNorm)) return 2;
+    if (carnet === queryNorm || doc === queryNorm) return 3;
+    if (carnet.startsWith(queryNorm) || doc.startsWith(queryNorm)) return 4;
+    return 5; // coincide por tokens sueltos en algún campo, nada más específico
+}
+
+let buscarArbitrosSecuencia = 0;
+
 async function buscarArbitros(partidoId, query, rolId, resultsEl, desigReasignar = null) {
     if (!window.buscarUrl) return;
+
+    // Si esta respuesta llega después de una búsqueda más reciente (el
+    // usuario siguió escribiendo mientras la petición estaba en vuelo), se
+    // descarta — evita que resultados desactualizados "parpadeen" encima de
+    // lo que el usuario ya escribió.
+    const miSecuencia = ++buscarArbitrosSecuencia;
 
     try {
         const r    = await fetch(`${window.buscarUrl}?q=${encodeURIComponent(query)}`);
         const data = await r.json();
+
+        if (miSecuencia !== buscarArbitrosSecuencia) return;
 
         resultsEl.innerHTML = '';
 
         // Cada palabra del query debe aparecer en algún campo del árbitro
         // (nombre, carnet, documento o categoría), sin distinguir tildes ni
         // mayúsculas — "jose ramirez" encuentra a "José RAMÍREZ".
-        const tokens = normalizarTexto(query).split(/\s+/).filter(Boolean);
+        const queryNorm = normalizarTexto(query.trim());
+        const tokens = queryNorm.split(/\s+/).filter(Boolean);
 
-        const filtrados = data.filter(a => {
-            const haystack = normalizarTexto(
-                `${a.nombreUsuario ?? ''} ${a.codigoCarnet ?? ''} ${a.numeroDocumento ?? ''} ${a.nombreCategoria ?? ''}`
-            );
-            return tokens.every(t => haystack.includes(t));
-        });
+        const filtrados = data
+            .filter(a => {
+                const haystack = normalizarTexto(
+                    `${a.nombreUsuario ?? ''} ${a.codigoCarnet ?? ''} ${a.numeroDocumento ?? ''} ${a.nombreCategoria ?? ''}`
+                );
+                return tokens.every(t => haystack.includes(t));
+            })
+            // Sort estable: a igual relevancia, se conserva el orden de
+            // disponibilidad que ya trae el backend.
+            .sort((a, b) => relevancia(a, queryNorm) - relevancia(b, queryNorm));
 
         if (filtrados.length === 0) {
             resultsEl.innerHTML = '<div style="padding:.75rem 1rem;font-size:.82rem;color:var(--disp-text-2)">Sin resultados</div>';
@@ -186,6 +223,13 @@ async function buscarArbitros(partidoId, query, rolId, resultsEl, desigReasignar
 
             resultsEl.appendChild(item);
         });
+
+        if (filtrados.length > 10) {
+            const nota = document.createElement('div');
+            nota.style.cssText = 'padding:.5rem 1rem;font-size:.76rem;color:var(--disp-text-2);text-align:center';
+            nota.textContent = `+${filtrados.length - 10} más — afina la búsqueda para verlos`;
+            resultsEl.appendChild(nota);
+        }
 
         resultsEl.style.display = 'block';
     } catch (e) {
@@ -345,7 +389,7 @@ function buildBadgesSecundarios(a) {
     const badges = [];
 
     if (a.advertenciaTiempo)  badges.push(`<span class="arbitro-result__badge badge-warn-tiempo">Ya asignado a las ${a.horaPartidoCercano}</span>`);
-    if (a.partidosHoy > 0)    badges.push(`<span class="arbitro-result__badge badge-sobrecarga">${pluralizarPartidos(a.partidosHoy + 1)} este día</span>`);
+    if (a.partidosHoy > 0)    badges.push(`<span class="arbitro-result__badge badge-sobrecarga">Tendría ${pluralizarPartidos(a.partidosHoy + 1)} este día</span>`);
     if (a.esSuspendido)       badges.push(`<span class="arbitro-result__badge badge-suspendido">Suspendido</span>`);
 
     return badges.join('');
@@ -691,15 +735,43 @@ function actualizarRolCard(designacion) {
     }
 }
 
+/** Resumen del partido + roles asignados, mostrado en el modal de confirmación de publicar. */
+function renderResumenPublicarHtml(r) {
+    if (!r) return '';
+
+    const filasRoles = (r.roles ?? [])
+        .map(x => `<li class="nova-swal-resumen__rol${x.arbitro ? '' : ' nova-swal-resumen__rol--vacio'}">
+            <span>${x.rol}</span>
+            <strong>${x.arbitro ?? 'Sin asignar'}</strong>
+        </li>`)
+        .join('');
+
+    return `
+        <div class="nova-swal-resumen">
+            <div class="nova-swal-resumen__match">${r.equipoLocal} <span>vs</span> ${r.equipoVisitante}</div>
+            <div class="nova-swal-resumen__meta">
+                <span><i class="fa-regular fa-calendar"></i> ${r.fecha}</span>
+                <span><i class="fa-regular fa-clock"></i> ${r.hora}</span>
+                <span><i class="fa-solid fa-location-dot"></i> ${r.sede}</span>
+            </div>
+            <ul class="nova-swal-resumen__roles">${filasRoles}</ul>
+        </div>
+        <p style="margin:.75rem 0 0;font-size:.82rem;color:var(--nv-text-2)">
+            Los árbitros designados serán notificados y podrán confirmar o rechazar.
+        </p>
+    `;
+}
+
 // ── Publicar partido (borrador → programado) ─────────
 async function publicarPartido(partidoId) {
     const result = await novaAlert.confirm({
         titulo:         '¿Publicar partido?',
-        texto:          'Los árbitros designados serán notificados y podrán confirmar o rechazar.',
+        texto:          '',
         icono:          'question',
         confirmarTexto: 'Sí, publicar',
         confirmColor:   '#16a34a',
         iconColor:      '#22c55e',
+        html:           renderResumenPublicarHtml(window.partidoResumen),
     });
     if (!result.isConfirmed) return;
 
@@ -724,6 +796,46 @@ async function publicarPartido(partidoId) {
     }
 }
 window.publicarPartido = publicarPartido;
+
+// ── Editar partido (solo borrador) ────────
+function abrirModalEditarPartido() {
+    const modal = document.getElementById('modal-editar-partido');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+    const primero = modal.querySelector('input:not([type="hidden"]), select, textarea');
+    if (primero) setTimeout(() => primero.focus(), 50);
+}
+window.abrirModalEditarPartido = abrirModalEditarPartido;
+
+function cerrarModalEditarPartido() {
+    const modal = document.getElementById('modal-editar-partido');
+    if (modal) modal.style.display = 'none';
+}
+window.cerrarModalEditarPartido = cerrarModalEditarPartido;
+
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('modal-editar-partido');
+    if (!modal) return;
+
+    // Clic en el overlay (fuera del cuadro) cierra — antes solo se podía
+    // cerrar con el botón X o "Cancelar", lo que se sentía "bloqueado".
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) cerrarModalEditarPartido();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.style.display === 'flex') cerrarModalEditarPartido();
+    });
+
+    const form = document.getElementById('form-editar-partido');
+    const btn  = document.getElementById('btn-guardar-editar-partido');
+    form?.addEventListener('submit', function () {
+        if (!btn) return;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando…';
+    });
+});
 
 // ── Eliminar partido (solo borrador) ──────────────────
 async function eliminarPartido(partidoId) {

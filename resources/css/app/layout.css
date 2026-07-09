@@ -319,7 +319,13 @@
     height: calc(100vh - var(--navbar-h) - var(--banner-h, 0px));
     clip-path: inset(0 calc(var(--sidebar-w-open) - var(--sidebar-w)) 0 0);
     transition: clip-path 0.22s var(--ease);
-    z-index: 10;
+    /* 50, no 10: al ser fixed y flotar sobre .main al expandirse, tiene
+       que ganarle a cualquier z-index normal de página (badges, sticky
+       date-dividers como .date-divider en mis-partidos.css, que usan 20)
+       para que el contenido no se pinte encima del menú. Se deja por
+       debajo del navbar superior y los dropdowns/tooltips de contenido
+       (100) y de los modales (1000). */
+    z-index: 50;
 }
 .sidebar:hover { clip-path: inset(0 0 0 0); }
 

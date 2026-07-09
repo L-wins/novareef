@@ -554,20 +554,24 @@ final class DesignacionService
             ];
         });
 
-        // Los árbitros que se declararon no disponibles para esa fecha (franja
-        // explícita "no disponible" o indisponibilidad extraordinaria) NO son
-        // candidatos: se excluyen de la lista de asignación.
-        // Ordenar el resto: disponibles sin advertencias → con advertencias
-        //                   → otra franja → sin reporte → suspendidos al final
+        // Ningún árbitro se excluye de la lista de candidatos por su
+        // disponibilidad: el designador debe poder ver y elegir a cualquiera
+        // (incluyendo "no disponible" e indisponibilidad extraordinaria) para
+        // casos de emergencia o reportes incorrectos. Solo se ordenan al
+        // final con su insignia de advertencia correspondiente — la exclusión
+        // es una decisión del designador, no del sistema.
+        // Orden: disponibles sin advertencias → con advertencias → otra
+        //        franja → sin reporte → no disponible/extraordinaria
+        //        → suspendidos → ya asignados al final
         return $resultado
-            ->reject(fn ($r) => in_array($r['disponibilidad'], ['no_disponible', 'extraordinaria'], true))
             ->sortBy(fn ($r) => match (true) {
-                $r['yaAsignado']                        => 99,
-                $r['esSuspendido']                      => 5,
-                $r['disponibilidad'] === 'sin_reporte'  => 3,
-                $r['disponibilidad'] === 'otra_franja'  => 2,
-                $r['advertenciaTiempo']                 => 1,
-                default                                 => 0,
+                $r['yaAsignado']                                                       => 99,
+                $r['esSuspendido']                                                     => 5,
+                in_array($r['disponibilidad'], ['no_disponible', 'extraordinaria'], true) => 4,
+                $r['disponibilidad'] === 'sin_reporte'                                 => 3,
+                $r['disponibilidad'] === 'otra_franja'                                 => 2,
+                $r['advertenciaTiempo']                                                => 1,
+                default                                                                => 0,
             })->values();
     }
 

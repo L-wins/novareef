@@ -60,6 +60,14 @@ return [
             // ],
         ],
 
+        // resend/resend-laravel registra el transporte 'resend' vía Mail::extend()
+        // en su propio ServiceProvider — pero Laravel solo lo resuelve si también
+        // aparece aquí. Sin esta entrada, MAIL_MAILER=resend falla con
+        // "Mailer [resend] is not defined" aunque el paquete esté instalado.
+        'resend' => [
+            'transport' => 'resend',
+        ],
+
         'sendmail' => [
             'transport' => 'sendmail',
             'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),

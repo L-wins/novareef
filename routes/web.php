@@ -157,6 +157,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::delete('/designacion/{id}',     [DesignacionController::class, 'quitarDesignacion'])->middleware('permission:crear-designaciones')->name('quitar');
         Route::put('/designacion/{id}/reasignar', [DesignacionController::class, 'reasignarArbitro'])->middleware('permission:crear-designaciones')->name('reasignar');
         Route::put('/{id}/estado',             [DesignacionController::class, 'cambiarEstadoPartido'])->middleware('permission:crear-designaciones')->name('estado');
+        Route::put('/partido/{id}',            [DesignacionController::class, 'actualizarPartido'])->middleware('permission:crear-designaciones')->name('partido.actualizar');
         Route::post('/partido/{id}/publicar',  [DesignacionController::class, 'publicarPartido'])->middleware('permission:crear-designaciones')->name('partido.publicar');
         Route::delete('/partido/{id}',         [DesignacionController::class, 'eliminarPartido'])->middleware('permission:crear-designaciones')->name('partido.eliminar');
         Route::put('/partido/{id}/veedor',     [DesignacionController::class, 'asignarVeedor'])->middleware('permission:crear-designaciones')->name('partido.veedor');
