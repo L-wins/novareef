@@ -4,22 +4,15 @@
 
 @section('contenido')
 
-<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:2rem;flex-wrap:wrap;">
-    <div>
-        <h1 style="font-size:1.5rem;font-weight:800;color:var(--text-bright);margin:0 0 4px;letter-spacing:-0.4px;">
-            Usuarios
-        </h1>
-        <p style="font-size:0.875rem;color:var(--text);margin:0;">
-            Cuentas de todos los colegios registrados en la plataforma.
-        </p>
-    </div>
+<div class="admin-page-header">
+    <h1>Usuarios</h1>
+    <p>Cuentas de todos los colegios registrados en la plataforma.</p>
 </div>
 
 {{-- Filtros --}}
-<div class="admin-card" style="padding:0.875rem 1.25rem;margin-bottom:1rem;">
-    <form method="GET" action="{{ route('admin.usuarios.index') }}" data-auto-filter
-          style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
-        <div class="admin-search-bar" style="flex:1;min-width:220px;">
+<div class="admin-card admin-card--filters">
+    <form method="GET" action="{{ route('admin.usuarios.index') }}" data-auto-filter class="admin-filters">
+        <div class="admin-search-bar">
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" name="q" value="{{ request('q') }}"
                    placeholder="Buscar por nombre o email…"
@@ -31,20 +24,24 @@
                 </a>
             @endif
         </div>
-        <select name="colegio" class="admin-input" style="max-width:220px;">
-            <option value="">Todos los colegios</option>
-            @foreach($colegios as $c)
-                <option value="{{ $c->idColegio }}" {{ (string) request('colegio') === (string) $c->idColegio ? 'selected' : '' }}>
-                    {{ $c->nombreColegio }}
-                </option>
-            @endforeach
-        </select>
-        <select name="rol" class="admin-input" style="max-width:180px;">
-            <option value="">Todos los roles</option>
-            @foreach($roles as $r)
-                <option value="{{ $r }}" {{ request('rol') === $r ? 'selected' : '' }}>{{ ucfirst($r) }}</option>
-            @endforeach
-        </select>
+        <div class="admin-filter admin-filter--wide">
+            <select name="colegio" data-nova-select data-searchable="true" data-placeholder="Todos los colegios">
+                <option value="">Todos los colegios</option>
+                @foreach($colegios as $c)
+                    <option value="{{ $c->idColegio }}" {{ (string) request('colegio') === (string) $c->idColegio ? 'selected' : '' }}>
+                        {{ $c->nombreColegio }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="admin-filter">
+            <select name="rol" data-nova-select data-placeholder="Todos los roles">
+                <option value="">Todos los roles</option>
+                @foreach($roles as $r)
+                    <option value="{{ $r }}" {{ request('rol') === $r ? 'selected' : '' }}>{{ ucfirst($r) }}</option>
+                @endforeach
+            </select>
+        </div>
     </form>
 </div>
 
@@ -58,17 +55,17 @@
                 <th>Rol</th>
                 <th>Estado</th>
                 <th>Último acceso</th>
-                <th style="text-align:right;">Acciones</th>
+                <th class="text-right">Acciones</th>
             </tr>
         </thead>
         <tbody>
             @forelse($usuarios as $u)
             <tr>
                 <td>
-                    <div style="font-weight:600;color:var(--text-bright);">{{ $u->nombreUsuario }}</div>
-                    <div style="font-size:0.75rem;color:var(--text);">{{ $u->emailUsuario }}</div>
+                    <div class="admin-table__strong">{{ $u->nombreUsuario }}</div>
+                    <div class="admin-table__sub">{{ $u->emailUsuario }}</div>
                 </td>
-                <td style="color:var(--text);">{{ $u->colegio?->nombreColegio ?? '—' }}</td>
+                <td class="admin-table__muted">{{ $u->colegio?->nombreColegio ?? '—' }}</td>
                 <td>
                     <span class="badge badge--gray">{{ ucfirst($u->rolUsuario) }}</span>
                 </td>
@@ -81,15 +78,19 @@
                         <span class="badge badge--amber">{{ ucfirst($u->estadoUsuario) }}</span>
                     @endif
                 </td>
-                <td style="color:var(--text);font-size:0.8125rem;">
+                <td class="admin-table__muted admin-table__small">
                     {{ $u->ultimoAcceso?->format('d/m/Y H:i') ?? 'Nunca' }}
                 </td>
                 <td>
-                    <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+                    <div class="admin-table__actions">
                         <form method="POST"
                               action="{{ route('admin.usuarios.toggleEstado', $u->idUsuario) }}"
-                              style="display:contents;"
-                              onsubmit="return confirm('¿{{ $u->estadoUsuario === 'activo' ? 'Suspender' : 'Activar' }} la cuenta de «{{ addslashes($u->nombreUsuario) }}»?')">
+                              class="form-contents"
+                              data-confirm-submit
+                              data-confirm-title="{{ $u->estadoUsuario === 'activo' ? 'Suspender cuenta' : 'Activar cuenta' }}"
+                              data-confirm-text="¿{{ $u->estadoUsuario === 'activo' ? 'Suspender' : 'Activar' }} la cuenta de «{{ $u->nombreUsuario }}»?"
+                              data-confirm-color="{{ $u->estadoUsuario === 'activo' ? '#ef4444' : '#22c55e' }}"
+                              data-confirm-btn="{{ $u->estadoUsuario === 'activo' ? 'Sí, suspender' : 'Sí, activar' }}">
                             @csrf
                             @method('PUT')
                             <button type="submit"
@@ -103,8 +104,8 @@
             </tr>
             @empty
             <tr>
-                <td colspan="6" style="text-align:center;padding:3.5rem;color:var(--text-muted);">
-                    <i class="fa-solid fa-inbox" style="font-size:32px;margin:0 auto 0.75rem;display:block;"></i>
+                <td colspan="6" class="admin-table__empty">
+                    <i class="fa-solid fa-inbox"></i>
                     No hay usuarios que coincidan con el filtro.
                 </td>
             </tr>
@@ -112,37 +113,7 @@
         </tbody>
     </table>
 
-    @if($usuarios->hasPages())
-    <div class="admin-pagination">
-        <span class="admin-pagination__info">
-            Mostrando {{ $usuarios->firstItem() }}–{{ $usuarios->lastItem() }}
-            de {{ $usuarios->total() }} usuarios
-        </span>
-        <div class="admin-pagination__nav">
-            @if($usuarios->onFirstPage())
-                <span class="admin-pagination__btn admin-pagination__btn--disabled">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </span>
-            @else
-                <a href="{{ $usuarios->previousPageUrl() }}" class="admin-pagination__btn">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </a>
-            @endif
-            <span class="admin-pagination__pages">
-                Página {{ $usuarios->currentPage() }} de {{ $usuarios->lastPage() }}
-            </span>
-            @if($usuarios->hasMorePages())
-                <a href="{{ $usuarios->nextPageUrl() }}" class="admin-pagination__btn">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </a>
-            @else
-                <span class="admin-pagination__btn admin-pagination__btn--disabled">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </span>
-            @endif
-        </div>
-    </div>
-    @endif
+    @include('admin.partials.pagination', ['paginator' => $usuarios, 'etiqueta' => 'usuarios'])
 </div>
 
 @endsection

@@ -24,7 +24,7 @@
 </a>
 
 @if(session('success'))
-<div class="admin-alert admin-alert--success" style="margin-bottom:1.25rem;">
+<div class="admin-alert admin-alert--success mb-4">
     <i class="fa-solid fa-circle-check"></i>
     {{ session('success') }}
 </div>
@@ -33,9 +33,9 @@
 {{-- Hero --}}
 <div class="admin-detail-hero">
     <div>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
-            <p class="admin-detail-hero__name" style="margin:0;">{{ $plan->nombre }}</p>
-            <span class="badge badge--plan-{{ $planKey }}" style="font-size:0.75rem;padding:4px 10px;">
+        <div class="admin-detail-hero__title-row">
+            <p class="admin-detail-hero__name">{{ $plan->nombre }}</p>
+            <span class="badge badge--plan-{{ $planKey }} badge--lg">
                 {{ ucfirst($planKey) }}
             </span>
         </div>
@@ -45,32 +45,32 @@
     </div>
     <div class="admin-detail-hero__actions">
         @if($plan->esActivo)
-            <span class="badge badge--green" style="padding:5px 11px;font-size:0.75rem;">Activo</span>
+            <span class="badge badge--green badge--lg">Activo</span>
         @else
-            <span class="badge badge--gray" style="padding:5px 11px;font-size:0.75rem;">Inactivo</span>
+            <span class="badge badge--gray badge--lg">Inactivo</span>
         @endif
         @if($plan->esVisible)
-            <span class="badge badge--blue" style="padding:5px 11px;font-size:0.75rem;">Visible</span>
+            <span class="badge badge--blue badge--lg">Visible</span>
         @else
-            <span class="badge badge--gray" style="padding:5px 11px;font-size:0.75rem;">Oculto</span>
+            <span class="badge badge--gray badge--lg">Oculto</span>
         @endif
 
-        <a href="{{ route('admin.planes.edit', $plan->idPlan) }}" class="a-btn a-btn--ghost" style="height:38px;font-size:0.8125rem;">
+        <a href="{{ route('admin.planes.edit', $plan->idPlan) }}" class="a-btn a-btn--ghost a-btn--sm">
             <i class="fa-solid fa-pen-to-square"></i>
             Editar
         </a>
 
-        <form method="POST" action="{{ route('admin.planes.toggleVisible', $plan->idPlan) }}" style="display:contents;">
+        <form method="POST" action="{{ route('admin.planes.toggleVisible', $plan->idPlan) }}" class="form-contents">
             @csrf @method('PUT')
-            <button type="submit" class="a-btn a-btn--ghost" style="height:38px;font-size:0.8125rem;">
+            <button type="submit" class="a-btn a-btn--ghost a-btn--sm">
                 <i class="fa-solid {{ $plan->esVisible ? 'fa-eye-slash' : 'fa-eye' }}"></i>
                 {{ $plan->esVisible ? 'Ocultar' : 'Mostrar' }}
             </button>
         </form>
 
-        <form method="POST" action="{{ route('admin.planes.toggleActivo', $plan->idPlan) }}" style="display:contents;">
+        <form method="POST" action="{{ route('admin.planes.toggleActivo', $plan->idPlan) }}" class="form-contents">
             @csrf @method('PUT')
-            <button type="submit" class="a-btn a-btn--ghost" style="height:38px;font-size:0.8125rem;">
+            <button type="submit" class="a-btn a-btn--ghost a-btn--sm">
                 <i class="fa-solid {{ $plan->esActivo ? 'fa-toggle-on' : 'fa-toggle-off' }}"></i>
                 {{ $plan->esActivo ? 'Desactivar' : 'Activar' }}
             </button>
@@ -79,9 +79,9 @@
 </div>
 
 {{-- Mini stats --}}
-<div class="admin-detail-mini-stats" style="margin-bottom:1.25rem;">
+<div class="admin-detail-mini-stats mb-4">
     <div class="admin-mini-stat">
-        <div class="admin-mini-stat__value" style="color:var(--primary);">{{ $totalActivas }}</div>
+        <div class="admin-mini-stat__value admin-mini-stat__value--accent">{{ $totalActivas }}</div>
         <div class="admin-mini-stat__label">Colegios activos / trial</div>
     </div>
     <div class="admin-mini-stat">
@@ -95,7 +95,7 @@
 </div>
 
 {{-- Detalles del plan --}}
-<div class="admin-detail-card" style="margin-bottom:1.25rem;">
+<div class="admin-detail-card">
     <div class="admin-detail-section">
         <p class="admin-detail-section__title">Configuración del plan</p>
         <div class="admin-detail-grid">
@@ -133,7 +133,7 @@
     @if($plan->modulosJSON && count($plan->modulosJSON))
     <div class="admin-detail-section">
         <p class="admin-detail-section__title">Módulos habilitados</p>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <div class="plan-mgmt-card__modulos">
             @foreach($plan->modulosJSON as $modulo)
                 <span class="plan-mgmt-modulo-tag plan-mgmt-modulo-tag--active">{{ $modulo }}</span>
             @endforeach
@@ -144,16 +144,16 @@
 
 {{-- Tabla de suscripciones --}}
 <div class="admin-detail-card">
-    <div class="admin-detail-section" style="border-bottom:1px solid var(--border-color);padding-bottom:1rem;">
-        <p class="admin-detail-section__title" style="margin:0;">Colegios suscritos</p>
+    <div class="admin-detail-section admin-detail-section--compact">
+        <p class="admin-detail-section__title">Colegios suscritos</p>
     </div>
 
     @if($suscripciones->isEmpty())
-        <div style="padding:3rem;text-align:center;">
-            <p style="color:var(--text-muted);font-size:0.875rem;">Ningún colegio ha contratado este plan aún.</p>
+        <div class="admin-card--empty">
+            <p>Ningún colegio ha contratado este plan aún.</p>
         </div>
     @else
-        <div style="overflow-x:auto;">
+        <div class="admin-table-scroll">
             <table class="admin-table">
                 <thead>
                     <tr>
@@ -168,31 +168,31 @@
                     @foreach($suscripciones as $sus)
                     <tr>
                         <td>
-                            <span style="font-weight:600;color:var(--text-bright);">
+                            <span class="admin-table__strong">
                                 {{ $sus->colegio->nombreColegio ?? '—' }}
                             </span>
                             @if($sus->colegio)
-                                <br><span style="font-size:0.75rem;color:var(--text-muted);font-family:monospace;">
+                                <br><span class="admin-table__mono">
                                     {{ $sus->colegio->codigoColegio }}
                                 </span>
                             @endif
                         </td>
                         <td>
                             @if($sus->estado === 'activa')
-                                <span class="badge badge--green" style="font-size:0.7rem;">Activa</span>
+                                <span class="badge badge--green">Activa</span>
                             @elseif($sus->estado === 'trial')
-                                <span class="badge badge--amber" style="font-size:0.7rem;">Trial</span>
+                                <span class="badge badge--amber">Trial</span>
                             @elseif($sus->estado === 'vencida')
-                                <span class="badge badge--red" style="font-size:0.7rem;">Vencida</span>
+                                <span class="badge badge--red">Vencida</span>
                             @elseif($sus->estado === 'cancelada')
-                                <span class="badge badge--gray" style="font-size:0.7rem;">Cancelada</span>
+                                <span class="badge badge--gray">Cancelada</span>
                             @else
-                                <span class="badge badge--gray" style="font-size:0.7rem;">{{ $sus->estado }}</span>
+                                <span class="badge badge--gray">{{ $sus->estado }}</span>
                             @endif
                         </td>
                         <td>{{ $sus->fechaInicio ? $sus->fechaInicio->format('d/m/Y') : '—' }}</td>
                         <td>{{ $sus->fechaVencimiento ? $sus->fechaVencimiento->format('d/m/Y') : '—' }}</td>
-                        <td style="text-align:right;">
+                        <td class="text-right">
                             @if($sus->colegio)
                                 <a href="{{ route('admin.colegios.show', $sus->colegio->idColegio) }}"
                                    class="a-tbl-btn" title="Ver colegio">

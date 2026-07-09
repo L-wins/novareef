@@ -99,7 +99,7 @@
                 </div>
 
                 {{-- Contraseña --}}
-                <div class="a-field" style="margin-bottom:1.5rem;">
+                <div class="a-field mb-6">
                     <label for="password">Contraseña</label>
                     <div class="a-input-wrap">
                         <span class="a-icon"><i class="fa-solid fa-lock"></i></span>
@@ -126,12 +126,9 @@
             </div>
 
             {{-- Volver al sitio público --}}
-            <p style="text-align:center;margin-top:1.5rem;font-size:0.8125rem;">
-                <a href="{{ route('welcome') }}"
-                   style="color:var(--text-muted);text-decoration:none;transition:color .2s;display:inline-flex;align-items:center;gap:6px;"
-                   onmouseover="this.style.color='var(--text-bright)'"
-                   onmouseout="this.style.color='var(--text-muted)'">
-                    <i class="fa-solid fa-arrow-left" style="font-size:11px;"></i>
+            <p class="a-back-home-wrap">
+                <a href="{{ route('welcome') }}" class="a-back-home">
+                    <i class="fa-solid fa-arrow-left"></i>
                     Volver al sitio público
                 </a>
             </p>

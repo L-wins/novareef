@@ -1,0 +1,422 @@
+/*
+   FORM — Create / Edit
+    */
+
+.admin-form-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.admin-form-section {
+  padding: 1.75rem 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.admin-form-section:last-child { border-bottom: none; }
+
+.admin-form-section__title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-form-section__title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.admin-form-grid--3 { grid-template-columns: 1fr 1fr 1fr; }
+.admin-form-col-2 { grid-column: span 2; }
+.admin-form-col-3 { grid-column: span 3; }
+@media (max-width: 720px) {
+  .admin-form-grid { grid-template-columns: 1fr; }
+  .admin-form-col-2,
+  .admin-form-col-3 { grid-column: span 1; }
+}
+
+/* Fusionado: estaba definido dos veces en el admin.css original
+   (formularios create/edit y luego planes/edit). Gana la declaración
+   más reciente por propiedad — mismo render que antes de dividir. */
+.admin-form-group { display: flex; flex-direction: column; gap: 5px; }
+
+.admin-form-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.admin-form-label .req { color: var(--danger); margin-left: 2px; }
+
+.admin-form-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 13px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  color: var(--text-bright);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color var(--timing), background var(--timing), box-shadow var(--timing);
+}
+.admin-form-input::placeholder { color: var(--text-muted); }
+.admin-form-input:focus {
+  border-color: var(--primary);
+  background: rgba(79,142,247,0.04);
+  box-shadow: 0 0 0 3px rgba(79,142,247,0.12);
+}
+.admin-form-input.is-invalid { border-color: var(--danger); }
+.admin-form-input.is-invalid:focus { box-shadow: 0 0 0 3px rgba(239,68,68,0.12); }
+.admin-form-input--mono { font-family: 'SF Mono','Cascadia Code','Courier New',monospace; }
+
+.admin-form-textarea {
+  width: 100%;
+  padding: 11px 13px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  color: var(--text-bright);
+  font-size: 0.875rem;
+  outline: none;
+  resize: vertical;
+  min-height: 88px;
+  transition: border-color var(--timing), box-shadow var(--timing);
+}
+.admin-form-textarea::placeholder { color: var(--text-muted); }
+.admin-form-textarea:focus {
+  border-color: var(--primary);
+  background: rgba(79,142,247,0.04);
+  box-shadow: 0 0 0 3px rgba(79,142,247,0.12);
+}
+.admin-form-textarea.is-invalid { border-color: var(--danger); }
+
+/* Fusionado (definido dos veces): margin:0 de la versión más reciente. */
+.admin-form-error {
+  font-size: 0.75rem;
+  color: var(--danger);
+  margin: 0;
+}
+
+/* Fusionado (definido dos veces): caja informativa (create colegio) +
+   texto pequeño dentro de labels (planes/edit). */
+.admin-form-hint {
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 10px 13px;
+  background: var(--nv-fill);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+.admin-form-hint svg,
+.admin-form-hint i { width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px; color: var(--text-muted); }
+/* Dentro de un label no lleva caja (planes/edit) */
+.admin-form-label .admin-form-hint {
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.admin-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--nv-fill);
+}
+
+.admin-form-readonly__badge { margin-right: 8px; }
+
+/* Fila de acciones al pie de un formulario sin card footer */
+.admin-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.admin-form-readonly {
+  width: 100%;
+  height: 44px;
+  padding: 0 13px;
+  background: var(--nv-fill);
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  color: var(--text);
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  cursor: default;
+  user-select: none;
+}
+
+/*  Input compacto (ej. días a extender)  */
+.admin-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-bright);
+  font-family: inherit;
+  font-size: 0.875rem;
+  height: 40px;
+  padding: 0 12px;
+  width: 100%;
+  transition: border-color var(--timing), box-shadow var(--timing);
+  outline: none;
+}
+.admin-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79,142,247,0.1);
+}
+.admin-input--error { border-color: var(--danger) !important; }
+.admin-input--error:focus { box-shadow: 0 0 0 3px rgba(239,68,68,0.1); }
+.admin-input--xs { width: 90px; }
+/* Fallback para selects nativos sin data-nova-select */
+select.admin-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+
+/*
+   PLAN CARDS (create colegio)
+    */
+
+.plan-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+@media (max-width: 900px) { .plan-cards-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .plan-cards-grid { grid-template-columns: 1fr; } }
+
+.plan-card {
+  position: relative;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: border-color var(--timing), background var(--timing), box-shadow var(--timing);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.plan-card:hover {
+  border-color: var(--border-hover);
+  background: var(--nv-fill);
+}
+.plan-card--selected {
+  border-color: var(--primary);
+  background: rgba(79,142,247,0.06);
+  box-shadow: 0 0 0 3px rgba(79,142,247,0.12);
+}
+/* El radio real queda oculto — la selección visual la da .plan-card--selected */
+.plan-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.plan-card[data-plan="rookie"]  { --plan-color: #6b7280; }
+.plan-card[data-plan="goliath"] { --plan-color: var(--primary); }
+.plan-card[data-plan="zenith"]  { --plan-color: #8b5cf6; }
+.plan-card[data-plan="godmode"] { --plan-color: #f59e0b; }
+
+.plan-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--nv-fill-2);
+  color: var(--plan-color, var(--text));
+  border: 1px solid var(--nv-border-2);
+  width: fit-content;
+  margin-bottom: 4px;
+}
+.plan-card--selected .plan-card__badge {
+  background: rgba(79,142,247,0.12);
+  color: var(--primary);
+  border-color: rgba(79,142,247,0.25);
+}
+
+.plan-card__price {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-bright);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+.plan-card__price span {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: 0;
+}
+
+.plan-card__detail {
+  font-size: 0.75rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.plan-card__detail i,
+.plan-card__detail svg { width: 11px; height: 11px; flex-shrink: 0; color: var(--text-muted); }
+
+.plan-card-check {
+  position: absolute;
+  top: 10px; right: 10px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-body);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--timing), border-color var(--timing);
+}
+.plan-card--selected .plan-card-check {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.plan-card-check svg { width: 10px; height: 10px; color: #fff; opacity: 0; transition: opacity var(--timing); }
+.plan-card--selected .plan-card-check svg { opacity: 1; }
+
+/*
+   PLAN EDIT — form elements
+    */
+
+.plan-edit-modulos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.plan-edit-modulo-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--nv-fill);
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--timing), border-color var(--timing), color var(--timing);
+  user-select: none;
+}
+.plan-edit-modulo-label input[type="checkbox"] { display: none; }
+.plan-edit-modulo-label i,
+.plan-edit-modulo-label svg { width: 14px; height: 14px; flex-shrink: 0; }
+.plan-edit-modulo-label:hover {
+  background: var(--nv-fill-2);
+  border-color: var(--border-hover);
+  color: var(--text-bright);
+}
+.plan-edit-modulo-label--active {
+  background: var(--primary-dim);
+  border-color: rgba(79,142,247,0.35);
+  color: var(--primary);
+}
+
+/* Toggle switch */
+.plan-edit-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.plan-edit-toggle-title {
+  color: var(--text-bright);
+  font-weight: 500;
+}
+.plan-edit-toggle-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.plan-edit-toggle-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+.plan-edit-toggle-wrap {
+  position: relative;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.plan-edit-toggle {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+.plan-edit-toggle-slider {
+  display: block;
+  width: 40px;
+  height: 22px;
+  background: var(--nv-fill-2);
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  transition: background var(--timing), border-color var(--timing);
+  cursor: pointer;
+}
+.plan-edit-toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform var(--timing), background var(--timing);
+}
+.plan-edit-toggle:checked + .plan-edit-toggle-slider {
+  background: var(--primary-dim);
+  border-color: rgba(79,142,247,0.4);
+}
+.plan-edit-toggle:checked + .plan-edit-toggle-slider::after {
+  transform: translateX(18px);
+  background: var(--primary);
+}
+.plan-edit-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Tema claro
+   ═══════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] .plan-card[data-plan="rookie"]  { --plan-color: #475569; }
+:root[data-theme="light"] .plan-card[data-plan="zenith"]  { --plan-color: #7c3aed; }
+:root[data-theme="light"] .plan-card[data-plan="godmode"] { --plan-color: #b45309; }

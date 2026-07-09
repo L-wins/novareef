@@ -15,19 +15,19 @@
     Volver al plan
 </a>
 
-<div class="admin-page-header" style="margin-bottom:1.5rem;">
+<div class="admin-page-header">
     <h1>Editar plan</h1>
-    <p>Modifica la configuración de <strong style="color:var(--text-bright);">{{ $plan->nombre }}</strong>.</p>
+    <p>Modifica la configuración de <strong>{{ $plan->nombre }}</strong>.</p>
 </div>
 
 @if($errors->any())
-<div class="admin-alert admin-alert--danger" style="margin-bottom:1.25rem;">
+<div class="admin-alert admin-alert--danger mb-4">
     <i class="fa-solid fa-circle-exclamation"></i>
     <div>
         <strong>Corrige los siguientes errores:</strong>
-        <ul style="margin:6px 0 0 16px;padding:0;list-style:disc;">
+        <ul class="admin-alert__list">
             @foreach($errors->all() as $error)
-                <li style="font-size:0.8125rem;margin-top:2px;">{{ $error }}</li>
+                <li>{{ $error }}</li>
             @endforeach
         </ul>
     </div>
@@ -39,10 +39,10 @@
     @method('PUT')
 
     {{-- Datos básicos --}}
-    <div class="admin-detail-card" style="margin-bottom:1.25rem;">
+    <div class="admin-detail-card">
         <div class="admin-detail-section">
             <p class="admin-detail-section__title">Datos básicos</p>
-            <div class="admin-detail-grid" style="row-gap:1.25rem;">
+            <div class="admin-detail-grid">
 
                 {{-- Nombre --}}
                 <div class="admin-form-group">
@@ -67,7 +67,8 @@
                 {{-- Periodicidad --}}
                 <div class="admin-form-group">
                     <label class="admin-form-label" for="periodicidad">Periodicidad</label>
-                    <select id="periodicidad" name="periodicidad" class="admin-input {{ $errors->has('periodicidad') ? 'admin-input--error' : '' }}" required>
+                    <select id="periodicidad" name="periodicidad" data-nova-select
+                            class="{{ $errors->has('periodicidad') ? 'admin-input--error' : '' }}" required>
                         <option value="mensual" {{ old('periodicidad', $plan->periodicidad) === 'mensual' ? 'selected' : '' }}>Mensual</option>
                         <option value="anual"   {{ old('periodicidad', $plan->periodicidad) === 'anual'   ? 'selected' : '' }}>Anual</option>
                     </select>
@@ -120,7 +121,7 @@
     </div>
 
     {{-- Módulos --}}
-    <div class="admin-detail-card" style="margin-bottom:1.25rem;">
+    <div class="admin-detail-card">
         <div class="admin-detail-section">
             <p class="admin-detail-section__title">Módulos habilitados</p>
             <div class="plan-edit-modulos">
@@ -148,10 +149,10 @@
     </div>
 
     {{-- Opciones adicionales --}}
-    <div class="admin-detail-card" style="margin-bottom:1.25rem;">
+    <div class="admin-detail-card">
         <div class="admin-detail-section">
             <p class="admin-detail-section__title">Opciones adicionales</p>
-            <div style="display:flex;flex-direction:column;gap:1rem;">
+            <div class="plan-edit-toggles">
 
                 <label class="plan-edit-toggle-label">
                     <div class="plan-edit-toggle-wrap">
@@ -161,8 +162,8 @@
                         <span class="plan-edit-toggle-slider"></span>
                     </div>
                     <span class="plan-edit-toggle-text">
-                        <span style="color:var(--text-bright);font-weight:500;">Incluye página web</span>
-                        <span style="font-size:0.75rem;color:var(--text-muted);">El colegio recibe un subdominio en novareef.com</span>
+                        <span class="plan-edit-toggle-title">Incluye página web</span>
+                        <span class="plan-edit-toggle-desc">El colegio recibe un subdominio en novareef.com</span>
                     </span>
                 </label>
 
@@ -174,8 +175,8 @@
                         <span class="plan-edit-toggle-slider"></span>
                     </div>
                     <span class="plan-edit-toggle-text">
-                        <span style="color:var(--text-bright);font-weight:500;">Incluye onboarding</span>
-                        <span style="font-size:0.75rem;color:var(--text-muted);">Sesión de configuración asistida por el equipo NovaReef</span>
+                        <span class="plan-edit-toggle-title">Incluye onboarding</span>
+                        <span class="plan-edit-toggle-desc">Sesión de configuración asistida por el equipo NovaReef</span>
                     </span>
                 </label>
 
@@ -187,8 +188,8 @@
                         <span class="plan-edit-toggle-slider"></span>
                     </div>
                     <span class="plan-edit-toggle-text">
-                        <span style="color:var(--text-bright);font-weight:500;">Visible en la página pública</span>
-                        <span style="font-size:0.75rem;color:var(--text-muted);">Los colegios pueden ver este plan en el landing</span>
+                        <span class="plan-edit-toggle-title">Visible en la página pública</span>
+                        <span class="plan-edit-toggle-desc">Los colegios pueden ver este plan en el landing</span>
                     </span>
                 </label>
 
@@ -200,8 +201,8 @@
                         <span class="plan-edit-toggle-slider"></span>
                     </div>
                     <span class="plan-edit-toggle-text">
-                        <span style="color:var(--text-bright);font-weight:500;">Plan activo</span>
-                        <span style="font-size:0.75rem;color:var(--text-muted);">Los colegios pueden suscribirse a este plan</span>
+                        <span class="plan-edit-toggle-title">Plan activo</span>
+                        <span class="plan-edit-toggle-desc">Los colegios pueden suscribirse a este plan</span>
                     </span>
                 </label>
 
@@ -210,7 +211,7 @@
     </div>
 
     {{-- Botones --}}
-    <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;">
+    <div class="admin-form-actions">
         <a href="{{ route('admin.planes.show', $plan->idPlan) }}" class="a-btn a-btn--ghost">
             Cancelar
         </a>

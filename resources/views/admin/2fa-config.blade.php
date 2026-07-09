@@ -14,34 +14,31 @@
     {{-- ══ 2FA ACTIVO ══ --}}
     <div class="twofa-active-wrap">
 
-        <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;">
-            <div style="width:56px;height:56px;border-radius:16px;background:rgba(16,185,129,0.1);
-                        border:1px solid rgba(16,185,129,0.2);
-                        display:flex;align-items:center;justify-content:center;">
-                <i class="fa-solid fa-shield-halved" style="font-size:26px;color:var(--success);"></i>
+        <div class="twofa-active-head">
+            <div class="twofa-active-icon">
+                <i class="fa-solid fa-shield-halved"></i>
             </div>
             <div>
                 <div class="twofa-active-badge">
                     <span class="twofa-dot"></span>
                     2FA Activo
                 </div>
-                <p style="margin:6px 0 0;font-size:0.875rem;color:var(--text);">
+                <p class="twofa-active-desc">
                     Tu cuenta está protegida con autenticación de dos factores.
                 </p>
             </div>
         </div>
 
-        <hr style="border:none;border-top:1px solid var(--border-color);margin-bottom:1.5rem;">
+        <hr class="twofa-divider">
 
-        <p style="font-size:0.875rem;color:var(--text);margin:0 0 1rem;">
+        <p class="twofa-disable-note">
             Para desactivar el 2FA confirma con tu contraseña actual.
         </p>
 
-        <form method="POST" action="{{ route('admin.2fa.disable') }}"
-              style="display:flex;gap:0.75rem;align-items:flex-start;max-width:420px;">
+        <form method="POST" action="{{ route('admin.2fa.disable') }}" class="twofa-disable-form">
             @csrf
 
-            <div style="flex:1;">
+            <div class="twofa-disable-form__field">
                 <div class="a-input-wrap">
                     <span class="a-icon"><i class="fa-solid fa-lock"></i></span>
                     <input type="password" name="password"
@@ -53,7 +50,7 @@
                 @enderror
             </div>
 
-            <button type="submit" class="a-btn a-btn--danger-soft" style="white-space:nowrap;">
+            <button type="submit" class="a-btn a-btn--danger-soft twofa-disable-form__btn">
                 <i class="fa-solid fa-circle-xmark"></i>
                 Desactivar 2FA
             </button>
@@ -75,21 +72,21 @@
                 {!! $qrSvg !!}
             </div>
 
-            <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 6px;">
+            <p class="twofa-hint">
                 ¿No puedes escanear? Ingresa esta clave manualmente:
             </p>
             <div class="secret-code">{{ $secret }}</div>
         </div>
 
         {{-- Panel instrucciones + formulario --}}
-        <div class="twofa-panel" style="display:flex;flex-direction:column;">
+        <div class="twofa-panel twofa-panel--column">
             <h3>2. Verifica e ingresa el código</h3>
             <p>Ingresa el código de 6 dígitos que muestra la app para confirmar la activación.</p>
 
             <ol class="step-list">
                 <li class="step-item">
                     <span class="step-num">1</span>
-                    <span>Descarga <strong style="color:var(--text-bright);">Google Authenticator</strong> o cualquier app TOTP compatible.</span>
+                    <span>Descarga <strong>Google Authenticator</strong> o cualquier app TOTP compatible.</span>
                 </li>
                 <li class="step-item">
                     <span class="step-num">2</span>
@@ -97,18 +94,17 @@
                 </li>
                 <li class="step-item">
                     <span class="step-num">3</span>
-                    <span>Escribe el <strong style="color:var(--text-bright);">código de 6 dígitos</strong> que aparece en la app.</span>
+                    <span>Escribe el <strong>código de 6 dígitos</strong> que aparece en la app.</span>
                 </li>
             </ol>
 
-            <form method="POST" action="{{ route('admin.2fa.enable') }}" style="margin-top:auto;">
+            <form method="POST" action="{{ route('admin.2fa.enable') }}" class="twofa-enable-form">
                 @csrf
 
-                <p style="font-size:0.8125rem;color:var(--text);margin:0 0 8px;">Código de verificación</p>
+                <p class="twofa-code-label">Código de verificación</p>
 
                 <input type="hidden" name="codigo" id="otp-code">
-                <div class="otp-row {{ $errors->has('codigo') ? 'otp-has-error' : '' }}"
-                     style="justify-content:flex-start;margin-bottom:8px;">
+                <div class="otp-row otp-row--left {{ $errors->has('codigo') ? 'otp-has-error' : '' }}">
                     @for ($i = 0; $i < 6; $i++)
                         <input type="text" class="otp-digit"
                                inputmode="numeric" pattern="[0-9]"
@@ -117,9 +113,9 @@
                 </div>
 
                 @error('codigo')
-                    <p class="a-field-error" style="margin-bottom:0.75rem;">{{ $message }}</p>
+                    <p class="a-field-error twofa-code-error">{{ $message }}</p>
                 @else
-                    <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 1rem;">
+                    <p class="twofa-hint twofa-hint--spaced">
                         El código cambia cada 30 segundos.
                     </p>
                 @enderror
@@ -134,7 +130,7 @@
     </div>
 
     {{-- Advertencia --}}
-    <div class="admin-flash admin-flash--warning" style="margin-top:1rem;">
+    <div class="admin-flash admin-flash--warning mt-4">
         <i class="fa-solid fa-triangle-exclamation"></i>
         Guarda la clave secreta en un lugar seguro. Sin ella no podrás recuperar el acceso si pierdes tu dispositivo.
     </div>

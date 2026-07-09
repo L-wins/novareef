@@ -1,0 +1,273 @@
+/*
+   DETAIL VIEW (show)
+    */
+
+.admin-detail-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.admin-detail-hero__name {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--text-bright);
+  letter-spacing: -0.4px;
+  margin: 0 0 4px;
+}
+/* Nombre + badge en la misma línea (ej. planes/show) */
+.admin-detail-hero__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.admin-detail-hero__title-row .admin-detail-hero__name { margin: 0; }
+.admin-detail-hero__code {
+  font-family: 'SF Mono','Cascadia Code','Courier New',monospace;
+  font-size: 0.8125rem;
+  color: var(--text);
+}
+.admin-detail-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-detail-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+/* overflow:hidden recorta a las esquinas redondeadas, pero decapita el
+   dropdown de Choices (ej. "Cambiar a…" en la ficha del colegio). Solo
+   mientras un select está abierto se permite desbordar. */
+.admin-detail-card:has(.choices.is-open) { overflow: visible; }
+
+.admin-detail-section {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.admin-detail-section:last-child { border-bottom: none; }
+/* Sección compacta usada como encabezado de una tabla dentro de la card */
+.admin-detail-section--compact {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.admin-detail-section--compact .admin-detail-section__title { margin: 0; }
+
+.admin-detail-section__title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0 0 1rem;
+}
+
+.admin-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+.admin-detail-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.admin-detail-col-2   { grid-column: span 2; }
+@media (max-width: 720px) {
+  .admin-detail-grid { grid-template-columns: repeat(2, 1fr); }
+  .admin-detail-grid--2 { grid-template-columns: 1fr; }
+  .admin-detail-col-2 { grid-column: span 1; }
+}
+
+.admin-detail-field { display: flex; flex-direction: column; gap: 3px; }
+.admin-detail-field__label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+.admin-detail-field__value {
+  font-size: 0.875rem;
+  color: var(--text-bright);
+  font-weight: 500;
+}
+.admin-detail-field__value--mono {
+  font-family: 'SF Mono','Cascadia Code','Courier New',monospace;
+  font-size: 0.8125rem;
+}
+.admin-detail-field__value--dim { color: var(--text); }
+.admin-detail-field__empty {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+/* Texto "no hay datos" dentro de una sección */
+.admin-detail-empty {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Fila de acciones al pie de una sección (ej. suscripción) */
+.admin-detail-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-color);
+}
+.admin-detail-actions form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.admin-detail-mini-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+@media (max-width: 640px) { .admin-detail-mini-stats { grid-template-columns: 1fr; } }
+
+.admin-mini-stat {
+  background: var(--nv-fill);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  text-align: center;
+}
+.admin-mini-stat__value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-bright);
+  line-height: 1;
+  margin-bottom: 4px;
+  letter-spacing: -1px;
+}
+.admin-mini-stat__value--success { color: var(--success); }
+.admin-mini-stat__value--warning { color: var(--warning); }
+.admin-mini-stat__value--accent  { color: var(--primary); }
+.admin-mini-stat__label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/*
+   PLAN MANAGEMENT — index cards
+    */
+
+.plan-mgmt-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 1100px) { .plan-mgmt-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 580px)  { .plan-mgmt-grid { grid-template-columns: 1fr; } }
+
+.plan-mgmt-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: border-color var(--timing), box-shadow var(--timing);
+}
+.plan-mgmt-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--nv-shadow-2);
+}
+.plan-mgmt-card--rookie  { --card-accent: #6b7280; }
+.plan-mgmt-card--goliath { --card-accent: var(--primary); }
+.plan-mgmt-card--zenith  { --card-accent: #8b5cf6; }
+.plan-mgmt-card--godmode { --card-accent: #f59e0b; }
+.plan-mgmt-card { border-top: 3px solid var(--card-accent, var(--border-color)); }
+
+.plan-mgmt-card__header { display: flex; flex-direction: column; gap: 6px; }
+.plan-mgmt-card__name-badge { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; width: fit-content; }
+.plan-mgmt-card__status-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.plan-mgmt-card__price { line-height: 1; }
+.plan-mgmt-card__price-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-bright);
+  letter-spacing: -0.5px;
+}
+.plan-mgmt-card__price-period {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+.plan-mgmt-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.plan-mgmt-stat {
+  background: var(--nv-fill);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 6px;
+  text-align: center;
+}
+.plan-mgmt-stat__value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  display: block;
+  line-height: 1.2;
+}
+.plan-mgmt-stat__label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 2px;
+}
+
+.plan-mgmt-card__modulos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.plan-mgmt-modulo-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--nv-fill);
+  border: 1px solid var(--border-color);
+  color: var(--text);
+}
+.plan-mgmt-modulo-tag--active {
+  background: var(--primary-dim);
+  border-color: rgba(79,142,247,0.25);
+  color: var(--primary);
+}
+
+.plan-mgmt-card__footer {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+}
+.plan-mgmt-card__btn {
+  flex: 1;
+  justify-content: center;
+  font-size: 0.75rem;
+  height: 34px;
+  min-width: 0;
+}

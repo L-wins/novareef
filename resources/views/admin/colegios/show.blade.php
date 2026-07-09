@@ -18,40 +18,40 @@
     </div>
     <div class="admin-detail-hero__actions">
         @if($colegio->estadoColegio === 'activo')
-            <span class="badge badge--green" style="padding:5px 11px;font-size:0.75rem;">Activo</span>
+            <span class="badge badge--green badge--lg">Activo</span>
         @elseif($colegio->estadoColegio === 'suspendido')
-            <span class="badge badge--red" style="padding:5px 11px;font-size:0.75rem;">Suspendido</span>
+            <span class="badge badge--red badge--lg">Suspendido</span>
         @elseif($colegio->estadoColegio === 'prueba')
-            <span class="badge badge--amber" style="padding:5px 11px;font-size:0.75rem;">Prueba</span>
+            <span class="badge badge--amber badge--lg">Prueba</span>
         @else
-            <span class="badge badge--gray" style="padding:5px 11px;font-size:0.75rem;">{{ ucfirst($colegio->estadoColegio) }}</span>
+            <span class="badge badge--gray badge--lg">{{ ucfirst($colegio->estadoColegio) }}</span>
         @endif
 
-        <a href="{{ route('admin.colegios.edit', $colegio->idColegio) }}" class="a-btn a-btn--ghost" style="height:38px;font-size:0.8125rem;">
+        <a href="{{ route('admin.colegios.edit', $colegio->idColegio) }}" class="a-btn a-btn--ghost a-btn--sm">
             <i class="fa-solid fa-pen-to-square"></i>
             Editar
         </a>
 
         <form method="POST" action="{{ route('admin.colegios.impersonar', $colegio->idColegio) }}"
-              onsubmit="return confirm('¿Entrar como la cuenta ejecutivo de «{{ addslashes($colegio->nombreColegio) }}»? Se registrará en el log de impersonaciones.')">
+              data-confirm-submit
+              data-confirm-title="Entrar como colegio"
+              data-confirm-text="¿Entrar como la cuenta ejecutivo de «{{ $colegio->nombreColegio }}»? Se registrará en el log de impersonaciones."
+              data-confirm-btn="Sí, entrar">
             @csrf
-            <button type="submit" class="a-btn a-btn--ghost" style="height:38px;font-size:0.8125rem;">
+            <button type="submit" class="a-btn a-btn--ghost a-btn--sm">
                 <i class="fa-solid fa-user-secret"></i>
                 Entrar como
             </button>
         </form>
 
         {{-- Cambiar estado --}}
-        <div style="position:relative;display:inline-block;" x-data="{ open: false }">
-            <button onclick="this.nextElementSibling.classList.toggle('hidden')"
-                    class="a-btn a-btn--ghost" style="height:38px;font-size:0.8125rem;">
+        <div class="admin-dropdown" data-dropdown>
+            <button type="button" data-dropdown-toggle class="a-btn a-btn--ghost a-btn--sm">
                 <i class="fa-solid fa-power-off"></i>
                 Estado
-                <i class="fa-solid fa-chevron-down" style="font-size:12px;"></i>
+                <i class="fa-solid fa-chevron-down"></i>
             </button>
-            <div class="hidden" style="position:absolute;right:0;top:calc(100% + 6px);
-                         background:var(--bg-navbar);border:1px solid var(--border-color);
-                         border-radius:10px;min-width:160px;z-index:50;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+            <div class="admin-dropdown__menu hidden">
                 @foreach(['activo' => ['label'=>'Activo','class'=>'badge--green'],
                            'suspendido' => ['label'=>'Suspendido','class'=>'badge--red']] as $estado => $opts)
                 @if($colegio->estadoColegio !== $estado)
@@ -59,12 +59,8 @@
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="estado" value="{{ $estado }}">
-                    <button type="submit" style="width:100%;padding:10px 14px;text-align:left;
-                                display:flex;align-items:center;gap:8px;font-size:0.8125rem;color:var(--text);
-                                background:none;border:none;cursor:pointer;transition:background .2s;"
-                            onmouseover="this.style.background='rgba(255,255,255,0.05)'"
-                            onmouseout="this.style.background='none'">
-                        <span class="badge {{ $opts['class'] }}" style="font-size:0.625rem;">{{ $opts['label'] }}</span>
+                    <button type="submit" class="admin-dropdown__item">
+                        <span class="badge {{ $opts['class'] }}">{{ $opts['label'] }}</span>
                     </button>
                 </form>
                 @endif
@@ -85,13 +81,13 @@
             </div>
             <div class="admin-detail-field">
                 <span class="admin-detail-field__label">Código</span>
-                <span class="admin-detail-field__value" style="font-family:monospace;font-size:0.8125rem;">
+                <span class="admin-detail-field__value admin-detail-field__value--mono">
                     {{ $colegio->codigoColegio }}
                 </span>
             </div>
             <div class="admin-detail-field">
                 <span class="admin-detail-field__label">Tenant ID</span>
-                <span class="admin-detail-field__value" style="font-family:monospace;font-size:0.8125rem;color:var(--text);">
+                <span class="admin-detail-field__value admin-detail-field__value--mono admin-detail-field__value--dim">
                     {{ $colegio->tenantId }}
                 </span>
             </div>
@@ -208,36 +204,39 @@
             </div>
         </div>
         @else
-        <p style="font-size:0.875rem;color:var(--text-muted);margin:0;">Este colegio no tiene suscripción activa.</p>
+        <p class="admin-detail-empty">Este colegio no tiene suscripción activa.</p>
         @endif
 
         {{-- Acciones de suscripción --}}
-        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border-color);">
+        <div class="admin-detail-actions">
 
             <form method="POST" action="{{ route('admin.suscripciones.cambiarPlan', $colegio->idColegio) }}"
-                  style="display:flex;gap:0.5rem;align-items:center;">
+                  data-confirm-submit
+                  data-confirm-title="Cambiar plan"
+                  data-confirm-text="¿Cambiar el plan de «{{ $colegio->nombreColegio }}»? La suscripción actual queda como histórico."
+                  data-confirm-btn="Sí, cambiar plan">
                 @csrf
                 @method('PUT')
-                <select name="idPlan" class="admin-input" style="min-width:160px;" required>
-                    <option value="">Cambiar a…</option>
-                    @foreach($planesDisponibles as $p)
-                        <option value="{{ $p->idPlan }}" {{ $planActual?->idPlan === $p->idPlan ? 'disabled' : '' }}>
-                            {{ $p->nombre }}
-                        </option>
-                    @endforeach
-                </select>
-                <button type="submit" class="a-btn a-btn--ghost"
-                        onclick="return confirm('¿Cambiar el plan de «{{ addslashes($colegio->nombreColegio) }}»? La suscripción actual queda como histórico.')">
+                <div class="admin-filter">
+                    <select name="idPlan" data-nova-select data-placeholder="Cambiar a…" required>
+                        <option value="">Cambiar a…</option>
+                        @foreach($planesDisponibles as $p)
+                            <option value="{{ $p->idPlan }}" {{ $planActual?->idPlan === $p->idPlan ? 'disabled' : '' }}>
+                                {{ $p->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="a-btn a-btn--ghost">
                     <i class="fa-solid fa-right-left"></i> Cambiar plan
                 </button>
             </form>
 
-            <form method="POST" action="{{ route('admin.suscripciones.extender', $colegio->idColegio) }}"
-                  style="display:flex;gap:0.5rem;align-items:center;">
+            <form method="POST" action="{{ route('admin.suscripciones.extender', $colegio->idColegio) }}">
                 @csrf
                 @method('PUT')
                 <input type="number" name="dias" min="1" max="365" value="30" required
-                       class="admin-input" style="width:90px;" title="Días a extender">
+                       class="admin-input admin-input--xs" title="Días a extender">
                 <button type="submit" class="a-btn a-btn--ghost">
                     <i class="fa-solid fa-calendar-plus"></i> Extender
                 </button>
@@ -245,7 +244,11 @@
 
             @if($suscripcion && $suscripcion->estaVigente())
             <form method="POST" action="{{ route('admin.suscripciones.cancelar', $colegio->idColegio) }}"
-                  onsubmit="return confirm('¿Cancelar la suscripción de «{{ addslashes($colegio->nombreColegio) }}»? El colegio perderá el acceso.')">
+                  data-confirm-submit
+                  data-confirm-title="Cancelar suscripción"
+                  data-confirm-text="¿Cancelar la suscripción de «{{ $colegio->nombreColegio }}»? El colegio perderá el acceso."
+                  data-confirm-color="#ef4444"
+                  data-confirm-btn="Sí, cancelar">
                 @csrf
                 @method('PUT')
                 <button type="submit" class="a-btn a-btn--danger-soft">
@@ -292,7 +295,7 @@
             </div>
         </div>
         @else
-        <p style="font-size:0.875rem;color:var(--text-muted);margin:0;">No se encontró un administrador ejecutivo para este colegio.</p>
+        <p class="admin-detail-empty">No se encontró un administrador ejecutivo para este colegio.</p>
         @endif
     </div>
 </div>
@@ -307,11 +310,11 @@
                 <div class="admin-mini-stat__label">Total árbitros</div>
             </div>
             <div class="admin-mini-stat">
-                <div class="admin-mini-stat__value" style="color:var(--success);">{{ $arbitrosActivos }}</div>
+                <div class="admin-mini-stat__value admin-mini-stat__value--success">{{ $arbitrosActivos }}</div>
                 <div class="admin-mini-stat__label">Activos</div>
             </div>
             <div class="admin-mini-stat">
-                <div class="admin-mini-stat__value" style="color:var(--warning);">{{ $arbitrosProceso }}</div>
+                <div class="admin-mini-stat__value admin-mini-stat__value--warning">{{ $arbitrosProceso }}</div>
                 <div class="admin-mini-stat__label">En proceso de ingreso</div>
             </div>
         </div>

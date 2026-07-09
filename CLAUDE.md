@@ -237,7 +237,7 @@ En `bootstrap/app.php`:
 - Agregar `data-searchable="true"` cuando la lista tiene >10 items
 - Agregar `data-placeholder="Texto..."` para el placeholder
 - **Tematización**: usar `!important` en los overrides CSS (v11 usa CSS custom properties internamente que necesitan ser forzadas)
-- Inicialización global en `app.js` → `window.initNovaSelects()`, llamar también al abrir modales con contenido dinámico
+- Inicialización global: `resources/js/shared/nova-selects.js` → `window.initNovaSelects()` (importado por `app.js` y `admin/admin.js`), llamar también al abrir modales con contenido dinámico
 - El selector `estadoNuevo` en modales por-partido NO usa Choices (tiene listener nativo que muestra/oculta campos de resultado)
 
 ### Flatpickr v4 (date picker)
@@ -278,24 +278,30 @@ En `bootstrap/app.php`:
 
 ## Panel Admin — assets
 
-- CSS: `resources/css/admin/admin.css`
+- CSS: `resources/css/admin/admin.css` — **manifiesto de solo `@import`**; el contenido vive en archivos hermanos por dominio: `variables.css` (alias legacy → tokens `--nv-*`, reset, utilidades), `navbar.css`, `layout.css`, `components.css` (cards, tablas, badges, botones, filtros, paginación, dropdown), `login.css` (login + OTP + 2FA), `forms.css`, `detail.css`
+- Overrides de vendors (SweetAlert2/Flatpickr/Choices.js): `resources/css/vendor/overrides.css` — **compartido** entre `app/vendor-overrides.css` y el manifiesto admin, para que popups/selects/date pickers se vean idénticos en ambos paneles
 - JS: `resources/js/admin/admin.js`
 - Layout: `resources/views/admin/layouts/app.blade.php`
+- Paginación de listados: `@include('admin.partials.pagination', ['paginator' => $x, 'etiqueta' => 'usuarios'])`
 
 ### CSS variables principales
+Alias legacy definidos en `admin/variables.css`, todos mapeados a tokens (`tokens.css`):
 ```css
---primary: #4f8ef7
---bg-navbar: #1a1f2e
---bg-body: #0f1117
---bg-card: #131927
---text-bright: #e2e8f0
---text: #8892a4
---text-muted: #3d4558
---border-color: rgba(255,255,255,0.06)
+--primary: var(--nv-accent)
+--bg-navbar: var(--nv-elevated)
+--bg-body: var(--nv-bg)
+--bg-card: var(--nv-card-alt)
+--text-bright: var(--nv-text)
+--text: var(--nv-text-2)
+--text-muted: var(--nv-text-3)
+--border-color: var(--nv-border)
 ```
 
 ### JS (admin.js)
-- Inicializa Feather Icons con `feather.replace({ 'stroke-width': 1.8, width: 18, height: 18 })`
+- Comparte módulos con el panel usuario: `shared/nova-selects.js` (`initNovaSelects` — Choices.js + Flatpickr), `shared/nova-alert.js` (`novaAlert` + `initConfirmSubmit`), `shared/auto-filter.js`, `shared/theme.js`
+- Confirmaciones destructivas: marcar el `<form>` con `data-confirm-submit` (+ `data-confirm-title/text/color/btn`) — NO usar `confirm()` nativo ni `onsubmit` inline
+- Dropdowns simples: `[data-dropdown]` + `[data-dropdown-toggle]` + `.admin-dropdown__menu` (cierra con click fuera)
+- Selección de plan en colegios/create: listener de `.plan-card` (marca radio oculto)
 - Lógica OTP: 6 inputs individuales `.otp-digit`, auto-avance, backspace, paste, auto-submit al completar, sincroniza con `#otp-code` hidden input
 
 ### Sidebar navbar
@@ -351,7 +357,7 @@ En `bootstrap/app.php`:
 
 ### Tamaño de archivos (regla dura)
 - Ningún archivo de código (PHP, JS, Blade, CSS) debe superar ~600-700 líneas. Al acercarse a ese umbral, dividir por responsabilidad **antes** de seguir agregando código, no después.
-- Patrón para CSS (ya aplicado en `app.css`, `designaciones.css`, `arbitros.css`): el archivo original queda como manifiesto de solo `@import`, apuntando a archivos hermanos en su propia subcarpeta — un `variables.css` con los alias/tokens locales, y uno por dominio o sección (ej. `layout.css`, `forms.css`, `table.css`). Cada archivo de dominio lleva su propio bloque de overrides de tema claro al final (`:root[data-theme="light"] ...`) — nunca un archivo catch-all separado para eso.
+- Patrón para CSS (ya aplicado en `app.css`, `designaciones.css`, `arbitros.css`, `admin/admin.css`): el archivo original queda como manifiesto de solo `@import`, apuntando a archivos hermanos en su propia subcarpeta — un `variables.css` con los alias/tokens locales, y uno por dominio o sección (ej. `layout.css`, `forms.css`, `table.css`). Cada archivo de dominio lleva su propio bloque de overrides de tema claro al final (`:root[data-theme="light"] ...`) — nunca un archivo catch-all separado para eso.
 - Antes de dividir un archivo grande, buscar selectores/bloques duplicados (mismo selector redefinido dos veces — normalmente resto de un rediseño que nunca reemplazó al bloque anterior) y **fusionarlos** en el archivo nuevo, no copiarlos duplicados. Fusionar propiedad por propiedad (la declaración más reciente en el archivo original gana esa propiedad; lo que no toca se hereda de la más vieja), no "borrar el primer bloque a lo bruto".
 - Aplica igual a PHP: si un Controller o Service crece demasiado, extraer lógica a Services/Actions por dominio (ya se hizo con `app/Actions` → `app/Services`).
 - Después de dividir, verificar contra el CSS/código compilado (build de Vite, o el autoload de PHP) que ningún selector/método se perdió — no basta con que compile sin errores.

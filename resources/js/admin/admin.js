@@ -2,13 +2,50 @@
 
 import { initAutoFilter } from '../shared/auto-filter.js';
 import { initTheme } from '../shared/theme.js';
+import { initNovaSelects } from '../shared/nova-selects.js';
+import { Swal, novaAlert, initConfirmSubmit } from '../shared/nova-alert.js';
+
+// Globales (mismos puentes que el panel usuario)
+window.Swal            = Swal;
+window.novaAlert       = novaAlert;
+window.initNovaSelects = initNovaSelects;
 
 document.addEventListener('DOMContentLoaded', function () {
 
     initAutoFilter();
     initTheme();
+    initNovaSelects();
+    initConfirmSubmit();
 
-    //  OTP Inputs 
+    //  Dropdowns simples (ej. cambiar estado en colegios/show)
+    document.querySelectorAll('[data-dropdown]').forEach(function (dd) {
+        var toggle = dd.querySelector('[data-dropdown-toggle]');
+        var menu   = dd.querySelector('.admin-dropdown__menu');
+        if (!toggle || !menu) return;
+
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            menu.classList.toggle('hidden');
+        });
+    });
+    document.addEventListener('click', function () {
+        document.querySelectorAll('.admin-dropdown__menu:not(.hidden)').forEach(function (m) {
+            m.classList.add('hidden');
+        });
+    });
+
+    //  Selección de plan (colegios/create)
+    var planCards = document.querySelectorAll('.plan-card');
+    planCards.forEach(function (card) {
+        card.addEventListener('click', function () {
+            planCards.forEach(function (c) { c.classList.remove('plan-card--selected'); });
+            card.classList.add('plan-card--selected');
+            var radio = card.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+        });
+    });
+
+    //  OTP Inputs
     const digits  = document.querySelectorAll('.otp-digit');
     const hidden  = document.getElementById('otp-code');
 

@@ -11,9 +11,9 @@
         {{ now()->isoFormat('dddd, D [de] MMMM [de] YYYY') }}
         &nbsp;·&nbsp;
         @if(Auth::guard('admin')->user()->two_factor_enabled)
-            <span class="badge badge--green" style="font-size:0.7rem;">2FA activo</span>
+            <span class="badge badge--green">2FA activo</span>
         @else
-            <a href="{{ route('admin.2fa.config') }}" class="badge badge--red" style="font-size:0.7rem;text-decoration:none;">
+            <a href="{{ route('admin.2fa.config') }}" class="badge badge--red">
                 2FA inactivo — configúralo ahora
             </a>
         @endif
@@ -73,8 +73,7 @@
 <div class="admin-card">
     <div class="admin-card__header">
         <h2 class="admin-card__title">Últimos colegios registrados</h2>
-        <a href="{{ route('admin.colegios.index') }}"
-           style="font-size:0.8125rem;color:var(--primary);display:flex;align-items:center;gap:5px;">
+        <a href="{{ route('admin.colegios.index') }}" class="admin-card__link">
             Ver todos
             <i class="fa-solid fa-arrow-right"></i>
         </a>
@@ -94,15 +93,15 @@
             @forelse($ultimosColegios as $colegio)
             <tr>
                 <td>
-                    <div style="font-weight:600;color:var(--text-bright);">
+                    <div class="admin-table__strong">
                         {{ $colegio->nombreColegio }}
                     </div>
-                    <div style="font-size:0.75rem;color:var(--text);">
+                    <div class="admin-table__sub">
                         {{ $colegio->emailColegio }}
                     </div>
                 </td>
                 <td>
-                    <code style="font-size:0.75rem;font-family:monospace;color:var(--text);">
+                    <code class="admin-table__mono">
                         {{ $colegio->codigoColegio }}
                     </code>
                 </td>
@@ -116,13 +115,13 @@
                         <span class="badge badge--gray">{{ $colegio->estadoColegio }}</span>
                     @endif
                 </td>
-                <td style="color:var(--text);">
+                <td class="admin-table__muted">
                     {{ $colegio->created_at?->format('d/m/Y') ?? '—' }}
                 </td>
             </tr>
             @empty
             <tr>
-                <td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                <td colspan="5" class="admin-table__empty">
                     No hay colegios registrados aún.
                 </td>
             </tr>
