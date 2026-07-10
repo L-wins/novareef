@@ -5,6 +5,7 @@
     */
 
 @import "./variables.css";
+@import "./base.css";
 @import "./layout.css";
 @import "./badges.css";
 @import "./table.css";
