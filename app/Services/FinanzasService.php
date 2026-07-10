@@ -285,6 +285,7 @@ final class FinanzasService
         $egresosArbitro = MovimientoFinanciero::where('idArbitro', $arbitro->idArbitro)
             ->whereIn('categoria', $categoriasPagoArbitro)
             ->where('estadoMovimiento', '!=', MovimientoFinanciero::ESTADO_ANULADO)
+            ->conTotalAbonado()
             ->get();
 
         $saldoPendienteCobrar = $egresosArbitro->sum(fn (MovimientoFinanciero $m) => $m->saldoPendiente());
@@ -426,100 +427,6 @@ final class FinanzasService
         });
     }
 
-    /**
-     * Reporte financiero para un rango de fechas libre (no hay período fijo
-     * obligatorio — mensual/trimestral/anual son solo atajos de UI sobre este
-     * mismo filtro). Se basa en el monto registrado de los movimientos no
-     * anulados (base contable, no solo lo efectivamente cobrado/pagado).
-     *
-     * @return array{
-     *     totalIngresos: float, totalEgresos: float, neto: float,
-     *     porCategoria: Collection<int, array{categoria: string, tipoMovimiento: string, total: float, cantidad: int}>,
-     * }
-     */
-    public function reporte(int $idColegio, string $desde, string $hasta): array
-    {
-        $movimientos = MovimientoFinanciero::where('idColegio', $idColegio)
-            ->where('estadoMovimiento', '!=', MovimientoFinanciero::ESTADO_ANULADO)
-            ->whereBetween('fechaMovimiento', [$desde, $hasta])
-            ->get();
-
-        $totalIngresos = $movimientos->where('tipoMovimiento', MovimientoFinanciero::TIPO_INGRESO)->sum(fn ($m) => (float) $m->montoTotal);
-        $totalEgresos  = $movimientos->where('tipoMovimiento', MovimientoFinanciero::TIPO_EGRESO)->sum(fn ($m) => (float) $m->montoTotal);
-
-        $porCategoria = $movimientos
-            ->groupBy('categoria')
-            ->map(function (Collection $grupo, string $categoria) {
-                return [
-                    'categoria'      => $categoria,
-                    'tipoMovimiento' => $grupo->first()->tipoMovimiento,
-                    'total'          => $grupo->sum(fn ($m) => (float) $m->montoTotal),
-                    'cantidad'       => $grupo->count(),
-                ];
-            })
-            ->sortByDesc('total')
-            ->values();
-
-        return [
-            'totalIngresos' => $totalIngresos,
-            'totalEgresos'  => $totalEgresos,
-            'neto'          => $totalIngresos - $totalEgresos,
-            'porCategoria'  => $porCategoria,
-        ];
-    }
-
-    /**
-     * Balance general del colegio: saldo en caja (dinero real que ha
-     * entrado/salido — excluye abonos de compensación, que son solo un
-     * ajuste contable interno sin movimiento de efectivo) y, por cada
-     * árbitro con saldo activo, cuánto le debe el colegio (nómina/externo
-     * pendiente) y cuánto debe el árbitro al colegio (mensualidad/multa
-     * pendiente).
-     *
-     * @return array{
-     *     saldoEnCaja: float, totalLeDebemos: float, totalNosDeben: float,
-     *     porArbitro: Collection<int, array{arbitro: Arbitro, leDebemos: float, nosDebe: float}>,
-     * }
-     */
-    public function balanceGeneral(int $idColegio): array
-    {
-        $abonosIngreso = AbonoMovimiento::whereHas('movimiento', fn ($q) => $q->where('idColegio', $idColegio)->where('tipoMovimiento', MovimientoFinanciero::TIPO_INGRESO))
-            ->where('anulado', false)
-            ->where('metodoPago', '!=', AbonoMovimiento::METODO_COMPENSACION_NOMINA)
-            ->sum('monto');
-
-        $abonosEgreso = AbonoMovimiento::whereHas('movimiento', fn ($q) => $q->where('idColegio', $idColegio)->where('tipoMovimiento', MovimientoFinanciero::TIPO_EGRESO))
-            ->where('anulado', false)
-            ->where('metodoPago', '!=', AbonoMovimiento::METODO_COMPENSACION_NOMINA)
-            ->sum('monto');
-
-        $porArbitro = Arbitro::where('idColegio', $idColegio)
-            ->with('usuario')
-            ->get()
-            ->map(function (Arbitro $arbitro): array {
-                $leDebemos = MovimientoFinanciero::where('idArbitro', $arbitro->idArbitro)
-                    ->whereIn('categoria', [MovimientoFinanciero::CATEGORIA_NOMINA_ARBITRO, MovimientoFinanciero::CATEGORIA_ARBITRO_EXTERNO])
-                    ->where('estadoMovimiento', '!=', MovimientoFinanciero::ESTADO_ANULADO)
-                    ->get()
-                    ->sum(fn (MovimientoFinanciero $m) => $m->saldoPendiente());
-
-                $nosDebe = MovimientoFinanciero::where('idArbitro', $arbitro->idArbitro)
-                    ->whereIn('categoria', [MovimientoFinanciero::CATEGORIA_MENSUALIDAD, MovimientoFinanciero::CATEGORIA_MULTA])
-                    ->where('estadoMovimiento', '!=', MovimientoFinanciero::ESTADO_ANULADO)
-                    ->get()
-                    ->sum(fn (MovimientoFinanciero $m) => $m->saldoPendiente());
-
-                return ['arbitro' => $arbitro, 'leDebemos' => $leDebemos, 'nosDebe' => $nosDebe];
-            })
-            ->filter(fn (array $fila) => $fila['leDebemos'] > 0.0 || $fila['nosDebe'] > 0.0)
-            ->sortByDesc('leDebemos')
-            ->values();
-
-        return [
-            'saldoEnCaja'    => (float) $abonosIngreso - (float) $abonosEgreso,
-            'totalLeDebemos' => $porArbitro->sum('leDebemos'),
-            'totalNosDeben'  => $porArbitro->sum('nosDebe'),
-            'porArbitro'     => $porArbitro,
-        ];
-    }
+    // Las consultas de lectura/agregación (reporte, serie mensual, balance,
+    // resumen del listado) viven en ReporteFinanzasService.
 }

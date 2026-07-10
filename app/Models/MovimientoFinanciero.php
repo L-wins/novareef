@@ -61,6 +61,27 @@ class MovimientoFinanciero extends Model
     public const ESTADO_PAGADO    = 'pagado';
     public const ESTADO_ANULADO   = 'anulado';
 
+    /** Etiquetas legibles por categoría — única fuente (antes copiadas en cada vista). */
+    public const ETIQUETAS_CATEGORIA = [
+        self::CATEGORIA_INGRESO_TORNEO      => 'Ingreso por torneo',
+        self::CATEGORIA_MENSUALIDAD         => 'Mensualidad',
+        self::CATEGORIA_MULTA               => 'Multa',
+        self::CATEGORIA_OTRO_INGRESO        => 'Otro ingreso',
+        self::CATEGORIA_NOMINA_ARBITRO      => 'Nómina de árbitros',
+        self::CATEGORIA_ARBITRO_EXTERNO     => 'Árbitro externo',
+        self::CATEGORIA_GASTO_FIJO          => 'Gasto fijo',
+        self::CATEGORIA_GASTO_INSTITUCIONAL => 'Gasto institucional',
+        self::CATEGORIA_GASTO_VARIO         => 'Gasto vario',
+    ];
+
+    /** Etiqueta + color de badge por estado. */
+    public const ETIQUETAS_ESTADO = [
+        self::ESTADO_PENDIENTE => ['Pendiente', 'gray'],
+        self::ESTADO_PARCIAL   => ['Parcial', 'amber'],
+        self::ESTADO_PAGADO    => ['Pagado', 'green'],
+        self::ESTADO_ANULADO   => ['Anulado', 'red'],
+    ];
+
     // ── Orígenes de multa ──────────────────
     public const ORIGEN_MULTA_SANCION  = 'sancion';
     public const ORIGEN_MULTA_ACADEMICO = 'academico';
@@ -108,18 +129,33 @@ class MovimientoFinanciero extends Model
         return $this->estadoMovimiento === self::ESTADO_ANULADO;
     }
 
+    public function etiquetaCategoria(): string
+    {
+        return self::ETIQUETAS_CATEGORIA[$this->categoria] ?? $this->categoria;
+    }
+
     /**
      * Saldo pendiente = monto total menos la suma de abonos no anulados.
-     * Se calcula siempre en vivo (no es un valor persistido) para no
-     * arrastrar inconsistencias si un abono se anula después.
+     * No es un valor persistido (no arrastra inconsistencias si un abono se
+     * anula después). Si el listado precargó el agregado `totalAbonado`
+     * (scope conTotalAbonado), se usa ese valor — evita una query por fila.
      */
     public function saldoPendiente(): float
     {
-        $abonado = $this->abonos()
-            ->where('anulado', false)
-            ->sum('monto');
+        $abonado = array_key_exists('totalAbonado', $this->attributes)
+            ? $this->attributes['totalAbonado']
+            : $this->abonos()->where('anulado', false)->sum('monto');
 
         return (float) $this->montoTotal - (float) $abonado;
+    }
+
+    /**
+     * Precarga la suma de abonos válidos como `totalAbonado` en una sola
+     * query agregada — usar en cualquier listado que llame saldoPendiente().
+     */
+    public function scopeConTotalAbonado($query)
+    {
+        return $query->withSum('abonosValidos as totalAbonado', 'monto');
     }
 
     // ── Relaciones ──
@@ -158,6 +194,13 @@ class MovimientoFinanciero extends Model
     {
         return $this->hasMany(AbonoMovimiento::class, 'idMovimiento', 'idMovimiento')
                     ->orderByDesc('fechaAbono');
+    }
+
+    /** Solo los abonos que cuentan contablemente (no anulados). */
+    public function abonosValidos(): HasMany
+    {
+        return $this->hasMany(AbonoMovimiento::class, 'idMovimiento', 'idMovimiento')
+                    ->where('anulado', false);
     }
 
     public function historial(): HasMany

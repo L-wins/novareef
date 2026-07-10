@@ -45,7 +45,7 @@ class EstadoCuentaArbitroTest extends TestCase
         $response = $this->actingAs($arbitro->usuario)->get('/mi-estado-cuenta');
 
         $response->assertOk();
-        $response->assertSee('60,000.00');
+        $response->assertSee('$60.000'); // formato COP sin decimales
     }
 
     public function test_un_pago_recibido_reduce_el_saldo_y_aparece_en_el_historial(): void

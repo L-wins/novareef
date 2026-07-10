@@ -34,7 +34,9 @@
     border-radius: var(--fin-radius-sm);
     font-size: 0.85rem;
     border: 1px solid transparent;
+    margin-bottom: 1.25rem;
 }
+.flash-success a { color: inherit; font-weight: 700; text-decoration: underline; }
 .flash-success { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.25); color: #6ee7b7; }
 .flash-error   { background: rgba(239,68,68,.12);  border-color: rgba(239,68,68,.25);  color: #fca5a5; }
 
@@ -160,6 +162,105 @@
     background: var(--nv-fill);
     border-radius: var(--fin-radius-sm);
 }
+.cuenta-resumen-pago .monto-lg   { font-size: 1.3rem; }
+.cuenta-resumen-pago .monto-hero { font-size: 1.4rem; font-weight: 700; }
+
+/*  Stat tiles (KPI row del listado y reportes)  */
+.fin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1.5rem;
+}
+.fin-stat {
+    background: var(--fin-bg-card);
+    border: 1px solid var(--fin-border);
+    border-radius: var(--fin-radius);
+    padding: 0.9rem 1.1rem;
+}
+.fin-stat__label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--fin-text-mute);
+    font-weight: 600;
+    margin: 0 0 0.35rem;
+}
+.fin-stat__value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--fin-text);
+    line-height: 1.15;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+}
+.fin-stat__sub {
+    font-size: 0.72rem;
+    color: var(--fin-text-mute);
+    margin: 0.25rem 0 0;
+}
+/* Delta vs período anterior (↑/↓ + %) — el ícono acompaña, no reemplaza, el texto */
+.fin-stat__delta          { font-size: 0.75rem; font-weight: 600; margin: 0.25rem 0 0; }
+.fin-stat__delta--up      { color: var(--fin-ingreso); }
+.fin-stat__delta--down    { color: var(--fin-egreso); }
+.fin-stat__delta--neutral { color: var(--fin-text-mute); }
+
+/*  Toolbar del listado (export, contador)  */
+.fin-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+.fin-toolbar__info { font-size: 0.8rem; color: var(--fin-text-mute); }
+
+/*  Progreso de abono dentro de la celda de monto  */
+.monto-abonado {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--fin-text-mute);
+    margin-top: 0.15rem;
+}
+
+/*  Lotes de pago recientes (comprobantes descargables)  */
+.fin-lotes { display: flex; flex-direction: column; gap: 0.5rem; }
+.fin-lote {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.6rem 0.9rem;
+    background: var(--nv-fill);
+    border: 1px solid var(--fin-border);
+    border-radius: var(--fin-radius-sm);
+    font-size: 0.83rem;
+}
+.fin-lote__info  { color: var(--fin-text-2); display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+.fin-lote__monto { color: var(--fin-text); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/*  Ajustes menores (reemplazan estilos inline)  */
+.mb-fin { margin-bottom: 1.5rem; }
+.page-header-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.empty-state i       { font-size: 48px; }
+.table-scroll        { overflow-x: auto; }
+.form-actions-end    { display: flex; justify-content: flex-end; }
+.form-actions-end--gap { gap: 0.75rem; }
+.form-section--sin-borde { border-bottom: none; }
+.form-section--titulo    { padding-bottom: 0; }
+.card-empty-note {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--fin-text-mute);
+    font-size: 0.875rem;
+}
+.historial-lista { display: flex; flex-direction: column; gap: 0.75rem; padding: 0 1.5rem 1.5rem; }
+.historial-item  { font-size: 0.85rem; color: var(--fin-text-2); }
+.monto-md { font-size: 1.1rem; }
+.monto-md-bold { font-size: 1.1rem; font-weight: 700; }
 
 /*  Sub-navegación de Finanzas (Movimientos / Balance / Pago a árbitro / Reportes)  */
 .fin-subnav {

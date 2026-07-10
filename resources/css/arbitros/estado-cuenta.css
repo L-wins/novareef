@@ -25,6 +25,10 @@
 .monto-positivo { color: #6ee7b7; font-weight: 600; }
 .monto-negativo { color: #fca5a5; font-weight: 600; }
 
+.cuenta-mb     { margin-bottom: 1.5rem; }
+.cuenta-icono  { font-size: 2.5rem; opacity: .35; }
+.cuenta-scroll { overflow-x: auto; }
+
 :root[data-theme="light"] .cuenta-saldo-valor.tiene-saldo { color: #b45309; }
 :root[data-theme="light"] .monto-positivo { color: #15803d; }
 :root[data-theme="light"] .monto-negativo { color: #dc2626; }

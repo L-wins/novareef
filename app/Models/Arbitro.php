@@ -226,6 +226,11 @@ class Arbitro extends Model
         return $this->hasMany(Designacion::class, 'idArbitro', 'idArbitro');
     }
 
+    public function movimientosFinancieros(): HasMany
+    {
+        return $this->hasMany(MovimientoFinanciero::class, 'idArbitro', 'idArbitro');
+    }
+
     public function calificaciones(): HasManyThrough
     {
         return $this->hasManyThrough(

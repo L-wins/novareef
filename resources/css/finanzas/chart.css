@@ -1,0 +1,82 @@
+/*
+   Gráfico de barras mensual (ingresos vs egresos) — SVG generado en Blade.
+
+   Paleta validada con el validador del skill dataviz (banda de luminosidad,
+   croma, separación CVD y contraste) por tema:
+   · dark  (superficie #111827): ingresos #059669 · egresos #ef4444
+   · light (superficie #ffffff): ingresos #059669 · egresos #dc2626
+   No reutiliza --fin-ingreso/--fin-egreso (esos son tintes de TEXTO, muy
+   claros para rellenar barras con contraste suficiente).
+    */
+:root {
+    --fin-chart-ingreso: #059669;
+    --fin-chart-egreso:  #ef4444;
+    --fin-chart-grid:    var(--nv-border);
+    --fin-chart-texto:   var(--nv-text-3);
+}
+:root[data-theme="light"] {
+    --fin-chart-egreso: #dc2626;
+}
+
+.fin-chart-card {
+    background: var(--fin-bg-card);
+    border: 1px solid var(--fin-border);
+    border-radius: var(--fin-radius);
+    padding: 1.1rem 1.25rem 0.9rem;
+    margin-bottom: 1.5rem;
+}
+.fin-chart-card__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+.fin-chart-card__title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--fin-text);
+    margin: 0;
+}
+.fin-chart-card__sub { font-size: 0.75rem; color: var(--fin-text-mute); }
+
+/* Leyenda — siempre presente (2 series) */
+.fin-chart-legend {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: var(--fin-text-2);
+}
+.fin-chart-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.fin-chart-legend i {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    display: inline-block;
+}
+.fin-chart-legend .swatch-ingreso { background: var(--fin-chart-ingreso); }
+.fin-chart-legend .swatch-egreso  { background: var(--fin-chart-egreso); }
+
+/* El SVG escala al ancho de la card; scroll horizontal si hay muchos meses */
+.fin-chart-scroll { overflow-x: auto; }
+.fin-chart svg { display: block; min-width: 560px; width: 100%; height: auto; }
+
+.fin-chart .barra-ingreso { fill: var(--fin-chart-ingreso); }
+.fin-chart .barra-egreso  { fill: var(--fin-chart-egreso); }
+.fin-chart .grid-line     { stroke: var(--fin-chart-grid); stroke-width: 1; }
+.fin-chart .eje-label     { fill: var(--fin-chart-texto); font-size: 10px; font-family: inherit; }
+
+/* Hover por grupo de mes: atenúa el resto (el <title> nativo da el tooltip) */
+.fin-chart .mes-grupo             { transition: opacity .12s; }
+.fin-chart svg:hover .mes-grupo   { opacity: 0.45; }
+.fin-chart svg .mes-grupo:hover   { opacity: 1; }
+
+/* Vista de tabla plegable del gráfico */
+.fin-chart-tabla { margin-top: 0.5rem; }
+.fin-chart-tabla summary { cursor: pointer; padding: 0.35rem 0; }
+.fin-chart-tabla[open] summary { margin-bottom: 0.5rem; }

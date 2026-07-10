@@ -8,23 +8,9 @@
 @endpush
 
 @php
-    $etiquetasCategoria = [
-        'ingreso_torneo'      => 'Ingreso por torneo',
-        'mensualidad'         => 'Mensualidad',
-        'multa'               => 'Multa',
-        'otro_ingreso'        => 'Otro ingreso',
-        'nomina_arbitro'      => 'Nómina de árbitros',
-        'arbitro_externo'     => 'Árbitro externo',
-        'gasto_fijo'          => 'Gasto fijo',
-        'gasto_institucional' => 'Gasto institucional',
-        'gasto_vario'         => 'Gasto vario',
-    ];
-    $etiquetasEstado = [
-        'pendiente' => ['Pendiente', 'gray'],
-        'parcial'   => ['Parcial', 'amber'],
-        'pagado'    => ['Pagado', 'green'],
-        'anulado'   => ['Anulado', 'red'],
-    ];
+    use App\Models\MovimientoFinanciero;
+    $etiquetasCategoria = MovimientoFinanciero::ETIQUETAS_CATEGORIA;
+    $etiquetasEstado    = MovimientoFinanciero::ETIQUETAS_ESTADO;
     [$estadoLabel, $estadoColor] = $etiquetasEstado[$movimiento->estadoMovimiento] ?? ['—', 'gray'];
     $saldoPendiente = $movimiento->saldoPendiente();
 @endphp
@@ -47,7 +33,7 @@
                 {{ $etiquetasCategoria[$movimiento->categoria] ?? $movimiento->categoria }}
             </p>
         </div>
-        <div style="display:flex; gap:0.75rem;">
+        <div class="page-header-actions">
             @can('crear-finanzas')
                 @if ($movimiento->estadoMovimiento !== 'anulado' && $saldoPendiente > 0)
                     <button type="button" class="btn btn-primary" data-open-modal="abono">
@@ -75,10 +61,10 @@
     </div>
 
     @if (session('success'))
-        <div class="flash-success" style="margin-bottom:1.25rem;">{{ session('success') }}</div>
+        <div class="flash-success">{{ session('success') }}</div>
     @endif
     @if (session('error'))
-        <div class="flash-error" style="margin-bottom:1.25rem;">{{ session('error') }}</div>
+        <div class="flash-error">{{ session('error') }}</div>
     @endif
 
     <div class="form-card">
@@ -87,13 +73,13 @@
             <div class="form-grid form-grid-2">
                 <div class="form-group">
                     <label class="form-label">Monto total</label>
-                    <span class="{{ $movimiento->esIngreso() ? 'monto-ingreso' : 'monto-egreso' }}" style="font-size:1.1rem;">
-                        ${{ number_format((float) $movimiento->montoTotal, 2) }}
+                    <span class="{{ $movimiento->esIngreso() ? 'monto-ingreso' : 'monto-egreso' }} monto-md">
+                        ${{ number_format((float) $movimiento->montoTotal, 0, ',', '.') }}
                     </span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Saldo pendiente</label>
-                    <span style="font-size:1.1rem;font-weight:700;">${{ number_format($saldoPendiente, 2) }}</span>
+                    <span class="monto-md-bold">${{ number_format($saldoPendiente, 0, ',', '.') }}</span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Estado</label>
@@ -131,15 +117,15 @@
     </div>
 
     <div class="form-card">
-        <div class="form-section" style="padding-bottom:0;">
+        <div class="form-section form-section--titulo">
             <p class="form-section-title">Abonos registrados</p>
         </div>
         @if ($movimiento->abonos->isEmpty())
-            <div style="padding:1.5rem;text-align:center;color:var(--fin-text-mute);font-size:0.875rem;">
+            <div class="card-empty-note">
                 Aún no se han registrado abonos.
             </div>
         @else
-            <div style="overflow-x:auto;">
+            <div class="table-scroll">
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -154,7 +140,7 @@
                         @foreach ($movimiento->abonos as $abono)
                         <tr>
                             <td>{{ $abono->fechaAbono->format('d/m/Y') }}</td>
-                            <td>${{ number_format((float) $abono->monto, 2) }}</td>
+                            <td>${{ number_format((float) $abono->monto, 0, ',', '.') }}</td>
                             <td>{{ ucfirst(str_replace('_', ' ', $abono->metodoPago)) }}</td>
                             <td>{{ $abono->referencia ?? '—' }}</td>
                             <td>{{ $abono->usuarioRegistro->nombreUsuario ?? '—' }}</td>
@@ -167,12 +153,12 @@
     </div>
 
     <div class="form-card">
-        <div class="form-section" style="padding-bottom:0;border-bottom:none;">
+        <div class="form-section form-section--titulo form-section--sin-borde">
             <p class="form-section-title">Historial</p>
         </div>
-        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <div class="historial-lista">
             @foreach ($movimiento->historial as $item)
-                <div style="font-size:0.85rem;color:var(--fin-text-2);">
+                <div class="historial-item">
                     <span class="td-primary">{{ ucfirst($item->tipoAccion) }}</span>
                     <span class="td-secondary">
                         {{ $item->created_at->format('d/m/Y H:i') }}
@@ -201,7 +187,7 @@
                             <label class="form-label">Monto <span class="req">*</span></label>
                             <input type="number" name="monto" min="0.01" max="{{ $saldoPendiente }}" step="0.01"
                                    value="{{ old('monto') }}" class="form-input">
-                            <p class="field-hint">Saldo pendiente: ${{ number_format($saldoPendiente, 2) }}</p>
+                            <p class="field-hint">Saldo pendiente: ${{ number_format($saldoPendiente, 0, ',', '.') }}</p>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Fecha <span class="req">*</span></label>

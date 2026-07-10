@@ -19,27 +19,27 @@
 
     @include('finanzas.partials.subnav')
 
-    <div class="cuenta-resumen-pago" style="margin-bottom:1.5rem;">
+    <div class="cuenta-resumen-pago mb-fin">
         <div>
             <p class="form-label">Saldo en caja</p>
-            <p style="font-size:1.4rem;font-weight:700;" class="{{ $balance['saldoEnCaja'] < 0 ? 'monto-egreso' : 'monto-ingreso' }}">
-                ${{ number_format($balance['saldoEnCaja'], 2) }}
+            <p class="monto-hero {{ $balance['saldoEnCaja'] < 0 ? 'monto-egreso' : 'monto-ingreso' }}">
+                ${{ number_format($balance['saldoEnCaja'], 0, ',', '.') }}
             </p>
             <p class="field-hint">Dinero realmente cobrado menos realmente pagado (no incluye pendientes).</p>
         </div>
         <div>
             <p class="form-label">Total que le debemos a árbitros</p>
-            <p class="monto-egreso" style="font-size:1.3rem;">${{ number_format($balance['totalLeDebemos'], 2) }}</p>
+            <p class="monto-egreso monto-lg">${{ number_format($balance['totalLeDebemos'], 0, ',', '.') }}</p>
         </div>
         <div>
             <p class="form-label">Total que nos deben los árbitros</p>
-            <p class="monto-ingreso" style="font-size:1.3rem;">${{ number_format($balance['totalNosDeben'], 2) }}</p>
+            <p class="monto-ingreso monto-lg">${{ number_format($balance['totalNosDeben'], 0, ',', '.') }}</p>
         </div>
     </div>
 
     @if ($balance['porArbitro']->isEmpty())
         <div class="empty-state">
-            <i class="fa-solid fa-circle-check" style="font-size:48px;"></i>
+            <i class="fa-solid fa-circle-check"></i>
             <p>No hay saldos pendientes con ningún árbitro en este momento.</p>
         </div>
     @else
@@ -61,20 +61,20 @@
                             <td class="td-primary">{{ $fila['arbitro']->usuario->nombreUsuario ?? 'Árbitro #' . $fila['arbitro']->idArbitro }}</td>
                             <td class="text-right">
                                 @if ($fila['leDebemos'] > 0)
-                                    <span class="monto-egreso">${{ number_format($fila['leDebemos'], 2) }}</span>
+                                    <span class="monto-egreso">${{ number_format($fila['leDebemos'], 0, ',', '.') }}</span>
                                 @else
                                     —
                                 @endif
                             </td>
                             <td class="text-right">
                                 @if ($fila['nosDebe'] > 0)
-                                    <span class="monto-ingreso">${{ number_format($fila['nosDebe'], 2) }}</span>
+                                    <span class="monto-ingreso">${{ number_format($fila['nosDebe'], 0, ',', '.') }}</span>
                                 @else
                                     —
                                 @endif
                             </td>
                             <td class="text-right">
-                                <span class="{{ $neto >= 0 ? 'monto-egreso' : 'monto-ingreso' }}">${{ number_format(abs($neto), 2) }}</span>
+                                <span class="{{ $neto >= 0 ? 'monto-egreso' : 'monto-ingreso' }}">${{ number_format(abs($neto), 0, ',', '.') }}</span>
                                 <span class="td-secondary">{{ $neto >= 0 ? 'a favor del árbitro' : 'a favor del colegio' }}</span>
                             </td>
                             <td class="text-right">

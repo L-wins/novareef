@@ -23,7 +23,7 @@
     </div>
 
     @if ($errors->any())
-        <div class="flash-error" style="margin-bottom:1.25rem;">
+        <div class="flash-error">
             Revisa los campos marcados abajo.
         </div>
     @endif
@@ -133,7 +133,7 @@
             </div>
         </div>
 
-        <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+        <div class="form-actions-end form-actions-end--gap">
             <a href="{{ route('finanzas.index') }}" class="btn btn-secondary">Cancelar</a>
             <button type="submit" class="btn btn-primary">
                 <i class="fa-solid fa-check"></i>

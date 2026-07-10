@@ -25,16 +25,23 @@
     @include('finanzas.partials.subnav')
 
     @if (session('success'))
-        <div class="flash-success" style="margin-bottom:1.25rem;">{{ session('success') }}</div>
+        <div class="flash-success">
+            {{ session('success') }}
+            @if (session('lotePago'))
+                <a href="{{ route('finanzas.pagos-arbitro.comprobante', session('lotePago')) }}">
+                    <i class="fa-solid fa-file-pdf"></i> Descargar comprobante
+                </a>
+            @endif
+        </div>
     @endif
     @if (session('error'))
-        <div class="flash-error" style="margin-bottom:1.25rem;">{{ session('error') }}</div>
+        <div class="flash-error">{{ session('error') }}</div>
     @endif
 
     <form method="GET" action="{{ route('finanzas.pagos-arbitro.index') }}" class="filter-bar-grid" data-auto-filter>
-        <div class="filter-group" style="min-width:260px;">
+        <div class="filter-group">
             <label class="filter-label">Árbitro</label>
-            <select name="idArbitro" class="filter-select" data-nova-select data-searchable="true" data-placeholder="Selecciona un árbitro">
+            <select name="idArbitro" data-nova-select data-searchable="true" data-placeholder="Selecciona un árbitro">
                 <option value="">— Selecciona —</option>
                 @foreach ($arbitros as $arbitro)
                     <option value="{{ $arbitro->idArbitro }}" {{ (string) request('idArbitro') === (string) $arbitro->idArbitro ? 'selected' : '' }}>
@@ -51,7 +58,7 @@
     @if ($arbitroSeleccionado)
         @if ($movimientosNomina->isEmpty())
             <div class="empty-state">
-                <i class="fa-solid fa-circle-check" style="font-size:48px;"></i>
+                <i class="fa-solid fa-circle-check"></i>
                 <p>{{ $arbitroSeleccionado->usuario->nombreUsuario ?? 'Este árbitro' }} no tiene pagos de nómina pendientes.</p>
             </div>
         @else
@@ -61,7 +68,7 @@
 
                 <div class="form-section">
                     <p class="form-section-title">Pagos de nómina pendientes</p>
-                    <div class="table-card" style="overflow-x:auto;">
+                    <div class="table-card table-scroll">
                         <table class="data-table">
                             <thead>
                                 <tr>
@@ -82,7 +89,7 @@
                                         <td>{{ $mov->fechaMovimiento->format('d/m/Y') }}</td>
                                         <td>{{ $mov->concepto }}</td>
                                         <td>{{ $mov->partido->torneo->nombreTorneo ?? '—' }}</td>
-                                        <td class="text-right">${{ number_format($mov->saldoPendiente(), 2) }}</td>
+                                        <td class="text-right">${{ number_format($mov->saldoPendiente(), 0, ',', '.') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -93,7 +100,7 @@
                 @if ($deudas->isNotEmpty())
                 <div class="form-section">
                     <p class="form-section-title">Deudas pendientes a compensar (opcional)</p>
-                    <div class="table-card" style="overflow-x:auto;">
+                    <div class="table-card table-scroll">
                         <table class="data-table">
                             <thead>
                                 <tr>
@@ -112,7 +119,7 @@
                                         </td>
                                         <td>{{ $deuda->fechaMovimiento->format('d/m/Y') }}</td>
                                         <td>{{ $deuda->concepto }}</td>
-                                        <td class="text-right">${{ number_format($deuda->saldoPendiente(), 2) }}</td>
+                                        <td class="text-right">${{ number_format($deuda->saldoPendiente(), 0, ',', '.') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -144,30 +151,53 @@
                     </div>
                 </div>
 
-                <div class="form-section" style="border-bottom:none;">
+                <div class="form-section form-section--sin-borde">
                     <div class="cuenta-resumen-pago">
                         <div>
                             <p class="form-label">Total nómina seleccionada</p>
-                            <p id="total-nomina" class="monto-ingreso" style="font-size:1.1rem;">$0.00</p>
+                            <p id="total-nomina" class="monto-ingreso monto-md">$0</p>
                         </div>
                         <div>
                             <p class="form-label">Total deudas a compensar</p>
-                            <p id="total-deudas" class="monto-egreso" style="font-size:1.1rem;">$0.00</p>
+                            <p id="total-deudas" class="monto-egreso monto-md">$0</p>
                         </div>
                         <div>
                             <p class="form-label">Neto a desembolsar</p>
-                            <p id="total-neto" style="font-size:1.2rem;font-weight:700;">$0.00</p>
+                            <p id="total-neto" class="monto-md-bold">$0</p>
                         </div>
                     </div>
                 </div>
 
-                <div style="display:flex;justify-content:flex-end;">
+                <div class="form-actions-end">
                     <button type="submit" class="btn btn-primary">
                         <i class="fa-solid fa-check"></i>
                         Registrar pago
                     </button>
                 </div>
             </form>
+        @endif
+
+        {{-- Comprobantes de pagos anteriores --}}
+        @if ($lotesRecientes->isNotEmpty())
+        <div class="form-card">
+            <div class="form-section form-section--sin-borde">
+                <p class="form-section-title">Últimos pagos realizados</p>
+                <div class="fin-lotes">
+                    @foreach ($lotesRecientes as $lote)
+                        <div class="fin-lote">
+                            <span class="fin-lote__info">
+                                <i class="fa-solid fa-receipt"></i>
+                                {{ \Illuminate\Support\Carbon::parse($lote->fecha)->format('d/m/Y') }}
+                                <span class="fin-lote__monto">${{ number_format($lote->neto, 0, ',', '.') }}</span>
+                            </span>
+                            <a href="{{ route('finanzas.pagos-arbitro.comprobante', $lote->idLotePago) }}" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-file-pdf"></i> Comprobante
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
         @endif
     @endif
 

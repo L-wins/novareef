@@ -69,6 +69,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     //  Mi estado de cuenta — fuera del grupo finanzas: el árbitro no tiene
     //  ver-finanzas, mismo criterio que finalizarPartido con ver-designaciones.
     Route::get('/mi-estado-cuenta', [EstadoCuentaArbitroController::class, 'show'])->name('arbitros.estado-cuenta');
+    Route::get('/mi-estado-cuenta/comprobante/{lote}', [EstadoCuentaArbitroController::class, 'comprobante'])->name('arbitros.estado-cuenta.comprobante');
 
     // Foto de perfil — el árbitro siempre, y editores con permiso
     Route::post('/arbitros/{id}/foto',   [ArbitroFotoController::class, 'subir'])->name('arbitros.foto.subir');
@@ -188,6 +189,11 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::get('/historial/pdf', [DesignacionController::class, 'historialPdf'])->name('historial.pdf');
         Route::get('/{id}',       [DesignacionController::class, 'detallePartido'])->name('detalle');
         Route::post('/{id}/confirmar', [DesignacionController::class, 'confirmarDesignacion'])->name('confirmar');
+        // Fallback GET: los correos de designación antiguos traían el botón
+        // "Confirmar" como enlace directo a la URL POST — un clic desde el
+        // correo hace GET y explotaba con MethodNotAllowed. Redirige a la
+        // card correspondiente en Mis partidos.
+        Route::get('/{id}/confirmar',  [DesignacionController::class, 'redirigirConfirmacionEmail'])->name('confirmar.email');
         Route::post('/{id}/rechazar',  [DesignacionController::class, 'rechazarDesignacion'])->name('rechazar');
     });
 
@@ -225,18 +231,21 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
 
     //  Finanzas — M06
     Route::prefix('finanzas')->name('finanzas.')->middleware(['permission:ver-finanzas', 'modulo:finanzas'])->group(function () {
-        Route::get('/',      [MovimientoFinancieroController::class, 'index'])->name('index');
-        Route::get('/crear', [MovimientoFinancieroController::class, 'create'])->middleware('permission:crear-finanzas')->name('create');
-        Route::post('/',     [MovimientoFinancieroController::class, 'store'])->middleware('permission:crear-finanzas')->name('store');
+        Route::get('/',         [MovimientoFinancieroController::class, 'index'])->name('index');
+        Route::get('/crear',    [MovimientoFinancieroController::class, 'create'])->middleware('permission:crear-finanzas')->name('create');
+        Route::get('/exportar', [MovimientoFinancieroController::class, 'exportarCsv'])->name('exportar');
+        Route::post('/',        [MovimientoFinancieroController::class, 'store'])->middleware('permission:crear-finanzas')->name('store');
 
         // Pago acumulado al árbitro y reportes — antes de /{id} para que no los capture como id
         Route::prefix('pagos-arbitro')->name('pagos-arbitro.')->group(function () {
             Route::get('/',  [PagoArbitroController::class, 'index'])->name('index');
             Route::post('/', [PagoArbitroController::class, 'store'])->middleware('permission:crear-finanzas')->name('store');
+            Route::get('/comprobante/{lote}', [PagoArbitroController::class, 'comprobante'])->name('comprobante');
         });
 
-        Route::get('/reportes', [ReporteFinancieroController::class, 'index'])->name('reportes.index');
-        Route::get('/balance',  [BalanceFinancieroController::class, 'index'])->name('balance.index');
+        Route::get('/reportes',     [ReporteFinancieroController::class, 'index'])->name('reportes.index');
+        Route::get('/reportes/pdf', [ReporteFinancieroController::class, 'pdf'])->name('reportes.pdf');
+        Route::get('/balance',      [BalanceFinancieroController::class, 'index'])->name('balance.index');
 
         Route::get('/{id}',  [MovimientoFinancieroController::class, 'show'])->name('show');
         Route::post('/{id}/abonos', [MovimientoFinancieroController::class, 'abonar'])->middleware('permission:crear-finanzas')->name('abonar');

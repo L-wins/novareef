@@ -245,7 +245,9 @@ GET  /api/partidos/{id}/arbitros-disponibles → AJAX
 
 **Quien opera:** rol `'tesorero'` (`ver-finanzas`, `crear-finanzas`, `editar-finanzas`) y `'ejecutivo'` (todos).
 
-**Rutas:** `/finanzas` (índice, crear, detalle, abonar, anular), `/finanzas/pagos-arbitro` (pago acumulado), `/finanzas/reportes` (rango de fechas libre, sin período fijo obligatorio).
+**Rutas:** `/finanzas` (índice con resumen del período filtrado, crear, detalle, abonar, anular), `/finanzas/exportar` (CSV del listado filtrado), `/finanzas/pagos-arbitro` (pago acumulado + `comprobante/{lote}` PDF), `/finanzas/reportes` (rango libre + serie mensual con gráfico + comparativa vs período anterior + `/pdf`), `/finanzas/balance`. El árbitro descarga sus comprobantes en `/mi-estado-cuenta/comprobante/{lote}`.
+
+**Separación de servicios:** `FinanzasService` = escrituras (movimientos, abonos, pago acumulado, anulación); `ReporteFinanzasService` = lecturas/agregaciones (resumen del listado, reporte con comparativa, serie mensual, balance sin N+1 — una query agregada `GROUP BY idArbitro`, no 2 por árbitro; los listados que llaman `saldoPendiente()` precargan el agregado con el scope `conTotalAbonado`). Formato de moneda: COP sin decimales (`number_format($x, 0, ',', '.')`) en todas las vistas del módulo.
 
 ---
 

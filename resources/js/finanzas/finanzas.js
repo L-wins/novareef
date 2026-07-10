@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var totalNetoEl    = document.getElementById('total-neto');
 
     function formatoMoneda(valor) {
-        return '$' + valor.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return '$' + valor.toLocaleString('es-CO', { maximumFractionDigits: 0 });
     }
 
     function sumarChecks(checks) {

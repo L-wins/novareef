@@ -8,23 +8,9 @@
 @endpush
 
 @php
-    $etiquetasCategoria = [
-        'ingreso_torneo'      => 'Ingreso por torneo',
-        'mensualidad'         => 'Mensualidad',
-        'multa'               => 'Multa',
-        'otro_ingreso'        => 'Otro ingreso',
-        'nomina_arbitro'      => 'Nómina de árbitros',
-        'arbitro_externo'     => 'Árbitro externo',
-        'gasto_fijo'          => 'Gasto fijo',
-        'gasto_institucional' => 'Gasto institucional',
-        'gasto_vario'         => 'Gasto vario',
-    ];
-    $etiquetasEstado = [
-        'pendiente' => ['Pendiente', 'gray'],
-        'parcial'   => ['Parcial', 'amber'],
-        'pagado'    => ['Pagado', 'green'],
-        'anulado'   => ['Anulado', 'red'],
-    ];
+    use App\Models\MovimientoFinanciero;
+    $etiquetasCategoria = MovimientoFinanciero::ETIQUETAS_CATEGORIA;
+    $etiquetasEstado    = MovimientoFinanciero::ETIQUETAS_ESTADO;
 @endphp
 
 @section('contenido')
@@ -46,16 +32,48 @@
     @include('finanzas.partials.subnav')
 
     @if (session('success'))
-        <div class="flash-success" style="margin-bottom:1.25rem;">{{ session('success') }}</div>
+        <div class="flash-success">{{ session('success') }}</div>
     @endif
     @if (session('error'))
-        <div class="flash-error" style="margin-bottom:1.25rem;">{{ session('error') }}</div>
+        <div class="flash-error">{{ session('error') }}</div>
     @endif
+
+    {{-- Resumen del período filtrado (los anulados nunca suman) --}}
+    <div class="fin-stats">
+        <div class="fin-stat">
+            <p class="fin-stat__label">Ingresos</p>
+            <p class="fin-stat__value monto-ingreso">${{ number_format($resumen['totalIngresos'], 0, ',', '.') }}</p>
+        </div>
+        <div class="fin-stat">
+            <p class="fin-stat__label">Egresos</p>
+            <p class="fin-stat__value monto-egreso">${{ number_format($resumen['totalEgresos'], 0, ',', '.') }}</p>
+        </div>
+        <div class="fin-stat">
+            <p class="fin-stat__label">Neto</p>
+            <p class="fin-stat__value">${{ number_format($resumen['neto'], 0, ',', '.') }}</p>
+        </div>
+        <div class="fin-stat">
+            <p class="fin-stat__label">Por cobrar</p>
+            <p class="fin-stat__value">${{ number_format($resumen['pendientePorCobrar'], 0, ',', '.') }}</p>
+            <p class="fin-stat__sub">Ingresos sin abonar por completo</p>
+        </div>
+        <div class="fin-stat">
+            <p class="fin-stat__label">Por pagar</p>
+            <p class="fin-stat__value">${{ number_format($resumen['pendientePorPagar'], 0, ',', '.') }}</p>
+            <p class="fin-stat__sub">Egresos sin pagar por completo</p>
+        </div>
+    </div>
 
     <form method="GET" action="{{ route('finanzas.index') }}" class="filter-bar-grid" data-auto-filter>
         <div class="filter-group">
+            <label class="filter-label">Buscar</label>
+            <input type="text" name="q" value="{{ request('q') }}" placeholder="Concepto…"
+                   class="filter-input" autocomplete="off">
+        </div>
+
+        <div class="filter-group">
             <label class="filter-label">Tipo</label>
-            <select name="tipoMovimiento" class="filter-select">
+            <select name="tipoMovimiento" data-nova-select data-placeholder="Todos">
                 <option value="">Todos</option>
                 <option value="ingreso" {{ request('tipoMovimiento') === 'ingreso' ? 'selected' : '' }}>Ingreso</option>
                 <option value="egreso"  {{ request('tipoMovimiento') === 'egreso'  ? 'selected' : '' }}>Egreso</option>
@@ -64,7 +82,7 @@
 
         <div class="filter-group">
             <label class="filter-label">Categoría</label>
-            <select name="categoria" class="filter-select">
+            <select name="categoria" data-nova-select data-placeholder="Todas">
                 <option value="">Todas</option>
                 @foreach ($etiquetasCategoria as $val => $label)
                     <option value="{{ $val }}" {{ request('categoria') === $val ? 'selected' : '' }}>{{ $label }}</option>
@@ -74,10 +92,22 @@
 
         <div class="filter-group">
             <label class="filter-label">Estado</label>
-            <select name="estado" class="filter-select">
+            <select name="estado" data-nova-select data-placeholder="Todos">
                 <option value="">Todos</option>
                 @foreach ($etiquetasEstado as $val => [$label, $color])
                     <option value="{{ $val }}" {{ request('estado') === $val ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label">Árbitro</label>
+            <select name="idArbitro" data-nova-select data-searchable="true" data-placeholder="Todos">
+                <option value="">Todos</option>
+                @foreach ($arbitrosFiltro as $arb)
+                    <option value="{{ $arb->idArbitro }}" {{ (string) request('idArbitro') === (string) $arb->idArbitro ? 'selected' : '' }}>
+                        {{ $arb->usuario->nombreUsuario ?? 'Árbitro #' . $arb->idArbitro }}
+                    </option>
                 @endforeach
             </select>
         </div>
@@ -97,15 +127,25 @@
                 <i class="fa-solid fa-magnifying-glass"></i>
                 Filtrar
             </button>
-            @if (request()->anyFilled(['tipoMovimiento', 'categoria', 'estado', 'desde', 'hasta']))
+            @if (request()->anyFilled(['q', 'tipoMovimiento', 'categoria', 'estado', 'idArbitro', 'desde', 'hasta']))
                 <a href="{{ route('finanzas.index') }}" class="filter-clear">Limpiar</a>
             @endif
         </div>
     </form>
 
+    <div class="fin-toolbar">
+        <span class="fin-toolbar__info">
+            {{ $resumen['cantidad'] }} {{ $resumen['cantidad'] === 1 ? 'movimiento' : 'movimientos' }} en el período
+        </span>
+        <a href="{{ route('finanzas.exportar', request()->query()) }}" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-file-csv"></i>
+            Exportar CSV
+        </a>
+    </div>
+
     @if ($movimientos->isEmpty())
         <div class="empty-state">
-            <i class="fa-solid fa-sack-dollar" style="font-size:48px;"></i>
+            <i class="fa-solid fa-sack-dollar"></i>
             <p>No hay movimientos financieros que coincidan con los filtros.</p>
         </div>
     @else
@@ -125,7 +165,10 @@
                 </thead>
                 <tbody>
                     @foreach ($movimientos as $mov)
-                        @php [$estadoLabel, $estadoColor] = $etiquetasEstado[$mov->estadoMovimiento] ?? ['—', 'gray']; @endphp
+                        @php
+                            [$estadoLabel, $estadoColor] = $etiquetasEstado[$mov->estadoMovimiento] ?? ['—', 'gray'];
+                            $abonado = (float) $mov->montoTotal - $mov->saldoPendiente();
+                        @endphp
                         <tr>
                             <td>{{ $mov->fechaMovimiento->format('d/m/Y') }}</td>
                             <td>
@@ -133,7 +176,7 @@
                                     {{ $mov->esIngreso() ? 'Ingreso' : 'Egreso' }}
                                 </span>
                             </td>
-                            <td>{{ $etiquetasCategoria[$mov->categoria] ?? $mov->categoria }}</td>
+                            <td>{{ $mov->etiquetaCategoria() }}</td>
                             <td>
                                 <span class="td-primary">{{ $mov->concepto }}</span>
                             </td>
@@ -151,8 +194,11 @@
                             </td>
                             <td class="text-right">
                                 <span class="{{ $mov->esIngreso() ? 'monto-ingreso' : 'monto-egreso' }}">
-                                    ${{ number_format((float) $mov->montoTotal, 2) }}
+                                    ${{ number_format((float) $mov->montoTotal, 0, ',', '.') }}
                                 </span>
+                                @if ($mov->estadoMovimiento === MovimientoFinanciero::ESTADO_PARCIAL)
+                                    <span class="monto-abonado">abonado ${{ number_format($abonado, 0, ',', '.') }}</span>
+                                @endif
                             </td>
                             <td><span class="badge badge-{{ $estadoColor }}">{{ $estadoLabel }}</span></td>
                             <td class="text-right">

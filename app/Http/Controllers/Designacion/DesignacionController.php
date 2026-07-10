@@ -802,6 +802,18 @@ class DesignacionController extends Controller
     }
 
     /**
+     * Fallback GET para los enlaces "Confirmar" de correos antiguos, que
+     * apuntaban directo al endpoint POST: lleva al árbitro a la card de su
+     * designación en Mis partidos, donde confirma con el botón real.
+     */
+    public function redirigirConfirmacionEmail(int $id): RedirectResponse
+    {
+        return redirect()
+            ->route('mis-partidos.index')
+            ->withFragment("desig-card-{$id}");
+    }
+
+    /**
      * El árbitro confirma su designación.
      */
     public function confirmarDesignacion(int $id): JsonResponse
