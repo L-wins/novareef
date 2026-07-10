@@ -83,9 +83,9 @@ php artisan permission:cache-reset
 | `/torneos/*` | auth, verificar.colegio, permission:ver-torneos | CRUD torneos |
 | `/torneos/{id}/partidos/*` | auth, verificar.colegio, permission:ver-torneos | CRUD partidos |
 | `/designaciones/*` | auth, verificar.colegio, permission:ver-designaciones, modulo:designaciones | M04 completo: creación de partido, asignación/reasignación de árbitros, publicación, veedor, acta, historial |
-| `/finanzas/*` | auth, verificar.colegio, permission:ver-finanzas | Placeholder |
-| `/academico/*` | auth, verificar.colegio, permission:ver-academico | Placeholder |
-| `/sanciones/*` | auth, verificar.colegio, permission:ver-sanciones | Placeholder |
+| `/finanzas/*` | auth, verificar.colegio, permission:ver-finanzas, modulo:finanzas | M06 completo: movimientos (ingreso/egreso), abonos, pago acumulado con neteo, balance, reportes (PDF/CSV) — ver tabla detallada abajo |
+| `/academico/*` | auth, verificar.colegio, permission:ver-academico, modulo:academico | M08 completo: sesiones académicas, asistencia manual/scanner en tiempo real (Reverb), justificaciones, catálogo de tipos por colegio — ver tabla detallada abajo |
+| `/sanciones/*` | auth, verificar.colegio, permission:ver-sanciones, modulo:sanciones | M07 completo: sanciones disciplinarias con multa económica opcional, catálogo de tipos por colegio — ver tabla detallada abajo |
 
 ### Rutas especiales de árbitros
 
@@ -97,6 +97,77 @@ php artisan permission:cache-reset
 | POST `/arbitros/guardar-perfil` | Guardar datos del wizard |
 | POST `/arbitros/{id}/foto` | Subir foto de perfil |
 | DELETE `/arbitros/{id}/foto` | Eliminar foto de perfil |
+| GET `/mi-estado-cuenta` | Estado de cuenta financiero del árbitro (saldo pendiente, pagos recibidos, multas, descuentos) — **fuera** del grupo `finanzas`, sin `permission:ver-finanzas` (el árbitro no lo tiene), mismo criterio que `finalizarPartido` fuera de `ver-designaciones` |
+
+### Rutas de Finanzas (M06)
+
+Prefix `finanzas`, middleware `permission:ver-finanzas` + `modulo:finanzas`. Controllers en `App\Http\Controllers\Finanza\`.
+
+| URI | Controller | Descripción |
+|---|---|---|
+| GET `/finanzas` | `MovimientoFinancieroController@index` | Listado con filtros + resumen agregado (ingresos/egresos/neto/pendientes) |
+| GET\|POST `/finanzas/crear` | `MovimientoFinancieroController@create/store` | Alta de movimiento (`permission:crear-finanzas`) |
+| GET `/finanzas/exportar` | `MovimientoFinancieroController@exportarCsv` | Export CSV del listado filtrado |
+| GET `/finanzas/balance` | `BalanceFinancieroController@index` | Saldo en caja + cuánto se debe con cada árbitro |
+| GET\|POST `/finanzas/pagos-arbitro` | `PagoArbitroController@index/store` | Pago acumulado con neteo de deudas (`permission:crear-finanzas` para store) |
+| GET `/finanzas/pagos-arbitro/comprobante/{lote}` | `PagoArbitroController` | Comprobante PDF de un lote de pago (`idLotePago`) |
+| GET `/finanzas/reportes` | `ReporteFinancieroController@index` | Rango de fechas libre, gráfico mensual, comparativa vs período anterior |
+| GET `/finanzas/reportes/pdf` | `ReporteFinancieroController@pdf` | Export PDF del reporte |
+| GET `/finanzas/{id}` | `MovimientoFinancieroController@show` | Detalle + abonos + historial |
+| POST `/finanzas/{id}/abonos` | `MovimientoFinancieroController@abonar` | Registrar abono (`permission:crear-finanzas`) |
+| PUT `/finanzas/{id}/anular` | `MovimientoFinancieroController@anular` | Anular — solo sin abonos previos (`permission:editar-finanzas`) |
+
+**Rutas de rango fijo (`/balance`, `/reportes`, `/pagos-arbitro`, `/exportar`) van declaradas antes de `/{id}` en `routes/web.php`** — si no, Laravel las capturaría como si `{id}` fuera el literal `"balance"`/`"reportes"`/etc.
+
+**Services**: `FinanzasService` (escritura — registrar movimiento/abono, anular, generar pagos de nómina, pago acumulado) y `ReporteFinanzasService` (solo lectura/agregación — resumen del listado, reporte por rango, serie mensual, balance general sin N+1, datos de comprobante). Separación deliberada: escritura vs. lectura agregada, para no mezclar transacciones con queries de reporte.
+
+**PDF**: `barryvdh/laravel-dompdf` (`app('dompdf.wrapper')`) — mismo paquete que ya se usaba para el historial/acta de designaciones. Vistas en `resources/views/pdf/`.
+
+### Rutas de Sanciones (M07)
+
+Prefix `sanciones`, middleware `permission:ver-sanciones` + `modulo:sanciones`. Controllers en `App\Http\Controllers\Sancion\`.
+
+| URI | Controller | Descripción |
+|---|---|---|
+| GET `/sanciones` | `SancionController@index` | Listado — si `rolUsuario==='arbitro'` filtra automáticamente a sus propias sanciones |
+| GET\|POST `/sanciones/crear` | `SancionController@create/store` | Alta de sanción, con multa económica opcional (`permission:crear-sanciones`) |
+| GET `/sanciones/{id}` | `SancionController@show` | Detalle + historial + acciones |
+| PUT `/sanciones/{id}/estado` | `SancionController@cambiarEstado` | `accion`: cumplir\|apelar (permiso `crear-sanciones`) o anular\|resolver (permiso `editar-sanciones`, chequeado en el controller, no en la ruta) |
+| `/tipos-sancion/*` | `TipoSancionController` | Catálogo de tipos de sanción **por colegio** (`permission:editar-sanciones` + `modulo:sanciones`) |
+
+**`SancionService`**: `crearSancion` (engancha la multa a `FinanzasService::registrarMovimiento` en la misma transacción si aplica), `cumplir`, `anular`, `apelar`, `resolverApelacion`. **`VencerSancionesJob`** (diario, `routes/console.php`) cierra automáticamente sanciones vencidas.
+
+**⚠️ Sanciones NO bloquea designaciones** — es un registro disciplinario/económico puro. Un árbitro sancionado sigue siendo designable con normalidad; `DesignacionService` y `PartidoStateMachine` no tienen ninguna validación de M07. Si un colegio quiere sacar de circulación a un árbitro, usa el toggle manual ya existente de M02 (`Arbitro.estadoArbitro = 'suspendido'`).
+
+### Rutas de Académico (M08)
+
+Prefix `academico`, middleware `permission:ver-academico` + `modulo:academico` (ya incluido en `Plan.modulosJSON` de los planes que lo traen — no hay flag propio en `ConfiguracionColegio`). Controllers en `App\Http\Controllers\Academico\`.
+
+| URI | Controller | Descripción |
+|---|---|---|
+| GET `/academico` | `SesionAcademicaController@index` | Listado de sesiones (`permission:crear-academico` — instructor/ejecutivo) |
+| GET\|POST `/academico/crear` | `SesionAcademicaController@create/store` | Alta de sesión — genera automáticamente un registro de asistencia `ausente` por cada árbitro que aplique (`permission:crear-academico`) |
+| GET `/academico/mis-clases` | `SesionAcademicaController@misClases` | Próximas, historial y % de asistencia del árbitro autenticado |
+| GET `/academico/{id}` | `SesionAcademicaController@show` | Detalle + registro de asistencia en tiempo real (manual o scanner) |
+| PUT `/academico/{id}/abrir` | `SesionAcademicaController@abrir` | Activa `sesionAbierta` |
+| PUT `/academico/{id}/cerrar` | `SesionAcademicaController@cerrar` | Cierra la sesión **y** confirma la lista como definitiva — es una sola acción, no dos |
+| POST `/academico/scanner` | `AsistenciaController@scanner` | Recibe `codigoCarnet`, responde JSON — usado por la terminal del instructor en modo scanner |
+| POST `/academico/asistencias/{id}/marcar` | `AsistenciaController@marcar` | El árbitro marca su propia asistencia (modo manual, requiere `sesionAbierta`) |
+| PUT `/academico/asistencias/{id}` | `AsistenciaController@corregir` | Instructor corrige una marca antes de cerrar la sesión |
+| GET\|POST `/academico/asistencias/{id}/justificar` | `JustificacionController@create/store` | El árbitro justifica una inasistencia (hasta `fechaSesion + 3 días`), PDF opcional |
+| GET `/academico/justificaciones/pendientes` | `JustificacionController@pendientes` | Para instructor/ejecutivo/sanciones (`permission:editar-academico`) |
+| PUT `/academico/justificaciones/{id}` | `JustificacionController@revisar` | Aprobar o rechazar — basta con que la apruebe uno de los roles autorizados |
+| `/tipos-sesion-academica/*` | `TipoSesionAcademicaController` | Catálogo de tipos de sesión **por colegio** (`permission:editar-academico`) — no hay un enum fijo de tipos, cada colegio define los suyos (uno o más puede marcarse `esOficial`, ej. prueba FCF) |
+
+**Servicios**: `SesionAcademicaService` (ciclo de vida de la sesión), `AsistenciaAcademicaService` (marcar web/scanner/corregir), `JustificacionAcademicaService` (crear/aprobar/rechazar), `TipoSesionAcademicaService` (catálogo).
+
+**Tiempo real (Reverb)**: canal privado `colegio.{idColegio}.academico` — eventos `AsistenciaActualizadaEvent` (marca web, scanner o corrección del instructor — se distinguen por `registradoPor` en el payload) y `SesionAcademicaCerradaEvent`.
+
+**`CerrarJustificacionesVencidasJob`** (diario, `routes/console.php`): cierra la ventana de justificación de asistencias vencidas sin justificar, y finaliza automáticamente sesiones pasadas que el instructor nunca cerró.
+
+**Permiso `editar-academico`** (nuevo, M08) — otorgado a `tecnico`, `ejecutivo` y `sanciones`; distinto de `crear-academico` porque aprobar/rechazar una justificación (como anular en Finanzas/Sanciones) es una acción de revisión, no de flujo normal de creación. Sin este permiso el rol `sanciones` no podría cumplir su parte en la aprobación de justificaciones.
+
+**⚠️ Académico NO bloquea designaciones ni genera multas automáticas** — es un registro de asistencia/capacitación puro. `NovaReef` solo lleva el control; si el colegio decide sancionar por inasistencias repetidas, lo hace manualmente vía M07.
 
 ### `routes/admin.php` — Superadmin (guard admin)
 
@@ -201,6 +272,38 @@ En `bootstrap/app.php`:
 - 2FA: `two_factor_enabled` (bool), `google2fa_secret` (en `$hidden`)
 - Acceder al secret: `$admin->getRawOriginal('google2fa_secret')`
 
+### `MovimientoFinanciero` (`movimientos_financieros`) — M06
+- Ingreso o egreso unificado en una sola tabla (discriminador `tipoMovimiento` + `categoria`, ver constantes de clase `CATEGORIAS_POR_TIPO`)
+- Categorías ingreso: `ingreso_torneo`, `mensualidad`, `multa`, `otro_ingreso`. Egreso: `nomina_arbitro`, `arbitro_externo`, `gasto_fijo`, `gasto_institucional`, `gasto_vario`
+- `estadoMovimiento`: pendiente | parcial | pagado | anulado (denormalizado, se recalcula en cada abono)
+- `idUsuarioRegistro` nullable — null cuando el movimiento lo genera un job del sistema (ej. `GenerarPagosJob` al finalizar un partido nómina), no un usuario
+- Multa con origen desacoplado sin FK: `tipoOrigenMulta` (`sancion`\|`academico`\|`manual`) + `idOrigenMulta`
+- Método `saldoPendiente()`: `montoTotal` − suma de `abonos()` no anulados (siempre calculado en vivo, no cacheado)
+- Relación nueva en `Arbitro`: `movimientosFinancieros()`
+
+### `AbonoMovimiento` (`abonos_movimiento`) — M06
+- Pagos parciales o totales sobre un `MovimientoFinanciero`; inmutables (solo se anulan, no se editan), `timestamps=false` con `created_at` manual
+- `metodoPago`: efectivo\|transferencia\|consignacion\|compensacion_nomina\|otro — `compensacion_nomina` es el ajuste interno que hace `FinanzasService::pagarAcumuladoArbitro()`, nunca dinero real (se excluye de "saldo en caja" y de "historial de pagos recibidos")
+- `idLotePago` (UUID) agrupa los abonos de una misma operación de pago acumulado — es la clave para comprobantes de pago y `lotesRecientes()`
+
+### `Sancion` (`sanciones`) / `TipoSancion` (`tipos_sancion`, catálogo **por colegio**) — M07
+- `estadoSancion`: activa | cumplida | anulada | apelada
+- **No bloquea designaciones** (decisión de negocio explícita — ver sección M07 abajo)
+- `tieneMultaEconomica` + `idMovimientoFinanciero` opcional (enganche a Finanzas)
+
+### `SesionAcademica` (`sesiones_academicas`) / `TipoSesionAcademica` (`tipos_sesion_academica`, catálogo **por colegio**) — M08
+- `estadoSesion`: programada | en_curso | finalizada | cancelada; `sesionAbierta` (bool) habilita el registro de asistencia en tiempo real
+- `dirigidaA`: todos | categoria (`idCategoria` solo si aplica) — el set de árbitros esperados se congela en `AsistenciaAcademica` al crear la sesión, no es editable después
+- `modoAsistencia`: manual (el árbitro marca desde su perfil) | scanner (instructor lee `codigoCarnet`)
+- Accessor `fechaLimiteJustificacion` = `fechaSesion + 3 días`; accessor `esOficial` delega en `tipo->esOficial` del catálogo
+- **Sin soft deletes** en `AsistenciaAcademica`/`JustificacionAcademica` (igual que M06/M07); `SesionAcademica` **sí** tiene `SoftDeletes`
+
+### `AsistenciaAcademica` (`asistencias_academicas`) / `JustificacionAcademica` (`justificaciones_academicas`) — M08
+- `estadoAsistencia`: presente | ausente | justificacion_pendiente | justificado | justificacion_rechazada — único `(idSesion, idArbitro)`
+- `registradoPor`: arbitro (marca web) | instructor (scanner o corrección manual) | sistema (jobs)
+- `JustificacionAcademica`: única por asistencia (`idAsistencia` unique), aprobable por instructor, ejecutivo o rol sanciones — basta una aprobación
+- **Sin multas automáticas** — Académico solo lleva el control; `tipoOrigenMulta='academico'` en `MovimientoFinanciero` ya estaba anticipado en M06 pero M08 no lo usa todavía
+
 ---
 
 ## Spatie Permission — configuración
@@ -210,17 +313,21 @@ En `bootstrap/app.php`:
 'guards' => ['web'],  // admin guard excluido
 ```
 
-**14 permisos**: ver/crear/editar-arbitros, ver/crear/editar-torneos, ver/crear-designaciones, ver/crear-finanzas, ver/crear-academico, ver/crear-sanciones
+**18 permisos**: ver/crear/editar-arbitros, ver/crear/editar-torneos, ver/crear-designaciones, ver/crear/editar-finanzas, ver/crear/editar-academico, gestionar-asistencia, ver/crear/editar-sanciones
+
+`editar-finanzas` (anular movimiento), `editar-sanciones` (anular sanción / resolver apelación) y `editar-academico` (aprobar/rechazar justificación) se agregaron con M06/M07/M08 — son deliberadamente distintos de `crear-*` porque son acciones de reversión/revisión, no de flujo normal. `gestionar-asistencia` es específico del instructor en M08.
 
 **6 roles**:
 | Rol | Permisos |
 |---|---|
-| `ejecutivo` | todos (14) |
-| `tesorero` | ver/crear-finanzas, ver-arbitros, ver-torneos, ver-designaciones |
+| `ejecutivo` | todos (18) + `gestionar-cuentas-admin` y `crear-calificaciones` (otorgados por seeders aparte, ver advertencia abajo) |
+| `tesorero` | ver/crear/editar-finanzas, ver-arbitros, ver-torneos, ver-designaciones |
 | `designador` | ver/crear-designaciones, ver-arbitros, ver-torneos |
-| `sanciones` | ver/crear-sanciones, ver-arbitros |
-| `tecnico` | ver/crear-academico, ver-arbitros |
-| `arbitro` | ver-arbitros, ver-torneos, ver-designaciones |
+| `sanciones` | ver/crear/editar-sanciones, ver-arbitros, ver-academico, editar-academico (revisa justificaciones) |
+| `tecnico` | ver/crear/editar-academico, gestionar-asistencia, ver-arbitros |
+| `arbitro` | ver-arbitros, ver-torneos, ver-designaciones, ver-sanciones, ver-academico |
+
+**⚠️ `RolesPermisosSeeder::run()` usa `syncPermissions()` — nunca correrlo solo.** `syncPermissions()` **reemplaza por completo** el set de permisos del rol, no lo complementa. `gestionar-cuentas-admin` (`CuentasAdminRolSeeder`) y `crear-calificaciones` (`VeedorRolSeeder`) se los otorgan a `ejecutivo` de forma *aditiva* (`givePermissionTo`) en seeders que corren **después** en `DatabaseSeeder`. Si se re-siembra `RolesPermisosSeeder` de forma aislada (ej. al agregar un permiso nuevo), esos dos permisos se pierden silenciosamente — hay que re-correr `VeedorRolSeeder` y `CuentasAdminRolSeeder` a continuación, o el `DatabaseSeeder` completo.
 
 ---
 
