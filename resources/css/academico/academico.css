@@ -1,0 +1,11 @@
+/*
+   NovaReef — Módulo M08 Académico
+   Este archivo es solo el manifiesto — el contenido vive dividido
+   por responsabilidad en los archivos hermanos.
+    */
+
+@import "./variables.css";
+@import "./layout.css";
+@import "./badges.css";
+@import "./table.css";
+@import "./scanner.css";

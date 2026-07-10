@@ -12,3 +12,7 @@ Broadcast::channel('colegio.{idColegio}.partidos', function (User $user, int $id
 Broadcast::channel('colegio.{idColegio}.designaciones', function (User $user, int $idColegio) {
     return (int) $user->idColegio === $idColegio;
 });
+
+Broadcast::channel('colegio.{idColegio}.academico', function (User $user, int $idColegio) {
+    return (int) $user->idColegio === $idColegio;
+});

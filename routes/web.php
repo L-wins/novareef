@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Academico\AsistenciaController;
+use App\Http\Controllers\Academico\JustificacionController;
+use App\Http\Controllers\Academico\SesionAcademicaController;
+use App\Http\Controllers\Academico\TipoSesionAcademicaController;
 use App\Http\Controllers\Arbitro\ArbitroController;
 use App\Http\Controllers\Arbitro\ArbitroFotoController;
 use App\Http\Controllers\Arbitro\ArbitroPerfilController;
@@ -252,11 +256,45 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::put('/{id}/anular',  [MovimientoFinancieroController::class, 'anular'])->middleware('permission:editar-finanzas')->name('anular');
     });
 
-    //  Académico 
+    //  Académico — M08
     Route::prefix('academico')->name('academico.')->middleware(['permission:ver-academico', 'modulo:academico'])->group(function () {
-        Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
-        Route::get('/crear', fn () => redirect()->route('dashboard'))->middleware('permission:crear-academico')->name('create');
-        Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-academico')->name('store');
+        // Instructor / ejecutivo — gestión de sesiones
+        Route::get('/',      [SesionAcademicaController::class, 'index'])->middleware('permission:crear-academico')->name('sesiones.index');
+        Route::get('/crear', [SesionAcademicaController::class, 'create'])->middleware('permission:crear-academico')->name('sesiones.create');
+        Route::post('/',     [SesionAcademicaController::class, 'store'])->middleware('permission:crear-academico')->name('sesiones.store');
+
+        // Árbitro
+        Route::get('/mis-clases', [SesionAcademicaController::class, 'misClases'])->name('mis-clases');
+
+        // Justificaciones — el árbitro crea, instructor/ejecutivo/sanciones revisan
+        Route::get('/justificaciones/pendientes',     [JustificacionController::class, 'pendientes'])->middleware('permission:editar-academico')->name('justificaciones.pendientes');
+        Route::put('/justificaciones/{id}',           [JustificacionController::class, 'revisar'])->middleware('permission:editar-academico')->name('justificaciones.revisar');
+        Route::get('/justificaciones/{id}/documento', [JustificacionController::class, 'descargarDocumento'])->name('justificaciones.documento');
+
+        // Scanner (terminal del instructor)
+        Route::post('/scanner', [AsistenciaController::class, 'scanner'])->middleware('permission:crear-academico')->name('scanner');
+
+        // Asistencias
+        Route::post('/asistencias/{id}/marcar',     [AsistenciaController::class, 'marcar'])->name('asistencias.marcar');
+        Route::put('/asistencias/{id}',             [AsistenciaController::class, 'corregir'])->middleware('permission:crear-academico')->name('asistencias.corregir');
+        Route::get('/asistencias/{id}/justificar',  [JustificacionController::class, 'create'])->name('justificaciones.create');
+        Route::post('/asistencias/{id}/justificar', [JustificacionController::class, 'store'])->name('justificaciones.store');
+
+        // Sesión individual — rutas fijas antes de /{id}
+        Route::get('/{id}/editar',   [SesionAcademicaController::class, 'edit'])->middleware('permission:crear-academico')->name('sesiones.edit');
+        Route::put('/{id}',         [SesionAcademicaController::class, 'update'])->middleware('permission:crear-academico')->name('sesiones.update');
+        Route::delete('/{id}',      [SesionAcademicaController::class, 'destroy'])->middleware('permission:crear-academico')->name('sesiones.destroy');
+        Route::put('/{id}/abrir',   [SesionAcademicaController::class, 'abrir'])->middleware('permission:crear-academico')->name('sesiones.abrir');
+        Route::put('/{id}/cerrar',  [SesionAcademicaController::class, 'cerrar'])->middleware('permission:crear-academico')->name('sesiones.cerrar');
+        Route::put('/{id}/cancelar',[SesionAcademicaController::class, 'cancelar'])->middleware('permission:crear-academico')->name('sesiones.cancelar');
+        Route::get('/{id}',         [SesionAcademicaController::class, 'show'])->middleware('permission:crear-academico')->name('sesiones.show');
+    });
+
+    Route::prefix('tipos-sesion-academica')->name('tipos-sesion-academica.')->middleware(['permission:editar-academico', 'modulo:academico'])->group(function () {
+        Route::get('/',        [TipoSesionAcademicaController::class, 'index'])->name('index');
+        Route::post('/',       [TipoSesionAcademicaController::class, 'store'])->name('store');
+        Route::put('/{id}',    [TipoSesionAcademicaController::class, 'toggleActivo'])->name('toggleActivo');
+        Route::delete('/{id}', [TipoSesionAcademicaController::class, 'destroy'])->name('destroy');
     });
 
     //  Sanciones — M07

@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\CerrarJustificacionesVencidasJob;
 use App\Jobs\VencerSancionesJob;
 use App\Jobs\VerificarConfirmacionesJob;
 use Illuminate\Foundation\Inspiring;
@@ -34,3 +35,7 @@ Schedule::job(new VerificarConfirmacionesJob)->everyFifteenMinutes();
 // Cierra automáticamente las sanciones activas/apeladas cuya fechaFinSancion
 // ya pasó, marcándolas como cumplidas. Las de fecha indefinida no se tocan.
 Schedule::job(new VencerSancionesJob)->daily();
+
+// Cierra la ventana de justificación de asistencias académicas vencidas sin
+// justificar, y finaliza sesiones pasadas que el instructor nunca cerró.
+Schedule::job(new CerrarJustificacionesVencidasJob)->daily();

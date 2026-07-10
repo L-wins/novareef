@@ -24,7 +24,7 @@ class RolesPermisosSeeder extends Seeder
             // Finanzas
             'ver-finanzas', 'crear-finanzas', 'editar-finanzas',
             // Académico
-            'ver-academico', 'crear-academico',
+            'ver-academico', 'crear-academico', 'editar-academico', 'gestionar-asistencia',
             // Sanciones
             'ver-sanciones', 'crear-sanciones', 'editar-sanciones',
         ];
@@ -58,12 +58,13 @@ class RolesPermisosSeeder extends Seeder
         $sanciones->syncPermissions([
             'ver-arbitros',
             'ver-sanciones', 'crear-sanciones', 'editar-sanciones',
+            'ver-academico', 'editar-academico',
         ]);
 
         $tecnico = Role::firstOrCreate(['name' => 'tecnico', 'guard_name' => 'web']);
         $tecnico->syncPermissions([
             'ver-arbitros',
-            'ver-academico', 'crear-academico',
+            'ver-academico', 'crear-academico', 'editar-academico', 'gestionar-asistencia',
         ]);
 
         $arbitro = Role::firstOrCreate(['name' => 'arbitro', 'guard_name' => 'web']);

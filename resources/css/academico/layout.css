@@ -1,0 +1,112 @@
+/* ── Cards de sesión (listado del instructor) ── */
+.sesiones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.sesion-card {
+    background: var(--aca-bg-card);
+    border: 1px solid var(--aca-border);
+    border-radius: var(--aca-radius);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: border-color .15s ease;
+}
+.sesion-card:hover { border-color: var(--aca-border-h); }
+
+.sesion-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.sesion-card__tema {
+    font-weight: 600;
+    color: var(--aca-text);
+    font-size: 0.95rem;
+}
+
+.sesion-card__meta {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    color: var(--aca-text-2);
+}
+.sesion-card__meta i { color: var(--aca-text-mute); margin-right: 0.3rem; }
+
+.sesion-card__progreso-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--aca-text-mute);
+}
+
+.sesion-progreso-bar {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--nv-fill-1);
+    overflow: hidden;
+}
+.sesion-progreso-bar__fill {
+    height: 100%;
+    background: var(--aca-accent);
+    border-radius: 999px;
+}
+
+.sesion-card__footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* ── Stat tiles (mis-clases del árbitro) ── */
+.aca-stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.aca-stat {
+    background: var(--aca-bg-card);
+    border: 1px solid var(--aca-border);
+    border-radius: var(--aca-radius);
+    padding: 1rem 1.25rem;
+}
+.aca-stat__label {
+    font-size: 0.72rem;
+    color: var(--aca-text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.aca-stat__value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--aca-text);
+    margin-top: 0.2rem;
+}
+
+.aca-section-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--aca-text);
+    margin: 0.5rem 0 0.75rem;
+}
+
+.aca-proxima-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    background: var(--aca-bg-card);
+    border: 1px solid var(--aca-border);
+    border-radius: var(--aca-radius-sm);
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.6rem;
+}
+
+:root[data-theme="light"] .sesion-progreso-bar { background: rgba(15, 23, 42, 0.08); }

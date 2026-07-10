@@ -1,0 +1,22 @@
+/* ── Tabla de asistencia en tiempo real (modo manual) ── */
+.asistencia-row[data-estado="presente"]  { background: rgba(16, 185, 129, 0.05); }
+.asistencia-row[data-estado="ausente"]   { background: transparent; }
+.asistencia-row.recien-actualizada {
+    animation: aca-flash 1.4s ease-out;
+}
+
+@keyframes aca-flash {
+    0%   { background: rgba(79, 142, 247, 0.22); }
+    100% { background: transparent; }
+}
+
+.asistencia-hora {
+    font-size: 0.78rem;
+    color: var(--aca-text-mute);
+}
+
+.asistencia-acciones {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: flex-end;
+}

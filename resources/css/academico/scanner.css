@@ -1,0 +1,62 @@
+/* ── Modo scanner: input grande con foco automático ── */
+.scanner-panel {
+    background: var(--aca-bg-card);
+    border: 1px solid var(--aca-border);
+    border-radius: var(--aca-radius);
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.scanner-panel__icono {
+    font-size: 2.25rem;
+    color: var(--aca-accent);
+    margin-bottom: 0.75rem;
+}
+
+.scanner-input {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    font-size: 1.5rem;
+    text-align: center;
+    padding: 0.9rem 1.25rem;
+    border-radius: var(--aca-radius-sm);
+    border: 2px solid var(--aca-border-h);
+    background: var(--nv-bg);
+    color: var(--aca-text);
+    letter-spacing: 0.05em;
+}
+.scanner-input:focus {
+    outline: none;
+    border-color: var(--aca-accent);
+    box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.2);
+}
+
+.scanner-feedback {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    min-height: 1.4rem;
+}
+.scanner-feedback--ok    { color: #6ee7b7; }
+.scanner-feedback--error { color: #fca5a5; }
+
+.scanner-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.scanner-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--aca-bg-card);
+    border: 1px solid var(--aca-border);
+    border-radius: var(--aca-radius-sm);
+    padding: 0.7rem 1rem;
+    animation: aca-flash 1.4s ease-out;
+}
+
+:root[data-theme="light"] .scanner-feedback--ok    { color: #15803d; }
+:root[data-theme="light"] .scanner-feedback--error { color: #dc2626; }

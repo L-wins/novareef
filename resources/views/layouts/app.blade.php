@@ -187,12 +187,25 @@
                 @endif
 
                 @if (in_array('academico', $modulosPlan ?? [], true))
-                @can('ver-academico')
-                <a href="{{ route('academico.index') }}"
-                   class="sidebar-link {{ request()->routeIs('academico.*') ? 'active' : '' }}">
+                @can('crear-academico')
+                <a href="{{ route('academico.sesiones.index') }}"
+                   class="sidebar-link {{ request()->routeIs('academico.sesiones.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-graduation-cap"></i>
                     <span>Académico</span>
                 </a>
+                <a href="{{ route('academico.justificaciones.pendientes') }}"
+                   class="sidebar-link sidebar-link--sub {{ request()->routeIs('academico.justificaciones.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-file-circle-question"></i>
+                    <span>Justificaciones</span>
+                </a>
+                @else
+                @can('ver-academico')
+                <a href="{{ route('academico.mis-clases') }}"
+                   class="sidebar-link {{ request()->routeIs('academico.mis-clases') || request()->routeIs('academico.justificaciones.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>Mis Clases</span>
+                </a>
+                @endcan
                 @endcan
                 @endif
 

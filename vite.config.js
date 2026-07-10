@@ -29,6 +29,8 @@ export default defineConfig({
                 'resources/js/finanzas/finanzas.js',
                 'resources/css/sanciones/sanciones.css',
                 'resources/js/sanciones/sanciones.js',
+                'resources/css/academico/academico.css',
+                'resources/js/academico/academico.js',
             ],
             refresh: true,
         }),
