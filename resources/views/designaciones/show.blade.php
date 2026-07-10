@@ -21,12 +21,12 @@
         $estado     = $partido->estadoPartido;
         $esBorrador = $estado === 'borrador';
         $esCritico  = $estado === 'critico';
-        $enCurso    = $estado === 'en_curso';
         $fechaHuman = $partido->fechaPartido?->locale('es')->isoFormat('dddd D [de] MMMM [de] YYYY');
-        $esTerminal = in_array($estado, ['finalizado', 'cancelado']);
+        $esTerminal     = in_array($estado, ['finalizado', 'cancelado']);
+        $puedeReasignar = ! $esBorrador && ! in_array($estado, ['finalizado', 'cancelado'], true);
         $rolUsuario = Auth::user()->rolUsuario;
         $veHistorial = in_array($rolUsuario, ['designador', 'ejecutivo', 'superadmin'], true);
-        $estadoMapa = ['borrador'=>'Borrador','programado'=>'Programado','confirmado'=>'Confirmado','critico'=>'Crítico','aplazado'=>'Aplazado','en_curso'=>'En curso','finalizado'=>'Finalizado','cancelado'=>'Cancelado'];
+        $estadoMapa = ['borrador'=>'Borrador','programado'=>'Programado','confirmado'=>'Confirmado','critico'=>'Crítico','aplazado'=>'Aplazado','finalizado'=>'Finalizado','cancelado'=>'Cancelado'];
     @endphp
 
     {{-- Banner borrador / publicado --}}
@@ -43,7 +43,7 @@
         <i class="fa-solid fa-circle-check"></i>
         <div>
             <strong>PUBLICADO — Los árbitros han sido notificados.</strong>
-            <div class="banner-publicado__sub">Para modificar árbitros debes contactar al árbitro directamente. Solo el veedor puede cambiarse.</div>
+            <div class="banner-publicado__sub">Puedes reasignar un rol si es necesario — solo se notifica al árbitro nuevo, sin afectar a los demás.</div>
         </div>
     </div>
     @endif
@@ -91,6 +91,19 @@
             @php
                 // Numerar visualmente solo cuando el rol tiene más de un slot
                 $conteoPorRol = $slots->groupBy('idRol')->map->count();
+
+                // Resumen para el modal de confirmación de publicación —
+                // mismos datos que ya se pintan en los slot-card, solo
+                // reordenados en un arreglo plano para pasarlos por
+                // window.partidoResumen (ver script al final del archivo).
+                $resumenRoles = $slots->map(function ($slot) use ($conteoPorRol) {
+                    $multiple = ($conteoPorRol[$slot->idRol] ?? 1) > 1;
+
+                    return [
+                        'rol'     => $slot->rol?->nombre . ($multiple ? " {$slot->numeroSlot}" : ''),
+                        'arbitro' => $slot->designacion?->arbitro?->usuario?->nombreUsuario,
+                    ];
+                })->values();
             @endphp
 
             @foreach($slots as $slot)
@@ -114,6 +127,14 @@
                             onclick="quitarDesignacion({{ $designacion->idDesignacion }}, {{ $slot->idRol }})">
                         <i class="fa-solid fa-xmark"></i> Quitar
                     </button>
+                    @endif
+                    @if(!$esBorrador && $designacion && $puedeReasignar)
+                    @can('crear-designaciones')
+                    <button class="btn btn-ghost btn-xs btn-reasignar"
+                            onclick="toggleReasignarBusqueda({{ $designacion->idDesignacion }})">
+                        <i class="fa-solid fa-arrows-rotate"></i> Reasignar
+                    </button>
+                    @endcan
                     @endif
                 </div>
 
@@ -142,6 +163,21 @@
                         <i class="fa-solid fa-comment-slash"></i>
                         "{{ $designacion->motivoRechazo }}"
                     </div>
+                    @endif
+                    @if(!$esBorrador && $puedeReasignar)
+                    @can('crear-designaciones')
+                    {{-- Buscador de árbitro para reasignar (oculto hasta que se pulse "Reasignar") --}}
+                    <div class="arbitro-search arbitro-search--reasignar" style="display:none"
+                         data-rol="{{ $slot->idRol }}" data-partido="{{ $partido->idPartido }}"
+                         data-reasignar="{{ $designacion->idDesignacion }}"
+                         id="reasignar-search-{{ $designacion->idDesignacion }}">
+                        <input type="text"
+                               class="arbitro-search__input form-input"
+                               placeholder="Buscar árbitro reemplazo..."
+                               autocomplete="off">
+                        <div class="arbitro-search__results" style="display:none"></div>
+                    </div>
+                    @endcan
                     @endif
                 @elseif($esBorrador)
                     @can('crear-designaciones')
@@ -173,8 +209,9 @@
                 <i class="fa-solid fa-history"></i>
                 Historial de acciones
             </div>
-            <div class="historial-timeline">
-                @forelse($partido->historial as $h)
+            @php $historialVisibleInicial = 5; @endphp
+            <div class="historial-timeline" id="historial-timeline">
+                @forelse($partido->historial as $i => $h)
                 @php
                     $tipoLabel = [
                         'asignado'               => 'Árbitro asignado',
@@ -186,7 +223,7 @@
                         'emergente_cubrio'       => 'Emergente cubrió',
                     ][$h->tipoAccion] ?? $h->tipoAccion;
                 @endphp
-                <div class="historial-item">
+                <div class="historial-item {{ $i >= $historialVisibleInicial ? 'historial-item--oculto' : '' }}">
                     <div class="historial-dot historial-dot--{{ $h->tipoAccion }}"></div>
                     <div class="historial-body">
                         <div class="historial-accion">{{ $tipoLabel }}</div>
@@ -213,6 +250,15 @@
                 <p class="empty-state__sub">No hay acciones registradas aún.</p>
                 @endforelse
             </div>
+            @if($partido->historial->count() > $historialVisibleInicial)
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-historial-toggle"
+                    style="width:100%;margin-top:.5rem"
+                    data-restantes="{{ $partido->historial->count() - $historialVisibleInicial }}"
+                    onclick="toggleHistorialCompleto()">
+                <i class="fa-solid fa-chevron-down"></i>
+                Ver {{ $partido->historial->count() - $historialVisibleInicial }} más...
+            </button>
+            @endif
             @endif
         </div>
 
@@ -231,6 +277,16 @@
                 <button class="btn-publicar" onclick="publicarPartido({{ $partido->idPartido }})">
                     <i class="fa-solid fa-rocket"></i>
                     Publicar partido
+                </button>
+                <button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;margin-top:.6rem"
+                        onclick="abrirModalEditarPartido()">
+                    <i class="fa-solid fa-pen"></i>
+                    Editar partido
+                </button>
+                <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:.6rem;color:#fca5a5"
+                        onclick="eliminarPartido({{ $partido->idPartido }})">
+                    <i class="fa-solid fa-trash"></i>
+                    Eliminar partido
                 </button>
             </div>
             @endif
@@ -264,12 +320,10 @@
             <div class="info-card">
                 <div class="info-card__title">Cambiar estado</div>
                 <select id="estado-nuevo" class="form-input" data-nova-select>
-                    @foreach(\App\StateMachines\PartidoStateMachine::TRANSICIONES[$estado] as $sig)
+                    @foreach(\App\StateMachines\PartidoStateMachine::transicionesManuales($estado) as $sig)
                     <option value="{{ $sig }}">{{ $estadoMapa[$sig] ?? $sig }}</option>
                     @endforeach
                 </select>
-                <textarea id="estado-detalle" class="form-input" rows="2"
-                          placeholder="Observación (opcional)..." style="margin-top:.75rem;resize:vertical"></textarea>
                 <button class="btn btn-primary" style="width:100%;margin-top:.75rem"
                         onclick="cambiarEstado({{ $partido->idPartido }}, {{ $partido->version }})">
                     <i class="fa-solid fa-arrows-rotate"></i> Aplicar cambio
@@ -356,16 +410,128 @@
 
 </div>
 
+{{-- Editar partido (solo borrador) --}}
+@can('crear-designaciones')
+@if($esBorrador)
+<div class="nova-modal-overlay" id="modal-editar-partido" data-close-on-overlay
+     style="display:{{ $errors->any() ? 'flex' : 'none' }}">
+    <div class="nova-modal nova-modal--form">
+        <form method="POST" action="{{ route('designaciones.partido.actualizar', $partido->idPartido) }}"
+              id="form-editar-partido">
+            @csrf
+            @method('PUT')
+            <div class="nova-modal__header">
+                <h2><i class="fa-solid fa-pen"></i> Editar partido</h2>
+                <button type="button" class="nova-modal__close" onclick="cerrarModalEditarPartido()" aria-label="Cerrar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="nova-modal__body">
+                <div class="form-grid form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Equipo local <span class="req">*</span></label>
+                        <input type="text" name="equipoLocal" maxlength="150" required class="form-input"
+                               value="{{ old('equipoLocal', $partido->equipoLocal) }}">
+                        @error('equipoLocal') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Equipo visitante <span class="req">*</span></label>
+                        <input type="text" name="equipoVisitante" maxlength="150" required class="form-input"
+                               value="{{ old('equipoVisitante', $partido->equipoVisitante) }}">
+                        @error('equipoVisitante') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">División <span class="req">*</span></label>
+                        <select name="idDivision" required class="form-select"
+                                data-nova-select data-placeholder="Selecciona división">
+                            <option value="">— Selecciona —</option>
+                            @foreach ($partido->torneo->divisiones as $div)
+                                <option value="{{ $div->idDivision }}" {{ (int) old('idDivision', $partido->idDivision) === $div->idDivision ? 'selected' : '' }}>
+                                    {{ $div->nombreDivision }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('idDivision') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sede</label>
+                        <select name="idSede" class="form-select"
+                                data-nova-select data-placeholder="Sin sede">
+                            <option value="">— Sin sede —</option>
+                            @foreach ($partido->torneo->sedes as $sedeOpcion)
+                                <option value="{{ $sedeOpcion->idSede }}" {{ (int) old('idSede', $partido->idSede) === $sedeOpcion->idSede ? 'selected' : '' }}>
+                                    {{ $sedeOpcion->nombreSede }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('idSede') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha <span class="req">*</span></label>
+                        <input type="text" name="fechaPartido" required
+                               data-nova-date placeholder="dd/mm/aaaa"
+                               value="{{ old('fechaPartido', $partido->fechaPartido->format('Y-m-d')) }}"
+                               class="form-input">
+                        @error('fechaPartido') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Hora <span class="req">*</span></label>
+                        <input type="time" name="horaPartido" required class="form-input"
+                               value="{{ old('horaPartido', substr($partido->horaPartido, 0, 5)) }}">
+                        @error('horaPartido') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group span-2">
+                        <label class="form-label">Formato</label>
+                        <input type="text" disabled class="form-input" value="{{ $partido->formato?->nombre ?? '—' }}">
+                        <input type="hidden" name="idFormato" value="{{ $partido->idFormato }}">
+                        <small class="field-hint">
+                            Define los roles/slots del equipo arbitral — cambiarlo aquí podría desincronizar a
+                            los árbitros ya asignados, así que no es editable desde este modal.
+                        </small>
+                    </div>
+                    <div class="form-group span-2">
+                        <label class="form-label">Observaciones</label>
+                        <textarea name="observaciones" rows="2" class="form-textarea textarea-fixed">{{ old('observaciones', $partido->observaciones) }}</textarea>
+                        @error('observaciones') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+            </div>
+            <div class="nova-modal__footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalEditarPartido()">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="btn-guardar-editar-partido">
+                    <i class="fa-solid fa-check"></i>
+                    Guardar cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+@endcan
+
 <script>
 window.colegioId   = {{ Auth::user()->idColegio }};
+window.broadcastAuthEndpoint = "{{ url('/broadcasting/auth') }}";
 window.partidoId   = {{ $partido->idPartido }};
 window.partidoVersion = {{ $partido->version }};
+window.partidoHora = "{{ \Carbon\Carbon::createFromFormat('H:i', substr($partido->horaPartido, 0, 5))->format('g:i A') }}";
+window.partidoResumen = {
+    equipoLocal:     @json($partido->equipoLocal),
+    equipoVisitante: @json($partido->equipoVisitante),
+    fecha:           @json(ucfirst($fechaHuman ?? '')),
+    hora:            window.partidoHora,
+    sede:            @json($partido->sede?->nombreSede ?? '—'),
+    roles:           @json($resumenRoles),
+};
 window.asignarUrl  = "{{ route('designaciones.asignar', $partido->idPartido) }}";
 window.quitarBase  = "{{ url('/designaciones/designacion') }}";
+window.reasignarBase = "{{ url('/designaciones/designacion') }}";
 window.estadoUrl   = "{{ route('designaciones.estado', $partido->idPartido) }}";
 window.buscarUrl   = "{{ route('api.partidos.arbitros-disponibles', $partido->idPartido) }}";
 window.veedorUrl   = "{{ route('designaciones.partido.veedor', $partido->idPartido) }}";
 window.publicarUrl = "{{ route('designaciones.partido.publicar', $partido->idPartido) }}";
+window.eliminarPartidoBase   = "{{ url('/designaciones/partido') }}";
+window.designacionesIndexUrl = "{{ route('designaciones.index', ['torneo' => $partido->idTorneo]) }}";
 window.csrfToken   = "{{ csrf_token() }}";
 </script>
 @endsection

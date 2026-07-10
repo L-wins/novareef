@@ -1,6 +1,6 @@
-/* =========================================================
+/* 
    welcome.js — Comportamiento interactivo de la página pública
-   ========================================================= */
+    */
 
 document.addEventListener('DOMContentLoaded', () => {
     initNavbarScroll();

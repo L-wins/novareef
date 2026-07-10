@@ -27,7 +27,7 @@ class CalificacionArbitro extends Model
         'nota' => 'decimal:1',
     ];
 
-    // ── Accessors ─────────────────────────────────────────────────────────────
+    // ── Accessors ───
 
     public function getNotaLabelAttribute(): string
     {
@@ -53,7 +53,7 @@ class CalificacionArbitro extends Model
         };
     }
 
-    // ── Relaciones ────────────────────────────────────────────────────────────
+    // ── Relaciones ──
 
     public function designacion(): BelongsTo
     {

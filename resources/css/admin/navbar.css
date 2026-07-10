@@ -1,0 +1,240 @@
+/*
+   SIDEBAR NAVBAR
+    */
+
+.navbar {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  /* El box del navbar mide SIEMPRE el ancho expandido — nunca cambia de
+     tamaño. Lo que se anima al hacer hover es cuánto se ve de esa caja
+     (clip-path), no su "width" real.
+     Por qué: "width" dispara layout (reflow) en cada frame de la
+     animación sin excepción — no importa el "contain" o el will-change
+     que se use, es una limitación de cómo funcionan los motores de layout
+     de los navegadores, no algo optimizable desde CSS. clip-path con una
+     forma simple (inset) no dispara layout, solo recorta lo ya pintado:
+     es la única garantía real de cero reflow, en cualquier hardware.
+     Contrapartida: se quitó el box-shadow decorativo del hover — clip-path
+     recorta también cualquier pintura que se salga de esta caja (incluido
+     un box-shadow propio), así que no pueden convivir. */
+  width: var(--sidebar-w-open);
+  background: var(--bg-navbar);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  clip-path: inset(0 calc(var(--sidebar-w-open) - var(--sidebar-w)) 0 0);
+  transition: clip-path var(--timing) var(--ease);
+  z-index: 200;
+}
+
+.navbar:hover {
+  clip-path: inset(0 0 0 0);
+}
+
+/* Logo */
+.navbar__logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--header-h);
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.navbar__logo-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 20px var(--primary-glow);
+}
+.navbar__logo-icon svg { width: 18px; height: 18px; color: #fff; stroke-width: 2; }
+
+.navbar__logo-text {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-bright);
+  letter-spacing: -0.4px;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity var(--timing) var(--ease), transform var(--timing) var(--ease);
+}
+.navbar:hover .navbar__logo-text { opacity: 1; transform: translateX(0); }
+
+/* Menu */
+.navbar__menu {
+  flex: 1;
+  padding: 12px 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.navbar__menu::-webkit-scrollbar { width: 0; }
+
+.navbar__item { margin-bottom: 2px; }
+
+.navbar__link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: var(--link-height);
+  padding: 0 14px;
+  border-radius: var(--border-radius);
+  color: var(--text);
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: background var(--timing) var(--ease), color var(--timing) var(--ease);
+}
+
+.navbar__link:hover {
+  background: var(--nv-fill-2);
+  color: var(--text-bright);
+}
+
+.navbar__link.active {
+  background: var(--primary-dim);
+  color: var(--primary);
+}
+
+/* Active left stripe + glow */
+.navbar__link.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--primary);
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 0 12px var(--primary-glow);
+}
+
+/* "Gooey" blob — smooth pill indicator animado.
+   Antes usaba filter:blur(6px): como este pseudo-elemento estira al 100%
+   del ancho de .navbar__link, y ese ancho cambia en cada frame mientras
+   .navbar anima su "width" en hover, el navegador tenía que re-rasterizar
+   el blur en cada frame a un tamaño distinto — el causante real de que el
+   menú se sintiera trabado al abrir/cerrar. Un radial-gradient da el mismo
+   glow sin filtro, así que no hay nada que recalcular por frame. */
+.navbar__link.active::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  background: radial-gradient(ellipse at center, rgba(79, 142, 247, 0.14) 0%, rgba(79, 142, 247, 0) 72%);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+/* Icon */
+.navbar__link i,
+.navbar__link svg {
+  width: 18px;
+  height: 18px;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  transition: filter var(--timing);
+}
+
+.navbar__link.active i,
+.navbar__link.active svg {
+  filter: drop-shadow(0 0 6px var(--primary-glow));
+}
+
+/* Label */
+.navbar__link span {
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity var(--timing) var(--ease), transform var(--timing) var(--ease);
+  position: relative;
+  z-index: 1;
+}
+.navbar:hover .navbar__link span { opacity: 1; transform: translateX(0); }
+
+/* Divider */
+.navbar__divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 6px 12px;
+}
+
+/* Footer: user + logout */
+.navbar__footer {
+  border-top: 1px solid var(--border-color);
+  padding: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.navbar__user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px 6px;
+}
+
+.navbar__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(79, 142, 247, 0.15);
+  border: 1px solid rgba(79, 142, 247, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.navbar__username {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-bright);
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity var(--timing) var(--ease), transform var(--timing) var(--ease);
+}
+.navbar:hover .navbar__username { opacity: 1; transform: translateX(0); }
+
+.navbar__logout {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 3rem;
+  padding: 0 14px;
+  border-radius: var(--border-radius);
+  color: var(--text);
+  width: 100%;
+  text-align: left;
+  transition: background var(--timing), color var(--timing);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.navbar__logout:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+.navbar__logout i,
+.navbar__logout svg { width: 18px; height: 18px; flex-shrink: 0; }
+.navbar__logout span {
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity var(--timing) var(--ease), transform var(--timing) var(--ease);
+}
+.navbar:hover .navbar__logout span { opacity: 1; transform: translateX(0); }

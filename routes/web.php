@@ -1,16 +1,28 @@
 <?php
 
+use App\Http\Controllers\Academico\AsistenciaController;
+use App\Http\Controllers\Academico\JustificacionController;
+use App\Http\Controllers\Academico\SesionAcademicaController;
+use App\Http\Controllers\Academico\TipoSesionAcademicaController;
 use App\Http\Controllers\Arbitro\ArbitroController;
 use App\Http\Controllers\Arbitro\ArbitroFotoController;
 use App\Http\Controllers\Arbitro\ArbitroPerfilController;
 use App\Http\Controllers\Arbitro\CategoriaArbitroController;
+use App\Http\Controllers\Arbitro\EstadoCuentaArbitroController;
 use App\Http\Controllers\Auth\CambioContrasenaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Colegio\ColegioController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Configuracion\ConfiguracionController;
+use App\Http\Controllers\Configuracion\CuentaAdminController;
 use App\Http\Controllers\Designacion\CalificacionController;
 use App\Http\Controllers\Designacion\DesignacionController;
+use App\Http\Controllers\Finanza\MovimientoFinancieroController;
+use App\Http\Controllers\Finanza\BalanceFinancieroController;
+use App\Http\Controllers\Finanza\PagoArbitroController;
+use App\Http\Controllers\Finanza\ReporteFinancieroController;
+use App\Http\Controllers\Sancion\SancionController;
+use App\Http\Controllers\Sancion\TipoSancionController;
 use App\Http\Controllers\Designacion\DisponibilidadController;
 use App\Http\Controllers\Torneo\DivisionTorneoController;
 use App\Http\Controllers\Torneo\EmergenteTorneoController;
@@ -33,6 +45,16 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/mi-perfil/completar',  [ArbitroPerfilController::class, 'completar'])->name('arbitros.completar-perfil');
     Route::post('/mi-perfil/completar', [ArbitroPerfilController::class, 'guardar'])->name('arbitros.guardar-perfil');
+
+    // Preferencia de tema — disponible para cualquier usuario autenticado
+    Route::patch('/preferencias/tema', [\App\Http\Controllers\Configuracion\PreferenciaController::class, 'actualizarTema'])
+        ->name('preferencias.tema');
+
+    // Salir de una impersonación (ver AdminColegioController::impersonar) —
+    // sin verificar.colegio/verificar.perfil, para que funcione aunque el
+    // colegio impersonado esté suspendido o el perfil incompleto.
+    Route::post('/impersonacion/salir', [\App\Http\Controllers\ImpersonacionController::class, 'salir'])
+        ->name('impersonacion.salir');
 });
 
 // Rutas privadas (requieren autenticación)
@@ -47,6 +69,11 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     //  Mi perfil (árbitro autenticado)
     Route::get('/mi-perfil', [ArbitroPerfilController::class, 'show'])->name('arbitros.mi-perfil');
     Route::put('/mi-perfil', [ArbitroPerfilController::class, 'update'])->name('arbitros.mi-perfil.update');
+
+    //  Mi estado de cuenta — fuera del grupo finanzas: el árbitro no tiene
+    //  ver-finanzas, mismo criterio que finalizarPartido con ver-designaciones.
+    Route::get('/mi-estado-cuenta', [EstadoCuentaArbitroController::class, 'show'])->name('arbitros.estado-cuenta');
+    Route::get('/mi-estado-cuenta/comprobante/{lote}', [EstadoCuentaArbitroController::class, 'comprobante'])->name('arbitros.estado-cuenta.comprobante');
 
     // Foto de perfil — el árbitro siempre, y editores con permiso
     Route::post('/arbitros/{id}/foto',   [ArbitroFotoController::class, 'subir'])->name('arbitros.foto.subir');
@@ -79,7 +106,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     });
 
     //  Torneos 
-    Route::prefix('torneos')->name('torneos.')->middleware('permission:ver-torneos')->group(function () {
+    Route::prefix('torneos')->name('torneos.')->middleware(['permission:ver-torneos', 'modulo:torneos'])->group(function () {
         Route::get('/',              [TorneoController::class, 'index'])->name('index');
         Route::get('/crear',         [TorneoController::class, 'create'])->middleware('permission:crear-torneos')->name('create');
         Route::post('/',             [TorneoController::class, 'store'])->middleware('permission:crear-torneos')->name('store');
@@ -127,7 +154,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         });
 
     //  Partidos de un torneo ─
-    Route::prefix('torneos/{torneoId}/partidos')->name('partidos.')->middleware('permission:ver-torneos')->group(function () {
+    Route::prefix('torneos/{torneoId}/partidos')->name('partidos.')->middleware(['permission:ver-torneos', 'modulo:torneos'])->group(function () {
         Route::get('/',           [PartidoController::class, 'index'])->name('index');
         Route::post('/',          [PartidoController::class, 'store'])->middleware('permission:crear-torneos')->name('store');
         Route::put('/{id}',       [PartidoController::class, 'update'])->middleware('permission:editar-torneos')->name('update');
@@ -135,7 +162,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     });
 
     //  Designaciones — M04 Bloque 3
-    Route::prefix('designaciones')->name('designaciones.')->middleware('permission:ver-designaciones')->group(function () {
+    Route::prefix('designaciones')->name('designaciones.')->middleware(['permission:ver-designaciones', 'modulo:designaciones'])->group(function () {
         Route::get('/',         [DesignacionController::class, 'index'])->name('index');
         Route::get('/crear',    [DesignacionController::class, 'crearPartido'])->middleware('permission:crear-designaciones')->name('create');
         Route::post('/',        [DesignacionController::class, 'guardarPartido'])->middleware('permission:crear-designaciones')->name('store');
@@ -144,8 +171,11 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         // AJAX — requieren permiso crear-designaciones
         Route::post('/{id}/asignar',           [DesignacionController::class, 'asignarArbitro'])->middleware('permission:crear-designaciones')->name('asignar');
         Route::delete('/designacion/{id}',     [DesignacionController::class, 'quitarDesignacion'])->middleware('permission:crear-designaciones')->name('quitar');
+        Route::put('/designacion/{id}/reasignar', [DesignacionController::class, 'reasignarArbitro'])->middleware('permission:crear-designaciones')->name('reasignar');
         Route::put('/{id}/estado',             [DesignacionController::class, 'cambiarEstadoPartido'])->middleware('permission:crear-designaciones')->name('estado');
+        Route::put('/partido/{id}',            [DesignacionController::class, 'actualizarPartido'])->middleware('permission:crear-designaciones')->name('partido.actualizar');
         Route::post('/partido/{id}/publicar',  [DesignacionController::class, 'publicarPartido'])->middleware('permission:crear-designaciones')->name('partido.publicar');
+        Route::delete('/partido/{id}',         [DesignacionController::class, 'eliminarPartido'])->middleware('permission:crear-designaciones')->name('partido.eliminar');
         Route::put('/partido/{id}/veedor',     [DesignacionController::class, 'asignarVeedor'])->middleware('permission:crear-designaciones')->name('partido.veedor');
         Route::get('/partido/{id}/acta',       [DesignacionController::class, 'generarActa'])->middleware('permission:ver-designaciones')->name('partido.acta');
         Route::get('/partido/{id}/calificaciones', [CalificacionController::class, 'index'])->middleware('permission:crear-calificaciones')->name('calificaciones.index');
@@ -159,8 +189,15 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     //  Mis partidos (árbitro)
     Route::prefix('mis-partidos')->name('mis-partidos.')->group(function () {
         Route::get('/',           [DesignacionController::class, 'misPartidos'])->name('index');
+        Route::get('/historial',  [DesignacionController::class, 'historialPartidos'])->name('historial');
+        Route::get('/historial/pdf', [DesignacionController::class, 'historialPdf'])->name('historial.pdf');
         Route::get('/{id}',       [DesignacionController::class, 'detallePartido'])->name('detalle');
         Route::post('/{id}/confirmar', [DesignacionController::class, 'confirmarDesignacion'])->name('confirmar');
+        // Fallback GET: los correos de designación antiguos traían el botón
+        // "Confirmar" como enlace directo a la URL POST — un clic desde el
+        // correo hace GET y explotaba con MethodNotAllowed. Redirige a la
+        // card correspondiente en Mis partidos.
+        Route::get('/{id}/confirmar',  [DesignacionController::class, 'redirigirConfirmacionEmail'])->name('confirmar.email');
         Route::post('/{id}/rechazar',  [DesignacionController::class, 'rechazarDesignacion'])->name('rechazar');
     });
 
@@ -196,32 +233,107 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         ->name('disponibilidad.arbitro')
         ->middleware('permission:crear-designaciones');
 
-    //  Finanzas ─
-    Route::prefix('finanzas')->name('finanzas.')->middleware('permission:ver-finanzas')->group(function () {
-        Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
-        Route::get('/crear', fn () => redirect()->route('dashboard'))->middleware('permission:crear-finanzas')->name('create');
-        Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-finanzas')->name('store');
+    //  Finanzas — M06
+    Route::prefix('finanzas')->name('finanzas.')->middleware(['permission:ver-finanzas', 'modulo:finanzas'])->group(function () {
+        Route::get('/',         [MovimientoFinancieroController::class, 'index'])->name('index');
+        Route::get('/crear',    [MovimientoFinancieroController::class, 'create'])->middleware('permission:crear-finanzas')->name('create');
+        Route::get('/exportar', [MovimientoFinancieroController::class, 'exportarCsv'])->name('exportar');
+        Route::post('/',        [MovimientoFinancieroController::class, 'store'])->middleware('permission:crear-finanzas')->name('store');
+
+        // Pago acumulado al árbitro y reportes — antes de /{id} para que no los capture como id
+        Route::prefix('pagos-arbitro')->name('pagos-arbitro.')->group(function () {
+            Route::get('/',  [PagoArbitroController::class, 'index'])->name('index');
+            Route::post('/', [PagoArbitroController::class, 'store'])->middleware('permission:crear-finanzas')->name('store');
+            Route::get('/comprobante/{lote}', [PagoArbitroController::class, 'comprobante'])->name('comprobante');
+        });
+
+        Route::get('/reportes',     [ReporteFinancieroController::class, 'index'])->name('reportes.index');
+        Route::get('/reportes/pdf', [ReporteFinancieroController::class, 'pdf'])->name('reportes.pdf');
+        Route::get('/balance',      [BalanceFinancieroController::class, 'index'])->name('balance.index');
+
+        Route::get('/{id}',  [MovimientoFinancieroController::class, 'show'])->name('show');
+        Route::post('/{id}/abonos', [MovimientoFinancieroController::class, 'abonar'])->middleware('permission:crear-finanzas')->name('abonar');
+        Route::put('/{id}/anular',  [MovimientoFinancieroController::class, 'anular'])->middleware('permission:editar-finanzas')->name('anular');
     });
 
-    //  Académico 
-    Route::prefix('academico')->name('academico.')->middleware('permission:ver-academico')->group(function () {
-        Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
-        Route::get('/crear', fn () => redirect()->route('dashboard'))->middleware('permission:crear-academico')->name('create');
-        Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-academico')->name('store');
+    //  Académico — M08
+    Route::prefix('academico')->name('academico.')->middleware(['permission:ver-academico', 'modulo:academico'])->group(function () {
+        // Instructor / ejecutivo — gestión de sesiones
+        Route::get('/',      [SesionAcademicaController::class, 'index'])->middleware('permission:crear-academico')->name('sesiones.index');
+        Route::get('/crear', [SesionAcademicaController::class, 'create'])->middleware('permission:crear-academico')->name('sesiones.create');
+        Route::post('/',     [SesionAcademicaController::class, 'store'])->middleware('permission:crear-academico')->name('sesiones.store');
+
+        // Árbitro
+        Route::get('/mis-clases', [SesionAcademicaController::class, 'misClases'])->name('mis-clases');
+
+        // Justificaciones — el árbitro crea, instructor/ejecutivo/sanciones revisan
+        Route::get('/justificaciones/pendientes',     [JustificacionController::class, 'pendientes'])->middleware('permission:editar-academico')->name('justificaciones.pendientes');
+        Route::put('/justificaciones/{id}',           [JustificacionController::class, 'revisar'])->middleware('permission:editar-academico')->name('justificaciones.revisar');
+        Route::get('/justificaciones/{id}/documento', [JustificacionController::class, 'descargarDocumento'])->name('justificaciones.documento');
+
+        // Scanner (terminal del instructor)
+        Route::post('/scanner', [AsistenciaController::class, 'scanner'])->middleware('permission:crear-academico')->name('scanner');
+
+        // Asistencias
+        Route::post('/asistencias/{id}/marcar',     [AsistenciaController::class, 'marcar'])->name('asistencias.marcar');
+        Route::put('/asistencias/{id}',             [AsistenciaController::class, 'corregir'])->middleware('permission:crear-academico')->name('asistencias.corregir');
+        Route::get('/asistencias/{id}/justificar',  [JustificacionController::class, 'create'])->name('justificaciones.create');
+        Route::post('/asistencias/{id}/justificar', [JustificacionController::class, 'store'])->name('justificaciones.store');
+
+        // Sesión individual — rutas fijas antes de /{id}
+        Route::get('/{id}/editar',   [SesionAcademicaController::class, 'edit'])->middleware('permission:crear-academico')->name('sesiones.edit');
+        Route::put('/{id}',         [SesionAcademicaController::class, 'update'])->middleware('permission:crear-academico')->name('sesiones.update');
+        Route::delete('/{id}',      [SesionAcademicaController::class, 'destroy'])->middleware('permission:crear-academico')->name('sesiones.destroy');
+        Route::put('/{id}/abrir',   [SesionAcademicaController::class, 'abrir'])->middleware('permission:crear-academico')->name('sesiones.abrir');
+        Route::put('/{id}/cerrar',  [SesionAcademicaController::class, 'cerrar'])->middleware('permission:crear-academico')->name('sesiones.cerrar');
+        Route::put('/{id}/cancelar',[SesionAcademicaController::class, 'cancelar'])->middleware('permission:crear-academico')->name('sesiones.cancelar');
+        Route::get('/{id}',         [SesionAcademicaController::class, 'show'])->middleware('permission:crear-academico')->name('sesiones.show');
     });
 
-    //  Sanciones 
-    Route::prefix('sanciones')->name('sanciones.')->middleware('permission:ver-sanciones')->group(function () {
-        Route::get('/',      fn () => redirect()->route('dashboard'))->name('index');
-        Route::get('/crear', fn () => redirect()->route('dashboard'))->middleware('permission:crear-sanciones')->name('create');
-        Route::post('/',     fn () => redirect()->route('dashboard'))->middleware('permission:crear-sanciones')->name('store');
+    Route::prefix('tipos-sesion-academica')->name('tipos-sesion-academica.')->middleware(['permission:editar-academico', 'modulo:academico'])->group(function () {
+        Route::get('/',        [TipoSesionAcademicaController::class, 'index'])->name('index');
+        Route::post('/',       [TipoSesionAcademicaController::class, 'store'])->name('store');
+        Route::put('/{id}',    [TipoSesionAcademicaController::class, 'toggleActivo'])->name('toggleActivo');
+        Route::delete('/{id}', [TipoSesionAcademicaController::class, 'destroy'])->name('destroy');
+    });
+
+    //  Sanciones — M07
+    Route::prefix('sanciones')->name('sanciones.')->middleware(['permission:ver-sanciones', 'modulo:sanciones'])->group(function () {
+        Route::get('/',      [SancionController::class, 'index'])->name('index');
+        Route::get('/crear', [SancionController::class, 'create'])->middleware('permission:crear-sanciones')->name('create');
+        Route::post('/',     [SancionController::class, 'store'])->middleware('permission:crear-sanciones')->name('store');
+        Route::get('/{id}',  [SancionController::class, 'show'])->name('show');
+        Route::put('/{id}/estado', [SancionController::class, 'cambiarEstado'])->middleware('permission:crear-sanciones')->name('estado');
+    });
+
+    //  Catálogo de tipos de sanción — gestión, solo editar-sanciones
+    Route::prefix('tipos-sancion')->name('tipos-sancion.')->middleware(['permission:editar-sanciones', 'modulo:sanciones'])->group(function () {
+        Route::get('/',        [TipoSancionController::class, 'index'])->name('index');
+        Route::post('/',       [TipoSancionController::class, 'store'])->name('store');
+        Route::put('/{id}',    [TipoSancionController::class, 'toggleActivo'])->name('toggleActivo');
+        Route::delete('/{id}', [TipoSancionController::class, 'destroy'])->name('destroy');
     });
 
     //  Configuración del colegio — solo ejecutivo
     Route::prefix('configuracion')->name('configuracion.')->middleware('permission:editar-arbitros')->group(function () {
-        Route::get('/',  [ConfiguracionController::class, 'index'])->name('index');
-        Route::put('/',  [ConfiguracionController::class, 'update'])->name('update');
+        Route::get('/',        [ConfiguracionController::class, 'index'])->name('index');
+        Route::put('/',        [ConfiguracionController::class, 'update'])->name('update');
+        Route::post('/logo',   [ConfiguracionController::class, 'actualizarLogo'])->name('logo.actualizar');
+        Route::delete('/logo', [ConfiguracionController::class, 'eliminarLogo'])->name('logo.eliminar');
     });
+
+    //  Cuentas admin (tesorero, designador, sanciones, tecnico, veedor, co-ejecutivo)
+    Route::prefix('configuracion/cuentas-admin')->name('configuracion.cuentas-admin.')
+        ->middleware('permission:gestionar-cuentas-admin')->group(function () {
+            Route::get('/',            [CuentaAdminController::class, 'index'])->name('index');
+            Route::get('/crear',       [CuentaAdminController::class, 'create'])->name('create');
+            Route::get('/verificar-username', [CuentaAdminController::class, 'verificarUsername'])->name('verificar-username');
+            Route::post('/',           [CuentaAdminController::class, 'store'])->name('store');
+            Route::get('/{id}/editar', [CuentaAdminController::class, 'edit'])->name('edit');
+            Route::put('/{id}',        [CuentaAdminController::class, 'update'])->name('update');
+            Route::put('/{id}/revocar',  [CuentaAdminController::class, 'revocar'])->name('revocar');
+            Route::put('/{id}/reactivar',[CuentaAdminController::class, 'reactivar'])->name('reactivar');
+        });
 
     //  Colegios — solo superadmin
     Route::prefix('colegios')->name('colegios.')->middleware('solo.superadmin')->group(function () {

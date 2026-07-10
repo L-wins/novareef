@@ -21,11 +21,12 @@ class ColegioController extends Controller
 
     public function index(): View
     {
-        // Columnas mínimas que usa la vista: código, nombre, ciudad, plan, estado, acciones.
+        // El plan viene de la suscripción activa — 'colegios' no tiene columna de plan propia.
         $colegios = Colegio::select([
                 'idColegio', 'nombreColegio', 'codigoColegio',
-                'ciudadColegio', 'estadoColegio', 'planColegio',
+                'ciudadColegio', 'estadoColegio',
             ])
+            ->with('suscripcionActiva.plan:idPlan,nombre')
             ->orderBy('nombreColegio')
             ->get();
 
@@ -93,13 +94,9 @@ class ColegioController extends Controller
 
     public function toggleEstado(int $id): RedirectResponse
     {
-        $colegio     = Colegio::findOrFail($id);
-        $estadoFinal = $colegio->estadoColegio === 'activo' ? 'suspendido' : 'activo';
+        $colegio = Colegio::findOrFail($id);
+        $label   = $this->colegios->cambiarEstado($colegio, null);
 
-        $colegio->update(['estadoColegio' => $estadoFinal]);
-
-        $accion = $estadoFinal === 'activo' ? 'activado' : 'suspendido';
-
-        return back()->with('success', "Colegio {$accion} correctamente.");
+        return back()->with('success', "Colegio {$label} correctamente.");
     }
 }

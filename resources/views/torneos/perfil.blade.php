@@ -42,7 +42,7 @@
     {{-- ═
          SECCIÓN 1 — DIVISIONES
          ═ --}}
-    <div class="perfil-step is-open" id="step-divisiones">
+    <div class="perfil-step" id="step-divisiones">
         <div class="perfil-step-head">
             <h3>
                 <span class="perfil-step-num">1</span>
@@ -398,7 +398,7 @@
                 </label>
                 <input type="file" id="input-reglamento" name="reglamentoPDF" accept=".pdf" style="display:none;">
                 <span class="field-hint" style="margin-left:0.6rem;">
-                    Máximo 60 MB · solo PDF{{ $reglamentoActual ? ' · el anterior queda en el historial' : '' }}
+                    Máximo 20 MB · solo PDF{{ $reglamentoActual ? ' · el anterior queda en el historial' : '' }}
                 </span>
             </form>
 

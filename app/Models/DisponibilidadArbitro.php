@@ -17,7 +17,7 @@ class DisponibilidadArbitro extends Model
     protected $keyType      = 'int';
     public    $incrementing = true;
 
-    // ── Franjas horarias disponibles ──────────────────────────────────────────
+    // ── Franjas horarias disponibles ──────
     public const FRANJA_AM        = 'am';
     public const FRANJA_PM        = 'pm';
     public const FRANJA_NOCHE     = 'noche';
@@ -25,6 +25,9 @@ class DisponibilidadArbitro extends Model
     public const FRANJA_AM_NOCHE  = 'am_noche';
     public const FRANJA_PM_NOCHE  = 'pm_noche';
     public const FRANJA_TODO_DIA  = 'todo_el_dia';
+
+    /** Marca explícita de "no disponible" — distinta de no tener ningún registro (sin reportar). */
+    public const FRANJA_NO_DISPONIBLE = 'no_disponible';
 
     protected $fillable = [
         'idArbitro',
@@ -37,7 +40,7 @@ class DisponibilidadArbitro extends Model
         'fechaDisponibilidad' => 'date',
     ];
 
-    // ── Catálogo legible en español ───────────────────────────────────────────
+    // ── Catálogo legible en español ───────
 
     /**
      * Retorna todas las franjas con su etiqueta en español.
@@ -58,14 +61,28 @@ class DisponibilidadArbitro extends Model
     }
 
     /**
-     * Devuelve la etiqueta legible de la franja actual.
+     * Devuelve la etiqueta legible de la franja actual (incluye "No disponible",
+     * que no forma parte del catálogo de franjas seleccionables de getFranjas()).
      */
     public function franjaLegible(): string
     {
+        if ($this->franjaHoraria === self::FRANJA_NO_DISPONIBLE) {
+            return 'No disponible';
+        }
+
         return self::getFranjas()[$this->franjaHoraria] ?? $this->franjaHoraria;
     }
 
-    // ── Relaciones ────────────────────────────────────────────────────────────
+    /**
+     * Falso si el árbitro marcó explícitamente "no disponible" para este día.
+     * Distinto de que no exista ningún registro (ese caso no es una instancia).
+     */
+    public function esDisponible(): bool
+    {
+        return $this->franjaHoraria !== self::FRANJA_NO_DISPONIBLE;
+    }
+
+    // ── Relaciones ──
 
     public function arbitro(): BelongsTo
     {

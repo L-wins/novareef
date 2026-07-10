@@ -12,7 +12,7 @@
 </div>
 
 @if(session('success'))
-<div class="admin-alert admin-alert--success" style="margin-bottom:1.25rem;">
+<div class="admin-alert admin-alert--success">
     <i class="fa-solid fa-circle-check"></i>
     {{ session('success') }}
 </div>
@@ -41,14 +41,14 @@
             </span>
             <div class="plan-mgmt-card__status-row">
                 @if($plan->esActivo)
-                    <span class="badge badge--green" style="font-size:0.65rem;padding:3px 8px;">Activo</span>
+                    <span class="badge badge--green badge--sm">Activo</span>
                 @else
-                    <span class="badge badge--gray" style="font-size:0.65rem;padding:3px 8px;">Inactivo</span>
+                    <span class="badge badge--gray badge--sm">Inactivo</span>
                 @endif
                 @if($plan->esVisible)
-                    <span class="badge badge--blue" style="font-size:0.65rem;padding:3px 8px;">Visible</span>
+                    <span class="badge badge--blue badge--sm">Visible</span>
                 @else
-                    <span class="badge badge--gray" style="font-size:0.65rem;padding:3px 8px;">Oculto</span>
+                    <span class="badge badge--gray badge--sm">Oculto</span>
                 @endif
             </div>
         </div>
@@ -74,8 +74,8 @@
                 <span class="plan-mgmt-stat__label">Árbitros</span>
             </div>
             <div class="plan-mgmt-stat">
-                <span class="plan-mgmt-stat__value">{{ $plan->limiteRolesTexto }}</span>
-                <span class="plan-mgmt-stat__label">Roles</span>
+                <span class="plan-mgmt-stat__value">{{ $plan->limiteCuentasAdminTexto }}</span>
+                <span class="plan-mgmt-stat__label">Cuentas admin</span>
             </div>
         </div>
 
@@ -98,7 +98,7 @@
                 <i class="fa-solid fa-pen-to-square"></i>
                 Editar
             </a>
-            <form method="POST" action="{{ route('admin.planes.toggleActivo', $plan->idPlan) }}" style="display:contents;">
+            <form method="POST" action="{{ route('admin.planes.toggleActivo', $plan->idPlan) }}" class="form-contents">
                 @csrf
                 @method('PUT')
                 <button type="submit" class="a-btn a-btn--ghost plan-mgmt-card__btn"
@@ -111,8 +111,8 @@
 
     </div>
 @empty
-    <div class="admin-card" style="padding:3rem;text-align:center;grid-column:1/-1;">
-        <p style="color:var(--text-muted);font-size:0.875rem;">No hay planes registrados.</p>
+    <div class="admin-card admin-card--empty">
+        <p>No hay planes registrados.</p>
     </div>
 @endforelse
 </div>

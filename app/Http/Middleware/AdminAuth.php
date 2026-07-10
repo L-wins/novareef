@@ -13,8 +13,20 @@ class AdminAuth
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! Auth::guard('admin')->check()) {
+        $guard = Auth::guard('admin');
+
+        if (! $guard->check()) {
             return redirect()->route('admin.login');
+        }
+
+        // Revalidar en cada request: si al admin lo desactivan a mitad de
+        // sesión, no debe seguir operando hasta que la sesión expire sola.
+        if (! $guard->user()->activo) {
+            $guard->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('admin.login')->with('error', 'Tu cuenta ha sido desactivada.');
         }
 
         return $next($request);

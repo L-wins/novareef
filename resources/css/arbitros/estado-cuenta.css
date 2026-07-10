@@ -1,0 +1,34 @@
+/*  Estado de cuenta del árbitro (Finanzas M06, vista propia sin permission:ver-finanzas) */
+
+.cuenta-resumen {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+.cuenta-saldo-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+.cuenta-saldo-valor {
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.cuenta-saldo-valor.tiene-saldo { color: #fbbf24; }
+
+.monto-positivo { color: #6ee7b7; font-weight: 600; }
+.monto-negativo { color: #fca5a5; font-weight: 600; }
+
+.cuenta-mb     { margin-bottom: 1.5rem; }
+.cuenta-icono  { font-size: 2.5rem; opacity: .35; }
+.cuenta-scroll { overflow-x: auto; }
+
+:root[data-theme="light"] .cuenta-saldo-valor.tiene-saldo { color: #b45309; }
+:root[data-theme="light"] .monto-positivo { color: #15803d; }
+:root[data-theme="light"] .monto-negativo { color: #dc2626; }

@@ -11,6 +11,7 @@ use App\Http\Requests\Torneo\StoreEmergenteRequest;
 use App\Models\Arbitro;
 use App\Models\EmergenteTorneo;
 use App\Models\Torneo;
+use App\Services\EmergenteTorneoService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +20,10 @@ use Illuminate\View\View;
 class EmergenteTorneoController extends Controller
 {
     use ResuelveColegio, AutorizaTorneo;
+
+    public function __construct(
+        private readonly EmergenteTorneoService $emergentes,
+    ) {}
 
     public function index(int $torneoId): View
     {
@@ -55,32 +60,24 @@ class EmergenteTorneoController extends Controller
         $datos   = $request->validated();
         $arbitro = Arbitro::findOrFail($datos['idArbitro']);
 
-        // Reglas de negocio: el árbitro debe estar activo y pertenecer al mismo colegio.
-        abort_unless($arbitro->estadoArbitro === 'activo', 422, 'El árbitro seleccionado no está activo.');
-        abort_unless((int) $arbitro->idColegio === $this->idColegioActivo(), 403, 'El árbitro pertenece a otro colegio.');
-
-        abort_if(
-            EmergenteTorneo::where('idTorneo', $torneo->idTorneo)
-                ->where('idArbitro', $datos['idArbitro'])
-                ->where('fechaEmergente', $datos['fechaEmergente'])
-                ->exists(),
-            422,
-            'Este árbitro ya está asignado como emergente en esa fecha para este torneo.',
-        );
-
-        EmergenteTorneo::create([
-            'idTorneo'           => $torneo->idTorneo,
-            'idArbitro'          => $datos['idArbitro'],
-            'idSede'             => $datos['idSede'],
-            'fechaEmergente'     => $datos['fechaEmergente'],
-            'notas'              => $datos['notas'] ?? null,
-            'idUsuarioAsignador' => Auth::id(),
-        ]);
+        try {
+            $this->emergentes->asignar(
+                $torneo,
+                $arbitro,
+                $this->idColegioActivo(),
+                (int) $datos['idSede'],
+                $datos['fechaEmergente'],
+                $datos['notas'] ?? null,
+                Auth::id(),
+            );
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['idArbitro' => $e->getMessage()]);
+        }
 
         return back()->with('success', 'Emergente asignado correctamente.');
     }
 
-    public function destroy(int $id): RedirectResponse
+    public function destroy(int $torneoId, int $id): RedirectResponse
     {
         $emergente = EmergenteTorneo::with('torneo')->findOrFail($id);
 

@@ -15,16 +15,19 @@ use App\Models\FormatoDesignacion;
 use App\Models\ReglamentoTorneo;
 use App\Models\RolPartido;
 use App\Models\Torneo;
+use App\Services\TorneoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class TorneoController extends Controller
 {
     use ResuelveColegio, AutorizaTorneo;
+
+    public function __construct(
+        private readonly TorneoService $torneos,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -84,12 +87,12 @@ class TorneoController extends Controller
 
     public function store(StoreTorneoRequest $request): RedirectResponse
     {
-        $torneo = DB::transaction(fn (): Torneo => Torneo::create([
+        $torneo = Torneo::create([
             ...$request->validated(),
             'idColegio'        => $this->idColegioActivo(),
             'idUsuarioCreador' => Auth::id(),
             'estadoTorneo'     => 'proximo',
-        ]));
+        ]);
 
         return redirect()
             ->route('torneos.perfil', $torneo->idTorneo)
@@ -110,8 +113,8 @@ class TorneoController extends Controller
 
         $this->autorizarTorneo($torneo);
 
-        $roles    = RolPartido::where('esActivo', true)->orderBy('orden')->get();
-        $formatos = FormatoDesignacion::where('esActivo', true)->orderBy('orden')->get();
+        $roles    = RolPartido::activos()->get();
+        $formatos = FormatoDesignacion::activos()->get();
 
         return view('torneos.perfil', compact('torneo', 'roles', 'formatos'));
     }
@@ -123,23 +126,7 @@ class TorneoController extends Controller
         $this->autorizarTorneo($torneo);
 
         if ($request->hasFile('reglamentoPDF')) {
-            DB::transaction(function () use ($torneo, $request): void {
-                ReglamentoTorneo::where('idTorneo', $torneo->idTorneo)
-                    ->where('esActual', true)
-                    ->update(['esActual' => false]);
-
-                $archivo = $request->file('reglamentoPDF');
-                $ruta    = $archivo->store('reglamentos', 'public');
-
-                ReglamentoTorneo::create([
-                    'idTorneo'        => $torneo->idTorneo,
-                    'nombreArchivo'   => $archivo->getClientOriginalName(),
-                    'rutaArchivo'     => $ruta,
-                    'tamanoBytes'     => (int) $archivo->getSize(),
-                    'esActual'        => true,
-                    'idUsuarioSubida' => Auth::id(),
-                ]);
-            });
+            $this->torneos->subirReglamento($torneo, $request->file('reglamentoPDF'), Auth::id());
 
             return back()->with('success', 'Reglamento subido correctamente. La versión anterior queda en el historial.');
         }
@@ -175,13 +162,11 @@ class TorneoController extends Controller
 
         $this->autorizarTorneo($torneo);
 
-        $estadoNuevo = $request->validated('estadoNuevo');
-
-        if ($torneo->estadoTorneo === $estadoNuevo) {
-            return back()->with('error', 'El torneo ya está en ese estado.');
+        try {
+            $this->torneos->cambiarEstado($torneo, $request->validated('estadoNuevo'));
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $torneo->update(['estadoTorneo' => $estadoNuevo]);
 
         return back()->with('success', 'Estado del torneo actualizado correctamente.');
     }
@@ -205,18 +190,7 @@ class TorneoController extends Controller
 
         $this->autorizarTorneo($reglamento->torneo);
 
-        $eraActual = $reglamento->esActual;
-        $torneoId  = $reglamento->idTorneo;
-
-        Storage::disk('public')->delete($reglamento->rutaArchivo);
-        $reglamento->delete();
-
-        if ($eraActual) {
-            ReglamentoTorneo::where('idTorneo', $torneoId)
-                ->latest('created_at')
-                ->first()
-                ?->update(['esActual' => true]);
-        }
+        $this->torneos->eliminarReglamento($reglamento);
 
         return back()->with('success', 'Reglamento eliminado correctamente.');
     }

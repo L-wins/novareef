@@ -24,6 +24,13 @@ export default defineConfig({
                 'resources/css/designaciones/designaciones.css',
                 'resources/js/designaciones/designaciones.js',
                 'resources/js/disponibilidad/disponibilidad.js',
+                'resources/js/configuracion/configuracion.js',
+                'resources/css/finanzas/finanzas.css',
+                'resources/js/finanzas/finanzas.js',
+                'resources/css/sanciones/sanciones.css',
+                'resources/js/sanciones/sanciones.js',
+                'resources/css/academico/academico.css',
+                'resources/js/academico/academico.js',
             ],
             refresh: true,
         }),
@@ -33,6 +40,14 @@ export default defineConfig({
     resolve: {
         alias: {
             vue: 'vue/dist/vue.esm-bundler.js',
+        },
+    },
+    server: {
+        host: '127.0.0.1',
+        // Fuerza también el host que Laravel inyecta en @vite() — evita que el
+        // navegador intente conectar por [::1] (IPv6) cuando localhost resuelve ahí primero.
+        hmr: {
+            host: '127.0.0.1',
         },
     },
 });

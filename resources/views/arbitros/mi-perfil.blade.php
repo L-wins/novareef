@@ -103,6 +103,13 @@
         </div>
     </div>
 
+    <div style="margin-top:1rem;">
+        <a href="{{ route('arbitros.estado-cuenta') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-sack-dollar"></i>
+            Mi estado de cuenta
+        </a>
+    </div>
+
     {{-- ===== DATOS NO EDITABLES ===== --}}
     <div class="detail-card" style="margin-top:1rem;">
         <p class="detail-section-title">Datos personales (no editables)</p>

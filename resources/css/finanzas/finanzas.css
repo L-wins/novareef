@@ -1,0 +1,11 @@
+/*
+   NovaReef — Módulo M06 Finanzas
+   Este archivo es solo el manifiesto — el contenido vive dividido
+   por responsabilidad en los archivos hermanos.
+    */
+
+@import "./variables.css";
+@import "./layout.css";
+@import "./form.css";
+@import "./badges.css";
+@import "./chart.css";

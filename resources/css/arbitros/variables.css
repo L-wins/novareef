@@ -1,0 +1,15 @@
+/*  Variables heredadas de app.css ─ */
+:root {
+    --bg-base:     var(--nv-bg);
+    --bg-card:     var(--nv-card-alt);
+    --bg-hover:    var(--nv-card-hover);
+    --border:      var(--nv-border);
+    --border-mid:  var(--nv-fill-2);
+    --text-primary:   var(--nv-text);
+    --text-secondary: var(--nv-text-2);
+    --text-muted:     var(--nv-text-3);
+    --accent:       var(--nv-accent);
+    --accent-hover: var(--nv-accent-strong);
+    --radius:       0.75rem;
+    --radius-sm:    0.5rem;
+}

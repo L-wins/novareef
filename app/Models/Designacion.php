@@ -19,7 +19,7 @@ class Designacion extends Model
     protected $keyType      = 'int';
     public    $incrementing = true;
 
-    // ── Estados posibles ──────────────────────────────────────────────────────
+    // ── Estados posibles ──────────────────
     public const ESTADO_PENDIENTE  = 'pendiente';
     public const ESTADO_CONFIRMADA = 'confirmada';
     public const ESTADO_RECHAZADA  = 'rechazada';
@@ -45,7 +45,7 @@ class Designacion extends Model
         'notificacionEnviada' => 'boolean',
     ];
 
-    // ── Inspectores de estado ─────────────────────────────────────────────────
+    // ── Inspectores de estado ─────────────
 
     public function estaConfirmada(): bool
     {
@@ -62,7 +62,7 @@ class Designacion extends Model
         return $this->estadoDesignacion === self::ESTADO_PENDIENTE;
     }
 
-    // ── Relaciones ────────────────────────────────────────────────────────────
+    // ── Relaciones ──
 
     public function partido(): BelongsTo
     {

@@ -1,6 +1,6 @@
-/* ============================================================
+/* 
    Page header
-   ============================================================ */
+    */
 .page-header {
     display: flex;
     align-items: flex-start;
@@ -19,9 +19,9 @@
 }
 .page-subheading { font-size: 0.875rem; color: var(--text-muted); }
 
-/* ============================================================
+/* 
    Back link
-   ============================================================ */
+    */
 .back-link {
     display: inline-flex;
     align-items: center;
@@ -33,9 +33,9 @@
 }
 .back-link:hover { color: var(--text-secondary); }
 
-/* ============================================================
+/* 
    Flash messages
-   ============================================================ */
+    */
 .flash {
     display: flex;
     align-items: center;
@@ -57,9 +57,9 @@
     color: #f87171;
 }
 
-/* ============================================================
+/* 
    Buttons
-   ============================================================ */
+    */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -90,12 +90,12 @@
 .btn-primary:hover { background: var(--accent-light); border-color: var(--accent-light); }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--nv-fill);
     color: var(--text-secondary);
     border-color: var(--border);
 }
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--nv-fill-2);
     border-color: var(--border-hover);
     color: var(--text-primary);
 }
@@ -139,15 +139,15 @@
         color 0.16s var(--ease);
 }
 .btn-icon svg { display: block; }
-.btn-icon:hover { background: rgba(255,255,255,0.06); border-color: var(--border-hover); color: var(--text-primary); }
+.btn-icon:hover { background: var(--nv-border); border-color: var(--border-hover); color: var(--text-primary); }
 .btn-icon-view:hover   { color: #60a5fa; border-color: rgba(59,130,246,0.30); background: rgba(59,130,246,0.07); }
 .btn-icon-edit:hover   { color: var(--accent); border-color: var(--border-accent); background: var(--accent-bg); }
 .btn-icon-suspend:hover { color: #f87171; border-color: var(--danger-border); background: var(--danger-bg); }
 .btn-icon-activate:hover { color: var(--accent); border-color: var(--border-accent); background: var(--accent-bg); }
 
-/* ============================================================
+/* 
    Status & plan badges
-   ============================================================ */
+    */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -183,13 +183,13 @@
     letter-spacing: 0.06em;
     white-space: nowrap;
 }
-.plan-basico      { background: rgba(71,85,105,0.14);   color: #94a3b8; border: 1px solid rgba(71,85,105,0.22); }
+.plan-basico      { background: rgba(71,85,105,0.14);   color: var(--nv-text-2); border: 1px solid rgba(71,85,105,0.22); }
 .plan-profesional { background: rgba(59,130,246,0.10);  color: #60a5fa; border: 1px solid rgba(59,130,246,0.22); }
 .plan-enterprise  { background: rgba(139,92,246,0.10); color: #a78bfa; border: 1px solid rgba(139,92,246,0.22); }
 
-/* ============================================================
+/* 
    Table
-   ============================================================ */
+    */
 .table-card {
     background: var(--bg-surface);
     border: 1px solid var(--border);
@@ -199,7 +199,7 @@
 .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .data-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 .data-table thead {
-    background: rgba(255,255,255,0.02);
+    background: var(--nv-fill);
     border-bottom: 1px solid var(--border);
 }
 .data-table th {
@@ -220,7 +220,7 @@
 }
 .data-table tbody tr:last-child td { border-bottom: none; }
 .data-table tbody tr { transition: background 0.14s var(--ease); }
-.data-table tbody tr:hover td { background: rgba(255,255,255,0.018); }
+.data-table tbody tr:hover td { background: var(--nv-fill); }
 .td-primary { color: var(--text-primary) !important; font-weight: 600; }
 .td-code {
     font-family: 'Cascadia Code', 'SF Mono', 'Consolas', monospace;
@@ -237,9 +237,9 @@
 .table-empty-title { font-size: 0.9375rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
 .table-empty-text  { font-size: 0.8125rem; color: var(--text-muted); }
 
-/* ============================================================
+/* 
    Form card
-   ============================================================ */
+    */
 .form-card {
     background: var(--bg-surface);
     border: 1px solid var(--border);
@@ -318,7 +318,7 @@
     color: var(--muted);
     line-height: 1.5;
     padding: 8px 12px;
-    background: rgba(255,255,255,0.03);
+    background: var(--nv-fill);
     border: 1px solid var(--border);
     border-radius: 6px;
 }
@@ -332,9 +332,9 @@
     justify-content: flex-end;
 }
 
-/* ============================================================
+/* 
    Detail / show view
-   ============================================================ */
+    */
 .detail-hero {
     background: var(--bg-surface);
     border: 1px solid var(--border);
@@ -400,3 +400,21 @@
     font-size: 0.875rem;
     color: var(--accent-light);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Tema claro — los pasteles pensados para fondo oscuro (dark)
+   pierden contraste sobre fondo blanco; se oscurecen aquí.
+   ═══════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] .flash-success       { color: #15803d; }
+:root[data-theme="light"] .flash-error         { color: #dc2626; }
+:root[data-theme="light"] .btn-danger          { color: #dc2626; }
+:root[data-theme="light"] .btn-danger:hover    { color: #b91c1c; }
+:root[data-theme="light"] .btn-success         { color: #15803d; }
+:root[data-theme="light"] .btn-success:hover   { color: #15803d; }
+:root[data-theme="light"] .status-prueba       { color: #b45309; }
+:root[data-theme="light"] .status-suspendido   { color: #dc2626; }
+:root[data-theme="light"] .plan-enterprise     { color: #7c3aed; }
+:root[data-theme="light"] .plan-profesional    { color: #1d4ed8; }
+:root[data-theme="light"] .field-error         { color: #dc2626; }
+:root[data-theme="light"] .btn-icon-view:hover    { color: #1d4ed8; }
+:root[data-theme="light"] .btn-icon-suspend:hover { color: #dc2626; }

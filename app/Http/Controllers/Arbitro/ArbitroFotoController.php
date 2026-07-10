@@ -7,60 +7,52 @@ namespace App\Http\Controllers\Arbitro;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Arbitro\SubirFotoArbitroRequest;
 use App\Models\Arbitro;
+use App\Services\ArbitroFotoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
 class ArbitroFotoController extends Controller
 {
-    private const DISCO = 'public';
-    private const DIRECTORIO = 'fotos-arbitros';
+    public function __construct(
+        private readonly ArbitroFotoService $fotos,
+    ) {}
 
     public function subir(SubirFotoArbitroRequest $request, int $id): RedirectResponse
     {
-        $arbitro = Arbitro::findOrFail($id);
+        $arbitro = $this->arbitroAutorizado($id);
 
-        $this->autorizar($arbitro);
-
-        $this->eliminarFotoActual($arbitro);
-
-        $ruta = $request->file('foto')->store(self::DIRECTORIO, self::DISCO);
-        $arbitro->update(['fotoPerfil' => $ruta]);
+        $this->fotos->actualizar($arbitro, $request->file('foto'));
 
         return back()->with('success', 'Foto de perfil actualizada correctamente.');
     }
 
     public function eliminar(int $id): RedirectResponse
     {
-        $arbitro = Arbitro::findOrFail($id);
+        $arbitro = $this->arbitroAutorizado($id);
 
-        $this->autorizar($arbitro);
-
-        $this->eliminarFotoActual($arbitro);
-        $arbitro->update(['fotoPerfil' => null]);
+        $this->fotos->eliminar($arbitro);
 
         return back()->with('success', 'Foto de perfil eliminada.');
     }
 
-    // ── Helpers privados ──────────────────────────────────────────────────────
+    // ── Helpers privados ──────────────────
 
     /**
-     * Permite subir/eliminar foto si el usuario es el propietario
-     * o si pertenece al mismo colegio y tiene permiso editar-arbitros.
+     * Resuelve el árbitro por ID verificando que el usuario autenticado pueda
+     * gestionar su foto: es el propio árbitro, o es staff del mismo colegio
+     * con permiso editar-arbitros. Centraliza lo que antes se repetía en
+     * subir() y eliminar() (findOrFail + autorizar por separado).
      */
-    private function autorizar(Arbitro $arbitro): void
+    private function arbitroAutorizado(int $id): Arbitro
     {
+        $arbitro = Arbitro::findOrFail($id);
+
         $esPropietario = (int) $arbitro->idUsuario === (int) Auth::id();
         $puedeEditar   = (int) $arbitro->idColegio === (int) Auth::user()->idColegio
             && Auth::user()->can('editar-arbitros');
 
         abort_unless($esPropietario || $puedeEditar, 403);
-    }
 
-    private function eliminarFotoActual(Arbitro $arbitro): void
-    {
-        if ($arbitro->fotoPerfil && Storage::disk(self::DISCO)->exists($arbitro->fotoPerfil)) {
-            Storage::disk(self::DISCO)->delete($arbitro->fotoPerfil);
-        }
+        return $arbitro;
     }
 }

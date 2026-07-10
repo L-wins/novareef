@@ -4,35 +4,28 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Designacion;
 
-use App\Events\DesignacionActualizadaEvent;
-use App\Events\PartidoActualizadoEvent;
 use App\Exceptions\OptimisticLockException;
 use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
-use App\Jobs\NotificarRechazoJob;
 use App\Models\Arbitro;
+use App\Models\ConfiguracionColegio;
 use App\Models\Designacion;
 use App\Models\DisponibilidadArbitro;
 use App\Models\FormatoDesignacion;
-use App\Models\HistorialDesignacion;
-use App\Models\IndisponibilidadExtraordinaria;
 use App\Models\Partido;
-use App\Models\CalificacionArbitro;
-use App\Models\RolPartido;
+use App\Models\RolPartido;  
 use App\Models\SedeTorneo;
 use App\Models\SlotDesignacion;
-use App\Models\TarifaTorneo;
 use App\Models\Torneo;
 use App\Models\User;
 use App\Services\DesignacionService;
+use App\Services\SlotDesignacionService;
 use App\StateMachines\PartidoStateMachine;
 use App\Support\SemanaNavegacion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class DesignacionController extends Controller
@@ -41,18 +34,42 @@ class DesignacionController extends Controller
 
     public function __construct(
         private readonly DesignacionService $designaciones,
+        private readonly SlotDesignacionService $slots,
     ) {}
 
-    // ── Designador / Ejecutivo ────────────────────────────────────────────────
+    // ── Designador / Ejecutivo ────────────
 
     /**
-     * Lista de partidos del colegio con sus designaciones.
+     * Sin ?torneo=: grid de torneos con conteo de partidos.
+     * Con ?torneo=X: lista de partidos de ese torneo (con filtros de estado/fecha/división).
      */
     public function index(Request $request): View
     {
         $idColegio = $this->idColegioActivo();
 
+        if (! $request->filled('torneo')) {
+            $torneos = Torneo::where('idColegio', $idColegio)
+                ->withCount([
+                    'partidos',
+                    'partidos as partidos_criticos_count' => fn ($q) => $q->where('estadoPartido', 'critico'),
+                    'partidos as partidos_hoy_count' => fn ($q) => $q->whereDate('fechaPartido', now()->toDateString()),
+                ])
+                ->orderByDesc('temporada')
+                ->orderBy('nombreTorneo')
+                ->get();
+
+            $criticosCount = Partido::where('idColegio', $idColegio)
+                ->where('estadoPartido', 'critico')
+                ->count();
+
+            return view('designaciones.index', compact('torneos', 'criticosCount'));
+        }
+
+        $torneo = Torneo::where('idColegio', $idColegio)
+            ->findOrFail($request->integer('torneo'));
+
         $query = Partido::where('idColegio', $idColegio)
+            ->where('idTorneo', $torneo->idTorneo)
             ->with([
                 'torneo',
                 'division',
@@ -62,10 +79,6 @@ class DesignacionController extends Controller
                 'designaciones.rol',
             ])
             ->orderBy('fechaPartido', 'asc');
-
-        if ($request->filled('torneo')) {
-            $query->where('idTorneo', $request->integer('torneo'));
-        }
 
         if ($request->filled('estado')) {
             $query->where('estadoPartido', $request->string('estado'));
@@ -81,16 +94,12 @@ class DesignacionController extends Controller
 
         $partidos = $query->paginate(20)->withQueryString();
 
-        $torneos = Torneo::where('idColegio', $idColegio)
-            ->whereIn('estadoTorneo', ['activo', 'proximo'])
-            ->orderByDesc('temporada')
-            ->get();
-
         $criticosCount = Partido::where('idColegio', $idColegio)
+            ->where('idTorneo', $torneo->idTorneo)
             ->where('estadoPartido', 'critico')
             ->count();
 
-        return view('designaciones.index', compact('partidos', 'torneos', 'criticosCount'));
+        return view('designaciones.partidos-torneo', compact('partidos', 'torneo', 'criticosCount'));
     }
 
     /**
@@ -102,7 +111,8 @@ class DesignacionController extends Controller
 
         $partido = Partido::where('idColegio', $idColegio)
             ->with([
-                'torneo',
+                'torneo.divisiones',
+                'torneo.sedes',
                 'division',
                 'sede',
                 'formato',
@@ -115,7 +125,7 @@ class DesignacionController extends Controller
             ->findOrFail($id);
 
         // Partidos anteriores al sistema de slots se les crean al vuelo
-        $this->asegurarSlots($partido);
+        $this->slots->asegurar($partido);
 
         $slots = SlotDesignacion::where('idPartido', $partido->idPartido)
             ->with(['rol', 'designacion.arbitro.usuario', 'designacion.arbitro.categoria'])
@@ -130,7 +140,9 @@ class DesignacionController extends Controller
             ->orderBy('nombreUsuario')
             ->get();
 
-        return view('designaciones.show', compact('partido', 'slots', 'posiblesVeedores'));
+        $formatos = FormatoDesignacion::activos()->get();
+
+        return view('designaciones.show', compact('partido', 'slots', 'posiblesVeedores', 'formatos'));
     }
 
     /**
@@ -146,9 +158,7 @@ class DesignacionController extends Controller
             ->orderByDesc('temporada')
             ->get();
 
-        $formatos = FormatoDesignacion::where('esActivo', true)
-            ->orderBy('orden')
-            ->get();
+        $formatos = FormatoDesignacion::activos()->get();
 
         return view('designaciones.partido-crear', compact('torneos', 'formatos'));
     }
@@ -191,40 +201,68 @@ class DesignacionController extends Controller
             'La sede no pertenece a este torneo.'
         );
 
-        $partido = DB::transaction(function () use ($validated, $idColegio): Partido {
-            $partido = Partido::create([
-                'idColegio'       => $idColegio,
-                'idTorneo'        => $validated['idTorneo'],
-                'idDivision'      => $validated['idDivision'],
-                'idSede'          => $validated['idSede'],
-                'idFormato'       => $validated['idFormato'],
-                'equipoLocal'     => $validated['equipoLocal'],
-                'equipoVisitante' => $validated['equipoVisitante'],
-                'fechaPartido'    => $validated['fechaPartido'],
-                'horaPartido'     => $validated['horaPartido'],
-                'estadoPartido'   => Partido::ESTADO_BORRADOR,
-                'version'         => 0,
-                'observaciones'   => $validated['observaciones'] ?? null,
-            ]);
-
-            // Slots de roles según formato — fuente de verdad para la asignación
-            $this->crearSlotsPartido($partido->load('formato'));
-
-            HistorialDesignacion::create([
-                'idPartido'       => $partido->idPartido,
-                'idColegio'       => $idColegio,
-                'idUsuarioAccion' => Auth::id(),
-                'tipoAccion'      => HistorialDesignacion::TIPO_PARTIDO_CREADO,
-                'estadoNuevo'     => Partido::ESTADO_BORRADOR,
-                'detalle'         => "Partido creado: {$partido->equipoLocal} vs {$partido->equipoVisitante}",
-            ]);
-
-            return $partido;
-        });
+        $partido = $this->designaciones->crearPartido($idColegio, $validated, Auth::id());
 
         return redirect()
             ->route('designaciones.show', $partido->idPartido)
             ->with('success', 'Partido creado en borrador. Asigna los árbitros y publícalo.');
+    }
+
+    /**
+     * Edita fecha/hora/sede/equipos de un partido — solo mientras sigue en
+     * borrador (una vez publicado, esos datos ya se notificaron al árbitro).
+     */
+    public function actualizarPartido(Request $request, int $id): RedirectResponse
+    {
+        $idColegio = $this->idColegioActivo();
+
+        $partido = Partido::where('idColegio', $idColegio)->findOrFail($id);
+
+        if ($partido->estadoPartido !== Partido::ESTADO_BORRADOR) {
+            return back()->with('error', 'Solo se puede editar un partido mientras está en borrador.');
+        }
+
+        $validated = $request->validate([
+            'idDivision'      => 'required|integer',
+            'idSede'          => 'nullable|integer',
+            'idFormato'       => 'required|integer',
+            'equipoLocal'     => 'required|string|max:150',
+            'equipoVisitante' => 'required|string|max:150|different:equipoLocal',
+            'fechaPartido'    => 'required|date_format:Y-m-d',
+            'horaPartido'     => 'required|date_format:H:i',
+            'observaciones'   => 'nullable|string|max:1000',
+        ], [
+            'idDivision.required'      => 'Debes seleccionar una división.',
+            'equipoLocal.required'     => 'El equipo local es obligatorio.',
+            'equipoVisitante.required' => 'El equipo visitante es obligatorio.',
+            'equipoVisitante.different'=> 'El visitante no puede ser igual al local.',
+            'fechaPartido.required'    => 'La fecha del partido es obligatoria.',
+            'fechaPartido.date_format' => 'La fecha debe tener formato YYYY-MM-DD.',
+            'horaPartido.required'     => 'La hora del partido es obligatoria.',
+            'horaPartido.date_format'  => 'La hora debe tener formato HH:MM.',
+        ]);
+
+        abort_unless(
+            Torneo::where('idTorneo', $partido->idTorneo)
+                ->whereHas('divisiones', fn ($q) => $q->where('idDivision', $validated['idDivision']))
+                ->exists(),
+            403,
+            'La división no pertenece a este torneo.'
+        );
+
+        if (! empty($validated['idSede'])) {
+            abort_unless(
+                SedeTorneo::where('idSede', $validated['idSede'])
+                    ->where('idTorneo', $partido->idTorneo)
+                    ->exists(),
+                403,
+                'La sede no pertenece a este torneo.'
+            );
+        }
+
+        $partido->update($validated);
+
+        return back()->with('success', 'Partido actualizado correctamente.');
     }
 
     /**
@@ -234,37 +272,10 @@ class DesignacionController extends Controller
     {
         $idColegio = $this->idColegioActivo();
 
-        $partido = Partido::where('idColegio', $idColegio)
-            ->with('formato')
-            ->findOrFail($id);
-
-        if ($partido->estadoPartido !== Partido::ESTADO_BORRADOR) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Solo se pueden publicar partidos en borrador.',
-            ], 422);
-        }
-
-        $tieneCentral = $partido->designaciones()
-            ->whereIn('estadoDesignacion', [Designacion::ESTADO_PENDIENTE, Designacion::ESTADO_CONFIRMADA])
-            ->whereHas('rol', fn ($q) => $q->where('nombre', 'Central'))
-            ->exists();
-
-        if (! $tieneCentral) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Debes asignar al menos el árbitro Central antes de publicar.',
-            ], 422);
-        }
+        $partido = Partido::where('idColegio', $idColegio)->with('formato')->findOrFail($id);
 
         try {
-            // La state machine despacha NotificarPublicacionJob en sus efectos
-            PartidoStateMachine::transicionarCon(
-                $partido,
-                Partido::ESTADO_PROGRAMADO,
-                Auth::user(),
-                'Partido publicado'
-            );
+            $this->designaciones->publicarPartido($partido, Auth::user());
 
             return response()->json([
                 'success' => true,
@@ -272,7 +283,28 @@ class DesignacionController extends Controller
             ]);
         } catch (OptimisticLockException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 409);
-        } catch (\InvalidArgumentException $e) {
+        } catch (\RuntimeException|\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Elimina un partido en borrador junto con designaciones/slots/historial.
+     */
+    public function eliminarPartido(int $id): JsonResponse
+    {
+        $idColegio = $this->idColegioActivo();
+
+        $partido = Partido::where('idColegio', $idColegio)->findOrFail($id);
+
+        try {
+            $this->designaciones->eliminarPartido($partido, $idColegio);
+
+            return response()->json([
+                'success' => true,
+                'mensaje' => 'Partido eliminado correctamente.',
+            ]);
+        } catch (\RuntimeException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
@@ -289,78 +321,16 @@ class DesignacionController extends Controller
             'idRol'     => 'required|integer',
         ]);
 
+        $partido = Partido::where('idColegio', $idColegio)->findOrFail($partidoId);
+
         try {
-            $result = DB::transaction(function () use ($validated, $partidoId, $idColegio): array {
-                $partido = Partido::lockForUpdate()->where('idColegio', $idColegio)->findOrFail($partidoId);
-
-                // Después de publicar solo se puede cambiar el veedor
-                abort_if(
-                    $partido->estadoPartido !== Partido::ESTADO_BORRADOR,
-                    422,
-                    'No puedes asignar árbitros después de publicar el partido. Solo puedes asignar el veedor.'
-                );
-
-                $arbitro = Arbitro::where('idArbitro', $validated['idArbitro'])
-                    ->where('idColegio', $idColegio)
-                    ->with('usuario', 'disponibilidades', 'indisponibilidadesExtraordinarias')
-                    ->firstOrFail();
-
-                // No duplicar árbitro en el mismo partido
-                abort_if(
-                    $partido->designaciones()->where('idArbitro', $arbitro->idArbitro)->exists(),
-                    422,
-                    'Este árbitro ya está designado en este partido.'
-                );
-
-                // Slots son la fuente de verdad: tomar el primer slot libre del rol
-                $this->asegurarSlots($partido->load('formato'));
-
-                $slot = SlotDesignacion::where('idPartido', $partido->idPartido)
-                    ->where('idRol', $validated['idRol'])
-                    ->whereNull('idDesignacion')
-                    ->orderBy('numeroSlot')
-                    ->lockForUpdate()
-                    ->first();
-
-                abort_if($slot === null, 422, 'No hay slots disponibles para este rol.');
-
-                $advertencias = $this->designaciones->calcularAdvertencias($arbitro, $partido);
-
-                $designacion = Designacion::create([
-                    'idPartido'          => $partido->idPartido,
-                    'idArbitro'          => $arbitro->idArbitro,
-                    'idRol'              => $validated['idRol'],
-                    'idColegio'          => $idColegio,
-                    'estadoDesignacion'  => Designacion::ESTADO_PENDIENTE,
-                    'idUsuarioDesignador'=> Auth::id(),
-                ]);
-
-                $slot->update(['idDesignacion' => $designacion->idDesignacion]);
-
-                HistorialDesignacion::create([
-                    'idDesignacion'   => $designacion->idDesignacion,
-                    'idPartido'       => $partido->idPartido,
-                    'idArbitro'       => $arbitro->idArbitro,
-                    'idColegio'       => $idColegio,
-                    'idUsuarioAccion' => Auth::id(),
-                    'tipoAccion'      => HistorialDesignacion::TIPO_ASIGNADO,
-                    'detalle'         => implode(', ', array_filter([
-                        $advertencias['sinDisponibilidad']   ? 'Sin disponibilidad reportada' : '',
-                        $advertencias['tieneExtraordinaria'] ? 'Indisponibilidad extraordinaria' : '',
-                        $advertencias['esSuspendido']        ? 'Árbitro suspendido' : '',
-                        $advertencias['advertenciaTiempo']   ? "Partido cercano ({$advertencias['minutosAlPartidoCercano']} min)" : '',
-                    ])) ?: null,
-                ]);
-
-                // El árbitro se notifica al publicar el partido (NotificarPublicacionJob),
-                // nunca mientras el partido siga en borrador.
-                broadcast(new DesignacionActualizadaEvent($designacion))->toOthers();
-
-                return [
-                    'designacion' => $designacion->load(['arbitro.usuario', 'rol']),
-                    'advertencias'=> $advertencias,
-                ];
-            });
+            $result = $this->designaciones->asignarArbitro(
+                $partido,
+                (int) $validated['idArbitro'],
+                (int) $validated['idRol'],
+                $idColegio,
+                Auth::id(),
+            );
 
             return response()->json([
                 'success'      => true,
@@ -368,8 +338,6 @@ class DesignacionController extends Controller
                 'designacion'  => $result['designacion'],
             ]);
         } catch (\Throwable $e) {
-            Log::error('asignarArbitro error', ['error' => $e->getMessage()]);
-
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
@@ -385,32 +353,48 @@ class DesignacionController extends Controller
             ->where('idColegio', $idColegio)
             ->firstOrFail();
 
-        if ($designacion->estaConfirmada()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No se puede quitar una designación ya confirmada.',
-            ], 422);
+        try {
+            $this->designaciones->quitarDesignacion($designacion, $idColegio, Auth::id());
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
 
-        DB::transaction(function () use ($designacion, $idColegio): void {
-            HistorialDesignacion::create([
-                'idDesignacion'   => $designacion->idDesignacion,
-                'idPartido'       => $designacion->idPartido,
-                'idArbitro'       => $designacion->idArbitro,
-                'idColegio'       => $idColegio,
-                'idUsuarioAccion' => Auth::id(),
-                'tipoAccion'      => HistorialDesignacion::TIPO_QUITADO,
-            ]);
-
-            $designacion->delete();
-
-            $partido = Partido::find($designacion->idPartido);
-            if ($partido) {
-                broadcast(new PartidoActualizadoEvent($partido))->toOthers();
-            }
-        });
-
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Reemplaza el árbitro de un rol en un partido ya publicado (programado,
+     * confirmado o crítico) sin afectar el estado del partido ni las demás
+     * designaciones. Solo se notifica al árbitro nuevo.
+     */
+    public function reasignarArbitro(Request $request, int $designacionId): JsonResponse
+    {
+        $idColegio = $this->idColegioActivo();
+
+        $validated = $request->validate([
+            'idArbitro' => 'required|integer',
+        ]);
+
+        $designacion = Designacion::where('idDesignacion', $designacionId)
+            ->where('idColegio', $idColegio)
+            ->firstOrFail();
+
+        try {
+            $result = $this->designaciones->reasignarArbitro(
+                $designacion,
+                (int) $validated['idArbitro'],
+                $idColegio,
+                Auth::id(),
+            );
+
+            return response()->json([
+                'success'      => true,
+                'advertencias' => $result['advertencias'],
+                'designacion'  => $result['designacion'],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
     }
 
     /**
@@ -421,17 +405,30 @@ class DesignacionController extends Controller
         $idColegio = $this->idColegioActivo();
 
         $validated = $request->validate([
-            'estadoNuevo' => 'required|string|in:programado,confirmado,critico,aplazado,en_curso,finalizado,cancelado',
+            'estadoNuevo' => 'required|string|in:programado,aplazado,finalizado,cancelado',
             'detalle'     => 'nullable|string|max:500',
         ]);
 
         $partido = Partido::where('idColegio', $idColegio)->findOrFail($id);
 
-        // Verificar permisos según estado destino
+        // 'programado' solo es un destino manual válido para reactivar un
+        // aplazado o revertir un finalizado — nunca para "deshacer" un
+        // confirmado/crítico sin resolver la causa real (eso lo hace el
+        // propio sistema al reasignar y confirmar el rol pendiente).
+        if ($validated['estadoNuevo'] === 'programado'
+            && ! in_array($partido->estadoPartido, ['aplazado', 'finalizado'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede revertir manualmente a programado desde este estado.',
+            ], 422);
+        }
+
+        // Verificar permisos según estado destino: cancelar es exclusivo de
+        // ejecutivo/admin; finalizar y aplazar los puede hacer también el designador.
         $user = Auth::user();
-        if (in_array($validated['estadoNuevo'], ['finalizado', 'cancelado'], true)) {
+        if ($validated['estadoNuevo'] === 'cancelado') {
             abort_unless($user->hasRole('ejecutivo') || $user->rolUsuario === 'superadmin', 403);
-        } elseif ($validated['estadoNuevo'] === 'aplazado') {
+        } elseif (in_array($validated['estadoNuevo'], ['finalizado', 'aplazado'], true)) {
             abort_unless(
                 $user->hasRole('ejecutivo') || $user->hasRole('designador') || $user->rolUsuario === 'superadmin',
                 403
@@ -457,79 +454,13 @@ class DesignacionController extends Controller
     /**
      * Retorna árbitros disponibles para un partido con todos sus indicadores (AJAX).
      */
-    public function getArbitrosDisponibles(Request $request, int $partidoId): JsonResponse
+    public function getArbitrosDisponibles(int $partidoId): JsonResponse
     {
         $idColegio = $this->idColegioActivo();
 
         $partido = Partido::where('idColegio', $idColegio)->findOrFail($partidoId);
 
-        $fecha     = $partido->fechaPartido;
-        $franjaNeed= $this->franjaDesdeHora($partido->horaPartido ?? '00:00');
-
-        $arbitros = Arbitro::where('idColegio', $idColegio)
-            ->whereNotIn('estadoArbitro', ['retirado'])
-            ->with([
-                'usuario',
-                'categoria',
-                'disponibilidades' => fn ($q) => $q->where('fechaDisponibilidad', $fecha),
-                'indisponibilidadesExtraordinarias' => fn ($q) => $q->where('fechaAfectada', $fecha),
-            ])
-            ->get();
-
-        // IDs ya asignados en este partido
-        $yaAsignados = $partido->designaciones()->pluck('idArbitro')->flip();
-
-        // Choques de horario para todos los árbitros con una sola query
-        $advertenciasPorArbitro = $this->designaciones->advertenciasPorLista($arbitros, $partido);
-
-        $resultado = $arbitros->map(function (Arbitro $a) use ($franjaNeed, $yaAsignados, $advertenciasPorArbitro): array {
-            $disponibilidad = $a->disponibilidades->first();
-            $extraordinaria = $a->indisponibilidadesExtraordinarias->first();
-
-            $dispEstado = 'sin_reporte';
-            $franjaDisp = null;
-            $franjaLabel= null;
-
-            if ($extraordinaria) {
-                $dispEstado = 'extraordinaria';
-            } elseif ($disponibilidad) {
-                $dispEstado = $this->franjaCoincide($disponibilidad->franjaHoraria, $franjaNeed)
-                    ? 'disponible'
-                    : 'sin_reporte';
-                $franjaDisp  = $disponibilidad->franjaHoraria;
-                $franjaLabel = DisponibilidadArbitro::getFranjas()[$franjaDisp] ?? $franjaDisp;
-            }
-
-            $advertencias = $advertenciasPorArbitro[$a->idArbitro];
-
-            return [
-                'idArbitro'              => $a->idArbitro,
-                'nombreUsuario'          => $a->usuario?->nombreUsuario,
-                'codigoCarnet'           => $a->codigoCarnet,
-                'nombreCategoria'        => $a->categoria?->nombreCategoria,
-                'disponibilidad'         => $dispEstado,
-                'franjaDisponible'       => $franjaDisp,
-                'franjaLabel'            => $franjaLabel,
-                'advertenciaTiempo'      => $advertencias['advertenciaTiempo'],
-                'minutosAlPartidoCercano'=> $advertencias['minutosAlPartidoCercano'],
-                'yaAsignado'             => isset($yaAsignados[$a->idArbitro]),
-                'esSuspendido'           => $a->estadoArbitro === 'suspendido',
-                'estadoArbitro'          => $a->estadoArbitro,
-            ];
-        });
-
-        // Ordenar: disponibles sin advertencias → disponibles con advertencias
-        //          → sin reporte → suspendidos al final
-        $ordenada = $resultado->sortBy(fn ($r) => match (true) {
-            $r['yaAsignado']                                    => 99,
-            $r['esSuspendido']                                  => 4,
-            $r['disponibilidad'] === 'extraordinaria'           => 3,
-            $r['disponibilidad'] === 'sin_reporte'              => 2,
-            $r['advertenciaTiempo']                             => 1,
-            default                                             => 0,
-        })->values();
-
-        return response()->json($ordenada);
+        return response()->json($this->designaciones->candidatosParaPartido($partido, $idColegio));
     }
 
     /**
@@ -577,28 +508,13 @@ class DesignacionController extends Controller
 
         $partido = Partido::where('idColegio', $idColegio)->findOrFail($partidoId);
 
-        // Si se proporcionó un veedor, verificar que pertenece al mismo colegio
-        if (! empty($validated['idVeedor'])) {
-            abort_unless(
-                User::where('idUsuario', $validated['idVeedor'])
-                    ->where('idColegio', $idColegio)
-                    ->exists(),
-                403,
-                'El veedor no pertenece a este colegio.'
-            );
+        $idVeedor = isset($validated['idVeedor']) ? (int) $validated['idVeedor'] : null;
+
+        try {
+            $this->designaciones->asignarVeedor($partido, $idVeedor, $idColegio, Auth::id());
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
         }
-
-        $partido->update(['idVeedor' => $validated['idVeedor'] ?? null]);
-
-        HistorialDesignacion::create([
-            'idPartido'       => $partido->idPartido,
-            'idColegio'       => $idColegio,
-            'idUsuarioAccion' => Auth::id(),
-            'tipoAccion'      => HistorialDesignacion::TIPO_ESTADO_PARTIDO_CAMBIADO,
-            'detalle'         => $validated['idVeedor']
-                ? 'Veedor asignado: ' . User::find($validated['idVeedor'])?->nombreUsuario
-                : 'Veedor removido',
-        ]);
 
         return response()->json(['success' => true]);
     }
@@ -633,7 +549,7 @@ class DesignacionController extends Controller
         return $pdf->download($nombre);
     }
 
-    // ── Árbitro ───────────────────────────────────────────────────────────────
+    // ── Árbitro ─────
 
     /**
      * Vista detalle de un partido para el árbitro (requiere designación confirmada).
@@ -672,7 +588,7 @@ class DesignacionController extends Controller
             ->sortBy(fn (SlotDesignacion $s) => [$s->rol?->orden ?? 99, $s->numeroSlot])
             ->values();
 
-        $pago      = $this->calcularPago($designacion);
+        $pago      = $this->designaciones->calcularPago($designacion);
         $esCentral = $designacion->rol?->nombre === 'Central';
 
         return view('mis-partidos.detalle', compact('designacion', 'partido', 'arbitro', 'slots', 'pago', 'esCentral'));
@@ -692,21 +608,159 @@ class DesignacionController extends Controller
             ->whereHas('partido', fn ($q) => $q->where('estadoPartido', '!=', Partido::ESTADO_BORRADOR))
             ->with(['partido.torneo', 'partido.sede', 'partido.division', 'partido.formato', 'partido.designaciones.rol', 'rol'])
             ->get()
-            ->each(fn (Designacion $d) => $d->setAttribute('pago', $this->calcularPago($d)));
+            ->each(fn (Designacion $d) => $d->setAttribute('pago', $this->designaciones->calcularPago($d)));
 
         $hoyPartidos    = $base->filter(fn ($d) => $d->partido->fechaPartido->isToday());
         $mananaPartidos = $base->filter(fn ($d) => $d->partido->fechaPartido->isTomorrow());
         $proximos       = $base->filter(fn ($d) => $d->partido->fechaPartido->gt($manana->copy()->endOfDay()));
-        $historial      = $base->filter(fn ($d) => $d->partido->fechaPartido->lt($hoy))
-                               ->sortByDesc(fn ($d) => $d->partido->fechaPartido);
 
         $pendientesCount = $base->filter(fn ($d) => $d->estaPendiente() && ! $d->partido->fechaPartido->isPast())->count();
 
-        return view('mis-partidos.index', compact('hoyPartidos', 'mananaPartidos', 'proximos', 'historial', 'pendientesCount', 'arbitro'));
+        return view('mis-partidos.index', compact('hoyPartidos', 'mananaPartidos', 'proximos', 'pendientesCount', 'arbitro'));
     }
 
     /**
-     * El árbitro Central finaliza el partido en curso.
+     * Historial paginado de designaciones pasadas del árbitro autenticado,
+     * con filtros (torneo, rol, estado, rango de fechas) y estadísticas de carrera.
+     */
+    public function historialPartidos(Request $request): View
+    {
+        $arbitro = $this->arbitroAutenticado();
+
+        $historial = $this->queryHistorial($arbitro, $request)
+            ->with(['partido.torneo', 'partido.sede', 'partido.division', 'partido.formato', 'rol'])
+            ->paginate(20)
+            ->withQueryString();
+
+        $historial->getCollection()
+            ->each(fn (Designacion $d) => $d->setAttribute('pago', $this->designaciones->calcularPago($d)));
+
+        // Opciones de filtros: solo torneos donde el árbitro tuvo designaciones
+        $torneos = Torneo::whereIn('idTorneo', function ($q) use ($arbitro) {
+            $q->select('partidos.idTorneo')
+                ->from('designaciones')
+                ->join('partidos', 'partidos.idPartido', '=', 'designaciones.idPartido')
+                ->where('designaciones.idArbitro', $arbitro->idArbitro);
+        })->orderByDesc('temporada')->get();
+
+        $roles = RolPartido::activos()->get();
+
+        return view('mis-partidos.historial', [
+            'historial' => $historial,
+            'arbitro'   => $arbitro,
+            'stats'     => $this->statsHistorial($arbitro),
+            'torneos'   => $torneos,
+            'roles'     => $roles,
+        ]);
+    }
+
+    /**
+     * Exporta el historial (con los filtros activos) a PDF.
+     */
+    public function historialPdf(Request $request): mixed
+    {
+        $arbitro = $this->arbitroAutenticado();
+
+        $historial = $this->queryHistorial($arbitro, $request)
+            ->with(['partido.torneo', 'partido.sede', 'rol'])
+            ->get()
+            ->each(fn (Designacion $d) => $d->setAttribute('pago', $this->designaciones->calcularPago($d)));
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('pdf.historial-arbitro', [
+            'historial' => $historial,
+            'arbitro'   => $arbitro,
+            'stats'     => $this->statsHistorial($arbitro),
+        ]);
+        $pdf->setPaper('a4', 'portrait');
+
+        $nombre = 'historial-partidos-' . now()->format('Y-m-d') . '.pdf';
+
+        return $pdf->download($nombre);
+    }
+
+    /**
+     * Query base del historial: designaciones pasadas del árbitro con filtros de request.
+     * Join con partidos para poder ordenar y filtrar por columnas del partido.
+     */
+    private function queryHistorial(Arbitro $arbitro, Request $request): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Designacion::query()
+            ->select('designaciones.*')
+            ->join('partidos', 'partidos.idPartido', '=', 'designaciones.idPartido')
+            ->where('designaciones.idArbitro', $arbitro->idArbitro)
+            ->where('partidos.estadoPartido', '!=', Partido::ESTADO_BORRADOR)
+            ->whereDate('partidos.fechaPartido', '<', now()->toDateString())
+            ->orderByDesc('partidos.fechaPartido')
+            ->orderByDesc('partidos.horaPartido');
+
+        if ($request->filled('torneo')) {
+            $query->where('partidos.idTorneo', $request->integer('torneo'));
+        }
+
+        if ($request->filled('rol')) {
+            $query->where('designaciones.idRol', $request->integer('rol'));
+        }
+
+        if ($request->filled('estado')) {
+            $query->where('designaciones.estadoDesignacion', $request->string('estado'));
+        }
+
+        if ($request->filled('desde')) {
+            $query->whereDate('partidos.fechaPartido', '>=', $request->string('desde'));
+        }
+
+        if ($request->filled('hasta')) {
+            $query->whereDate('partidos.fechaPartido', '<=', $request->string('hasta'));
+        }
+
+        return $query;
+    }
+
+    /**
+     * Estadísticas de carrera del árbitro (independientes de los filtros de la tabla).
+     * "Dirigido" = designación confirmada en partido pasado que sí se jugó
+     * (se excluyen borrador, cancelado y aplazado).
+     */
+    private function statsHistorial(Arbitro $arbitro): array
+    {
+        $dirigidos = Designacion::query()
+            ->join('partidos', 'partidos.idPartido', '=', 'designaciones.idPartido')
+            ->join('roles_partido', 'roles_partido.idRol', '=', 'designaciones.idRol')
+            ->where('designaciones.idArbitro', $arbitro->idArbitro)
+            ->where('designaciones.estadoDesignacion', Designacion::ESTADO_CONFIRMADA)
+            ->whereNotIn('partidos.estadoPartido', [Partido::ESTADO_BORRADOR, 'cancelado', 'aplazado'])
+            ->whereDate('partidos.fechaPartido', '<', now()->toDateString());
+
+        $porRol = (clone $dirigidos)
+            ->groupBy('roles_partido.nombre', 'roles_partido.orden')
+            ->orderBy('roles_partido.orden')
+            ->selectRaw('roles_partido.nombre as rol, COUNT(*) as total')
+            ->pluck('total', 'rol');
+
+        $torneosDistintos = (clone $dirigidos)
+            ->distinct('partidos.idTorneo')
+            ->count('partidos.idTorneo');
+
+        $rechazadas = Designacion::query()
+            ->join('partidos', 'partidos.idPartido', '=', 'designaciones.idPartido')
+            ->where('designaciones.idArbitro', $arbitro->idArbitro)
+            ->where('designaciones.estadoDesignacion', Designacion::ESTADO_RECHAZADA)
+            ->whereDate('partidos.fechaPartido', '<', now()->toDateString())
+            ->count();
+
+        return [
+            'totalDirigidos' => $porRol->sum(),
+            'porRol'         => $porRol,
+            'torneos'        => $torneosDistintos,
+            'rechazadas'     => $rechazadas,
+        ];
+    }
+
+    /**
+     * El árbitro Central finaliza un partido confirmado. No existe estado
+     * "en curso": el partido queda en 'confirmado' hasta que el Central o el
+     * designador lo finalizan manualmente.
      */
     public function finalizarPartido(int $id): JsonResponse
     {
@@ -723,10 +777,10 @@ class DesignacionController extends Controller
 
         abort_unless($esCentral, 403, 'Solo el árbitro Central puede finalizar el partido.');
 
-        if ($partido->estadoPartido !== Partido::ESTADO_EN_CURSO) {
+        if ($partido->estadoPartido !== Partido::ESTADO_CONFIRMADO) {
             return response()->json([
                 'success' => false,
-                'message' => 'Solo se puede finalizar un partido en curso.',
+                'message' => 'Solo se puede finalizar un partido confirmado.',
             ], 422);
         }
 
@@ -748,6 +802,18 @@ class DesignacionController extends Controller
     }
 
     /**
+     * Fallback GET para los enlaces "Confirmar" de correos antiguos, que
+     * apuntaban directo al endpoint POST: lleva al árbitro a la card de su
+     * designación en Mis partidos, donde confirma con el botón real.
+     */
+    public function redirigirConfirmacionEmail(int $id): RedirectResponse
+    {
+        return redirect()
+            ->route('mis-partidos.index')
+            ->withFragment("desig-card-{$id}");
+    }
+
+    /**
      * El árbitro confirma su designación.
      */
     public function confirmarDesignacion(int $id): JsonResponse
@@ -758,49 +824,15 @@ class DesignacionController extends Controller
             ->where('idArbitro', $arbitro->idArbitro)
             ->firstOrFail();
 
-        if (! $designacion->estaPendiente()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Esta designación no está en estado pendiente.',
-            ], 422);
+        try {
+            $partidoCompleto = $this->designaciones->confirmarDesignacion($designacion, $arbitro, Auth::user());
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
 
-        $partidoCompleto = DB::transaction(function () use ($designacion, $arbitro): bool {
-            $designacion->update([
-                'estadoDesignacion' => Designacion::ESTADO_CONFIRMADA,
-                'fechaConfirmacion' => now(),
-            ]);
-
-            HistorialDesignacion::create([
-                'idDesignacion'   => $designacion->idDesignacion,
-                'idPartido'       => $designacion->idPartido,
-                'idArbitro'       => $arbitro->idArbitro,
-                'idColegio'       => $designacion->idColegio,
-                'idUsuarioAccion' => Auth::id(),
-                'tipoAccion'      => HistorialDesignacion::TIPO_CONFIRMADO,
-                'estadoAnterior'  => Designacion::ESTADO_PENDIENTE,
-                'estadoNuevo'     => Designacion::ESTADO_CONFIRMADA,
-            ]);
-
-            broadcast(new DesignacionActualizadaEvent($designacion->fresh()))->toOthers();
-
-            // Verificar si todas las designaciones están confirmadas
-            $partido = Partido::with('formato')->find($designacion->idPartido);
-            if ($partido && $partido->estaCompleto()) {
-                PartidoStateMachine::transicionarCon(
-                    $partido,
-                    Partido::ESTADO_CONFIRMADO,
-                    Auth::user()
-                );
-                return true;
-            }
-
-            return false;
-        });
-
         return response()->json([
-            'success'        => true,
-            'partidoCompleto'=> $partidoCompleto,
+            'success'         => true,
+            'partidoCompleto' => $partidoCompleto,
         ]);
     }
 
@@ -819,46 +851,11 @@ class DesignacionController extends Controller
             ->where('idArbitro', $arbitro->idArbitro)
             ->firstOrFail();
 
-        if (! $designacion->estaPendiente()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Solo se pueden rechazar designaciones pendientes.',
-            ], 422);
+        try {
+            $this->designaciones->rechazarDesignacion($designacion, $arbitro, $validated['motivo'], Auth::user());
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
-
-        DB::transaction(function () use ($designacion, $validated, $arbitro): void {
-            $designacion->update([
-                'estadoDesignacion' => Designacion::ESTADO_RECHAZADA,
-                'motivoRechazo'     => $validated['motivo'],
-                'fechaRechazo'      => now(),
-            ]);
-
-            HistorialDesignacion::create([
-                'idDesignacion'   => $designacion->idDesignacion,
-                'idPartido'       => $designacion->idPartido,
-                'idArbitro'       => $arbitro->idArbitro,
-                'idColegio'       => $designacion->idColegio,
-                'idUsuarioAccion' => Auth::id(),
-                'tipoAccion'      => HistorialDesignacion::TIPO_RECHAZADO,
-                'estadoAnterior'  => Designacion::ESTADO_PENDIENTE,
-                'estadoNuevo'     => Designacion::ESTADO_RECHAZADA,
-                'detalle'         => $validated['motivo'],
-            ]);
-
-            // Si el partido estaba confirmado → regresa a programado
-            $partido = Partido::find($designacion->idPartido);
-            if ($partido && $partido->estadoPartido === Partido::ESTADO_CONFIRMADO) {
-                PartidoStateMachine::transicionarCon(
-                    $partido,
-                    Partido::ESTADO_PROGRAMADO,
-                    Auth::user(),
-                    "Árbitro rechazó designación: {$validated['motivo']}"
-                );
-            }
-
-            NotificarRechazoJob::dispatch($designacion->load(['partido', 'arbitro.usuario', 'designador']));
-            broadcast(new PartidoActualizadoEvent($partido ?? Partido::find($designacion->idPartido)))->toOthers();
-        });
 
         return response()->json(['success' => true]);
     }
@@ -868,8 +865,12 @@ class DesignacionController extends Controller
      */
     public function disponibilidadGeneral(Request $request): View
     {
-        $semana    = SemanaNavegacion::desde($request->query('semana'));
         $idColegio = $this->idColegioActivo();
+        $semana    = SemanaNavegacion::desde(
+            $request->query('semana'),
+            ConfiguracionColegio::getDiaDisponibilidad($idColegio),
+            recortarAHoy: false,
+        );
 
         $arbitros = Arbitro::where('idColegio', $idColegio)
             ->where('estadoArbitro', 'activo')
@@ -892,131 +893,5 @@ class DesignacionController extends Controller
             'semana'   => $semana,
             'franjas'  => DisponibilidadArbitro::getFranjas(),
         ]);
-    }
-
-    // ── Helpers privados ──────────────────────────────────────────────────────
-
-    private function franjaDesdeHora(string $hora): string
-    {
-        $h = (int) substr($hora, 0, 2);
-
-        return match (true) {
-            $h >= 6  && $h < 12 => 'am',
-            $h >= 12 && $h < 18 => 'pm',
-            default             => 'noche',
-        };
-    }
-
-    private function franjaCoincide(string $franjaArbitro, string $franjaPartido): bool
-    {
-        $mapa = [
-            'am'        => ['am'],
-            'pm'        => ['pm'],
-            'noche'     => ['noche'],
-            'am_pm'     => ['am', 'pm'],
-            'am_noche'  => ['am', 'noche'],
-            'pm_noche'  => ['pm', 'noche'],
-            'todo_el_dia'=> ['am', 'pm', 'noche'],
-        ];
-
-        return in_array($franjaPartido, $mapa[$franjaArbitro] ?? [], true);
-    }
-
-    /**
-     * Define cuántos slots de cada rol exige el formato del partido.
-     * VAR y AVAR nunca en formatos estándar.
-     */
-    private function definicionSlots(?object $formato): array
-    {
-        $nombreFormato = strtolower($formato?->nombre ?? '');
-
-        return match (true) {
-            str_contains($nombreFormato, 'solo')   => ['Central' => 1],
-            str_contains($nombreFormato, 'dupla')  => ['Central' => 1, 'Asistente' => 1],
-            str_contains($nombreFormato, 'cuarto') => ['Central' => 1, 'Asistente' => 2, 'Cuarto' => 1],
-            str_contains($nombreFormato, 'terna')  => ['Central' => 1, 'Asistente' => 2],
-            default                                => ['Central' => 1, 'Asistente' => 1],
-        };
-    }
-
-    /**
-     * Crea los slots de designación del partido según su formato.
-     * Idempotente: usa firstOrCreate sobre la clave única (partido, rol, numeroSlot).
-     */
-    private function crearSlotsPartido(Partido $partido): void
-    {
-        $definicion = $this->definicionSlots($partido->formato);
-
-        $roles = RolPartido::where('esActivo', true)
-            ->whereIn('nombre', array_keys($definicion))
-            ->get()
-            ->keyBy('nombre');
-
-        foreach ($definicion as $nombreRol => $cantidad) {
-            $rol = $roles->get($nombreRol);
-
-            if ($rol === null) {
-                Log::warning("crearSlotsPartido: rol '{$nombreRol}' no existe o está inactivo. idPartido={$partido->idPartido}");
-                continue;
-            }
-
-            for ($n = 1; $n <= $cantidad; $n++) {
-                SlotDesignacion::firstOrCreate([
-                    'idPartido'  => $partido->idPartido,
-                    'idRol'      => $rol->idRol,
-                    'numeroSlot' => $n,
-                ]);
-            }
-        }
-    }
-
-    /**
-     * Garantiza que el partido tenga slots: los crea y vincula las designaciones
-     * existentes (partidos creados antes del sistema de slots).
-     */
-    private function asegurarSlots(Partido $partido): void
-    {
-        if (SlotDesignacion::where('idPartido', $partido->idPartido)->exists()) {
-            return;
-        }
-
-        $this->crearSlotsPartido($partido);
-
-        $designaciones = $partido->designaciones()
-            ->whereIn('estadoDesignacion', [Designacion::ESTADO_PENDIENTE, Designacion::ESTADO_CONFIRMADA])
-            ->get();
-
-        foreach ($designaciones as $designacion) {
-            SlotDesignacion::where('idPartido', $partido->idPartido)
-                ->where('idRol', $designacion->idRol)
-                ->whereNull('idDesignacion')
-                ->orderBy('numeroSlot')
-                ->limit(1)
-                ->update(['idDesignacion' => $designacion->idDesignacion]);
-        }
-    }
-
-    /**
-     * Calcula la compensación del árbitro para su designación según la tarifa
-     * del torneo (división + rol + formato) y la modalidad de pago del partido.
-     *
-     * @return array{valor: float|null, modalidad: string|null}
-     */
-    private function calcularPago(Designacion $designacion): array
-    {
-        $partido = $designacion->partido;
-        $valor   = null;
-
-        if ($partido !== null && $partido->idDivision && $partido->idFormato && $designacion->idRol) {
-            $valor = TarifaTorneo::where('idDivision', $partido->idDivision)
-                ->where('idRol', $designacion->idRol)
-                ->where('idFormato', $partido->idFormato)
-                ->value('valorPago');
-        }
-
-        return [
-            'valor'     => $valor !== null ? (float) $valor : null,
-            'modalidad' => $partido?->modalidadPago,
-        ];
     }
 }

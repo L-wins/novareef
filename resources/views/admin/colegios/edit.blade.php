@@ -10,13 +10,9 @@
     Volver al detalle
 </a>
 
-<div style="margin-bottom:2rem;">
-    <h1 style="font-size:1.375rem;font-weight:800;color:var(--text-bright);margin:0 0 4px;letter-spacing:-0.4px;">
-        Editar colegio
-    </h1>
-    <p style="font-size:0.875rem;color:var(--text);margin:0;font-family:monospace;">
-        {{ $colegio->codigoColegio }}
-    </p>
+<div class="admin-page-header">
+    <h1>Editar colegio</h1>
+    <p class="admin-detail-hero__code">{{ $colegio->codigoColegio }}</p>
 </div>
 
 <form method="POST" action="{{ route('admin.colegios.update', $colegio->idColegio) }}" novalidate>
@@ -51,8 +47,7 @@
                        value="{{ old('codigoColegio', $colegio->codigoColegio) }}"
                        placeholder="Ej. CAC-001"
                        maxlength="20"
-                       class="admin-form-input {{ $errors->has('codigoColegio') ? 'is-invalid' : '' }}"
-                       style="font-family:monospace;">
+                       class="admin-form-input admin-form-input--mono {{ $errors->has('codigoColegio') ? 'is-invalid' : '' }}">
                 @error('codigoColegio')
                     <p class="admin-form-error">{{ $message }}</p>
                 @enderror
@@ -154,12 +149,12 @@
                 <label class="admin-form-label">Plan activo</label>
                 <div class="admin-form-readonly">
                     @if($planActual)
-                        <span class="badge badge--plan-{{ strtolower($planActual->nombre) }}" style="margin-right:8px;">
+                        <span class="badge badge--plan-{{ strtolower($planActual->nombre) }} admin-form-readonly__badge">
                             {{ $planActual->nombre }}
                         </span>
                         ${{ number_format($planActual->precio, 0, ',', '.') }} COP / {{ $planActual->periodicidad }}
                     @else
-                        <span style="color:var(--text-muted);font-style:italic;">Sin plan activo</span>
+                        <span class="admin-detail-field__empty">Sin plan activo</span>
                     @endif
                 </div>
             </div>
@@ -170,7 +165,7 @@
                     @if($suscripcion?->fechaVencimiento)
                         {{ $suscripcion->fechaVencimiento->format('d/m/Y') }}
                     @else
-                        <span style="color:var(--text-muted);font-style:italic;">—</span>
+                        <span class="admin-detail-field__empty">—</span>
                     @endif
                 </div>
             </div>
@@ -178,7 +173,8 @@
             <div class="admin-form-group admin-form-col-2">
                 <div class="admin-form-hint">
                     <i class="fa-solid fa-circle-info"></i>
-                    El plan y la suscripción se gestionan desde el módulo de suscripciones.
+                    El plan y la suscripción se gestionan desde la
+                    <a href="{{ route('admin.colegios.show', $colegio->idColegio) }}">ficha del colegio</a>.
                     Esta pantalla solo modifica los datos del colegio.
                 </div>
             </div>

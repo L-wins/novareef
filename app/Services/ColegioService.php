@@ -4,17 +4,32 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Arbitro;
 use App\Models\CategoriaArbitro;
 use App\Models\Colegio;
 use App\Models\ConfiguracionColegio;
 use App\Models\Plan;
 use App\Models\Suscripcion;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 final class ColegioService
 {
     /** Categorías que se crean automáticamente en todo colegio nuevo. */
     private const CATEGORIAS_DEFAULT = ['FIFA', 'A', 'A-FEM', 'B', 'C'];
+
+    /**
+     * Estados válidos del ciclo de vida de un colegio — coincide exactamente
+     * con el ENUM de la columna `colegios.estadoColegio` en BD. No agregar un
+     * estado aquí sin antes migrar la columna.
+     */
+    private const ESTADOS_VALIDOS = ['activo', 'suspendido'];
+
+    /** Etiqueta legible por estado, usada en mensajes flash tras un cambio. */
+    private const ESTADO_LABELS = [
+        'activo'     => 'activado',
+        'suspendido' => 'suspendido',
+    ];
 
     public function __construct(
         private readonly ArbitroService $arbitros,
@@ -92,7 +107,56 @@ final class ColegioService
         });
     }
 
-    // ── Helpers privados ──────────────────────────────────────────────────────
+    /**
+     * Usuario ejecutivo más reciente del colegio — quien administra la cuenta.
+     */
+    public function adminPrincipal(Colegio $colegio): ?User
+    {
+        return $colegio->usuarios()
+            ->where('rolUsuario', 'ejecutivo')
+            ->orderByDesc('created_at')
+            ->first();
+    }
+
+    /**
+     * Conteo de árbitros del colegio por estado, en una sola query
+     * con sumas condicionales en lugar de tres queries separadas.
+     *
+     * @return array{total: int, activos: int, enProceso: int}
+     */
+    public function estadisticasArbitros(int $idColegio): array
+    {
+        $stats = Arbitro::where('idColegio', $idColegio)
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(estadoArbitro = 'activo') as activos")
+            ->selectRaw("SUM(estadoArbitro = 'proceso_ingreso') as en_proceso")
+            ->first();
+
+        return [
+            'total'     => (int) $stats->total,
+            'activos'   => (int) $stats->activos,
+            'enProceso' => (int) $stats->en_proceso,
+        ];
+    }
+
+    /**
+     * Cambia el estado del colegio. Si el estado solicitado no es válido,
+     * alterna entre activo/suspendido (comportamiento del botón rápido del panel).
+     *
+     * @return string  Etiqueta legible del estado final, para el mensaje flash.
+     */
+    public function cambiarEstado(Colegio $colegio, ?string $estadoSolicitado): string
+    {
+        $estadoFinal = in_array($estadoSolicitado, self::ESTADOS_VALIDOS, true)
+            ? $estadoSolicitado
+            : ($colegio->estadoColegio === 'activo' ? 'suspendido' : 'activo');
+
+        $colegio->update(['estadoColegio' => $estadoFinal]);
+
+        return self::ESTADO_LABELS[$estadoFinal];
+    }
+
+    // ── Helpers privados ──────────────────
 
     private function crearSuscripcion(Colegio $colegio, Plan $plan): void
     {

@@ -1,0 +1,130 @@
+/* ════════════════════════════════════════════════════════════════
+   NovaReef — Design Tokens (única fuente de verdad del tema)
+
+   Reglas:
+   · Los componentes consumen tokens (--nv-*), nunca hex directos.
+   · El tema solo cambia el VALOR de los tokens, nunca su nombre.
+   · dark es el tema por defecto (:root) — preserva el look actual.
+   · light se activa con <html data-theme="light">.
+   · "system" no existe en CSS: lo resuelve JS antes del paint
+     (layouts/app.blade.php) y asigna data-theme=light|dark.
+
+   Buenas prácticas aplicadas (guías de modo oscuro):
+   · Sin negro puro ni blanco puro (fatiga visual / halation).
+   · Elevación por superficies escalonadas: bg → surface → card → elevated.
+   · Acento más saturado en light (fondos claros lavan el color),
+     más luminoso en dark.
+   · Sombras protagonistas en light; en dark la elevación la dan
+     las superficies y bordes.
+   · color-scheme por tema: scrollbars y controles nativos coherentes.
+   ════════════════════════════════════════════════════════════════ */
+
+:root {
+    color-scheme: dark;
+
+    /* ── Superficies (de fondo a primer plano) ─────────────────── */
+    --nv-bg:             #020617;   /* fondo de página                */
+    --nv-surface:        #0f172a;   /* paneles, navbar, thead         */
+    --nv-card:           #1e293b;   /* cards, inputs                  */
+    --nv-card-alt:       #111827;   /* cards alternas (listas densas) */
+    --nv-card-hover:     #263143;
+    --nv-elevated:       #1a1f2e;   /* modales, dropdowns             */
+    --nv-overlay:        rgba(0, 0, 0, 0.65);
+
+    /* ── Texto ─────────────────────────────────────────────────── */
+    --nv-text:           #f1f5f9;   /* títulos, énfasis (no blanco puro) */
+    --nv-text-2:         #94a3b8;   /* texto secundario                  */
+    --nv-text-3:         #64748b;   /* texto atenuado / placeholders     */
+    --nv-on-accent:      #ffffff;   /* texto sobre el color de acento    */
+
+    /* ── Bordes y rellenos sutiles ─────────────────────────────── */
+    --nv-border:         rgba(255, 255, 255, 0.06);
+    --nv-border-2:       rgba(255, 255, 255, 0.11);
+    --nv-border-strong:  #2d3748;
+    --nv-border-accent:  rgba(79, 142, 247, 0.22);
+    --nv-fill:           rgba(255, 255, 255, 0.04);   /* hover/tinte sutil */
+    --nv-fill-2:         rgba(255, 255, 255, 0.08);
+
+    /* ── Acento ────────────────────────────────────────────────── */
+    --nv-accent:         #4f8ef7;
+    --nv-accent-2:       #7aa8f9;   /* variante clara / hover texto   */
+    --nv-accent-strong:  #3b82f6;   /* hover de botones               */
+    --nv-accent-bg:      rgba(79, 142, 247, 0.08);
+    --nv-accent-glow:    rgba(79, 142, 247, 0.22);
+
+    /* ── Estados semánticos ────────────────────────────────────── */
+    --nv-danger:         #ef4444;
+    --nv-danger-bg:      rgba(239, 68, 68, 0.07);
+    --nv-danger-border:  rgba(239, 68, 68, 0.16);
+    --nv-success:        #22c55e;
+    --nv-success-bg:     rgba(34, 197, 94, 0.12);
+    --nv-warning:        #f59e0b;
+    --nv-warning-bg:     rgba(245, 158, 11, 0.12);
+
+    /* ── Sombras (elevación) ───────────────────────────────────── */
+    --nv-shadow-1:       0 4px 20px rgba(0, 0, 0, 0.20);
+    --nv-shadow-2:       0 8px 32px rgba(0, 0, 0, 0.35);
+    --nv-shadow-modal:   0 24px 48px rgba(0, 0, 0, 0.50);
+
+    /* ── Cromo (navbar con blur) ───────────────────────────────── */
+    --nv-navbar-bg:      rgba(2, 6, 23, 0.82);
+}
+
+:root[data-theme="light"] {
+    color-scheme: light;
+
+    /* ── Superficies ───────────────────────────────────────────── */
+    --nv-bg:             #eef2f7;   /* gris azulado, no blanco puro   */
+    --nv-surface:        #f7f9fc;
+    --nv-card:           #ffffff;
+    --nv-card-alt:       #ffffff;
+    --nv-card-hover:     #f1f5f9;
+    --nv-elevated:       #ffffff;
+    --nv-overlay:        rgba(15, 23, 42, 0.45);
+
+    /* ── Texto ─────────────────────────────────────────────────── */
+    --nv-text:           #0f172a;
+    --nv-text-2:         #475569;
+    --nv-text-3:         #94a3b8;
+    --nv-on-accent:      #ffffff;
+
+    /* ── Bordes y rellenos sutiles ─────────────────────────────── */
+    --nv-border:         rgba(15, 23, 42, 0.08);
+    --nv-border-2:       rgba(15, 23, 42, 0.14);
+    --nv-border-strong:  #cbd5e1;
+    --nv-border-accent:  rgba(47, 108, 222, 0.30);
+    --nv-fill:           rgba(15, 23, 42, 0.04);
+    --nv-fill-2:         rgba(15, 23, 42, 0.08);
+
+    /* ── Acento (más saturado: los fondos claros lavan el color) ── */
+    --nv-accent:         #2f6cde;
+    --nv-accent-2:       #2058c7;
+    --nv-accent-strong:  #2058c7;
+    --nv-accent-bg:      rgba(47, 108, 222, 0.08);
+    --nv-accent-glow:    rgba(47, 108, 222, 0.18);
+
+    /* ── Estados semánticos (contraste AA sobre claro) ─────────── */
+    --nv-danger:         #dc2626;
+    --nv-danger-bg:      rgba(220, 38, 38, 0.06);
+    --nv-danger-border:  rgba(220, 38, 38, 0.18);
+    --nv-success:        #15803d;
+    --nv-success-bg:     rgba(21, 128, 61, 0.10);
+    --nv-warning:        #b45309;
+    --nv-warning-bg:     rgba(180, 83, 9, 0.10);
+
+    /* ── Sombras (en light la elevación la dan las sombras) ───── */
+    --nv-shadow-1:       0 2px 12px rgba(15, 23, 42, 0.06);
+    --nv-shadow-2:       0 8px 28px rgba(15, 23, 42, 0.10);
+    --nv-shadow-modal:   0 24px 48px rgba(15, 23, 42, 0.18);
+
+    /* ── Cromo (navbar con blur) ───────────────────────────────── */
+    --nv-navbar-bg:      rgba(247, 249, 252, 0.85);
+}
+
+/* Al cambiar de tema se suprimen las transiciones un instante para
+   evitar el "recoloreado animado" de cientos de elementos a la vez. */
+:root.theme-switching *,
+:root.theme-switching *::before,
+:root.theme-switching *::after {
+    transition: none !important;
+}

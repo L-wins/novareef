@@ -1,12 +1,13 @@
-/* ============================================================
+/* 
    Font Awesome 7.2 — @font-face manual
    Las webfonts viven en /public/webfonts/ (copiadas desde
    node_modules/@fortawesome/fontawesome-free/webfonts/).
 
    Rutas absolutas para evitar problemas con la resolución de URL
    de Vite cuando el proyecto está alojado en un subdirectorio
-   de XAMPP (localhost/novareef/public/).
-   ============================================================ */
+   de XAMPP (localhost/novareef/public/) — convención de desarrollo
+   acordada para todo el equipo.
+    */
 
 /*  Solid (fas)  */
 @font-face {

@@ -1,34 +1,87 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme-pref="{{ Auth::user()->temaPreferencia ?? 'dark' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="@yield('descripcion', 'Panel de control — NovaReef')">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#020617">
     <title>@yield('titulo', 'Panel') — NovaReef</title>
+    @include('layouts.partials.theme-boot')
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 </head>
-<body>
+<body @if(session('impersonacion.idAdmin')) style="--banner-h: 40px;" @endif>
+
+    @if(session('impersonacion.idAdmin'))
+    <div class="impersonacion-banner">
+        <i class="fa-solid fa-user-secret"></i>
+        <span>Estás viendo NovaReef como <strong>{{ Auth::user()->nombreUsuario }}</strong> — sesión de soporte.</span>
+        <form method="POST" action="{{ route('impersonacion.salir') }}">
+            @csrf
+            <button type="submit" class="impersonacion-banner__salir">
+                <i class="fa-solid fa-right-from-bracket"></i> Salir
+            </button>
+        </form>
+    </div>
+    @endif
 
     {{-- ===== NAVBAR ===== --}}
     <header class="navbar" id="navbar">
         <div class="nav-inner">
 
-            {{-- Marca --}}
+            {{-- Marca: logo y nombre del colegio si existen; NovaReef como fallback --}}
+            @php($colegioNav = Auth::user()->colegio)
             <div class="nav-brand">
-                <div class="brand-icon">
-                    <i class="fa-solid fa-futbol"></i>
+                <div class="brand-icon {{ $colegioNav?->logoUrl ? 'brand-icon--logo' : '' }}">
+                    @if ($colegioNav?->logoUrl)
+                        <img src="{{ $colegioNav->logoUrl }}" alt="Logo de {{ $colegioNav->nombreColegio }}">
+                    @else
+                        <i class="fa-solid fa-futbol"></i>
+                    @endif
                 </div>
-                <span class="brand-name">NovaReef</span>
+                <span class="brand-name" title="{{ $colegioNav?->nombreColegio ?? 'NovaReef' }}">
+                    {{ $colegioNav?->nombreColegio ?? 'NovaReef' }}
+                </span>
                 <span class="brand-sep"></span>
                 <span class="brand-section">@yield('seccion', 'Panel de control')</span>
             </div>
 
+            {{-- Reloj en vivo — columna central propia (ver .nav-inner en grid),
+                 fijo a America/Bogota. La app corre en UTC (config/app.php),
+                 así que hay que convertir explícitamente, no usar now() tal
+                 cual. Valor inicial en servidor (sin flash de vacío) + epoch
+                 para que reloj.js corrija cualquier reloj de equipo
+                 desincronizado. --}}
+            @php($ahoraBogota = now()->setTimezone('America/Bogota'))
+            <div id="nav-reloj" class="nav-reloj" aria-live="off"
+                 data-server-epoch="{{ now()->getPreciseTimestamp(3) }}">
+                <i class="fa-regular fa-clock nav-reloj__icon"></i>
+                <span class="nav-reloj__fecha">{{ ucfirst($ahoraBogota->locale('es')->isoFormat('ddd DD MMM')) }}</span>
+                <span class="nav-reloj__hora">{{ $ahoraBogota->format('h:i:s A') }}</span>
+            </div>
+
             {{-- Acciones --}}
             <div class="nav-actions">
+
+                {{-- Selector de tema --}}
+                <div class="theme-switch" role="radiogroup" aria-label="Tema de la interfaz"
+                     data-theme-endpoint="{{ route('preferencias.tema') }}">
+                    <button type="button" class="theme-switch__btn" data-theme-set="light"
+                            title="Tema claro" aria-label="Tema claro">
+                        <i class="fa-solid fa-sun"></i>
+                    </button>
+                    <button type="button" class="theme-switch__btn" data-theme-set="dark"
+                            title="Tema oscuro" aria-label="Tema oscuro">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <button type="button" class="theme-switch__btn" data-theme-set="system"
+                            title="Según el sistema" aria-label="Tema según el sistema">
+                        <i class="fa-solid fa-desktop"></i>
+                    </button>
+                </div>
 
                 {{-- Chip de usuario --}}
                 <div class="user-chip">
@@ -103,6 +156,7 @@
                 </a>
                 @endcan
 
+                @if (in_array('torneos', $modulosPlan ?? [], true))
                 @can('ver-torneos')
                 <a href="{{ route('torneos.index') }}"
                    class="sidebar-link {{ request()->routeIs('torneos.*') || request()->routeIs('partidos.*') ? 'active' : '' }}">
@@ -110,7 +164,9 @@
                     <span>Torneos</span>
                 </a>
                 @endcan
+                @endif
 
+                @if (in_array('designaciones', $modulosPlan ?? [], true))
                 @can('ver-designaciones')
                 <a href="{{ route('designaciones.index') }}"
                    class="sidebar-link {{ request()->routeIs('designaciones.*') ? 'active' : '' }}">
@@ -118,7 +174,9 @@
                     <span>Designaciones</span>
                 </a>
                 @endcan
+                @endif
 
+                @if (in_array('finanzas', $modulosPlan ?? [], true))
                 @can('ver-finanzas')
                 <a href="{{ route('finanzas.index') }}"
                    class="sidebar-link {{ request()->routeIs('finanzas.*') ? 'active' : '' }}">
@@ -126,15 +184,32 @@
                     <span>Finanzas</span>
                 </a>
                 @endcan
+                @endif
 
-                @can('ver-academico')
-                <a href="{{ route('academico.index') }}"
-                   class="sidebar-link {{ request()->routeIs('academico.*') ? 'active' : '' }}">
+                @if (in_array('academico', $modulosPlan ?? [], true))
+                @can('crear-academico')
+                <a href="{{ route('academico.sesiones.index') }}"
+                   class="sidebar-link {{ request()->routeIs('academico.sesiones.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-graduation-cap"></i>
                     <span>Académico</span>
                 </a>
+                <a href="{{ route('academico.justificaciones.pendientes') }}"
+                   class="sidebar-link sidebar-link--sub {{ request()->routeIs('academico.justificaciones.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-file-circle-question"></i>
+                    <span>Justificaciones</span>
+                </a>
+                @else
+                @can('ver-academico')
+                <a href="{{ route('academico.mis-clases') }}"
+                   class="sidebar-link {{ request()->routeIs('academico.mis-clases') || request()->routeIs('academico.justificaciones.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>Mis Clases</span>
+                </a>
                 @endcan
+                @endcan
+                @endif
 
+                @if (in_array('sanciones', $modulosPlan ?? [], true))
                 @can('ver-sanciones')
                 <a href="{{ route('sanciones.index') }}"
                    class="sidebar-link {{ request()->routeIs('sanciones.*') ? 'active' : '' }}">
@@ -142,13 +217,22 @@
                     <span>Sanciones</span>
                 </a>
                 @endcan
+                @endif
 
                 @can('editar-arbitros')
                 <div class="sidebar-divider"></div>
                 <a href="{{ route('configuracion.index') }}"
-                   class="sidebar-link {{ request()->routeIs('configuracion.*') ? 'active' : '' }}">
+                   class="sidebar-link {{ request()->routeIs('configuracion.index') ? 'active' : '' }}">
                     <i class="fa-solid fa-gear"></i>
                     <span>Configuración</span>
+                </a>
+                @endcan
+
+                @can('gestionar-cuentas-admin')
+                <a href="{{ route('configuracion.cuentas-admin.index') }}"
+                   class="sidebar-link sidebar-link--sub {{ request()->routeIs('configuracion.cuentas-admin.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>Cuentas Admin</span>
                 </a>
                 @endcan
 

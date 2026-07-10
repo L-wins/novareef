@@ -112,9 +112,12 @@
         </div>
         @endif
 
+        {{-- Ambos botones llevan a la card de la designación en "Mis partidos":
+             un enlace de correo solo puede hacer GET — confirmar/rechazar son
+             POST con sesión + CSRF y se ejecutan con los botones de la app. --}}
         <div class="btn-row">
-            <a href="{{ route('mis-partidos.confirmar', $designacion->idDesignacion) }}" class="btn-confirm">✅ Confirmar designación</a>
-            <a href="{{ route('mis-partidos.index') }}#rechazar-{{ $designacion->idDesignacion }}" class="btn-reject">❌ No puedo asistir</a>
+            <a href="{{ route('mis-partidos.index') }}#desig-card-{{ $designacion->idDesignacion }}" class="btn-confirm">✅ Confirmar designación</a>
+            <a href="{{ route('mis-partidos.index') }}#desig-card-{{ $designacion->idDesignacion }}" class="btn-reject">❌ No puedo asistir</a>
         </div>
     </div>
     <div class="footer">

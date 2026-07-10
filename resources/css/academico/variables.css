@@ -1,0 +1,17 @@
+/*
+   NovaReef — Módulo M08 Académico
+   Hereda de tokens.css (mismas vars: --nv-accent, --nv-card-alt, etc.)
+    */
+
+:root {
+    --aca-bg-card:   var(--nv-card-alt);
+    --aca-border:    var(--nv-border);
+    --aca-border-h:  var(--nv-fill-2);
+    --aca-text:      var(--nv-text);
+    --aca-text-2:    var(--nv-text-2);
+    --aca-text-mute: var(--nv-text-3);
+    --aca-accent:    var(--nv-accent);
+    --aca-accent-2:  var(--nv-accent-2);
+    --aca-radius:    0.75rem;
+    --aca-radius-sm: 0.5rem;
+}

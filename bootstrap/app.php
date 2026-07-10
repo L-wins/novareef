@@ -2,9 +2,12 @@
 
 use App\Http\Middleware\AdminAuth;
 use App\Http\Middleware\BlockResendWebhook;
+use App\Http\Middleware\ProtegerEscrituraMasiva;
 use App\Http\Middleware\SoloSuperAdmin;
+use App\Http\Middleware\TerminarImpersonacionExpirada;
 use App\Http\Middleware\VerificarCambioContrasena;
 use App\Http\Middleware\VerificarEstadoColegio;
+use App\Http\Middleware\VerificarModuloPlan;
 use App\Http\Middleware\VerificarPerfilCompleto;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
+        channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function (): void {
             Route::middleware('web')->group(base_path('routes/admin.php'));
@@ -29,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'verificar.colegio'   => VerificarEstadoColegio::class,
             'solo.superadmin'     => SoloSuperAdmin::class,
             'verificar.perfil'    => VerificarPerfilCompleto::class,
+            'modulo'              => VerificarModuloPlan::class,
             'permission'          => PermissionMiddleware::class,
             'role'                => RoleMiddleware::class,
             'role_or_permission'  => RoleOrPermissionMiddleware::class,
@@ -37,7 +42,9 @@ return Application::configure(basePath: dirname(__DIR__))
             BlockResendWebhook::class,
         ]);
         $middleware->web(append: [
+            TerminarImpersonacionExpirada::class,
             VerificarCambioContrasena::class,
+            ProtegerEscrituraMasiva::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

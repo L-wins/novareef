@@ -16,7 +16,10 @@ class StoreDisponibilidadRequest extends FormRequest
 
     public function rules(): array
     {
-        $franjas = implode(',', array_keys(DisponibilidadArbitro::getFranjas()));
+        $franjas = implode(',', [
+            ...array_keys(DisponibilidadArbitro::getFranjas()),
+            DisponibilidadArbitro::FRANJA_NO_DISPONIBLE,
+        ]);
 
         return [
             'disponibilidades'          => ['required', 'array', 'min:1', 'max:7'],

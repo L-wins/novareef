@@ -41,6 +41,26 @@ class Colegio extends Model
         'estadoColegio'    => 'string',
     ];
 
+    //  Accessors ─
+
+    /**
+     * URL lista para mostrar el logo: logoColegio guarda una URL externa
+     * (cargada por el superadmin) o una ruta de storage (subida por el
+     * ejecutivo desde Configuración).
+     */
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (! $this->logoColegio) {
+            return null;
+        }
+
+        if (str_starts_with($this->logoColegio, 'http://') || str_starts_with($this->logoColegio, 'https://')) {
+            return $this->logoColegio;
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($this->logoColegio);
+    }
+
     //  Relaciones ─
 
     public function tenant(): BelongsTo
@@ -63,7 +83,7 @@ class Colegio extends Model
         return $this->hasOne(Suscripcion::class, 'idColegio', 'idColegio')
             ->ofMany(
                 ['fechaVencimiento' => 'max'],
-                fn ($query) => $query->where('estado', 'activa'),
+                fn ($query) => $query->whereIn('estado', Suscripcion::ESTADOS_VIGENTES),
             );
     }
 
@@ -76,7 +96,7 @@ class Colegio extends Model
             'idPlan',
             'idColegio',
             'idPlan',
-        )->where('suscripciones.estado', 'activa')
+        )->whereIn('suscripciones.estado', Suscripcion::ESTADOS_VIGENTES)
          ->orderByDesc('suscripciones.fechaVencimiento');
     }
 

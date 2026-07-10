@@ -20,6 +20,7 @@ class AsignarRolesExistentes extends Command
         'designador',
         'sanciones',
         'tecnico',
+        'veedor',
     ];
 
     public function handle(): int
@@ -39,7 +40,7 @@ class AsignarRolesExistentes extends Command
 
         User::whereIn('rolUsuario', self::ROLES_VALIDOS)
             ->select(['idUsuario', 'nombreUsuario', 'rolUsuario'])
-            ->chunkById(200, 'idUsuario', function ($chunk) use (&$asignados, &$omitidos, &$filas): void {
+            ->chunkById(200, function ($chunk) use (&$asignados, &$omitidos, &$filas): void {
                 foreach ($chunk as $usuario) {
                     if ($usuario->hasRole($usuario->rolUsuario)) {
                         $filas[] = [$usuario->idUsuario, $usuario->nombreUsuario, $usuario->rolUsuario, 'Sin cambios'];
@@ -51,7 +52,7 @@ class AsignarRolesExistentes extends Command
                     $filas[] = [$usuario->idUsuario, $usuario->nombreUsuario, $usuario->rolUsuario, '✓ Asignado'];
                     $asignados++;
                 }
-            });
+            }, 'idUsuario');
 
         $this->table(['ID', 'Nombre', 'Rol', 'Resultado'], $filas);
         $this->newLine();

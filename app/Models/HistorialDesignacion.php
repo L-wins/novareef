@@ -15,7 +15,7 @@ class HistorialDesignacion extends Model
     public    $incrementing = true;
     public    $timestamps   = false;
 
-    // ── Tipos de acción ───────────────────────────────────────────────────────
+    // ── Tipos de acción ───────────────────
     public const TIPO_ASIGNADO               = 'asignado';
     public const TIPO_CONFIRMADO             = 'confirmado';
     public const TIPO_RECHAZADO              = 'rechazado';
@@ -49,7 +49,7 @@ class HistorialDesignacion extends Model
         });
     }
 
-    // ── Relaciones ────────────────────────────────────────────────────────────
+    // ── Relaciones ──
 
     public function partido(): BelongsTo
     {

@@ -226,6 +226,11 @@ class Arbitro extends Model
         return $this->hasMany(Designacion::class, 'idArbitro', 'idArbitro');
     }
 
+    public function movimientosFinancieros(): HasMany
+    {
+        return $this->hasMany(MovimientoFinanciero::class, 'idArbitro', 'idArbitro');
+    }
+
     public function calificaciones(): HasManyThrough
     {
         return $this->hasManyThrough(
@@ -247,5 +252,35 @@ class Arbitro extends Model
         }
 
         return $promedio !== null ? round((float) $promedio, 2) : null;
+    }
+
+    public function asistenciasAcademicas(): HasMany
+    {
+        return $this->hasMany(AsistenciaAcademica::class, 'idArbitro', 'idArbitro');
+    }
+
+    public function justificacionesAcademicas(): HasMany
+    {
+        return $this->hasMany(JustificacionAcademica::class, 'idArbitro', 'idArbitro');
+    }
+
+    /**
+     * % de sesiones académicas marcadas como 'presente' sobre el total de
+     * sesiones a las que el árbitro debía asistir. Null si aún no tiene
+     * ninguna sesión asignada (evita dividir por cero / mostrar 0% engañoso).
+     */
+    public function getPorcentajeAsistenciaAttribute(): ?float
+    {
+        $asistencias = $this->relationLoaded('asistenciasAcademicas')
+            ? $this->asistenciasAcademicas
+            : $this->asistenciasAcademicas()->get();
+
+        if ($asistencias->isEmpty()) {
+            return null;
+        }
+
+        $presentes = $asistencias->where('estadoAsistencia', AsistenciaAcademica::ESTADO_PRESENTE)->count();
+
+        return round(($presentes / $asistencias->count()) * 100, 1);
     }
 }

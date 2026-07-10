@@ -7,18 +7,20 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreColegio;
 use App\Http\Requests\Admin\UpdateColegio;
-use App\Models\Arbitro;
 use App\Models\Colegio;
 use App\Models\Plan;
+use App\Services\AdminAuditService;
 use App\Services\ColegioService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class AdminColegioController extends Controller
 {
     public function __construct(
         private readonly ColegioService $colegios,
+        private readonly AdminAuditService $auditoria,
     ) {}
 
     public function index(Request $request): View
@@ -42,25 +44,15 @@ class AdminColegioController extends Controller
     public function show(int $id): View
     {
         $colegio = Colegio::with(['suscripcionActiva.plan'])->findOrFail($id);
-
-        $admin = $colegio->usuarios()
-            ->where('rolUsuario', 'ejecutivo')
-            ->orderByDesc('created_at')
-            ->first();
-
-        // Una sola query con conteos condicionales en lugar de 3 queries separadas.
-        $stats = Arbitro::where('idColegio', $id)
-            ->selectRaw('COUNT(*) as total')
-            ->selectRaw("SUM(estadoArbitro = 'activo') as activos")
-            ->selectRaw("SUM(estadoArbitro = 'proceso_ingreso') as en_proceso")
-            ->first();
+        $stats   = $this->colegios->estadisticasArbitros($id);
 
         return view('admin.colegios.show', [
-            'colegio'         => $colegio,
-            'admin'           => $admin,
-            'totalArbitros'   => (int) $stats->total,
-            'arbitrosActivos' => (int) $stats->activos,
-            'arbitrosProceso' => (int) $stats->en_proceso,
+            'colegio'          => $colegio,
+            'admin'            => $this->colegios->adminPrincipal($colegio),
+            'totalArbitros'    => $stats['total'],
+            'arbitrosActivos'  => $stats['activos'],
+            'arbitrosProceso'  => $stats['enProceso'],
+            'planesDisponibles' => Plan::where('esActivo', true)->orderBy('orden')->get(['idPlan', 'nombre']),
         ]);
     }
 
@@ -75,20 +67,24 @@ class AdminColegioController extends Controller
     {
         $data = $request->validated();
 
-        $this->colegios->registrar(
-            nombreColegio:       $data['nombreColegio'],
-            codigoColegio:       $data['codigoColegio'],
-            emailColegio:        $data['emailColegio'],
-            telefonoColegio:     $data['telefonoColegio'] ?? null,
-            direccionColegio:    $data['direccionColegio'] ?? null,
-            ciudadColegio:       $data['ciudadColegio'] ?? null,
-            departamentoColegio: $data['departamentoColegio'] ?? null,
-            paisColegio:         $data['paisColegio'],
-            logoColegio:         $data['logoColegio'] ?? null,
-            idPlan:              (int) $data['idPlan'],
-            nombreAdmin:         $data['nombreAdmin'],
-            emailAdmin:          $data['emailAdmin'],
-        );
+        try {
+            $this->colegios->registrar(
+                nombreColegio:       $data['nombreColegio'],
+                codigoColegio:       $data['codigoColegio'],
+                emailColegio:        $data['emailColegio'],
+                telefonoColegio:     $data['telefonoColegio'] ?? null,
+                direccionColegio:    $data['direccionColegio'] ?? null,
+                ciudadColegio:       $data['ciudadColegio'] ?? null,
+                departamentoColegio: $data['departamentoColegio'] ?? null,
+                paisColegio:         $data['paisColegio'],
+                logoColegio:         $data['logoColegio'] ?? null,
+                idPlan:              (int) $data['idPlan'],
+                nombreAdmin:         $data['nombreAdmin'],
+                emailAdmin:          $data['emailAdmin'],
+            );
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->withErrors(['emailAdmin' => $e->getMessage()]);
+        }
 
         return redirect()
             ->route('admin.colegios.index')
@@ -115,17 +111,45 @@ class AdminColegioController extends Controller
 
     public function toggleEstado(Request $request, int $id): RedirectResponse
     {
-        $colegio     = Colegio::findOrFail($id);
-        $nuevoEstado = $request->input('estado');
+        $colegio = Colegio::findOrFail($id);
+        $label   = $this->colegios->cambiarEstado($colegio, $request->input('estado'));
 
-        $estadoFinal = in_array($nuevoEstado, ['activo', 'suspendido', 'inactivo'], true)
-            ? $nuevoEstado
-            : ($colegio->estadoColegio === 'activo' ? 'suspendido' : 'activo');
+        return back()->with('success', "Colegio {$label} correctamente.");
+    }
 
-        $colegio->update(['estadoColegio' => $estadoFinal]);
+    /**
+     * Entra a la sesión del colegio como su cuenta ejecutivo principal —
+     * herramienta de soporte para reproducir/depurar un problema. La sesión
+     * de admin sigue viva en paralelo (guard distinto); no es necesario
+     * volver a loguearse al salir. Único punto que sigue dejando rastro en
+     * admin_action_logs — por transparencia, no por rendición de cuentas
+     * entre varios admins (solo existe un superadmin).
+     */
+    public function impersonar(Request $request, int $id): RedirectResponse
+    {
+        $colegio = Colegio::findOrFail($id);
+        $usuario = $this->colegios->adminPrincipal($colegio);
 
-        $labels = ['activo' => 'activado', 'suspendido' => 'suspendido', 'inactivo' => 'marcado como inactivo'];
+        if ($usuario === null) {
+            return back()->with('error', 'Este colegio no tiene una cuenta ejecutivo para impersonar.');
+        }
 
-        return back()->with('success', "Colegio {$labels[$estadoFinal]} correctamente.");
+        $admin = Auth::guard('admin')->user();
+
+        Auth::guard('web')->login($usuario);
+
+        $request->session()->put('impersonacion.idAdmin', $admin->idAdmin);
+        $request->session()->put('impersonacion.idColegio', $colegio->idColegio);
+        $request->session()->put('impersonacion.expira', now()->addMinutes(45)->timestamp);
+
+        $this->auditoria->registrar(
+            $admin,
+            'impersonar',
+            'colegio',
+            $colegio->idColegio,
+            "Entró como \"{$usuario->nombreUsuario}\" ({$colegio->nombreColegio}).",
+        );
+
+        return redirect()->route('dashboard');
     }
 }

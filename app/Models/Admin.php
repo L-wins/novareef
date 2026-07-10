@@ -23,6 +23,7 @@ class Admin extends Authenticatable
         'two_factor_enabled',
         'activo',
         'ultimo_acceso',
+        'temaPreferencia',
     ];
 
     protected $hidden = [
@@ -36,5 +37,6 @@ class Admin extends Authenticatable
         'activo'             => 'boolean',
         'ultimo_acceso'      => 'datetime',
         'password'           => 'hashed',
+        'temaPreferencia'    => 'string',
     ];
 }

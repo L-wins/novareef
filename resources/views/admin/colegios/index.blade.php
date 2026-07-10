@@ -5,24 +5,20 @@
 @section('contenido')
 
 {{-- Encabezado --}}
-<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:2rem;flex-wrap:wrap;">
+<div class="admin-page-header admin-page-header--row">
     <div>
-        <h1 style="font-size:1.5rem;font-weight:800;color:var(--text-bright);margin:0 0 4px;letter-spacing:-0.4px;">
-            Colegios
-        </h1>
-        <p style="font-size:0.875rem;color:var(--text);margin:0;">
-            Gestión de colegios de árbitros registrados en la plataforma.
-        </p>
+        <h1>Colegios</h1>
+        <p>Gestión de colegios de árbitros registrados en la plataforma.</p>
     </div>
-    <a href="{{ route('admin.colegios.create') }}" class="a-btn a-btn--primary" style="white-space:nowrap;">
+    <a href="{{ route('admin.colegios.create') }}" class="a-btn a-btn--primary">
         <i class="fa-solid fa-plus"></i>
         Nuevo colegio
     </a>
 </div>
 
 {{-- Buscador --}}
-<div class="admin-card" style="padding:0.875rem 1.25rem;margin-bottom:1rem;">
-    <form method="GET" action="{{ route('admin.colegios.index') }}">
+<div class="admin-card admin-card--filters">
+    <form method="GET" action="{{ route('admin.colegios.index') }}" data-auto-filter>
         <div class="admin-search-bar">
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" name="q" value="{{ request('q') }}"
@@ -49,7 +45,7 @@
                 <th>Plan</th>
                 <th>Estado</th>
                 <th>Árbitros</th>
-                <th style="text-align:right;">Acciones</th>
+                <th class="text-right">Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -60,15 +56,13 @@
             @endphp
             <tr>
                 <td>
-                    <code style="font-size:0.75rem;font-family:monospace;color:var(--text);">
-                        {{ $colegio->codigoColegio }}
-                    </code>
+                    <code class="admin-table__mono">{{ $colegio->codigoColegio }}</code>
                 </td>
                 <td>
-                    <div style="font-weight:600;color:var(--text-bright);">{{ $colegio->nombreColegio }}</div>
-                    <div style="font-size:0.75rem;color:var(--text);">{{ $colegio->emailColegio }}</div>
+                    <div class="admin-table__strong">{{ $colegio->nombreColegio }}</div>
+                    <div class="admin-table__sub">{{ $colegio->emailColegio }}</div>
                 </td>
-                <td style="color:var(--text);">{{ $colegio->ciudadColegio ?? '—' }}</td>
+                <td class="admin-table__muted">{{ $colegio->ciudadColegio ?? '—' }}</td>
                 <td>
                     @if($planLabel)
                         <span class="badge badge--plan-{{ $planNombre }}">{{ $planLabel }}</span>
@@ -81,17 +75,17 @@
                         <span class="badge badge--green">Activo</span>
                     @elseif($colegio->estadoColegio === 'suspendido')
                         <span class="badge badge--red">Suspendido</span>
-                    @elseif($colegio->estadoColegio === 'trial')
-                        <span class="badge badge--amber">Trial</span>
+                    @elseif($colegio->estadoColegio === 'prueba')
+                        <span class="badge badge--amber">Prueba</span>
                     @else
                         <span class="badge badge--gray">{{ ucfirst($colegio->estadoColegio) }}</span>
                     @endif
                 </td>
                 <td>
-                    <span style="font-weight:600;color:var(--text-bright);">{{ $colegio->arbitros_count }}</span>
+                    <span class="admin-table__strong">{{ $colegio->arbitros_count }}</span>
                 </td>
                 <td>
-                    <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+                    <div class="admin-table__actions">
                         <a href="{{ route('admin.colegios.show', $colegio->idColegio) }}"
                            class="a-tbl-btn" title="Ver detalle">
                             <i class="fa-solid fa-eye"></i>
@@ -102,8 +96,12 @@
                         </a>
                         <form method="POST"
                               action="{{ route('admin.colegios.toggleEstado', $colegio->idColegio) }}"
-                              style="display:contents;"
-                              onsubmit="return confirm('¿Cambiar estado del colegio «{{ addslashes($colegio->nombreColegio) }}»?')">
+                              class="form-contents"
+                              data-confirm-submit
+                              data-confirm-title="Cambiar estado"
+                              data-confirm-text="¿Cambiar estado del colegio «{{ $colegio->nombreColegio }}»?"
+                              data-confirm-color="{{ $colegio->estadoColegio === 'activo' ? '#ef4444' : '#22c55e' }}"
+                              data-confirm-btn="Sí, cambiar">
                             @csrf
                             @method('PUT')
                             <button type="submit"
@@ -117,16 +115,15 @@
             </tr>
             @empty
             <tr>
-                <td colspan="7" style="text-align:center;padding:3.5rem;color:var(--text-muted);">
+                <td colspan="7" class="admin-table__empty">
                     <div>
-                        <i class="fa-solid fa-inbox" style="font-size:32px;margin:0 auto 0.75rem;display:block;"></i>
+                        <i class="fa-solid fa-inbox"></i>
                         @if(request('q'))
-                            No se encontraron colegios para <strong style="color:var(--text);">«{{ request('q') }}»</strong>
+                            No se encontraron colegios para <strong>«{{ request('q') }}»</strong>
                         @else
                             No hay colegios registrados aún.
                             <br>
-                            <a href="{{ route('admin.colegios.create') }}"
-                               style="color:var(--primary);font-size:0.8125rem;margin-top:0.5rem;display:inline-block;">
+                            <a href="{{ route('admin.colegios.create') }}">
                                 Registrar el primer colegio
                             </a>
                         @endif
@@ -137,38 +134,7 @@
         </tbody>
     </table>
 
-    {{-- Paginación --}}
-    @if($colegios->hasPages())
-    <div class="admin-pagination">
-        <span class="admin-pagination__info">
-            Mostrando {{ $colegios->firstItem() }}–{{ $colegios->lastItem() }}
-            de {{ $colegios->total() }} colegios
-        </span>
-        <div class="admin-pagination__nav">
-            @if($colegios->onFirstPage())
-                <span class="admin-pagination__btn admin-pagination__btn--disabled">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </span>
-            @else
-                <a href="{{ $colegios->previousPageUrl() }}" class="admin-pagination__btn">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </a>
-            @endif
-            <span class="admin-pagination__pages">
-                Página {{ $colegios->currentPage() }} de {{ $colegios->lastPage() }}
-            </span>
-            @if($colegios->hasMorePages())
-                <a href="{{ $colegios->nextPageUrl() }}" class="admin-pagination__btn">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </a>
-            @else
-                <span class="admin-pagination__btn admin-pagination__btn--disabled">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </span>
-            @endif
-        </div>
-    </div>
-    @endif
+    @include('admin.partials.pagination', ['paginator' => $colegios, 'etiqueta' => 'colegios'])
 </div>
 
 @endsection

@@ -4,15 +4,15 @@
     */
 
 :root {
-    --t-bg-card:    #131927;
-    --t-bg-card-2:  #1a2233;
-    --t-border:     rgba(255, 255, 255, 0.06);
-    --t-border-h:   rgba(255, 255, 255, 0.10);
-    --t-text:       #f1f5f9;
-    --t-text-2:     #94a3b8;
-    --t-text-mute:  #64748b;
-    --t-accent:     #4f8ef7;
-    --t-accent-2:   #7aa8f9;
+    --t-bg-card:    var(--nv-card-alt);
+    --t-bg-card-2:  var(--nv-card-hover);
+    --t-border:     var(--nv-border);
+    --t-border-h:   var(--nv-fill-2);
+    --t-text:       var(--nv-text);
+    --t-text-2:     var(--nv-text-2);
+    --t-text-mute:  var(--nv-text-3);
+    --t-accent:     var(--nv-accent);
+    --t-accent-2:   var(--nv-accent-2);
     --t-radius:     0.75rem;
     --t-radius-sm:  0.5rem;
 }
@@ -64,7 +64,7 @@
 .filter-label       { font-size: 0.72rem; color: var(--t-text-mute); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
 .filter-input,
 .filter-select {
-    background: rgba(255,255,255,0.04);
+    background: var(--nv-fill);
     border: 1px solid var(--t-border);
     border-radius: var(--t-radius-sm);
     padding: 0.55rem 0.75rem;
@@ -102,11 +102,11 @@
 }
 .btn-primary:hover  { background: var(--t-accent-2); border-color: var(--t-accent-2); }
 .btn-secondary {
-    background: rgba(255,255,255,0.04);
+    background: var(--nv-fill);
     color: var(--t-text-2);
     border-color: var(--t-border);
 }
-.btn-secondary:hover { background: rgba(255,255,255,0.08); color: var(--t-text); border-color: var(--t-border-h); }
+.btn-secondary:hover { background: var(--nv-fill-2); color: var(--t-text); border-color: var(--t-border-h); }
 .btn-warning {
     background: rgba(245,158,11,0.10);
     color: #fbbf24;
@@ -127,12 +127,12 @@
     justify-content: center;
     width: 32px; height: 32px;
     border-radius: 8px;
-    background: rgba(255,255,255,0.03);
+    background: var(--nv-fill);
     border: 1px solid var(--t-border);
     color: var(--t-text-2);
     transition: background .15s, color .15s, border-color .15s;
 }
-.btn-icon:hover         { background: rgba(255,255,255,0.06); color: var(--t-text); }
+.btn-icon:hover         { background: var(--nv-border); color: var(--t-text); }
 .btn-icon-danger:hover  { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.35); color: #fca5a5; }
 
 .table-actions { display: inline-flex; align-items: center; gap: 0.4rem; }
@@ -233,12 +233,12 @@
 /* estadoTorneo */
 .t-badge[data-estado="proximo"]    { background: rgba(56,189,248,.12); color: #7dd3fc; border-color: rgba(56,189,248,.30); }
 .t-badge[data-estado="activo"]     { background: rgba(16,185,129,.12); color: #6ee7b7; border-color: rgba(16,185,129,.30); }
-.t-badge[data-estado="finalizado"] { background: rgba(148,163,184,.10); color: #94a3b8; border-color: rgba(148,163,184,.25); }
+.t-badge[data-estado="finalizado"] { background: rgba(148,163,184,.10); color: var(--nv-text-2); border-color: rgba(148,163,184,.25); }
 .t-badge[data-estado="cancelado"]  { background: rgba(239,68,68,.10);  color: #fca5a5; border-color: rgba(239,68,68,.25); }
 
 /* estadoPartido */
+.t-badge[data-estado-p="borrador"]   { background: rgba(148,163,184,.12); color: #cbd5e1; border-color: rgba(148,163,184,.30); }
 .t-badge[data-estado-p="programado"] { background: rgba(56,189,248,.12); color: #7dd3fc; border-color: rgba(56,189,248,.30); }
-.t-badge[data-estado-p="en_curso"]   { background: rgba(245,158,11,.14); color: #fcd34d; border-color: rgba(245,158,11,.35); }
 .t-badge[data-estado-p="finalizado"] { background: rgba(16,185,129,.12); color: #6ee7b7; border-color: rgba(16,185,129,.30); }
 .t-badge[data-estado-p="aplazado"]   { background: rgba(168,85,247,.12); color: #d8b4fe; border-color: rgba(168,85,247,.30); }
 .t-badge[data-estado-p="cancelado"]  { background: rgba(239,68,68,.10);  color: #fca5a5; border-color: rgba(239,68,68,.25); }
@@ -287,7 +287,7 @@
 .form-input,
 .form-select,
 .form-textarea {
-    background: rgba(255,255,255,0.04);
+    background: var(--nv-fill);
     border: 1px solid var(--t-border);
     border-radius: var(--t-radius-sm);
     padding: 0.6rem 0.85rem;
@@ -321,7 +321,7 @@
     align-items: center;
     gap: 0.6rem;
     padding: 0.7rem 0.9rem;
-    background: rgba(255,255,255,0.03);
+    background: var(--nv-fill);
     border: 1px solid var(--t-border);
     border-radius: var(--t-radius-sm);
     cursor: pointer;
@@ -434,7 +434,7 @@
     color: var(--t-text-mute);
     font-size: 0.85rem;
     font-style: italic;
-    background: rgba(255,255,255,0.02);
+    background: var(--nv-fill);
     border: 1px dashed var(--t-border);
     border-radius: var(--t-radius-sm);
 }
@@ -458,7 +458,7 @@
     user-select: none;
     transition: background .15s;
 }
-.perfil-step-head:hover { background: rgba(255,255,255,0.02); }
+.perfil-step-head:hover { background: var(--nv-fill); }
 .perfil-step-head h3 {
     display: flex;
     align-items: center;
@@ -482,7 +482,7 @@
 .perfil-step-count {
     font-size: 0.72rem;
     color: var(--t-text-mute);
-    background: rgba(255,255,255,0.04);
+    background: var(--nv-fill);
     border-radius: 9999px;
     padding: 0.15rem 0.55rem;
     margin-left: 0.5rem;
@@ -509,7 +509,7 @@
     justify-content: space-between;
     gap: 0.75rem;
     padding: 0.7rem 0.9rem;
-    background: rgba(255,255,255,0.02);
+    background: var(--nv-fill);
     border: 1px solid var(--t-border);
     border-radius: var(--t-radius-sm);
 }
@@ -522,7 +522,7 @@
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 0.6rem;
     padding: 0.9rem;
-    background: rgba(255,255,255,0.02);
+    background: var(--nv-fill);
     border: 1px solid var(--t-border);
     border-radius: var(--t-radius-sm);
     /* Crítico: sin overflow:hidden para que dropdowns Choices escapen el grid */
@@ -535,7 +535,7 @@
 .tarifas-block {
     margin-top: 1rem;
     padding: 1rem 1.1rem;
-    background: rgba(255,255,255,0.02);
+    background: var(--nv-fill);
     border: 1px solid var(--t-border);
     border-radius: var(--t-radius-sm);
 }
@@ -608,7 +608,7 @@
 .data-table thead th {
     text-align: left;
     padding: 0.85rem 1rem;
-    background: rgba(255,255,255,0.02);
+    background: var(--nv-fill);
     color: var(--t-text-mute);
     font-weight: 600;
     text-transform: uppercase;
@@ -623,7 +623,7 @@
     vertical-align: middle;
 }
 .data-table tbody tr:last-child td { border-bottom: none; }
-.data-table tbody tr:hover         { background: rgba(255,255,255,0.02); }
+.data-table tbody tr:hover         { background: var(--nv-fill); }
 .td-primary   { color: var(--t-text); font-weight: 500; display: block; }
 .td-secondary { color: var(--t-text-mute); font-size: 0.78rem; display: block; margin-top: 0.1rem; }
 
@@ -708,9 +708,19 @@
 /* Modal extra-grande (para iframe PDF) */
 .modal-dialog--xl { max-width: 1000px; }
 
+/* Modal compacto (contenido corto y controlado: ej. cambio de estado).
+   .modal-dialog base tiene overflow-y:auto para modales que sí pueden
+   crecer mucho — pero ESE overflow hace que cualquier dropdown de
+   Choices.js dentro (position:absolute) cuente como parte del área
+   desplazable del modal y le aparezca su propio scrollbar, aunque el
+   dropdown en sí no lo necesite. Sin overflow ancestro, el dropdown
+   flota libre sin generar scroll extra. Solo usar en modales cuyo
+   contenido nunca crece lo suficiente para necesitar scroll propio. */
+.modal-dialog--fit { overflow: visible; max-height: none; }
+
 /* Historial de reglamentos (acordeón nativo <details>) */
 .reglamento-history {
-    background: rgba(255,255,255,0.02);
+    background: var(--nv-fill);
     border: 1px solid var(--t-border);
     border-radius: var(--t-radius-sm);
     padding: 0.85rem 1rem;
@@ -739,3 +749,29 @@
     .data-table thead th,
     .data-table tbody td       { padding: 0.65rem 0.75rem; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Tema claro — los pasteles pensados para fondo oscuro (dark)
+   pierden contraste sobre fondo blanco; se oscurecen aquí.
+   ═══════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] .btn-warning              { color: #b45309; }
+:root[data-theme="light"] .btn-warning:hover        { color: #92400e; }
+:root[data-theme="light"] .btn-danger               { color: #dc2626; }
+:root[data-theme="light"] .btn-danger:hover         { color: #b91c1c; }
+:root[data-theme="light"] .btn-icon-danger:hover    { color: #dc2626; }
+
+:root[data-theme="light"] .t-badge[data-tipo="local"]          { color: #475569; }
+:root[data-theme="light"] .t-badge[data-tipo="zonal"]          { color: #1d4ed8; }
+:root[data-theme="light"] .t-badge[data-tipo="oficial"]        { color: #b45309; }
+:root[data-theme="light"] .t-badge[data-estado="proximo"]      { color: #0369a1; }
+:root[data-theme="light"] .t-badge[data-estado="activo"]       { color: #15803d; }
+:root[data-theme="light"] .t-badge[data-estado="cancelado"]    { color: #dc2626; }
+:root[data-theme="light"] .t-badge[data-estado-p="borrador"]   { color: #475569; }
+:root[data-theme="light"] .t-badge[data-estado-p="programado"] { color: #0369a1; }
+:root[data-theme="light"] .t-badge[data-estado-p="finalizado"] { color: #15803d; }
+:root[data-theme="light"] .t-badge[data-estado-p="aplazado"]   { color: #7c3aed; }
+:root[data-theme="light"] .t-badge[data-estado-p="cancelado"]  { color: #dc2626; }
+
+:root[data-theme="light"] .req               { color: #dc2626; }
+:root[data-theme="light"] .field-error       { color: #dc2626; }
+:root[data-theme="light"] .form-note--warn i { color: #b45309; }

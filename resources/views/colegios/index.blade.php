@@ -50,11 +50,7 @@
                             <td class="td-code">{{ $colegio->codigoColegio }}</td>
                             <td class="td-primary">{{ $colegio->nombreColegio }}</td>
                             <td>{{ $colegio->ciudadColegio ?? '—' }}</td>
-                            <td>
-                                <span class="plan-badge plan-{{ $colegio->planColegio }}">
-                                    {{ ucfirst($colegio->planColegio) }}
-                                </span>
-                            </td>
+                            <td>{{ $colegio->suscripcionActiva?->plan?->nombre ?? '—' }}</td>
                             <td>
                                 <span class="status-badge status-{{ $colegio->estadoColegio }}">
                                     {{ ucfirst($colegio->estadoColegio) }}

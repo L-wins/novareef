@@ -10,13 +10,9 @@
     Volver a colegios
 </a>
 
-<div style="margin-bottom:2rem;">
-    <h1 style="font-size:1.375rem;font-weight:800;color:var(--text-bright);margin:0 0 4px;letter-spacing:-0.4px;">
-        Nuevo colegio
-    </h1>
-    <p style="font-size:0.875rem;color:var(--text);margin:0;">
-        Completa los datos para registrar un nuevo colegio de árbitros en la plataforma.
-    </p>
+<div class="admin-page-header">
+    <h1>Nuevo colegio</h1>
+    <p>Completa los datos para registrar un nuevo colegio de árbitros en la plataforma.</p>
 </div>
 
 <form method="POST" action="{{ route('admin.colegios.store') }}" novalidate>
@@ -50,8 +46,7 @@
                        value="{{ old('codigoColegio') }}"
                        placeholder="Ej. CAC-001"
                        maxlength="20"
-                       class="admin-form-input {{ $errors->has('codigoColegio') ? 'is-invalid' : '' }}"
-                       style="font-family:monospace;">
+                       class="admin-form-input admin-form-input--mono {{ $errors->has('codigoColegio') ? 'is-invalid' : '' }}">
                 @error('codigoColegio')
                     <p class="admin-form-error">{{ $message }}</p>
                 @enderror
@@ -137,7 +132,7 @@
         <p class="admin-form-section__title">Plan de suscripción</p>
 
         @error('idPlan')
-            <div class="admin-flash admin-flash--danger" style="margin-bottom:1rem;">
+            <div class="admin-flash admin-flash--danger">
                 <i class="fa-solid fa-circle-exclamation"></i>
                 {{ $message }}
             </div>
@@ -150,8 +145,7 @@
                    data-plan="{{ $planKey }}"
                    id="plan-label-{{ $plan->idPlan }}">
                 <input type="radio" name="idPlan" value="{{ $plan->idPlan }}"
-                       {{ old('idPlan') == $plan->idPlan ? 'checked' : '' }}
-                       style="position:absolute;opacity:0;pointer-events:none;">
+                       {{ old('idPlan') == $plan->idPlan ? 'checked' : '' }}>
 
                 <div class="plan-card-check">
                     <i class="fa-solid fa-check"></i>
@@ -244,18 +238,6 @@
 
 </form>
 
-@push('scripts')
-<script>
-document.querySelectorAll('.plan-card').forEach(function(card) {
-    card.addEventListener('click', function() {
-        document.querySelectorAll('.plan-card').forEach(function(c) {
-            c.classList.remove('plan-card--selected');
-        });
-        card.classList.add('plan-card--selected');
-        card.querySelector('input[type="radio"]').checked = true;
-    });
-});
-</script>
-@endpush
+{{-- La selección visual de plan-card vive en admin.js (regla de separación de capas) --}}
 
 @endsection

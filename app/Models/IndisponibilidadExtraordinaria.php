@@ -30,7 +30,7 @@ class IndisponibilidadExtraordinaria extends Model
         'fechaAfectada' => 'date',
     ];
 
-    // ── Relaciones ────────────────────────────────────────────────────────────
+    // ── Relaciones ──
 
     public function arbitro(): BelongsTo
     {
