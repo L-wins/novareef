@@ -1,32 +1,32 @@
 @extends('layouts.app')
 
 @section('titulo', 'Justificaciones pendientes')
-@section('seccion', 'Académico')
+@section('seccion', 'Sanciones')
 
 @push('styles')
-    @vite(['resources/css/academico/academico.css'])
+    @vite(['resources/css/sanciones/sanciones.css'])
 @endpush
 
 @section('contenido')
 <div class="container">
 
-    <a href="{{ route('academico.sesiones.index') }}" class="back-link">
+    <a href="{{ route('sanciones.index') }}" class="back-link">
         <i class="fa-solid fa-arrow-left"></i>
-        Volver a académico
+        Volver a sanciones
     </a>
 
     <div class="page-header">
         <div class="page-header-left">
             <h1 class="page-heading">Justificaciones pendientes</h1>
-            <p class="page-subheading">Revisa las justificaciones de inasistencia enviadas por los árbitros.</p>
+            <p class="page-subheading">Revisa las justificaciones de inasistencia académica enviadas por los árbitros.</p>
         </div>
     </div>
 
     @if (session('success'))
-        <div class="flash-success" style="margin-bottom:1.25rem;">{{ session('success') }}</div>
+        <div class="flash-success">{{ session('success') }}</div>
     @endif
     @if (session('error'))
-        <div class="flash-error" style="margin-bottom:1.25rem;">{{ session('error') }}</div>
+        <div class="flash-error">{{ session('error') }}</div>
     @endif
 
     @if ($justificaciones->isEmpty())
@@ -56,7 +56,7 @@
                         </div>
                         @if ($justificacion->documentoPdf)
                             <div class="form-group">
-                                <a href="{{ route('academico.justificaciones.documento', $justificacion->idJustificacion) }}" class="btn btn-secondary btn-sm" style="width:fit-content;">
+                                <a href="{{ route('sanciones.justificaciones.documento', $justificacion->idJustificacion) }}" class="btn btn-secondary btn-sm" style="width:fit-content;">
                                     <i class="fa-solid fa-file-pdf"></i> Ver documento adjunto
                                 </a>
                             </div>
@@ -64,7 +64,7 @@
                     </div>
 
                     <div style="display:flex; gap:0.75rem; margin-top:1rem;">
-                        <form method="POST" action="{{ route('academico.justificaciones.revisar', $justificacion->idJustificacion) }}">
+                        <form method="POST" action="{{ route('sanciones.justificaciones.revisar', $justificacion->idJustificacion) }}">
                             @csrf @method('PUT')
                             <input type="hidden" name="accion" value="aprobar">
                             <button type="submit" class="btn btn-primary btn-sm">
@@ -76,7 +76,7 @@
                         </button>
                     </div>
 
-                    <form method="POST" action="{{ route('academico.justificaciones.revisar', $justificacion->idJustificacion) }}"
+                    <form method="POST" action="{{ route('sanciones.justificaciones.revisar', $justificacion->idJustificacion) }}"
                           id="form-rechazo-{{ $justificacion->idJustificacion }}" style="display:none;margin-top:0.75rem;">
                         @csrf @method('PUT')
                         <input type="hidden" name="accion" value="rechazar">
@@ -99,5 +99,5 @@
 @endsection
 
 @push('scripts')
-    @vite(['resources/js/academico/academico.js'])
+    @vite(['resources/js/sanciones/sanciones.js'])
 @endpush

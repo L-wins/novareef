@@ -104,6 +104,12 @@
                         <option value="scanner" {{ old('modoAsistencia', $sesion->modoAsistencia) === 'scanner' ? 'selected' : '' }}>Scanner</option>
                     </select>
                 </div>
+                <div class="form-group span-2">
+                    <label class="form-label form-label--check">
+                        <input type="checkbox" name="esObligatoria" value="1" {{ old('esObligatoria', session()->hasOldInput() ? false : $sesion->esObligatoria) ? 'checked' : '' }}>
+                        Esta sesión es de carácter obligatorio
+                    </label>
+                </div>
             </div>
         </div>
 

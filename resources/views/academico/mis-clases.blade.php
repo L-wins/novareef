@@ -62,7 +62,18 @@
                         {{ $sesion->fechaSesion->format('d/m/Y') }} ·
                         {{ \Illuminate\Support\Carbon::parse($sesion->horaSesion)->format('H:i') }}
                         @if ($sesion->esOficial) · <span class="badge badge-blue">Oficial FCF</span> @endif
+                        @if ($sesion->esObligatoria) · <span class="badge badge-amber">Obligatoria</span> @endif
                     </div>
+                    @if ($sesion->materiales->isNotEmpty())
+                        <div class="td-secondary" style="margin-top:0.3rem;display:flex;gap:0.6rem;flex-wrap:wrap;">
+                            @foreach ($sesion->materiales as $material)
+                                <a href="{{ route('academico.materiales.descargar', $material->idMaterial) }}" class="aca-material-link" style="font-size:0.78rem;">
+                                    <i class="fa-solid {{ $material->icono }}"></i>
+                                    <span>{{ $material->titulo }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
                 @if ($sesion->sesionAbierta && $sesion->modoAsistencia === 'manual' && $asistencia?->estadoAsistencia !== 'presente')
                     <form method="POST" action="{{ route('academico.asistencias.marcar', $asistencia->idAsistencia) }}"
@@ -112,6 +123,16 @@
                             <td>
                                 <span class="td-primary">{{ $sesion->tema }}</span>
                                 <span class="td-secondary">{{ $sesion->tipo->etiqueta ?? '—' }}</span>
+                                @if ($sesion->materiales->isNotEmpty())
+                                    <div style="margin-top:0.3rem;display:flex;gap:0.6rem;flex-wrap:wrap;">
+                                        @foreach ($sesion->materiales as $material)
+                                            <a href="{{ route('academico.materiales.descargar', $material->idMaterial) }}" class="aca-material-link" style="font-size:0.76rem;">
+                                                <i class="fa-solid {{ $material->icono }}"></i>
+                                                <span>{{ $material->titulo }}</span>
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </td>
                             <td>{{ $sesion->fechaSesion->format('d/m/Y') }}</td>
                             <td><span class="badge badge-{{ $aColor }}">{{ $aLabel }}</span></td>

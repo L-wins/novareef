@@ -16,6 +16,16 @@ class StoreSesionAcademicaRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Los checkboxes HTML no envían nada si quedan desmarcados — sin esto,
+     * "esObligatoria" jamás llegaría en false, sin importar lo que marque
+     * el usuario. $this->boolean() trata la ausencia como false.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['esObligatoria' => $this->boolean('esObligatoria')]);
+    }
+
     public function rules(): array
     {
         $idColegio = (int) Auth::user()->idColegio;
@@ -39,6 +49,7 @@ class StoreSesionAcademicaRequest extends FormRequest
                 Rule::exists('categorias_arbitro', 'idCategoria')->where('idColegio', $idColegio),
             ],
             'modoAsistencia' => ['required', Rule::in([SesionAcademica::MODO_MANUAL, SesionAcademica::MODO_SCANNER])],
+            'esObligatoria'  => ['boolean'],
         ];
     }
 

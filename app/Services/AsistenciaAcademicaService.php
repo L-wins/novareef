@@ -82,7 +82,7 @@ final class AsistenciaAcademicaService
      *
      * @throws \RuntimeException  Si la sesión ya no está abierta o el estado no es válido.
      */
-    public function corregirMarca(AsistenciaAcademica $asistencia, string $nuevoEstado): void
+    public function corregirMarca(AsistenciaAcademica $asistencia, string $nuevoEstado): AsistenciaAcademica
     {
         if (! $asistencia->sesion->sesionAbierta) {
             throw new \RuntimeException('Solo se puede corregir una marca mientras la sesión está abierta.');
@@ -98,6 +98,10 @@ final class AsistenciaAcademicaService
             'registradoPor'    => AsistenciaAcademica::REGISTRADO_INSTRUCTOR,
         ]);
 
-        AsistenciaActualizadaEvent::dispatch($asistencia->fresh());
+        $asistencia = $asistencia->fresh(['arbitro.usuario']);
+
+        AsistenciaActualizadaEvent::dispatch($asistencia);
+
+        return $asistencia;
     }
 }

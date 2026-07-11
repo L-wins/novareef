@@ -45,4 +45,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // ── Justificaciones pendientes: mostrar formulario de rechazo ──
+    document.querySelectorAll('[data-abrir-rechazo]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var form = document.getElementById('form-rechazo-' + btn.dataset.abrirRechazo);
+            if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        });
+    });
+
 });

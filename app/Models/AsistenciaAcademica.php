@@ -64,6 +64,30 @@ class AsistenciaAcademica extends Model
         return self::ETIQUETAS_ESTADO[$this->estadoAsistencia][0] ?? $this->estadoAsistencia;
     }
 
+    /**
+     * Payload compartido entre el broadcast de Reverb (AsistenciaActualizadaEvent)
+     * y la respuesta JSON síncrona de los endpoints de corrección/scanner —
+     * misma forma en ambos casos para que el JS use un único handler.
+     */
+    public function toRealtimePayload(): array
+    {
+        $this->loadMissing('arbitro.usuario');
+
+        return [
+            'idAsistencia'          => $this->idAsistencia,
+            'idSesion'              => $this->idSesion,
+            'estadoAsistencia'      => $this->estadoAsistencia,
+            'horaMarca'             => $this->horaMarca?->toIso8601String(),
+            'registradoPor'         => $this->registradoPor,
+            'confirmadoInstructor'  => $this->confirmadoInstructor,
+            'arbitro' => $this->arbitro ? [
+                'idArbitro'    => $this->arbitro->idArbitro,
+                'nombre'       => $this->arbitro->usuario?->nombreUsuario,
+                'codigoCarnet' => $this->arbitro->codigoCarnet,
+            ] : null,
+        ];
+    }
+
     // ── Relaciones ─────────────────────────
 
     public function colegio(): BelongsTo

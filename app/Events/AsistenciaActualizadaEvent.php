@@ -35,20 +35,6 @@ class AsistenciaActualizadaEvent implements ShouldBroadcast
 
     public function broadcastWith(): array
     {
-        $a = $this->asistencia->load('arbitro.usuario');
-
-        return [
-            'idAsistencia'          => $a->idAsistencia,
-            'idSesion'              => $a->idSesion,
-            'estadoAsistencia'      => $a->estadoAsistencia,
-            'horaMarca'             => $a->horaMarca?->toIso8601String(),
-            'registradoPor'         => $a->registradoPor,
-            'confirmadoInstructor'  => $a->confirmadoInstructor,
-            'arbitro' => $a->arbitro ? [
-                'idArbitro'    => $a->arbitro->idArbitro,
-                'nombre'       => $a->arbitro->usuario?->nombreUsuario,
-                'codigoCarnet' => $a->arbitro->codigoCarnet,
-            ] : null,
-        ];
+        return $this->asistencia->toRealtimePayload();
     }
 }

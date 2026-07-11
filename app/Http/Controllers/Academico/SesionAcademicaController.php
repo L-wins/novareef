@@ -62,7 +62,7 @@ class SesionAcademicaController extends Controller
 
     public function show(int $id): View
     {
-        $sesion = $this->sesionDelColegio($id, ['tipo', 'categoria', 'instructor']);
+        $sesion = $this->sesionDelColegio($id, ['tipo', 'categoria', 'instructor', 'materiales.usuarioSubio']);
 
         $asistencias = $sesion->asistencias()->with(['arbitro.usuario', 'justificacion'])
             ->join('arbitros', 'arbitros.idArbitro', '=', 'asistencias_academicas.idArbitro')
@@ -159,14 +159,14 @@ class SesionAcademicaController extends Controller
         $proximas = SesionAcademica::where('idColegio', $this->idColegioActivo())
             ->whereIn('estadoSesion', [SesionAcademica::ESTADO_PROGRAMADA, SesionAcademica::ESTADO_EN_CURSO])
             ->whereHas('asistencias', fn ($q) => $q->where('idArbitro', $arbitro->idArbitro))
-            ->with(['tipo', 'asistencias' => fn ($q) => $q->where('idArbitro', $arbitro->idArbitro)])
+            ->with(['tipo', 'materiales', 'asistencias' => fn ($q) => $q->where('idArbitro', $arbitro->idArbitro)])
             ->orderBy('fechaSesion')
             ->get();
 
         $historial = SesionAcademica::where('idColegio', $this->idColegioActivo())
             ->where('estadoSesion', SesionAcademica::ESTADO_FINALIZADA)
             ->whereHas('asistencias', fn ($q) => $q->where('idArbitro', $arbitro->idArbitro))
-            ->with(['tipo', 'asistencias' => fn ($q) => $q->where('idArbitro', $arbitro->idArbitro)->with('justificacion')])
+            ->with(['tipo', 'materiales', 'asistencias' => fn ($q) => $q->where('idArbitro', $arbitro->idArbitro)->with('justificacion')])
             ->orderByDesc('fechaSesion')
             ->paginate(15);
 

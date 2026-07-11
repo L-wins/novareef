@@ -17,15 +17,34 @@ use Symfony\Component\HttpFoundation\Response;
  * usuario autenticado — o por IP si es un visitante. Un humano usando
  * formularios no se acerca al límite; un bot lo agota en segundos.
  *
+ * Algunas pantallas (ej. marcar asistencia académica uno por uno, o por
+ * scanner, sobre decenas de árbitros en pocos minutos) son legítimamente
+ * más "escritura-intensivas" que un formulario normal — para esas rutas
+ * puntuales se permite un techo más alto vía LIMITES_PERSONALIZADOS, sin
+ * debilitar el límite por defecto para el resto de la aplicación.
+ *
  * Cada bloqueo queda registrado en el log para auditoría del sistema.
  */
 class ProtegerEscrituraMasiva
 {
-    /** Escrituras permitidas por ventana. */
+    /** Escrituras permitidas por ventana (rutas sin override). */
     private const MAX_ESCRITURAS = 30;
 
-    /** Tamaño de la ventana en segundos. */
+    /** Tamaño de la ventana en segundos (rutas sin override). */
     private const VENTANA_SEGUNDOS = 60;
+
+    /**
+     * Rutas (por nombre) con techo propio: [máximo, ventana en segundos].
+     * Pensado para pantallas de marcado masivo humano, no para relajar la
+     * protección general contra bots.
+     */
+    private const LIMITES_PERSONALIZADOS = [
+        // Pensado para el colegio más grande (~300 árbitros) marcando una
+        // sesión completa en un solo pase, más margen para correcciones y
+        // deshacer dentro del mismo minuto.
+        'academico.asistencias.corregir' => [500, 60],
+        'academico.scanner'              => [500, 60],
+    ];
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -33,9 +52,13 @@ class ProtegerEscrituraMasiva
             return $next($request);
         }
 
+        $nombreRuta = $request->route()?->getName();
+        [$maxEscrituras, $ventanaSegundos] = self::LIMITES_PERSONALIZADOS[$nombreRuta]
+            ?? [self::MAX_ESCRITURAS, self::VENTANA_SEGUNDOS];
+
         $clave = 'escrituras:' . (Auth::id() !== null ? 'user-' . Auth::id() : 'ip-' . $request->ip());
 
-        if (RateLimiter::tooManyAttempts($clave, self::MAX_ESCRITURAS)) {
+        if (RateLimiter::tooManyAttempts($clave, $maxEscrituras)) {
             $segundos = RateLimiter::availableIn($clave);
 
             Log::warning('Escritura masiva bloqueada', [
@@ -47,6 +70,8 @@ class ProtegerEscrituraMasiva
 
             if ($request->expectsJson()) {
                 return response()->json([
+                    'success' => false,
+                    'message' => "Demasiadas operaciones en poco tiempo. Espera {$segundos} segundos e intenta de nuevo.",
                     'mensaje' => "Demasiadas operaciones en poco tiempo. Espera {$segundos} segundos e intenta de nuevo.",
                 ], 429);
             }
@@ -54,7 +79,7 @@ class ProtegerEscrituraMasiva
             return back()->with('error', "Demasiadas operaciones en poco tiempo. Por seguridad, espera {$segundos} segundos e intenta de nuevo.");
         }
 
-        RateLimiter::hit($clave, self::VENTANA_SEGUNDOS);
+        RateLimiter::hit($clave, $ventanaSegundos);
 
         return $next($request);
     }

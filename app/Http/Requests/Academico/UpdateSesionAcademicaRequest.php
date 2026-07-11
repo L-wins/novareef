@@ -22,6 +22,16 @@ class UpdateSesionAcademicaRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Los checkboxes HTML no envían nada si quedan desmarcados — sin esto,
+     * "esObligatoria" jamás llegaría en false. $this->boolean() trata la
+     * ausencia como false.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['esObligatoria' => $this->boolean('esObligatoria')]);
+    }
+
     public function rules(): array
     {
         $idColegio = (int) Auth::user()->idColegio;
@@ -40,6 +50,7 @@ class UpdateSesionAcademicaRequest extends FormRequest
             'horaSesion'  => ['required', 'date_format:H:i'],
             'duracionMinutos' => ['required', 'integer', 'min:1'],
             'modoAsistencia'  => ['required', Rule::in([SesionAcademica::MODO_MANUAL, SesionAcademica::MODO_SCANNER])],
+            'esObligatoria'   => ['boolean'],
         ];
     }
 }

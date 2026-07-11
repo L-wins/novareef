@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Academico\AsistenciaController;
 use App\Http\Controllers\Academico\JustificacionController;
+use App\Http\Controllers\Academico\MaterialAcademicoController;
 use App\Http\Controllers\Academico\SesionAcademicaController;
 use App\Http\Controllers\Academico\TipoSesionAcademicaController;
 use App\Http\Controllers\Arbitro\ArbitroController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\Finanza\MovimientoFinancieroController;
 use App\Http\Controllers\Finanza\BalanceFinancieroController;
 use App\Http\Controllers\Finanza\PagoArbitroController;
 use App\Http\Controllers\Finanza\ReporteFinancieroController;
+use App\Http\Controllers\Sancion\JustificacionRevisionController;
 use App\Http\Controllers\Sancion\SancionController;
 use App\Http\Controllers\Sancion\TipoSancionController;
 use App\Http\Controllers\Designacion\DisponibilidadController;
@@ -266,11 +268,6 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         // Árbitro
         Route::get('/mis-clases', [SesionAcademicaController::class, 'misClases'])->name('mis-clases');
 
-        // Justificaciones — el árbitro crea, instructor/ejecutivo/sanciones revisan
-        Route::get('/justificaciones/pendientes',     [JustificacionController::class, 'pendientes'])->middleware('permission:editar-academico')->name('justificaciones.pendientes');
-        Route::put('/justificaciones/{id}',           [JustificacionController::class, 'revisar'])->middleware('permission:editar-academico')->name('justificaciones.revisar');
-        Route::get('/justificaciones/{id}/documento', [JustificacionController::class, 'descargarDocumento'])->name('justificaciones.documento');
-
         // Scanner (terminal del instructor)
         Route::post('/scanner', [AsistenciaController::class, 'scanner'])->middleware('permission:crear-academico')->name('scanner');
 
@@ -280,7 +277,14 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::get('/asistencias/{id}/justificar',  [JustificacionController::class, 'create'])->name('justificaciones.create');
         Route::post('/asistencias/{id}/justificar', [JustificacionController::class, 'store'])->name('justificaciones.store');
 
+        // Material de clase — se puede adjuntar antes, durante o después de
+        // la sesión; la descarga queda abierta a cualquiera con ver-academico
+        // (visible para todos los árbitros del colegio, no solo instructor/ejecutivo).
+        Route::delete('/materiales/{id}',            [MaterialAcademicoController::class, 'destroy'])->middleware('permission:crear-academico')->name('materiales.destroy');
+        Route::get('/materiales/{id}/descargar',     [MaterialAcademicoController::class, 'descargar'])->name('materiales.descargar');
+
         // Sesión individual — rutas fijas antes de /{id}
+        Route::post('/{id}/materiales', [MaterialAcademicoController::class, 'store'])->middleware('permission:crear-academico')->name('materiales.store');
         Route::get('/{id}/editar',   [SesionAcademicaController::class, 'edit'])->middleware('permission:crear-academico')->name('sesiones.edit');
         Route::put('/{id}',         [SesionAcademicaController::class, 'update'])->middleware('permission:crear-academico')->name('sesiones.update');
         Route::delete('/{id}',      [SesionAcademicaController::class, 'destroy'])->middleware('permission:crear-academico')->name('sesiones.destroy');
@@ -304,6 +308,18 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::post('/',     [SancionController::class, 'store'])->middleware('permission:crear-sanciones')->name('store');
         Route::get('/{id}',  [SancionController::class, 'show'])->name('show');
         Route::put('/{id}/estado', [SancionController::class, 'cambiarEstado'])->middleware('permission:crear-sanciones')->name('estado');
+    });
+
+    //  Revisión de justificaciones académicas — vive bajo /sanciones por
+    //  ubicación (quien revisa suele trabajar desde acá), pero el permiso
+    //  sigue siendo editar-academico (instructor/ejecutivo/sanciones), no
+    //  ver-sanciones — el rol tecnico no tiene permisos de sanciones y
+    //  igual debe poder revisar. Por eso NO va anidado en el grupo de
+    //  arriba (heredaría permission:ver-sanciones como blanket).
+    Route::prefix('sanciones/justificaciones')->name('sanciones.justificaciones.')->middleware(['permission:editar-academico', 'modulo:academico'])->group(function () {
+        Route::get('/pendientes',     [JustificacionRevisionController::class, 'pendientes'])->name('pendientes');
+        Route::put('/{id}',           [JustificacionRevisionController::class, 'revisar'])->name('revisar');
+        Route::get('/{id}/documento', [JustificacionRevisionController::class, 'descargarDocumento'])->name('documento');
     });
 
     //  Catálogo de tipos de sanción — gestión, solo editar-sanciones

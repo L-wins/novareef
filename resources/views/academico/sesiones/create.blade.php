@@ -145,6 +145,13 @@
                         <option value="scanner" {{ old('modoAsistencia') === 'scanner' ? 'selected' : '' }}>Scanner (lectura de carné)</option>
                     </select>
                 </div>
+                <div class="form-group span-2">
+                    <label class="form-label form-label--check">
+                        <input type="checkbox" name="esObligatoria" value="1" {{ old('esObligatoria', session()->hasOldInput() ? false : true) ? 'checked' : '' }}>
+                        Esta sesión es de carácter obligatorio
+                    </label>
+                    <p class="field-hint">Desmárcalo si es una sesión opcional (ej. un taller informativo).</p>
+                </div>
             </div>
         </div>
 

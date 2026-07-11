@@ -56,6 +56,7 @@ class SesionAcademica extends Model
         'dirigidaA',
         'idCategoria',
         'modoAsistencia',
+        'esObligatoria',
         'estadoSesion',
         'sesionAbierta',
     ];
@@ -64,6 +65,7 @@ class SesionAcademica extends Model
         'fechaSesion'     => 'date',
         'duracionMinutos' => 'integer',
         'sesionAbierta'   => 'boolean',
+        'esObligatoria'   => 'boolean',
     ];
 
     protected $appends = ['esOficial'];
@@ -121,5 +123,10 @@ class SesionAcademica extends Model
     public function asistencias(): HasMany
     {
         return $this->hasMany(AsistenciaAcademica::class, 'idSesion', 'idSesion');
+    }
+
+    public function materiales(): HasMany
+    {
+        return $this->hasMany(MaterialAcademico::class, 'idSesion', 'idSesion')->orderByDesc('created_at');
     }
 }

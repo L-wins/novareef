@@ -193,11 +193,6 @@
                     <i class="fa-solid fa-graduation-cap"></i>
                     <span>Académico</span>
                 </a>
-                <a href="{{ route('academico.justificaciones.pendientes') }}"
-                   class="sidebar-link sidebar-link--sub {{ request()->routeIs('academico.justificaciones.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-file-circle-question"></i>
-                    <span>Justificaciones</span>
-                </a>
                 @else
                 @can('ver-academico')
                 <a href="{{ route('academico.mis-clases') }}"
@@ -212,9 +207,23 @@
                 @if (in_array('sanciones', $modulosPlan ?? [], true))
                 @can('ver-sanciones')
                 <a href="{{ route('sanciones.index') }}"
-                   class="sidebar-link {{ request()->routeIs('sanciones.*') ? 'active' : '' }}">
+                   class="sidebar-link {{ request()->routeIs('sanciones.*') && ! request()->routeIs('sanciones.justificaciones.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-gavel"></i>
                     <span>Sanciones</span>
+                </a>
+                @endcan
+                @endif
+
+                {{-- Independiente de ver-sanciones a propósito: quien revisa
+                     justificaciones académicas es instructor/ejecutivo/sanciones
+                     (permiso editar-academico), y el rol tecnico no tiene
+                     ver-sanciones — igual debe ver este acceso. --}}
+                @if (in_array('academico', $modulosPlan ?? [], true))
+                @can('editar-academico')
+                <a href="{{ route('sanciones.justificaciones.pendientes') }}"
+                   class="sidebar-link sidebar-link--sub {{ request()->routeIs('sanciones.justificaciones.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-file-circle-question"></i>
+                    <span>Justificaciones</span>
                 </a>
                 @endcan
                 @endif

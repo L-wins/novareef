@@ -42,6 +42,7 @@ final class SesionAcademicaService
                 'dirigidaA'       => $datos['dirigidaA'],
                 'idCategoria'     => $datos['dirigidaA'] === SesionAcademica::DIRIGIDA_CATEGORIA ? ($datos['idCategoria'] ?? null) : null,
                 'modoAsistencia'  => $datos['modoAsistencia'],
+                'esObligatoria'   => $datos['esObligatoria'] ?? true,
                 'estadoSesion'    => SesionAcademica::ESTADO_PROGRAMADA,
                 'sesionAbierta'   => false,
             ]);
@@ -139,6 +140,7 @@ final class SesionAcademicaService
             'horaSesion'      => $datos['horaSesion'],
             'duracionMinutos' => $datos['duracionMinutos'],
             'modoAsistencia'  => $datos['modoAsistencia'],
+            'esObligatoria'   => $datos['esObligatoria'] ?? true,
         ]);
     }
 

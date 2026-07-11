@@ -31,7 +31,7 @@
                     Tipos de sesión
                 </a>
             @endcan
-            <a href="{{ route('academico.justificaciones.pendientes') }}" class="btn btn-secondary">
+            <a href="{{ route('sanciones.justificaciones.pendientes') }}" class="btn btn-secondary">
                 <i class="fa-solid fa-file-circle-question"></i>
                 Justificaciones
             </a>

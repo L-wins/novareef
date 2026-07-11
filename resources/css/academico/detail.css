@@ -1,0 +1,185 @@
+/* ── Chips de metadatos bajo el título ── */
+.sesion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+}
+.sesion-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--aca-text-2);
+    background: var(--aca-bg-card);
+    border: 1px solid var(--aca-border);
+    padding: 0.32rem 0.7rem;
+    border-radius: 999px;
+    line-height: 1.2;
+}
+.sesion-chip i { color: var(--aca-text-mute); font-size: 0.85em; }
+.sesion-chip a { color: inherit; text-decoration: underline; }
+
+/* ── Avatar de iniciales (mismo lenguaje visual que Designaciones) ── */
+.aca-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--nv-border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--aca-accent);
+    flex-shrink: 0;
+}
+.aca-avatar--sm { width: 28px; height: 28px; font-size: 0.72rem; }
+.aca-arbitro-cell { display: flex; align-items: center; gap: 0.65rem; }
+
+/* ── Stat tiles con ícono y barra de progreso interna ── */
+.aca-stat--rico {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+.aca-stat__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+.aca-stat__icon {
+    font-size: 1rem;
+    color: var(--aca-accent);
+    opacity: 0.55;
+}
+.aca-stat__value--green  { color: #6ee7b7; }
+.aca-stat__value--red    { color: #fca5a5; }
+.aca-stat__value--amber  { color: #fbbf24; }
+.aca-stat__bar {
+    height: 5px;
+    border-radius: 999px;
+    background: var(--nv-fill-1);
+    margin-top: 0.6rem;
+    overflow: hidden;
+}
+.aca-stat__bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--aca-accent);
+    transition: width .5s ease;
+}
+
+/* ── Toolbar de la tabla (buscador + contador) ── */
+.aca-table-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+    flex-wrap: wrap;
+}
+.aca-search { position: relative; max-width: 280px; flex: 1; min-width: 200px; }
+.aca-search input {
+    width: 100%;
+    background: var(--nv-fill);
+    border: 1px solid var(--aca-border);
+    border-radius: var(--aca-radius-sm);
+    padding: 0.5rem 0.75rem 0.5rem 2.15rem;
+    color: var(--aca-text);
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+.aca-search input:focus {
+    border-color: var(--aca-accent);
+    box-shadow: 0 0 0 3px rgba(79,142,247,.14);
+}
+.aca-search i {
+    position: absolute;
+    left: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--aca-text-mute);
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+.aca-table-count { font-size: 0.78rem; color: var(--aca-text-mute); white-space: nowrap; }
+.asistencia-row.is-filtrado { display: none; }
+
+/* ── Scanner: último escaneo destacado ── */
+.scanner-last {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1.1rem;
+    min-height: 50px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity .25s ease, transform .25s ease;
+}
+.scanner-last.is-visible { opacity: 1; transform: translateY(0); }
+.scanner-last__avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(16,185,129,.15);
+    border: 1px solid rgba(16,185,129,.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6ee7b7;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+.scanner-last__texto { text-align: left; }
+.scanner-last__nombre { font-weight: 600; color: var(--aca-text); font-size: 0.95rem; }
+.scanner-last__hora   { font-size: 0.78rem; color: var(--aca-text-mute); }
+
+.scanner-input.is-error {
+    animation: aca-shake .35s;
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239,68,68,.16) !important;
+}
+@keyframes aca-shake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-6px); }
+    75%      { transform: translateX(6px); }
+}
+
+:root[data-theme="light"] .scanner-last__avatar { background: rgba(16,185,129,.12); }
+
+/* ── Material de clase ── */
+.aca-materiales-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+.aca-material-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--nv-fill);
+    border: 1px solid var(--aca-border);
+    border-radius: var(--aca-radius-sm);
+    padding: 0.65rem 0.9rem;
+}
+.aca-material-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--aca-text);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    flex: 1;
+    min-width: 0;
+}
+.aca-material-link:hover { color: var(--aca-accent); }
+.aca-material-link i { color: var(--aca-accent); font-size: 1rem; flex-shrink: 0; }
+.aca-material-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aca-material-meta { font-size: 0.76rem; color: var(--aca-text-mute); flex-shrink: 0; }

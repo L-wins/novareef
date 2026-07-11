@@ -41,18 +41,22 @@ class AsistenciaController extends Controller
 
     /**
      * El instructor corrige manualmente una marca antes de cerrar la sesión.
+     * Se invoca via fetch() desde la tabla en tiempo real — responde JSON con
+     * la asistencia actualizada (el JS pinta la fila con esa respuesta, sin
+     * depender del round-trip de Reverb) y además dispara el evento para que
+     * otras pestañas/usuarios conectados vean el cambio.
      */
-    public function corregir(CorregirMarcaRequest $request, int $id): RedirectResponse
+    public function corregir(CorregirMarcaRequest $request, int $id): JsonResponse
     {
         $asistencia = $this->asistenciaDelColegio($id);
 
         try {
-            $this->asistencias->corregirMarca($asistencia, $request->validated()['estadoAsistencia']);
+            $actualizada = $this->asistencias->corregirMarca($asistencia, $request->validated()['estadoAsistencia']);
         } catch (\RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
 
-        return back()->with('success', 'Marca corregida.');
+        return response()->json(['success' => true, 'asistencia' => $actualizada->toRealtimePayload()]);
     }
 
     /**
@@ -73,9 +77,10 @@ class AsistenciaController extends Controller
         }
 
         return response()->json([
-            'success'  => true,
-            'nombre'   => $asistencia->arbitro->usuario->nombreUsuario ?? '—',
-            'hora'     => $asistencia->horaMarca->format('H:i:s'),
+            'success'    => true,
+            'nombre'     => $asistencia->arbitro->usuario->nombreUsuario ?? '—',
+            'hora'       => $asistencia->horaMarca->format('H:i:s'),
+            'asistencia' => $asistencia->toRealtimePayload(),
         ]);
     }
 

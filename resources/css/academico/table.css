@@ -19,4 +19,49 @@
     display: flex;
     gap: 0.4rem;
     justify-content: flex-end;
+    align-items: center;
 }
+
+/* ── Candado: mientras data-locked="1", solo se ve el lápiz de editar; al
+   desbloquear (data-locked="0") aparecen los dos botones de marca y el
+   lápiz se oculta. Evita que los botones queden "sueltos" todo el tiempo
+   una vez que ya hay una decisión tomada — hay que pedir editar a propósito. ── */
+.asistencia-acciones[data-locked="1"] .btn-marca        { display: none; }
+.asistencia-acciones[data-locked="1"] .btn-editar-marca { display: inline-flex; }
+.asistencia-acciones[data-locked="0"] .btn-marca        { display: inline-flex; }
+.asistencia-acciones[data-locked="0"] .btn-editar-marca { display: none; }
+
+/* ── Botón activo en la columna Acciones: muestra de un vistazo cuál de
+   los dos estados es el vigente, no solo el badge de la columna Estado ── */
+.asistencia-acciones .btn.is-activo {
+    border-width: 1px;
+    border-style: solid;
+    font-weight: 700;
+}
+.asistencia-acciones .btn.is-activo[data-estado-nuevo="presente"] {
+    background: rgba(16,185,129,.18);
+    border-color: rgba(16,185,129,.45);
+    color: #6ee7b7;
+}
+.asistencia-acciones .btn.is-activo[data-estado-nuevo="ausente"] {
+    background: rgba(239,68,68,.15);
+    border-color: rgba(239,68,68,.4);
+    color: #fca5a5;
+}
+
+:root[data-theme="light"] .asistencia-acciones .btn.is-activo[data-estado-nuevo="presente"] { color: #15803d; }
+:root[data-theme="light"] .asistencia-acciones .btn.is-activo[data-estado-nuevo="ausente"]  { color: #dc2626; }
+
+/* ── Badge "Sin marcar" — neutral, no debe leerse como una decisión tomada ── */
+.badge-pendiente {
+    background: transparent;
+    border: 1px dashed var(--aca-text-mute);
+    color: var(--aca-text-mute);
+}
+
+/* ── Columnas de la tabla de asistencia: anchos consistentes ── */
+.data-table--asistencia .col-arbitro  { width: 42%; }
+.data-table--asistencia .col-estado   { width: 22%; }
+.data-table--asistencia .col-hora     { width: 14%; }
+.data-table--asistencia .col-acciones { width: 22%; }
+.data-table--asistencia .col-hora     { text-align: right; }
