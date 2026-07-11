@@ -45,7 +45,7 @@ class SesionAcademicaController extends Controller
     {
         $idColegio = $this->idColegioActivo();
 
-        $tipos      = TipoSesionAcademica::where('idColegio', $idColegio)->where('esActivo', true)->orderBy('orden')->orderBy('nombre')->get();
+        $tipos      = TipoSesionAcademica::where('idColegio', $idColegio)->where('esActivo', true)->orderBy('orden')->orderBy('etiqueta')->get();
         $categorias = CategoriaArbitro::where('idColegio', $idColegio)->where('activa', true)->orderBy('nombreCategoria')->get();
 
         return view('academico.sesiones.create', compact('tipos', 'categorias'));
@@ -80,7 +80,7 @@ class SesionAcademicaController extends Controller
         abort_unless($sesion->estadoSesion === SesionAcademica::ESTADO_PROGRAMADA, 403, 'Solo se puede editar una sesión que aún no se ha abierto.');
 
         $idColegio  = $this->idColegioActivo();
-        $tipos      = TipoSesionAcademica::where('idColegio', $idColegio)->where('esActivo', true)->orderBy('orden')->orderBy('nombre')->get();
+        $tipos      = TipoSesionAcademica::where('idColegio', $idColegio)->where('esActivo', true)->orderBy('orden')->orderBy('etiqueta')->get();
 
         return view('academico.sesiones.edit', compact('sesion', 'tipos'));
     }

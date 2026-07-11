@@ -29,6 +29,23 @@ if (typeof window.Echo === 'undefined') {
 document.addEventListener('DOMContentLoaded', function () {
     window.initNovaSelects?.();
 
+    // ── Paneles plegables: [data-toggle-panel="id"] muestra/oculta el panel
+    //    y (opcional) enfoca el campo indicado en data-focus al abrir ──
+    document.querySelectorAll('[data-toggle-panel]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var panel = document.getElementById(btn.dataset.togglePanel);
+            if (!panel) return;
+
+            var abierto = !panel.classList.toggle('is-oculto');
+            if (abierto) {
+                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                if (btn.dataset.focus) {
+                    document.getElementById(btn.dataset.focus)?.focus();
+                }
+            }
+        });
+    });
+
     if (window.colegioId) {
         window.Echo.private(`colegio.${window.colegioId}.academico`)
             .listen('.asistencia.actualizada', (e) => actualizarFilaAsistencia(e))

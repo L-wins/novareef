@@ -20,11 +20,10 @@ class StoreTipoSesionRequest extends FormRequest
         $idColegio = (int) Auth::user()->idColegio;
 
         return [
-            'nombre' => [
-                'required', 'string', 'max:60',
-                Rule::unique('tipos_sesion_academica', 'nombre')->where('idColegio', $idColegio),
+            'etiqueta' => [
+                'required', 'string', 'max:80',
+                Rule::unique('tipos_sesion_academica', 'etiqueta')->where('idColegio', $idColegio),
             ],
-            'etiqueta'    => ['required', 'string', 'max:80'],
             'esOficial'   => ['sometimes', 'boolean'],
             'descripcion' => ['nullable', 'string'],
         ];
@@ -33,9 +32,8 @@ class StoreTipoSesionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'nombre.required'   => 'El nombre del tipo de sesión es obligatorio.',
-            'nombre.unique'     => 'Ya existe un tipo de sesión con ese nombre en este colegio.',
-            'etiqueta.required' => 'La etiqueta visible es obligatoria.',
+            'etiqueta.required' => 'El nombre del tipo de sesión es obligatorio.',
+            'etiqueta.unique'   => 'Ya existe un tipo de sesión con ese nombre en este colegio.',
         ];
     }
 }

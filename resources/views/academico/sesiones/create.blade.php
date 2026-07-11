@@ -100,7 +100,10 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="horaSesion">Hora <span class="req">*</span></label>
-                    <input type="time" id="horaSesion" name="horaSesion" value="{{ old('horaSesion') }}"
+                    {{-- Mismo patrón que la hora del partido: Flatpickr 24h, sin AM/PM --}}
+                    <input type="text" id="horaSesion" name="horaSesion" value="{{ old('horaSesion') }}"
+                           data-nova-date data-enable-time="true" data-no-calendar="true"
+                           data-date-format="H:i" data-alt-format="H:i" placeholder="HH:MM"
                            class="form-input {{ $errors->has('horaSesion') ? 'is-invalid' : '' }}">
                     @error('horaSesion') <p class="field-error">{{ $message }}</p> @enderror
                 </div>
