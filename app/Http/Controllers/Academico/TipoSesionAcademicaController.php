@@ -24,7 +24,7 @@ class TipoSesionAcademicaController extends Controller
     {
         $tipos = TipoSesionAcademica::where('idColegio', $this->idColegioActivo())
             ->orderBy('orden')
-            ->orderBy('nombre')
+            ->orderBy('etiqueta')
             ->get();
 
         return view('academico.tipos', compact('tipos'));

@@ -17,7 +17,6 @@ class TipoSesionAcademica extends Model
 
     protected $fillable = [
         'idColegio',
-        'nombre',
         'etiqueta',
         'esOficial',
         'descripcion',

@@ -12,7 +12,6 @@ final class TipoSesionAcademicaService
     {
         return TipoSesionAcademica::create([
             'idColegio'   => $idColegio,
-            'nombre'      => $datos['nombre'],
             'etiqueta'    => $datos['etiqueta'],
             'esOficial'   => $datos['esOficial'] ?? false,
             'descripcion' => $datos['descripcion'] ?? null,

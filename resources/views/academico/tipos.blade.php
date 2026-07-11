@@ -7,6 +7,12 @@
     @vite(['resources/css/academico/academico.css'])
 @endpush
 
+@php
+    // El formulario arranca plegado; si el envío anterior falló la validación
+    // se muestra expandido para no esconder los errores.
+    $formAbierto = $errors->any() || old('etiqueta') !== null;
+@endphp
+
 @section('contenido')
 <div class="container">
 
@@ -20,31 +26,71 @@
             <h1 class="page-heading">Tipos de sesión</h1>
             <p class="page-subheading">Define el catálogo de tipos de sesión académica de tu colegio.</p>
         </div>
+        <button type="button" class="btn btn-primary" data-toggle-panel="panel-nuevo-tipo" data-focus="input-etiqueta">
+            <i class="fa-solid fa-plus"></i>
+            Agregar tipo
+        </button>
     </div>
 
     @if (session('success'))
-        <div class="flash-success" style="margin-bottom:1.25rem;">{{ session('success') }}</div>
+        <div class="flash-success">{{ session('success') }}</div>
     @endif
     @if (session('error'))
-        <div class="flash-error" style="margin-bottom:1.25rem;">{{ session('error') }}</div>
+        <div class="flash-error">{{ session('error') }}</div>
     @endif
 
+    {{-- Formulario de alta — plegado hasta pulsar "Agregar tipo" --}}
+    <div class="form-card panel-plegable {{ $formAbierto ? '' : 'is-oculto' }}" id="panel-nuevo-tipo">
+        <div class="form-section">
+            <p class="form-section-title">Nuevo tipo de sesión</p>
+            <form method="POST" action="{{ route('tipos-sesion-academica.store') }}" novalidate>
+                @csrf
+                <div class="form-grid form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="input-etiqueta">Nombre <span class="req">*</span></label>
+                        <input type="text" id="input-etiqueta" name="etiqueta" value="{{ old('etiqueta') }}" maxlength="80"
+                               placeholder="Ej. Prueba oficial FCF" class="form-input {{ $errors->has('etiqueta') ? 'is-invalid' : '' }}">
+                        @error('etiqueta') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group form-group--centrada">
+                        <label class="form-label form-label--check">
+                            <input type="checkbox" name="esOficial" value="1" {{ old('esOficial') ? 'checked' : '' }}>
+                            Es una sesión oficial (ej. prueba oficial FCF)
+                        </label>
+                    </div>
+                    <div class="form-group span-2">
+                        <label class="form-label">Descripción</label>
+                        <textarea name="descripcion" class="form-textarea">{{ old('descripcion') }}</textarea>
+                    </div>
+                </div>
+                <div class="form-actions-fila">
+                    <button type="button" class="btn btn-secondary" data-toggle-panel="panel-nuevo-tipo">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-plus"></i>
+                        Agregar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Catálogo --}}
     <div class="form-card">
-        <div class="form-section" style="padding-bottom:0;">
+        <div class="form-section form-section--titulo">
             <p class="form-section-title">Tipos registrados</p>
         </div>
 
         @if ($tipos->isEmpty())
-            <div style="padding:1.5rem;text-align:center;color:var(--aca-text-mute);font-size:0.875rem;">
-                No hay tipos de sesión registrados aún.
+            <div class="card-empty-note">
+                No hay tipos de sesión registrados aún. Crea el primero con el botón «Agregar tipo».
             </div>
         @else
-            <div style="overflow-x:auto;">
+            <div class="table-scroll">
                 <table class="data-table">
                     <thead>
                         <tr>
                             <th>Nombre</th>
-                            <th>Etiqueta</th>
+                            <th>Descripción</th>
                             <th>Oficial FCF</th>
                             <th>Estado</th>
                             <th class="text-right">Acciones</th>
@@ -53,8 +99,8 @@
                     <tbody>
                         @foreach ($tipos as $tipo)
                         <tr>
-                            <td class="td-primary">{{ $tipo->nombre }}</td>
-                            <td>{{ $tipo->etiqueta }}</td>
+                            <td class="td-primary">{{ $tipo->etiqueta }}</td>
+                            <td class="td-descripcion">{{ $tipo->descripcion ?: '—' }}</td>
                             <td>
                                 <span class="badge {{ $tipo->esOficial ? 'badge-blue' : 'badge-gray' }}">
                                     {{ $tipo->esOficial ? 'Oficial' : 'No oficial' }}
@@ -66,7 +112,7 @@
                                 </span>
                             </td>
                             <td class="text-right">
-                                <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+                                <div class="acciones-fila">
                                     <form method="POST" action="{{ route('tipos-sesion-academica.toggleActivo', $tipo->idTipoSesion) }}">
                                         @csrf
                                         @method('PUT')
@@ -92,44 +138,11 @@
                 </table>
             </div>
         @endif
-
-        <div class="form-section" style="background:rgba(79,142,247,.03);border-bottom:none;margin-top:1rem;">
-            <p class="form-section-title">Agregar tipo de sesión</p>
-            <form method="POST" action="{{ route('tipos-sesion-academica.store') }}" novalidate>
-                @csrf
-                <div class="form-grid form-grid-2">
-                    <div class="form-group">
-                        <label class="form-label">Nombre interno <span class="req">*</span></label>
-                        <input type="text" name="nombre" value="{{ old('nombre') }}" maxlength="60"
-                               placeholder="Ej. prueba_oficial_fcf" class="form-input {{ $errors->has('nombre') ? 'is-invalid' : '' }}">
-                        @error('nombre') <p class="field-error">{{ $message }}</p> @enderror
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Etiqueta visible <span class="req">*</span></label>
-                        <input type="text" name="etiqueta" value="{{ old('etiqueta') }}" maxlength="80"
-                               placeholder="Ej. Prueba oficial FCF" class="form-input {{ $errors->has('etiqueta') ? 'is-invalid' : '' }}">
-                        @error('etiqueta') <p class="field-error">{{ $message }}</p> @enderror
-                    </div>
-                    <div class="form-group span-2">
-                        <label class="form-label" style="flex-direction:row;align-items:center;gap:0.5rem;">
-                            <input type="checkbox" name="esOficial" value="1" {{ old('esOficial') ? 'checked' : '' }}>
-                            Es una sesión oficial (ej. prueba oficial FCF)
-                        </label>
-                    </div>
-                    <div class="form-group span-2">
-                        <label class="form-label">Descripción</label>
-                        <textarea name="descripcion" class="form-textarea">{{ old('descripcion') }}</textarea>
-                    </div>
-                </div>
-                <div style="margin-top:1rem;">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-plus"></i>
-                        Agregar
-                    </button>
-                </div>
-            </form>
-        </div>
     </div>
 
 </div>
 @endsection
+
+@push('scripts')
+    @vite(['resources/js/academico/academico.js'])
+@endpush
