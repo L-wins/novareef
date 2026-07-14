@@ -25,9 +25,10 @@ class AppServiceProvider extends ServiceProvider
 
         Str::macro('safePassword', fn (int $length = 14) => PasswordGenerator::generate($length));
 
-        // 'dashboard' se registra aparte de 'layouts.app': su contenido (@section('contenido'))
+        // 'dashboard.*' se registra aparte de 'layouts.app': su contenido (@section('contenido'))
         // se evalúa y captura ANTES de que la vista padre (layouts.app) exista, así que un
         // composer solo en 'layouts.app' nunca alcanza a inyectar la variable a tiempo ahí.
-        View::composer(['layouts.app', 'dashboard'], SidebarComposer::class);
+        // El wildcard cubre los 8 dashboards por rol (dashboard.ejecutivo, dashboard.tesorero, ...).
+        View::composer(['layouts.app', 'dashboard.*'], SidebarComposer::class);
     }
 }

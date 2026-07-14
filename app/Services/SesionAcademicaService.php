@@ -9,6 +9,7 @@ use App\Models\Arbitro;
 use App\Models\AsistenciaAcademica;
 use App\Models\SesionAcademica;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 final class SesionAcademicaService
@@ -157,5 +158,49 @@ final class SesionAcademicaService
             'sesionAbierta' => false,
             'estadoSesion'  => SesionAcademica::ESTADO_CANCELADA,
         ]);
+    }
+
+    // ── Lectura para dashboards (por rol) ──
+
+    /**
+     * Próximas sesiones del colegio (programadas o en curso) — para el
+     * dashboard de técnico/ejecutivo, a diferencia de `misClases()` que filtra
+     * por un árbitro puntual.
+     *
+     * @return Collection<int, SesionAcademica>
+     */
+    public function proximasDelColegio(int $idColegio, int $limite = 5): Collection
+    {
+        return SesionAcademica::where('idColegio', $idColegio)
+            ->whereIn('estadoSesion', [SesionAcademica::ESTADO_PROGRAMADA, SesionAcademica::ESTADO_EN_CURSO])
+            ->with('tipo')
+            ->orderBy('fechaSesion')
+            ->limit($limite)
+            ->get();
+    }
+
+    public function sesionesAbiertasAhoraCount(int $idColegio): int
+    {
+        return SesionAcademica::where('idColegio', $idColegio)
+            ->where('sesionAbierta', true)
+            ->count();
+    }
+
+    /**
+     * Próximas sesiones del árbitro autenticado — versión liviana de la
+     * consulta `$proximas` de `SesionAcademicaController::misClases()`, sin
+     * los materiales ni el historial, pensada para un widget de dashboard.
+     *
+     * @return Collection<int, SesionAcademica>
+     */
+    public function proximasDelArbitro(Arbitro $arbitro, int $limite = 5): Collection
+    {
+        return SesionAcademica::where('idColegio', $arbitro->idColegio)
+            ->whereIn('estadoSesion', [SesionAcademica::ESTADO_PROGRAMADA, SesionAcademica::ESTADO_EN_CURSO])
+            ->whereHas('asistencias', fn ($q) => $q->where('idArbitro', $arbitro->idArbitro))
+            ->with('tipo')
+            ->orderBy('fechaSesion')
+            ->limit($limite)
+            ->get();
     }
 }

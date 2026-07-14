@@ -4,40 +4,38 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\Arbitro;
-use App\Models\User;
-use App\Services\LimiteService;
+use App\Http\Controllers\Concerns\ResuelveColegio;
+use App\Services\DashboardService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    use ResuelveColegio;
+
     public function __construct(
-        private readonly LimiteService $limites,
+        private readonly DashboardService $dashboards,
     ) {}
 
+    /**
+     * Dashboard personalizado por rol — cada uno tiene su propia vista y su
+     * propio payload de datos, armado por DashboardService a partir de los
+     * servicios de cada dominio. Sin lógica de negocio ni queries aquí.
+     */
     public function index(): View
     {
-        $idColegio = Auth::user()->idColegio;
+        $user      = Auth::user();
+        $idColegio = $user->idColegio;
 
-        $arbitrosRegistrados = Arbitro::where('idColegio', $idColegio)->count();
-        $arbitrosActivos     = Arbitro::where('idColegio', $idColegio)
-                                       ->where('estadoArbitro', 'activo')
-                                       ->count();
-        $arbitrosProceso     = Arbitro::where('idColegio', $idColegio)
-                                       ->where('estadoArbitro', 'proceso_ingreso')
-                                       ->count();
-        $totalUsuarios       = User::where('idColegio', $idColegio)->count();
-
-        return view('dashboard', compact(
-            'arbitrosRegistrados',
-            'arbitrosActivos',
-            'arbitrosProceso',
-            'totalUsuarios',
-        ) + [
-            'limiteArbitrosUsados'     => $arbitrosRegistrados,
-            'limiteArbitros'           => $this->limites->limiteArbitros($idColegio),
-            'limiteArbitrosPorcentaje' => $this->limites->porcentajeUsoArbitros($idColegio),
-        ]);
+        return match ($user->rolUsuario) {
+            'ejecutivo'  => view('dashboard.ejecutivo', $this->dashboards->paraEjecutivo($idColegio)),
+            'tesorero'   => view('dashboard.tesorero', $this->dashboards->paraTesorero($idColegio)),
+            'designador' => view('dashboard.designador', $this->dashboards->paraDesignador($idColegio)),
+            'sanciones'  => view('dashboard.sanciones', $this->dashboards->paraSanciones($idColegio)),
+            'tecnico'    => view('dashboard.tecnico', $this->dashboards->paraTecnico($idColegio)),
+            'arbitro'    => view('dashboard.arbitro', $this->dashboards->paraArbitro($this->arbitroAutenticado())),
+            'veedor'     => view('dashboard.veedor', $this->dashboards->paraVeedor((int) $user->idUsuario)),
+            default      => view('dashboard.generico'),
+        };
     }
 }

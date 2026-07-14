@@ -178,6 +178,13 @@
     border-radius: var(--fin-radius);
     padding: 0.9rem 1.1rem;
 }
+/* Bolsillo destacado (ej. "Disponible real") — misma tarjeta, borde de acento */
+.fin-stat--hero {
+    border-color: var(--nv-accent);
+}
+.fin-stat--hero .fin-stat__value {
+    font-size: 1.5rem;
+}
 .fin-stat__label {
     font-size: 0.72rem;
     text-transform: uppercase;

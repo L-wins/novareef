@@ -193,15 +193,22 @@ final class FinanzasService
     /**
      * Genera los movimientos financieros al finalizar un partido en
      * modalidad nómina: un egreso "nómina de árbitro" por cada designación
-     * confirmada (valor resuelto vía DesignacionService::calcularPago) y un
-     * ingreso "torneo" con la suma de esos valores — el colegio actúa de
-     * intermediario, sin margen (passthrough).
+     * confirmada (valor resuelto vía DesignacionService::calcularPago) — la
+     * deuda del colegio hacia cada árbitro se acumula de inmediato, visible
+     * desde su perfil, sin depender de nada más.
+     *
+     * El ingreso del torneo NO se genera aquí: el colegio no recibe ese
+     * dinero al finalizar el partido, sino cuando el organizador
+     * efectivamente paga. Ese ingreso se registra manualmente (categoría
+     * ingreso_torneo, vinculado al torneo) desde /finanzas/crear cuando el
+     * pago llega — ver TorneoController::show() para el resumen de cuánta
+     * nómina generada aún no tiene ingreso registrado.
      *
      * En modalidad 'campo' no genera nada: el árbitro cobra en efectivo
      * directo del organizador y el colegio no gestiona ese dinero.
      *
-     * Idempotente — si ya existen movimientos para este partido (el job que
-     * la invoca puede reintentarse), no vuelve a generarlos.
+     * Idempotente — si ya existen egresos de nómina para este partido (el
+     * job que la invoca puede reintentarse), no vuelve a generarlos.
      */
     public function generarMovimientosPorFinalizacionPartido(Partido $partido): void
     {
@@ -210,10 +217,7 @@ final class FinanzasService
         }
 
         $yaGenerado = MovimientoFinanciero::where('idPartido', $partido->idPartido)
-            ->whereIn('categoria', [
-                MovimientoFinanciero::CATEGORIA_INGRESO_TORNEO,
-                MovimientoFinanciero::CATEGORIA_NOMINA_ARBITRO,
-            ])
+            ->where('categoria', MovimientoFinanciero::CATEGORIA_NOMINA_ARBITRO)
             ->exists();
 
         if ($yaGenerado) {
@@ -223,8 +227,6 @@ final class FinanzasService
         $designacionesConfirmadas = $partido->designacionesConfirmadas()->with('rol')->get();
 
         DB::transaction(function () use ($partido, $designacionesConfirmadas): void {
-            $totalIngreso = 0.0;
-
             foreach ($designacionesConfirmadas as $designacion) {
                 $pago  = $this->designaciones->calcularPago($designacion);
                 $valor = $pago['valor'];
@@ -245,31 +247,83 @@ final class FinanzasService
                     'idPartido'       => $partido->idPartido,
                     'idDesignacion'   => $designacion->idDesignacion,
                 ], null);
-
-                $totalIngreso += $valor;
-            }
-
-            if ($totalIngreso > 0.0) {
-                $this->registrarMovimiento($partido->idColegio, [
-                    'tipoMovimiento'  => MovimientoFinanciero::TIPO_INGRESO,
-                    'categoria'       => MovimientoFinanciero::CATEGORIA_INGRESO_TORNEO,
-                    'concepto'        => "Ingreso por partido #{$partido->idPartido}",
-                    'montoTotal'      => $totalIngreso,
-                    'fechaMovimiento' => $partido->fechaPartido,
-                    'idTorneo'        => $partido->idTorneo,
-                    'idPartido'       => $partido->idPartido,
-                ], null);
             }
         });
     }
 
     /**
-     * Estado de cuenta del árbitro: saldo pendiente por cobrar, historial de
-     * pagos recibidos, historial de multas y descuentos aplicados en nómina
-     * (compensación automática de deudas al momento del pago acumulado).
+     * Registra el saldo inicial de apertura del colegio (o un ajuste
+     * posterior de caja) como un ingreso categoría `saldo_inicial` con abono
+     * automático inmediato por el mismo monto — ya es efectivo real que el
+     * colegio tenía antes de usar NovaReef, no una cuenta por cobrar. Nunca
+     * se edita el original: una corrección es un nuevo registro.
+     *
+     * @param  array{monto: float|string, fecha: string, observaciones?: ?string}  $datos
+     */
+    public function registrarSaldoInicial(int $idColegio, array $datos, User $usuario): MovimientoFinanciero
+    {
+        return DB::transaction(function () use ($idColegio, $datos, $usuario): MovimientoFinanciero {
+            $movimiento = $this->registrarMovimiento($idColegio, [
+                'tipoMovimiento'  => MovimientoFinanciero::TIPO_INGRESO,
+                'categoria'       => MovimientoFinanciero::CATEGORIA_SALDO_INICIAL,
+                'concepto'        => 'Saldo inicial de caja',
+                'montoTotal'      => $datos['monto'],
+                'fechaMovimiento' => $datos['fecha'],
+                'observaciones'   => $datos['observaciones'] ?? null,
+            ], $usuario);
+
+            $this->registrarAbono($movimiento, [
+                'monto'         => $datos['monto'],
+                'fechaAbono'    => $datos['fecha'],
+                'metodoPago'    => AbonoMovimiento::METODO_OTRO,
+                'observaciones' => 'Saldo inicial — ya es efectivo disponible, no un cobro pendiente.',
+            ], $usuario);
+
+            return $movimiento->refresh();
+        });
+    }
+
+    /** Categorías de egreso que representan pago a un árbitro por su labor. */
+    private const CATEGORIAS_PAGO_ARBITRO = [
+        MovimientoFinanciero::CATEGORIA_NOMINA_ARBITRO,
+        MovimientoFinanciero::CATEGORIA_ARBITRO_EXTERNO,
+    ];
+
+    /**
+     * Egresos de nómina/externo del árbitro aún no saldados por completo,
+     * con el partido y torneo de origen — es el desglose que el estado de
+     * cuenta y el badge del perfil necesitan para no repetir la query.
+     *
+     * @return Collection<int, MovimientoFinanciero>
+     */
+    private function egresosPendientesArbitro(Arbitro $arbitro): Collection
+    {
+        return MovimientoFinanciero::where('idArbitro', $arbitro->idArbitro)
+            ->whereIn('categoria', self::CATEGORIAS_PAGO_ARBITRO)
+            ->where('estadoMovimiento', '!=', MovimientoFinanciero::ESTADO_ANULADO)
+            ->with(['partido', 'torneo'])
+            ->conTotalAbonado()
+            ->get()
+            ->filter(fn (MovimientoFinanciero $m) => $m->saldoPendiente() > 0.0)
+            ->sortBy('fechaMovimiento')
+            ->values();
+    }
+
+    /** Saldo total pendiente por cobrar del árbitro — usado por el badge del perfil. */
+    public function saldoPendienteArbitro(Arbitro $arbitro): float
+    {
+        return $this->egresosPendientesArbitro($arbitro)->sum(fn (MovimientoFinanciero $m) => $m->saldoPendiente());
+    }
+
+    /**
+     * Estado de cuenta del árbitro: saldo pendiente por cobrar (con el
+     * detalle partido por partido), historial de pagos recibidos, historial
+     * de multas y descuentos aplicados en nómina (compensación automática de
+     * deudas al momento del pago acumulado).
      *
      * @return array{
      *     saldoPendienteCobrar: float,
+     *     pendientesPorPartido: Collection<int, MovimientoFinanciero>,
      *     historialPagos: Collection<int, AbonoMovimiento>,
      *     historialMultas: Collection<int, MovimientoFinanciero>,
      *     descuentosNomina: Collection<int, AbonoMovimiento>,
@@ -277,21 +331,11 @@ final class FinanzasService
      */
     public function estadoCuentaArbitro(Arbitro $arbitro): array
     {
-        $categoriasPagoArbitro = [
-            MovimientoFinanciero::CATEGORIA_NOMINA_ARBITRO,
-            MovimientoFinanciero::CATEGORIA_ARBITRO_EXTERNO,
-        ];
+        $pendientesPorPartido = $this->egresosPendientesArbitro($arbitro);
+        $saldoPendienteCobrar = $pendientesPorPartido->sum(fn (MovimientoFinanciero $m) => $m->saldoPendiente());
 
-        $egresosArbitro = MovimientoFinanciero::where('idArbitro', $arbitro->idArbitro)
-            ->whereIn('categoria', $categoriasPagoArbitro)
-            ->where('estadoMovimiento', '!=', MovimientoFinanciero::ESTADO_ANULADO)
-            ->conTotalAbonado()
-            ->get();
-
-        $saldoPendienteCobrar = $egresosArbitro->sum(fn (MovimientoFinanciero $m) => $m->saldoPendiente());
-
-        $historialPagos = AbonoMovimiento::whereHas('movimiento', function ($q) use ($arbitro, $categoriasPagoArbitro): void {
-                $q->where('idArbitro', $arbitro->idArbitro)->whereIn('categoria', $categoriasPagoArbitro);
+        $historialPagos = AbonoMovimiento::whereHas('movimiento', function ($q) use ($arbitro): void {
+                $q->where('idArbitro', $arbitro->idArbitro)->whereIn('categoria', self::CATEGORIAS_PAGO_ARBITRO);
             })
             ->where('anulado', false)
             ->where('metodoPago', '!=', AbonoMovimiento::METODO_COMPENSACION_NOMINA)
@@ -313,6 +357,7 @@ final class FinanzasService
 
         return [
             'saldoPendienteCobrar' => $saldoPendienteCobrar,
+            'pendientesPorPartido' => $pendientesPorPartido,
             'historialPagos'       => $historialPagos,
             'historialMultas'      => $historialMultas,
             'descuentosNomina'     => $descuentosNomina,

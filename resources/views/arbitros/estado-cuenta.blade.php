@@ -42,6 +42,47 @@
     </div>
 
     <div class="detail-card cuenta-mb">
+        <p class="detail-section-title">Partidos pendientes de pago</p>
+        @if ($estadoCuenta['pendientesPorPartido']->isEmpty())
+            <div class="empty-state">
+                <i class="fa-solid fa-circle-check"></i>
+                <p>No tienes partidos pendientes de pago.</p>
+            </div>
+        @else
+            <div class="table-card cuenta-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Torneo</th>
+                            <th>Partido</th>
+                            <th class="text-right">Monto</th>
+                            <th class="text-right">Saldo pendiente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($estadoCuenta['pendientesPorPartido'] as $mov)
+                        <tr>
+                            <td>{{ $mov->fechaMovimiento->format('d/m/Y') }}</td>
+                            <td>{{ $mov->torneo->nombreTorneo ?? '—' }}</td>
+                            <td>
+                                @if ($mov->partido)
+                                    {{ $mov->partido->equipoLocal }} vs {{ $mov->partido->equipoVisitante }}
+                                @else
+                                    {{ $mov->concepto }}
+                                @endif
+                            </td>
+                            <td class="text-right">${{ number_format((float) $mov->montoTotal, 0, ',', '.') }}</td>
+                            <td class="text-right"><span class="monto-negativo">${{ number_format($mov->saldoPendiente(), 0, ',', '.') }}</span></td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+
+    <div class="detail-card cuenta-mb">
         <p class="detail-section-title">Historial de pagos recibidos</p>
         @if ($estadoCuenta['historialPagos']->isEmpty())
             <div class="empty-state">

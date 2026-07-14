@@ -107,6 +107,9 @@
         <a href="{{ route('arbitros.estado-cuenta') }}" class="btn btn-secondary">
             <i class="fa-solid fa-sack-dollar"></i>
             Mi estado de cuenta
+            @if ($saldoPendienteCobrar > 0)
+                <span class="badge badge-amber">${{ number_format($saldoPendienteCobrar, 0, ',', '.') }} pendiente</span>
+            @endif
         </a>
     </div>
 

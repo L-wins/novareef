@@ -17,7 +17,9 @@
     right: -60px;
     width: 380px;
     height: 380px;
-    background: radial-gradient(circle, rgba(16,185,129,0.09) 0%, transparent 68%);
+    /* Tono del acento real de la marca (#4f8ef7) — antes era un verde suelto
+       que no coincidía con ningún color del resto del panel. */
+    background: radial-gradient(circle, rgba(79,142,247,0.11) 0%, transparent 68%);
     pointer-events: none;
 }
 .welcome-card::after {
@@ -27,7 +29,7 @@
     left: -40px;
     width: 220px;
     height: 220px;
-    background: radial-gradient(circle, rgba(20,184,166,0.05) 0%, transparent 68%);
+    background: radial-gradient(circle, rgba(79,142,247,0.06) 0%, transparent 68%);
     pointer-events: none;
 }
 .welcome-badge {
@@ -88,6 +90,13 @@
     font-size: 0.8125rem;
     color: var(--text-muted);
 }
+
+/*
+   Ritmo entre secciones — un solo valor consistente en vez de que cada
+   sección dependa del margen suelto de lo que tenga adentro.
+    */
+.dash-section { margin-bottom: 24px; }
+.dash-section:last-child { margin-bottom: 0; }
 
 /*
    Encabezados de sección
@@ -274,6 +283,47 @@
 .plan-limite-contador { font-weight: 500; color: var(--text-muted); }
 
 /*
+   Accesos rápidos compactos (barra de chips) — para cuando el dashboard ya
+   tiene su propio menú lateral y no necesita repetir la descripción completa
+   de cada módulo, solo un atajo rápido y visible arriba de la página.
+    */
+.quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.quick-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 16px 8px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    transition: border-color 0.15s var(--ease), background 0.15s var(--ease), transform 0.15s var(--ease);
+}
+.quick-action:hover {
+    border-color: var(--border-hover);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+}
+.quick-action__icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+/*
    Tarjetas de módulos
     */
 .modules-section { margin-bottom: 32px; }
@@ -304,13 +354,6 @@
     border-color: var(--border-hover);
     transform: translateY(-3px);
     box-shadow: 0 6px 24px rgba(0,0,0,0.3);
-}
-.module-card.featured {
-    border-color: var(--border-accent);
-    background: linear-gradient(140deg, rgba(16,185,129,0.05) 0%, var(--bg-card) 50%);
-}
-.module-card.featured:hover {
-    border-color: rgba(16,185,129,0.38);
 }
 .mod-icon-box {
     width: 46px;
@@ -345,16 +388,6 @@
     text-transform: uppercase;
     flex-shrink: 0;
 }
-.badge-soon {
-    background: rgba(71,85,105,0.18);
-    color: var(--text-muted);
-    border: 1px solid rgba(71,85,105,0.25);
-}
-.badge-key {
-    background: var(--accent-bg);
-    color: var(--accent);
-    border: 1px solid var(--border-accent);
-}
 .badge-locked {
     background: rgba(239,68,68,0.07);
     color: #f87171;
@@ -381,6 +414,187 @@
     cursor: not-allowed;
 }
 
+/*
+   Tarjeta de estadística como link (dashboards por rol)
+    */
+.stat-card--link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+/* Métrica "norte" del rol (ej. disponible real, pendiente por cobrar) — un
+   único acento por dashboard, no todas las tarjetas a la vez. Neutra y sin
+   forzar un color propio: cada rol la usa con el color de icono que le
+   corresponda (ámbar, teal, etc.), esta variante solo eleva su jerarquía. */
+.stat-card--hero {
+    border-color: var(--border-hover);
+    box-shadow: var(--nv-shadow-2);
+}
+.stat-card--hero .stat-value { font-size: 2.25rem; }
+
+/* Variante de alerta — solo cuando el dato realmente necesita atención
+   (ej. partidos críticos > 0, pendientes de calificar > 0). */
+.stat-card--urgent {
+    border-color: var(--danger-border);
+    background: linear-gradient(150deg, var(--danger-bg) 0%, var(--bg-card) 65%);
+    box-shadow: 0 0 0 1px var(--danger-border);
+}
+.stat-card--urgent .stat-value { color: var(--danger); }
+.stat-card--urgent .stat-icon-box { box-shadow: 0 0 22px rgba(239,68,68,.28); }
+
+/*
+   Widget de dashboard (contenedor de listas: designaciones pendientes,
+   sanciones activas, justificaciones, etc.)
+    */
+.widget-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+}
+.widget-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.widget-card__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.widget-card__icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 13px;
+}
+.widget-card__heading { display: flex; flex-direction: column; gap: 1px; }
+.widget-card__meta {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+.widget-card__cta {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.widget-card__cta:hover { color: var(--accent-light); }
+
+/* Grilla de widgets lado a lado (2 columnas en pantallas anchas) */
+.widgets-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 20px; }
+@media (min-width: 900px) { .widgets-grid { grid-template-columns: repeat(2, 1fr); } }
+.widgets-grid .widget-card { margin-bottom: 0; }
+
+/* Lista compacta dentro de un widget (designaciones pendientes, sanciones
+   activas, justificaciones, próximas sesiones/partidos, etc.) */
+.widget-list { display: flex; flex-direction: column; gap: 8px; }
+.widget-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+}
+.widget-list-item__main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.widget-list-item__title {
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.widget-list-item__meta { color: var(--text-muted); font-size: 0.75rem; }
+
+/* Solo los items que de verdad son un link se comportan como tal —
+   los informativos (sin acción posible) se quedan quietos a propósito. */
+a.widget-list-item {
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s var(--ease), border-color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+a.widget-list-item:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-hover);
+    transform: translateX(3px);
+}
+
+.widget-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 30px 12px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+.widget-empty i { font-size: 1.4rem; opacity: 0.45; }
+
+/* Pill de estado dentro de un widget (mismo patrón data-color que .estado-pill) */
+.dash-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    flex-shrink: 0;
+}
+.dash-pill[data-color="red"]   { background: rgba(239,68,68,.12);  color: #f87171; border-color: rgba(239,68,68,.25); }
+.dash-pill[data-color="amber"] { background: rgba(245,158,11,.12); color: #fbbf24; border-color: rgba(245,158,11,.25); }
+.dash-pill[data-color="blue"]  { background: rgba(99,102,241,.12); color: #818cf8; border-color: rgba(99,102,241,.25); }
+.dash-pill[data-color="gray"]  { background: rgba(100,116,139,.15); color: var(--text-secondary); border-color: rgba(100,116,139,.25); }
+
+/*
+   Entrada escalonada al cargar la página — un solo momento orquestado
+   en vez de micro-animaciones sueltas por todos lados.
+    */
+@keyframes dash-rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.stats-grid > *, .widgets-grid > *, .modules-grid > * {
+    animation: dash-rise 0.4s var(--ease) backwards;
+}
+.stats-grid > *:nth-child(1), .widgets-grid > *:nth-child(1), .modules-grid > *:nth-child(1) { animation-delay: 0.02s; }
+.stats-grid > *:nth-child(2), .widgets-grid > *:nth-child(2), .modules-grid > *:nth-child(2) { animation-delay: 0.07s; }
+.stats-grid > *:nth-child(3), .widgets-grid > *:nth-child(3), .modules-grid > *:nth-child(3) { animation-delay: 0.12s; }
+.stats-grid > *:nth-child(4), .widgets-grid > *:nth-child(4), .modules-grid > *:nth-child(4) { animation-delay: 0.17s; }
+.stats-grid > *:nth-child(5), .modules-grid > *:nth-child(5) { animation-delay: 0.22s; }
+.stats-grid > *:nth-child(6), .modules-grid > *:nth-child(6) { animation-delay: 0.27s; }
+.welcome-card { animation: dash-rise 0.35s var(--ease); }
+
+@media (prefers-reduced-motion: reduce) {
+    .stats-grid > *, .widgets-grid > *, .modules-grid > *, .welcome-card, .badge-dot {
+        animation: none;
+    }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    Tema claro — los pasteles pensados para fondo oscuro (dark)
    pierden contraste sobre fondo blanco; se oscurecen aquí.
@@ -398,3 +612,7 @@
 :root[data-theme="light"] .plan-usage-value[data-color="red"]    { color: #dc2626; }
 :root[data-theme="light"] .plan-limite-banner--advertencia .plan-limite-banner__icon { color: #b45309; }
 :root[data-theme="light"] .plan-limite-banner--critico .plan-limite-banner__icon     { color: #dc2626; }
+
+:root[data-theme="light"] .dash-pill[data-color="red"]   { color: #dc2626; }
+:root[data-theme="light"] .dash-pill[data-color="amber"] { color: #b45309; }
+:root[data-theme="light"] .dash-pill[data-color="blue"]  { color: #4338ca; }

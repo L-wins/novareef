@@ -62,6 +62,43 @@
         </div>
     </div>
 
+    @if ($resumenCobro)
+        @php
+            $pendienteDeRegistrar = max(0, $resumenCobro['nomina']['totalEgresos'] - $resumenCobro['ingresos']['totalIngresos']);
+        @endphp
+        <div class="detail-grid-card">
+            <p class="detail-grid-card-title"><i class="fa-solid fa-hand-holding-dollar"></i> Estado de cobro al organizador</p>
+            <div class="detail-pairs">
+                <div class="detail-pair">
+                    <span class="detail-pair-label">Nómina generada</span>
+                    <span class="detail-pair-value">${{ number_format($resumenCobro['nomina']['totalEgresos'], 0, ',', '.') }}</span>
+                </div>
+                <div class="detail-pair">
+                    <span class="detail-pair-label">Pendiente de registrar</span>
+                    <span class="detail-pair-value">${{ number_format($pendienteDeRegistrar, 0, ',', '.') }}</span>
+                </div>
+                <div class="detail-pair">
+                    <span class="detail-pair-label">Ya registrado como cobrado</span>
+                    <span class="detail-pair-value">${{ number_format($resumenCobro['ingresos']['totalIngresos'], 0, ',', '.') }}</span>
+                </div>
+            </div>
+            <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+                @can('ver-finanzas')
+                    <a href="{{ route('finanzas.index', ['idTorneo' => $torneo->idTorneo, 'categoria' => 'ingreso_torneo']) }}" class="btn btn-secondary btn-sm">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        Ver movimientos en Finanzas
+                    </a>
+                @endcan
+                @can('crear-finanzas')
+                    <a href="{{ route('finanzas.create', ['idTorneo' => $torneo->idTorneo]) }}" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-plus"></i>
+                        Registrar ingreso de este torneo
+                    </a>
+                @endcan
+            </div>
+        </div>
+    @endif
+
     {{-- 1. INFORMACIÓN GENERAL --}}
     <div class="detail-grid-card">
         <p class="detail-grid-card-title"><i class="fa-solid fa-circle-info"></i> Información general</p>

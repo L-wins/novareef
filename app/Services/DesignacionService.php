@@ -678,6 +678,10 @@ final class DesignacionService
         })->all();
     }
 
+    // Lectura/agregación para dashboards por rol vive en
+    // ReporteDesignacionesService (mismo criterio que Finanzas:
+    // FinanzasService escribe, ReporteFinanzasService lee).
+
     // ── Helpers privados ──────────────────
 
     private function franjaDesdeHora(string $hora): string

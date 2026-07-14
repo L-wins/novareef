@@ -28,6 +28,14 @@ class MovimientoFinanciero extends Model
     public const CATEGORIA_MULTA          = 'multa';
     public const CATEGORIA_OTRO_INGRESO   = 'otro_ingreso';
 
+    /**
+     * Capitalización de apertura del colegio (o ajuste posterior de caja) —
+     * no es ingreso operativo. Se crea únicamente vía
+     * FinanzasService::registrarSaldoInicial() (con abono automático), nunca
+     * desde el formulario genérico de alta de movimientos.
+     */
+    public const CATEGORIA_SALDO_INICIAL = 'saldo_inicial';
+
     // ── Categorías de egreso ───────────────
     public const CATEGORIA_NOMINA_ARBITRO       = 'nomina_arbitro';
     public const CATEGORIA_ARBITRO_EXTERNO      = 'arbitro_externo';
@@ -45,6 +53,7 @@ class MovimientoFinanciero extends Model
             self::CATEGORIA_MENSUALIDAD,
             self::CATEGORIA_MULTA,
             self::CATEGORIA_OTRO_INGRESO,
+            self::CATEGORIA_SALDO_INICIAL,
         ],
         self::TIPO_EGRESO => [
             self::CATEGORIA_NOMINA_ARBITRO,
@@ -67,6 +76,7 @@ class MovimientoFinanciero extends Model
         self::CATEGORIA_MENSUALIDAD         => 'Mensualidad',
         self::CATEGORIA_MULTA               => 'Multa',
         self::CATEGORIA_OTRO_INGRESO        => 'Otro ingreso',
+        self::CATEGORIA_SALDO_INICIAL       => 'Saldo inicial / ajuste de caja',
         self::CATEGORIA_NOMINA_ARBITRO      => 'Nómina de árbitros',
         self::CATEGORIA_ARBITRO_EXTERNO     => 'Árbitro externo',
         self::CATEGORIA_GASTO_FIJO          => 'Gasto fijo',

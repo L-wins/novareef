@@ -252,6 +252,8 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::get('/reportes',     [ReporteFinancieroController::class, 'index'])->name('reportes.index');
         Route::get('/reportes/pdf', [ReporteFinancieroController::class, 'pdf'])->name('reportes.pdf');
         Route::get('/balance',      [BalanceFinancieroController::class, 'index'])->name('balance.index');
+        Route::post('/saldo-inicial', [BalanceFinancieroController::class, 'registrarSaldoInicial'])
+            ->middleware('permission:crear-finanzas')->name('saldo-inicial.store');
 
         Route::get('/{id}',  [MovimientoFinancieroController::class, 'show'])->name('show');
         Route::post('/{id}/abonos', [MovimientoFinancieroController::class, 'abonar'])->middleware('permission:crear-finanzas')->name('abonar');

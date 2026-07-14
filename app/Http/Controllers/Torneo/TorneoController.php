@@ -14,7 +14,9 @@ use App\Http\Requests\Torneo\UpdateTorneoRequest;
 use App\Models\FormatoDesignacion;
 use App\Models\ReglamentoTorneo;
 use App\Models\RolPartido;
+use App\Models\MovimientoFinanciero;
 use App\Models\Torneo;
+use App\Services\ReporteFinanzasService;
 use App\Services\TorneoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +29,7 @@ class TorneoController extends Controller
 
     public function __construct(
         private readonly TorneoService $torneos,
+        private readonly ReporteFinanzasService $reportes,
     ) {}
 
     public function index(Request $request): View
@@ -77,7 +80,19 @@ class TorneoController extends Controller
 
         $this->autorizarTorneo($torneo);
 
-        return view('torneos.show', compact('torneo'));
+        $resumenCobro = null;
+        if ($torneo->modalidadPago === 'nomina' && Auth::user()->can('ver-finanzas')) {
+            $filtrosBase = ['idTorneo' => $torneo->idTorneo];
+
+            $resumenCobro = [
+                // totalEgresos aquí = nómina generada = lo que le corresponde cobrar al organizador (passthrough, sin margen)
+                'nomina'   => $this->reportes->resumenListado($this->idColegioActivo(), [...$filtrosBase, 'categoria' => MovimientoFinanciero::CATEGORIA_NOMINA_ARBITRO]),
+                // totalIngresos/pendientePorCobrar aquí = lo que el colegio ya registró manualmente como cobro recibido
+                'ingresos' => $this->reportes->resumenListado($this->idColegioActivo(), [...$filtrosBase, 'categoria' => MovimientoFinanciero::CATEGORIA_INGRESO_TORNEO]),
+            ];
+        }
+
+        return view('torneos.show', compact('torneo', 'resumenCobro'));
     }
 
     public function create(): View

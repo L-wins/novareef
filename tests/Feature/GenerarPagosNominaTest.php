@@ -88,7 +88,7 @@ class GenerarPagosNominaTest extends TestCase
         ];
     }
 
-    public function test_finalizar_un_partido_nomina_genera_ingreso_y_egresos(): void
+    public function test_finalizar_un_partido_nomina_genera_solo_los_egresos_de_nomina(): void
     {
         $datos = $this->prepararPartidoConfirmado('nomina');
 
@@ -111,11 +111,10 @@ class GenerarPagosNominaTest extends TestCase
 
         $movimientos = MovimientoFinanciero::where('idPartido', $datos['partido']->idPartido)->get();
 
+        // El ingreso del torneo ya no se genera automáticamente — el colegio
+        // aún no ha recibido ese dinero del organizador.
         $ingreso = $movimientos->firstWhere('categoria', MovimientoFinanciero::CATEGORIA_INGRESO_TORNEO);
-        $this->assertNotNull($ingreso);
-        $this->assertSame('ingreso', $ingreso->tipoMovimiento);
-        $this->assertSame(100000.0, (float) $ingreso->montoTotal);
-        $this->assertNull($ingreso->idUsuarioRegistro);
+        $this->assertNull($ingreso);
 
         $egresos = $movimientos->where('categoria', MovimientoFinanciero::CATEGORIA_NOMINA_ARBITRO);
         $this->assertCount(2, $egresos);
@@ -123,6 +122,7 @@ class GenerarPagosNominaTest extends TestCase
             [60000.0, 40000.0],
             $egresos->map(fn ($m) => (float) $m->montoTotal)->values()->all(),
         );
+        $egresos->each(fn ($m) => $this->assertNull($m->idUsuarioRegistro));
     }
 
     public function test_finalizar_un_partido_campo_no_genera_ningun_movimiento(): void
@@ -152,9 +152,9 @@ class GenerarPagosNominaTest extends TestCase
 
         $egresos = $movimientos->where('categoria', MovimientoFinanciero::CATEGORIA_NOMINA_ARBITRO);
         $this->assertCount(1, $egresos);
+        $this->assertSame(60000.0, (float) $egresos->first()->montoTotal);
 
-        $ingreso = $movimientos->firstWhere('categoria', MovimientoFinanciero::CATEGORIA_INGRESO_TORNEO);
-        $this->assertSame(60000.0, (float) $ingreso->montoTotal);
+        $this->assertNull($movimientos->firstWhere('categoria', MovimientoFinanciero::CATEGORIA_INGRESO_TORNEO));
     }
 
     public function test_es_idempotente_si_se_invoca_dos_veces_para_el_mismo_partido(): void
@@ -179,6 +179,52 @@ class GenerarPagosNominaTest extends TestCase
         $finanzas->generarMovimientosPorFinalizacionPartido($datos['partido']->fresh());
         $finanzas->generarMovimientosPorFinalizacionPartido($datos['partido']->fresh());
 
-        $this->assertSame(3, MovimientoFinanciero::where('idPartido', $datos['partido']->idPartido)->count());
+        $this->assertSame(2, MovimientoFinanciero::where('idPartido', $datos['partido']->idPartido)->count());
+    }
+
+    public function test_registrar_ingreso_manual_de_torneo_no_lo_genera_la_finalizacion_del_partido(): void
+    {
+        $datos = $this->prepararPartidoConfirmado('nomina');
+
+        TarifaTorneo::create([
+            'idDivision' => $datos['division']->idDivision,
+            'idRol'      => $this->idRolPorNombre('Central'),
+            'idFormato'  => $datos['formato']->idFormato,
+            'valorPago'  => 60000,
+        ]);
+        TarifaTorneo::create([
+            'idDivision' => $datos['division']->idDivision,
+            'idRol'      => $this->idRolPorNombre('Asistente'),
+            'idFormato'  => $datos['formato']->idFormato,
+            'valorPago'  => 40000,
+        ]);
+
+        PartidoStateMachine::transicionarCon($datos['partido']->fresh(), Partido::ESTADO_FINALIZADO, $datos['designador']);
+
+        $this->assertNull(
+            MovimientoFinanciero::where('idPartido', $datos['partido']->idPartido)
+                ->where('categoria', MovimientoFinanciero::CATEGORIA_INGRESO_TORNEO)
+                ->first()
+        );
+
+        $finanzas = app(\App\Services\FinanzasService::class);
+        $ejecutivo = $this->crearEjecutivo($datos['colegio']);
+
+        $finanzas->registrarMovimiento($datos['colegio']->idColegio, [
+            'tipoMovimiento'  => MovimientoFinanciero::TIPO_INGRESO,
+            'categoria'       => MovimientoFinanciero::CATEGORIA_INGRESO_TORNEO,
+            'concepto'        => 'Pago recibido del organizador',
+            'montoTotal'      => 100000,
+            'fechaMovimiento' => today()->format('Y-m-d'),
+            'idTorneo'        => $datos['torneo']->idTorneo,
+        ], $ejecutivo);
+
+        $reportes = app(\App\Services\ReporteFinanzasService::class);
+        $resumen  = $reportes->resumenListado($datos['colegio']->idColegio, [
+            'idTorneo'  => $datos['torneo']->idTorneo,
+            'categoria' => MovimientoFinanciero::CATEGORIA_INGRESO_TORNEO,
+        ]);
+
+        $this->assertSame(100000.0, $resumen['totalIngresos']);
     }
 }

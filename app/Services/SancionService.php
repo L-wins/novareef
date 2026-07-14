@@ -8,6 +8,7 @@ use App\Models\HistorialSancion;
 use App\Models\MovimientoFinanciero;
 use App\Models\Sancion;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 final class SancionService
@@ -168,6 +169,35 @@ final class SancionService
                 }
             }
         });
+    }
+
+    // ── Lectura para dashboards (por rol) ──
+
+    /**
+     * Resumen para el dashboard de sanciones/ejecutivo: cuántas sanciones
+     * activas y apelaciones pendientes de resolver hay, más una vista previa
+     * de las sanciones activas más recientes.
+     *
+     * @return array{activasCount: int, apelacionesPendientes: int, recientes: Collection<int, Sancion>}
+     */
+    public function resumenParaDashboard(int $idColegio, int $limiteRecientes = 5): array
+    {
+        $activasCount = Sancion::where('idColegio', $idColegio)
+            ->where('estadoSancion', Sancion::ESTADO_ACTIVA)
+            ->count();
+
+        $apelacionesPendientes = Sancion::where('idColegio', $idColegio)
+            ->where('estadoSancion', Sancion::ESTADO_APELADA)
+            ->count();
+
+        $recientes = Sancion::where('idColegio', $idColegio)
+            ->where('estadoSancion', Sancion::ESTADO_ACTIVA)
+            ->with(['arbitro.usuario', 'tipo'])
+            ->orderByDesc('fechaHecho')
+            ->limit($limiteRecientes)
+            ->get();
+
+        return compact('activasCount', 'apelacionesPendientes', 'recientes');
     }
 
     // ── Helper privado ──────────────────

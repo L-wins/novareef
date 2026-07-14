@@ -24,7 +24,7 @@ class MovimientoFinancieroController extends Controller
     use ResuelveColegio;
 
     /** Filtros del listado que comparten índice, resumen y export CSV. */
-    private const FILTROS = ['tipoMovimiento', 'categoria', 'estado', 'idArbitro', 'q', 'desde', 'hasta'];
+    private const FILTROS = ['tipoMovimiento', 'categoria', 'estado', 'idArbitro', 'idTorneo', 'q', 'desde', 'hasta'];
 
     public function __construct(
         private readonly FinanzasService $finanzas,
@@ -51,7 +51,12 @@ class MovimientoFinancieroController extends Controller
             ->with('usuario')
             ->get();
 
-        return view('finanzas.index', compact('movimientos', 'resumen', 'arbitrosFiltro'));
+        $torneosFiltro = Torneo::where('idColegio', $idColegio)
+            ->whereHas('movimientosFinancieros')
+            ->orderByDesc('temporada')
+            ->get();
+
+        return view('finanzas.index', compact('movimientos', 'resumen', 'arbitrosFiltro', 'torneosFiltro'));
     }
 
     /**

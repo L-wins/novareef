@@ -28,7 +28,7 @@ final class ReporteFinanzasService
      * stat cards siempre reflejen exactamente lo que se está filtrando.
      *
      * @param  array{tipoMovimiento?: ?string, categoria?: ?string, estado?: ?string,
-     *     idArbitro?: ?string|int, q?: ?string, desde?: ?string, hasta?: ?string}  $filtros
+     *     idArbitro?: ?string|int, idTorneo?: ?string|int, q?: ?string, desde?: ?string, hasta?: ?string}  $filtros
      */
     public function queryFiltrada(int $idColegio, array $filtros): Builder
     {
@@ -37,6 +37,7 @@ final class ReporteFinanzasService
             ->when(! empty($filtros['categoria']), fn ($q) => $q->where('categoria', $filtros['categoria']))
             ->when(! empty($filtros['estado']), fn ($q) => $q->where('estadoMovimiento', $filtros['estado']))
             ->when(! empty($filtros['idArbitro']), fn ($q) => $q->where('idArbitro', (int) $filtros['idArbitro']))
+            ->when(! empty($filtros['idTorneo']), fn ($q) => $q->where('idTorneo', (int) $filtros['idTorneo']))
             ->when(! empty($filtros['q']), fn ($q) => $q->where('concepto', 'like', '%' . $filtros['q'] . '%'))
             ->when(! empty($filtros['desde']), fn ($q) => $q->where('fechaMovimiento', '>=', $filtros['desde']))
             ->when(! empty($filtros['hasta']), fn ($q) => $q->where('fechaMovimiento', '<=', $filtros['hasta']));
@@ -56,7 +57,7 @@ final class ReporteFinanzasService
             ->leftJoinSub($this->subqueryAbonado(), 'ab', 'ab.idMovimiento', '=', 'movimientos_financieros.idMovimiento')
             ->selectRaw("
                 COUNT(*) as cantidad,
-                COALESCE(SUM(CASE WHEN tipoMovimiento = 'ingreso' AND estadoMovimiento != 'anulado' THEN montoTotal END), 0) as totalIngresos,
+                COALESCE(SUM(CASE WHEN tipoMovimiento = 'ingreso' AND estadoMovimiento != 'anulado' AND categoria != 'saldo_inicial' THEN montoTotal END), 0) as totalIngresos,
                 COALESCE(SUM(CASE WHEN tipoMovimiento = 'egreso'  AND estadoMovimiento != 'anulado' THEN montoTotal END), 0) as totalEgresos,
                 COALESCE(SUM(CASE WHEN tipoMovimiento = 'ingreso' AND estadoMovimiento != 'anulado' THEN montoTotal - COALESCE(ab.abonado, 0) END), 0) as pendientePorCobrar,
                 COALESCE(SUM(CASE WHEN tipoMovimiento = 'egreso'  AND estadoMovimiento != 'anulado' THEN montoTotal - COALESCE(ab.abonado, 0) END), 0) as pendientePorPagar
@@ -90,6 +91,9 @@ final class ReporteFinanzasService
     {
         $movimientos = MovimientoFinanciero::where('idColegio', $idColegio)
             ->where('estadoMovimiento', '!=', MovimientoFinanciero::ESTADO_ANULADO)
+            // Saldo inicial/ajuste de caja no es desempeño operativo del
+            // período — inflaría el mes en que se registró.
+            ->where('categoria', '!=', MovimientoFinanciero::CATEGORIA_SALDO_INICIAL)
             ->whereBetween('fechaMovimiento', [$desde, $hasta])
             ->get();
 
@@ -129,6 +133,7 @@ final class ReporteFinanzasService
     {
         $filas = MovimientoFinanciero::where('idColegio', $idColegio)
             ->where('estadoMovimiento', '!=', MovimientoFinanciero::ESTADO_ANULADO)
+            ->where('categoria', '!=', MovimientoFinanciero::CATEGORIA_SALDO_INICIAL)
             ->whereBetween('fechaMovimiento', [$desde, $hasta])
             ->selectRaw("DATE_FORMAT(fechaMovimiento, '%Y-%m') as mes, tipoMovimiento, COALESCE(SUM(montoTotal), 0) as total")
             ->groupBy('mes', 'tipoMovimiento')
@@ -216,6 +221,29 @@ final class ReporteFinanzasService
             'totalLeDebemos' => $porArbitro->sum('leDebemos'),
             'totalNosDeben'  => $porArbitro->sum('nosDebe'),
             'porArbitro'     => $porArbitro,
+        ];
+    }
+
+    /**
+     * "Bolsillos" del colegio — compone balanceGeneral() y resumenListado()
+     * (sin filtros) para separar la caja bruta de lo realmente disponible:
+     * `disponibleReal` es cuánto del saldo en caja NO está ya comprometido
+     * con pagos pendientes (nómina de árbitros + gastos institucionales/fijos/
+     * varios pendientes). Las deudas de árbitros hacia el colegio no cuentan
+     * porque todavía no son caja.
+     *
+     * @return array{saldoEnCaja: float, disponibleReal: float, pendientePorCobrar: float, pendientePorPagar: float}
+     */
+    public function bolsillos(int $idColegio): array
+    {
+        $balance = $this->balanceGeneral($idColegio);
+        $global  = $this->resumenListado($idColegio, []);
+
+        return [
+            'saldoEnCaja'        => $balance['saldoEnCaja'],
+            'disponibleReal'     => $balance['saldoEnCaja'] - $global['pendientePorPagar'],
+            'pendientePorCobrar' => $global['pendientePorCobrar'],
+            'pendientePorPagar'  => $global['pendientePorPagar'],
         ];
     }
 

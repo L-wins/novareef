@@ -28,7 +28,8 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('finanzas.store') }}" class="form-card" novalidate>
+    <form method="POST" action="{{ route('finanzas.store') }}" class="form-card" novalidate
+          @if (! old('categoria') && request('idTorneo')) data-categoria-preset="ingreso_torneo" @endif>
         @csrf
 
         <div class="form-section">
@@ -118,7 +119,7 @@
                             class="form-select {{ $errors->has('idTorneo') ? 'is-invalid' : '' }}">
                         <option value="">— Selecciona —</option>
                         @foreach ($torneos as $torneo)
-                            <option value="{{ $torneo->idTorneo }}" {{ (string) old('idTorneo') === (string) $torneo->idTorneo ? 'selected' : '' }}>
+                            <option value="{{ $torneo->idTorneo }}" {{ (string) old('idTorneo', request('idTorneo')) === (string) $torneo->idTorneo ? 'selected' : '' }}>
                                 {{ $torneo->nombreTorneo }} ({{ $torneo->temporada }})
                             </option>
                         @endforeach

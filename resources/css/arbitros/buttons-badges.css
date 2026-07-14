@@ -121,6 +121,7 @@
 .badge-red   { background: rgba(239,68,68,.12);   color: #fca5a5; border-color: rgba(239,68,68,.3); }
 .badge-gray  { background: rgba(100,116,139,.15); color: var(--nv-text-2); border-color: rgba(100,116,139,.3); }
 .badge-blue  { background: rgba(59,130,246,.12);  color: #93c5fd; border-color: rgba(59,130,246,.3); }
+.badge-amber { background: rgba(245,158,11,.12);  color: #fbbf24; border-color: rgba(245,158,11,.3); }
 
 /* ═══════════════════════════════════════════════════════════════
    Tema claro — los pasteles pensados para fondo oscuro (dark)
@@ -150,3 +151,4 @@
 :root[data-theme="light"] .badge-green { color: #15803d; }
 :root[data-theme="light"] .badge-red   { color: #dc2626; }
 :root[data-theme="light"] .badge-blue  { color: #1d4ed8; }
+:root[data-theme="light"] .badge-amber { color: #b45309; }

@@ -22,7 +22,10 @@ class StoreMovimientoRequest extends FormRequest
                 MovimientoFinanciero::TIPO_INGRESO,
                 MovimientoFinanciero::TIPO_EGRESO,
             ])],
-            'categoria' => ['required', 'string'],
+            // saldo_inicial queda excluido: solo se crea vía
+            // FinanzasService::registrarSaldoInicial() (con abono automático),
+            // nunca desde este formulario genérico.
+            'categoria' => ['required', 'string', Rule::notIn([MovimientoFinanciero::CATEGORIA_SALDO_INICIAL])],
             'concepto' => ['required', 'string', 'max:255'],
             'montoTotal' => ['required', 'numeric', 'min:0.01'],
             'fechaMovimiento' => ['required', 'date'],

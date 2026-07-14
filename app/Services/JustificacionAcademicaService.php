@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\AsistenciaAcademica;
 use App\Models\JustificacionAcademica;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 final class JustificacionAcademicaService
@@ -98,5 +99,31 @@ final class JustificacionAcademicaService
 
             $justificacion->asistencia()->update(['estadoAsistencia' => AsistenciaAcademica::ESTADO_JUSTIFICACION_RECHAZADA]);
         });
+    }
+
+    // ── Lectura para dashboards (por rol) ──
+
+    /**
+     * Vista previa de justificaciones pendientes de revisión — misma consulta
+     * que usa `JustificacionRevisionController::pendientes()` para su listado
+     * paginado completo, aquí acotada para un widget de dashboard.
+     *
+     * @return Collection<int, JustificacionAcademica>
+     */
+    public function pendientes(int $idColegio, int $limite = 5): Collection
+    {
+        return JustificacionAcademica::where('idColegio', $idColegio)
+            ->where('estadoJustificacion', JustificacionAcademica::ESTADO_PENDIENTE)
+            ->with(['arbitro.usuario', 'asistencia.sesion.tipo'])
+            ->orderBy('fechaLimite')
+            ->limit($limite)
+            ->get();
+    }
+
+    public function pendientesCount(int $idColegio): int
+    {
+        return JustificacionAcademica::where('idColegio', $idColegio)
+            ->where('estadoJustificacion', JustificacionAcademica::ESTADO_PENDIENTE)
+            ->count();
     }
 }

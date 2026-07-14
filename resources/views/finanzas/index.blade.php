@@ -38,7 +38,8 @@
         <div class="flash-error">{{ session('error') }}</div>
     @endif
 
-    {{-- Resumen del período filtrado (los anulados nunca suman) --}}
+    {{-- Resumen del período filtrado (los anulados nunca suman) — neto/por cobrar/por
+         pagar viven en /finanzas/balance (bolsillos), aquí solo el bruto del período --}}
     <div class="fin-stats">
         <div class="fin-stat">
             <p class="fin-stat__label">Ingresos</p>
@@ -47,20 +48,6 @@
         <div class="fin-stat">
             <p class="fin-stat__label">Egresos</p>
             <p class="fin-stat__value monto-egreso">${{ number_format($resumen['totalEgresos'], 0, ',', '.') }}</p>
-        </div>
-        <div class="fin-stat">
-            <p class="fin-stat__label">Neto</p>
-            <p class="fin-stat__value">${{ number_format($resumen['neto'], 0, ',', '.') }}</p>
-        </div>
-        <div class="fin-stat">
-            <p class="fin-stat__label">Por cobrar</p>
-            <p class="fin-stat__value">${{ number_format($resumen['pendientePorCobrar'], 0, ',', '.') }}</p>
-            <p class="fin-stat__sub">Ingresos sin abonar por completo</p>
-        </div>
-        <div class="fin-stat">
-            <p class="fin-stat__label">Por pagar</p>
-            <p class="fin-stat__value">${{ number_format($resumen['pendientePorPagar'], 0, ',', '.') }}</p>
-            <p class="fin-stat__sub">Egresos sin pagar por completo</p>
         </div>
     </div>
 
@@ -113,6 +100,18 @@
         </div>
 
         <div class="filter-group">
+            <label class="filter-label">Torneo</label>
+            <select name="idTorneo" data-nova-select data-searchable="true" data-placeholder="Todos">
+                <option value="">Todos</option>
+                @foreach ($torneosFiltro as $torneo)
+                    <option value="{{ $torneo->idTorneo }}" {{ (string) request('idTorneo') === (string) $torneo->idTorneo ? 'selected' : '' }}>
+                        {{ $torneo->nombreTorneo }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="filter-group">
             <label class="filter-label">Desde</label>
             <input type="text" name="desde" value="{{ request('desde') }}" data-nova-date placeholder="dd/mm/aaaa" class="filter-input">
         </div>
@@ -127,7 +126,7 @@
                 <i class="fa-solid fa-magnifying-glass"></i>
                 Filtrar
             </button>
-            @if (request()->anyFilled(['q', 'tipoMovimiento', 'categoria', 'estado', 'idArbitro', 'desde', 'hasta']))
+            @if (request()->anyFilled(['q', 'tipoMovimiento', 'categoria', 'estado', 'idArbitro', 'idTorneo', 'desde', 'hasta']))
                 <a href="{{ route('finanzas.index') }}" class="filter-clear">Limpiar</a>
             @endif
         </div>

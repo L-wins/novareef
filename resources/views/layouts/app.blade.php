@@ -130,6 +130,11 @@
                     <i class="fa-solid fa-futbol"></i>
                     <span>Mis partidos</span>
                 </a>
+                <a href="{{ route('arbitros.estado-cuenta') }}"
+                   class="sidebar-link {{ request()->routeIs('arbitros.estado-cuenta*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                    <span>Mi estado de cuenta</span>
+                </a>
                 @endif
 
                 @can('crear-designaciones')

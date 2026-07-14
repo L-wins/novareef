@@ -72,6 +72,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (tipoSelect && categoriaSelect) {
+        // Llegar desde "Registrar ingreso de este torneo" (ficha de torneo)
+        // precarga la categoría antes de poblar el select por primera vez.
+        var formMovimiento  = categoriaSelect.closest('form');
+        var categoriaPreset = formMovimiento ? formMovimiento.dataset.categoriaPreset : null;
+        if (categoriaPreset) categoriaSelect.value = categoriaPreset;
+
         tipoSelect.addEventListener('change', sincronizarCategorias);
         categoriaSelect.addEventListener('change', sincronizarCamposCondicionales);
         sincronizarCategorias();
