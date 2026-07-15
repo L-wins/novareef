@@ -145,6 +145,11 @@
                         <i class="fa-solid fa-triangle-exclamation w-4 h-4 mt-0.5 shrink-0"></i>
                         <span>{{ $errors->first('identificador') }}</span>
                     </div>
+                @elseif (session('error'))
+                    <div class="alert-error mb-6" role="alert">
+                        <i class="fa-solid fa-triangle-exclamation w-4 h-4 mt-0.5 shrink-0"></i>
+                        <span>{{ session('error') }}</span>
+                    </div>
                 @endif
 
                 <form id="login-form" method="POST" action="{{ route('login') }}" novalidate>
