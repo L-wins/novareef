@@ -95,9 +95,6 @@
                         <span>
                             ${{ number_format((float) $sancion->movimientoFinanciero->montoTotal, 2) }}
                             — estado: {{ $sancion->movimientoFinanciero->estadoMovimiento }}
-                            @can('ver-finanzas')
-                                (<a href="{{ route('finanzas.show', $sancion->movimientoFinanciero->idMovimiento) }}">ver movimiento</a>)
-                            @endcan
                         </span>
                     </div>
                 @endif

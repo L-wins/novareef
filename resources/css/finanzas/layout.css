@@ -127,7 +127,8 @@
 }
 .data-table tbody tr:last-child td { border-bottom: none; }
 .data-table tbody tr:hover         { background: var(--nv-fill); }
-.td-primary   { color: var(--fin-text); font-weight: 500; display: block; }
+.td-primary   { color: var(--fin-text); font-weight: 500; display: block; text-decoration: none; }
+.td-primary:hover { color: var(--fin-accent); }
 .td-secondary { color: var(--fin-text-mute); font-size: 0.78rem; display: block; margin-top: 0.1rem; }
 .text-right   { text-align: right; }
 
@@ -148,12 +149,6 @@
 }
 .empty-state i { color: var(--fin-text-mute); display: block; margin-bottom: 1rem; }
 
-.pagination-wrapper {
-    display: flex;
-    justify-content: center;
-    margin-top: 1.5rem;
-}
-
 .cuenta-resumen-pago {
     display: flex;
     gap: 2rem;
@@ -164,6 +159,43 @@
 }
 .cuenta-resumen-pago .monto-lg   { font-size: 1.3rem; }
 .cuenta-resumen-pago .monto-hero { font-size: 1.4rem; font-weight: 700; }
+
+/* Barra de "pagar seleccionados" — aparece al marcar al menos un partido
+   pendiente en la ficha del árbitro. */
+.ficha-pago-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: .75rem;
+    padding: .75rem 1.1rem;
+    background: var(--nv-fill);
+    border: 1px solid var(--fin-border);
+    border-radius: var(--fin-radius-sm);
+}
+.ficha-pago-bar strong { color: var(--fin-text); }
+
+/* Contenido del modal de historial — cada movimiento carga su propio
+   <template> con esta estructura ya renderizada por el servidor. */
+.historial-item {
+    padding: .65rem 0;
+    border-bottom: 1px solid var(--fin-border);
+}
+.historial-item:last-child { border-bottom: none; }
+.historial-item__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: .75rem;
+}
+.historial-item__accion {
+    font-weight: 600;
+    color: var(--fin-text);
+    text-transform: capitalize;
+}
+.historial-item__fecha { font-size: .78rem; color: var(--fin-text-mute); white-space: nowrap; }
+.historial-item__usuario { font-size: .82rem; color: var(--fin-text-2); margin: .2rem 0 0; }
+.historial-item__detalle { font-size: .82rem; color: var(--fin-text-mute); margin: .2rem 0 0; }
 
 /*  Stat tiles (KPI row del listado y reportes)  */
 .fin-stats {
@@ -212,26 +244,6 @@
 .fin-stat__delta--down    { color: var(--fin-egreso); }
 .fin-stat__delta--neutral { color: var(--fin-text-mute); }
 
-/*  Toolbar del listado (export, contador)  */
-.fin-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.75rem;
-}
-.fin-toolbar__info { font-size: 0.8rem; color: var(--fin-text-mute); }
-
-/*  Progreso de abono dentro de la celda de monto  */
-.monto-abonado {
-    display: block;
-    font-size: 0.72rem;
-    font-weight: 500;
-    color: var(--fin-text-mute);
-    margin-top: 0.15rem;
-}
-
 /*  Lotes de pago recientes (comprobantes descargables)  */
 .fin-lotes { display: flex; flex-direction: column; gap: 0.5rem; }
 .fin-lote {
@@ -258,14 +270,6 @@
 .form-actions-end--gap { gap: 0.75rem; }
 .form-section--sin-borde { border-bottom: none; }
 .form-section--titulo    { padding-bottom: 0; }
-.card-empty-note {
-    padding: 1.5rem;
-    text-align: center;
-    color: var(--fin-text-mute);
-    font-size: 0.875rem;
-}
-.historial-lista { display: flex; flex-direction: column; gap: 0.75rem; padding: 0 1.5rem 1.5rem; }
-.historial-item  { font-size: 0.85rem; color: var(--fin-text-2); }
 .monto-md { font-size: 1.1rem; }
 .monto-md-bold { font-size: 1.1rem; font-weight: 700; }
 

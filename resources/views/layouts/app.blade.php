@@ -183,7 +183,7 @@
 
                 @if (in_array('finanzas', $modulosPlan ?? [], true))
                 @can('ver-finanzas')
-                <a href="{{ route('finanzas.index') }}"
+                <a href="{{ route('finanzas.balance.index') }}"
                    class="sidebar-link {{ request()->routeIs('finanzas.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-money-bill-wave"></i>
                     <span>Finanzas</span>

@@ -61,11 +61,7 @@
 .field-error { font-size: 0.74rem; color: #fca5a5; margin-top: 0.25rem; }
 .field-hint  { font-size: 0.72rem; color: var(--fin-text-mute); margin-top: 0.25rem; }
 
-/* Campos condicionales según categoría (JS los muestra/oculta) */
-[data-campo-condicional] { display: none; }
-[data-campo-condicional].is-visible { display: flex; }
-
-/* ── Modal (registrar abono) ───── */
+/* ── Modal ───── */
 .nova-modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 1000;
   display: flex; align-items: center; justify-content: center;

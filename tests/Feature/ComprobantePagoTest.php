@@ -41,30 +41,22 @@ class ComprobantePagoTest extends TestCase
     }
 
     /**
-     * Nómina de 80000 + multa de 20000 compensada → neto 60000, con lote.
+     * Nómina de 60000 pagada en efectivo → un lote con comprobante.
      */
-    private function pagarAcumulado(Colegio $colegio, Arbitro $arbitro, User $tesorero): string
+    private function pagarNomina(Colegio $colegio, Arbitro $arbitro, User $tesorero): string
     {
         Queue::fake();
         $finanzas = app(FinanzasService::class);
 
         $nomina = $finanzas->registrarMovimiento($colegio->idColegio, [
             'tipoMovimiento' => 'egreso', 'categoria' => 'nomina_arbitro',
-            'concepto' => 'Partido de prueba', 'montoTotal' => 80000,
+            'concepto' => 'Partido de prueba', 'montoTotal' => 60000,
             'fechaMovimiento' => today()->format('Y-m-d'), 'idArbitro' => $arbitro->idArbitro,
         ], null);
 
-        $multa = $finanzas->registrarMovimiento($colegio->idColegio, [
-            'tipoMovimiento' => 'ingreso', 'categoria' => 'multa',
-            'concepto' => 'Multa de prueba', 'montoTotal' => 20000,
-            'fechaMovimiento' => today()->format('Y-m-d'), 'idArbitro' => $arbitro->idArbitro,
-            'tipoOrigenMulta' => 'manual',
-        ], null);
-
-        $resultado = $finanzas->pagarAcumuladoArbitro(
+        $resultado = $finanzas->pagarNominaArbitro(
             $arbitro,
             [$nomina->idMovimiento],
-            [$multa->idMovimiento],
             ['fecha' => today()->format('Y-m-d'), 'metodoPago' => 'transferencia', 'referencia' => 'REF-123'],
             $tesorero,
         );
@@ -78,10 +70,10 @@ class ComprobantePagoTest extends TestCase
         $tesorero = $this->crearTesorero($colegio);
         $arbitro  = $this->crearArbitro($colegio);
 
-        $lote = $this->pagarAcumulado($colegio, $arbitro, $tesorero);
+        $lote = $this->pagarNomina($colegio, $arbitro, $tesorero);
 
         $respuesta = $this->actingAs($tesorero)
-            ->get("/finanzas/pagos-arbitro/comprobante/{$lote}");
+            ->get("/finanzas/arbitro/{$arbitro->idArbitro}/comprobante/{$lote}");
 
         $respuesta->assertOk();
         $this->assertSame('application/pdf', $respuesta->headers->get('Content-Type'));
@@ -92,13 +84,13 @@ class ComprobantePagoTest extends TestCase
         $colegio  = $this->crearColegioConFinanzas();
         $tesorero = $this->crearTesorero($colegio);
         $arbitro  = $this->crearArbitro($colegio);
-        $lote     = $this->pagarAcumulado($colegio, $arbitro, $tesorero);
+        $lote     = $this->pagarNomina($colegio, $arbitro, $tesorero);
 
         $otroColegio  = $this->crearColegioConFinanzas();
         $otroTesorero = $this->crearTesorero($otroColegio);
 
         $this->actingAs($otroTesorero)
-            ->get("/finanzas/pagos-arbitro/comprobante/{$lote}")
+            ->get("/finanzas/arbitro/{$arbitro->idArbitro}/comprobante/{$lote}")
             ->assertNotFound();
     }
 
@@ -107,7 +99,7 @@ class ComprobantePagoTest extends TestCase
         $colegio  = $this->crearColegioConFinanzas();
         $tesorero = $this->crearTesorero($colegio);
         $arbitro  = $this->crearArbitro($colegio);
-        $lote     = $this->pagarAcumulado($colegio, $arbitro, $tesorero);
+        $lote     = $this->pagarNomina($colegio, $arbitro, $tesorero);
 
         $respuesta = $this->actingAs($arbitro->usuario)
             ->get("/mi-estado-cuenta/comprobante/{$lote}");
@@ -122,7 +114,7 @@ class ComprobantePagoTest extends TestCase
         $tesorero = $this->crearTesorero($colegio);
         $arbitro  = $this->crearArbitro($colegio);
         $otro     = $this->crearArbitro($colegio);
-        $lote     = $this->pagarAcumulado($colegio, $arbitro, $tesorero);
+        $lote     = $this->pagarNomina($colegio, $arbitro, $tesorero);
 
         $this->actingAs($otro->usuario)
             ->get("/mi-estado-cuenta/comprobante/{$lote}")
@@ -134,7 +126,7 @@ class ComprobantePagoTest extends TestCase
         $colegio  = $this->crearColegioConFinanzas();
         $tesorero = $this->crearTesorero($colegio);
         $arbitro  = $this->crearArbitro($colegio);
-        $lote     = $this->pagarAcumulado($colegio, $arbitro, $tesorero);
+        $lote     = $this->pagarNomina($colegio, $arbitro, $tesorero);
 
         $this->actingAs($arbitro->usuario)
             ->get('/mi-estado-cuenta')

@@ -8,7 +8,7 @@ use App\Models\AbonoMovimiento;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreAbonoRequest extends FormRequest
+class StoreAbonoArbitroRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -18,15 +18,10 @@ class StoreAbonoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'monto' => ['required', 'numeric', 'min:0.01'],
-            'fechaAbono' => ['required', 'date'],
-            'metodoPago' => ['required', Rule::in([
-                AbonoMovimiento::METODO_EFECTIVO,
-                AbonoMovimiento::METODO_TRANSFERENCIA,
-                AbonoMovimiento::METODO_CONSIGNACION,
-                AbonoMovimiento::METODO_OTRO,
-            ])],
-            'referencia' => ['nullable', 'string', 'max:100'],
+            'monto'         => ['required', 'numeric', 'min:0.01'],
+            'fechaAbono'    => ['required', 'date'],
+            'metodoPago'    => ['required', Rule::in(AbonoMovimiento::METODOS_MANUALES)],
+            'referencia'    => ['nullable', 'string', 'max:100'],
             'observaciones' => ['nullable', 'string'],
         ];
     }

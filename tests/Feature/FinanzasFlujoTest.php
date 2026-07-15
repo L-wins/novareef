@@ -5,14 +5,21 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\Colegio;
-use App\Models\MovimientoFinanciero;
 use App\Models\User;
+use App\Services\FinanzasService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\Concerns\CreaColegioDePrueba;
 use Tests\TestCase;
 
+/**
+ * Reglas de negocio de FinanzasService::registrarMovimiento/registrarAbono/
+ * anularMovimiento — probadas a nivel de Service porque ya no existe ningún
+ * formulario HTTP genérico de alta/abono/anulación (se eliminó el CRUD
+ * individual de movimientos; lo que sobrevive vive scopeado por árbitro en
+ * FichaFinancieraArbitroController, ver FichaFinancieraArbitroTest).
+ */
 class FinanzasFlujoTest extends TestCase
 {
     use RefreshDatabase;
@@ -33,87 +40,64 @@ class FinanzasFlujoTest extends TestCase
         return $usuario;
     }
 
-    private function crearColegioConFinanzas(): Colegio
-    {
-        return $this->crearColegio($this->crearPlan(['modulosJSON' => ['arbitros', 'torneos', 'designaciones', 'finanzas']]));
-    }
-
-    public function test_lista_movimientos_financieros_del_colegio(): void
-    {
-        $colegio  = $this->crearColegioConFinanzas();
-        $tesorero = $this->crearTesorero($colegio);
-
-        $this->actingAs($tesorero)->get('/finanzas')->assertOk();
-    }
-
     public function test_registra_un_movimiento_de_mensualidad(): void
     {
-        $colegio  = $this->crearColegioConFinanzas();
-        $tesorero = $this->crearTesorero($colegio);
+        $colegio  = $this->crearColegio();
+        $finanzas = app(FinanzasService::class);
 
-        $response = $this->actingAs($tesorero)->post('/finanzas', [
+        $movimiento = $finanzas->registrarMovimiento($colegio->idColegio, [
             'tipoMovimiento'  => 'ingreso',
             'categoria'       => 'mensualidad',
             'concepto'        => 'Mensualidad julio',
             'montoTotal'      => 50000,
             'fechaMovimiento' => today()->format('Y-m-d'),
-        ]);
+        ], null);
 
-        $response->assertRedirect();
-
-        $movimiento = MovimientoFinanciero::where('idColegio', $colegio->idColegio)->first();
-        $this->assertNotNull($movimiento);
         $this->assertSame('pendiente', $movimiento->estadoMovimiento);
         $this->assertSame(50000.0, (float) $movimiento->montoTotal);
     }
 
     public function test_no_se_puede_registrar_una_categoria_que_no_corresponde_al_tipo(): void
     {
-        $colegio  = $this->crearColegioConFinanzas();
-        $tesorero = $this->crearTesorero($colegio);
+        $colegio  = $this->crearColegio();
+        $finanzas = app(FinanzasService::class);
 
-        $response = $this->actingAs($tesorero)->post('/finanzas', [
+        $this->expectException(\RuntimeException::class);
+
+        $finanzas->registrarMovimiento($colegio->idColegio, [
             'tipoMovimiento'  => 'ingreso',
             'categoria'       => 'nomina_arbitro', // categoría de egreso, no de ingreso
             'concepto'        => 'Inválido',
             'montoTotal'      => 1000,
             'fechaMovimiento' => today()->format('Y-m-d'),
-        ]);
-
-        $response->assertRedirect();
-        $this->assertSame(0, MovimientoFinanciero::where('idColegio', $colegio->idColegio)->count());
+        ], null);
     }
 
     public function test_registrar_un_abono_reduce_el_saldo_pendiente_y_actualiza_el_estado(): void
     {
-        $colegio  = $this->crearColegioConFinanzas();
+        $colegio  = $this->crearColegio();
         $tesorero = $this->crearTesorero($colegio);
+        $finanzas = app(FinanzasService::class);
 
-        $this->actingAs($tesorero)->post('/finanzas', [
+        $movimiento = $finanzas->registrarMovimiento($colegio->idColegio, [
             'tipoMovimiento'  => 'egreso',
             'categoria'       => 'gasto_fijo',
             'concepto'        => 'Arriendo julio',
             'montoTotal'      => 100000,
             'fechaMovimiento' => today()->format('Y-m-d'),
-        ]);
+        ], null);
 
-        $movimiento = MovimientoFinanciero::where('idColegio', $colegio->idColegio)->firstOrFail();
-
-        $this->actingAs($tesorero)->post("/finanzas/{$movimiento->idMovimiento}/abonos", [
-            'monto'      => 40000,
-            'fechaAbono' => today()->format('Y-m-d'),
-            'metodoPago' => 'transferencia',
-        ])->assertRedirect();
+        $finanzas->registrarAbono($movimiento, [
+            'monto' => 40000, 'fechaAbono' => today()->format('Y-m-d'), 'metodoPago' => 'transferencia',
+        ], $tesorero);
 
         $movimiento->refresh();
         $this->assertSame('parcial', $movimiento->estadoMovimiento);
         $this->assertSame(60000.0, $movimiento->saldoPendiente());
 
-        $this->actingAs($tesorero)->post("/finanzas/{$movimiento->idMovimiento}/abonos", [
-            'monto'      => 60000,
-            'fechaAbono' => today()->format('Y-m-d'),
-            'metodoPago' => 'efectivo',
-        ])->assertRedirect();
+        $finanzas->registrarAbono($movimiento, [
+            'monto' => 60000, 'fechaAbono' => today()->format('Y-m-d'), 'metodoPago' => 'efectivo',
+        ], $tesorero);
 
         $movimiento->refresh();
         $this->assertSame('pagado', $movimiento->estadoMovimiento);
@@ -122,46 +106,40 @@ class FinanzasFlujoTest extends TestCase
 
     public function test_no_se_puede_abonar_mas_del_saldo_pendiente(): void
     {
-        $colegio  = $this->crearColegioConFinanzas();
+        $colegio  = $this->crearColegio();
         $tesorero = $this->crearTesorero($colegio);
+        $finanzas = app(FinanzasService::class);
 
-        $this->actingAs($tesorero)->post('/finanzas', [
+        $movimiento = $finanzas->registrarMovimiento($colegio->idColegio, [
             'tipoMovimiento'  => 'ingreso',
             'categoria'       => 'otro_ingreso',
             'concepto'        => 'Donación',
             'montoTotal'      => 10000,
             'fechaMovimiento' => today()->format('Y-m-d'),
-        ]);
+        ], null);
 
-        $movimiento = MovimientoFinanciero::where('idColegio', $colegio->idColegio)->firstOrFail();
+        $this->expectException(\RuntimeException::class);
 
-        $this->actingAs($tesorero)->post("/finanzas/{$movimiento->idMovimiento}/abonos", [
-            'monto'      => 20000,
-            'fechaAbono' => today()->format('Y-m-d'),
-            'metodoPago' => 'efectivo',
-        ])->assertRedirect();
-
-        $movimiento->refresh();
-        $this->assertSame(0, $movimiento->abonos()->count());
-        $this->assertSame('pendiente', $movimiento->estadoMovimiento);
+        $finanzas->registrarAbono($movimiento, [
+            'monto' => 20000, 'fechaAbono' => today()->format('Y-m-d'), 'metodoPago' => 'efectivo',
+        ], $tesorero);
     }
 
     public function test_anular_un_movimiento_sin_abonos(): void
     {
-        $colegio  = $this->crearColegioConFinanzas();
+        $colegio  = $this->crearColegio();
         $tesorero = $this->crearTesorero($colegio);
+        $finanzas = app(FinanzasService::class);
 
-        $this->actingAs($tesorero)->post('/finanzas', [
+        $movimiento = $finanzas->registrarMovimiento($colegio->idColegio, [
             'tipoMovimiento'  => 'egreso',
             'categoria'       => 'gasto_vario',
             'concepto'        => 'Duplicado por error',
             'montoTotal'      => 5000,
             'fechaMovimiento' => today()->format('Y-m-d'),
-        ]);
+        ], null);
 
-        $movimiento = MovimientoFinanciero::where('idColegio', $colegio->idColegio)->firstOrFail();
-
-        $this->actingAs($tesorero)->put("/finanzas/{$movimiento->idMovimiento}/anular")->assertRedirect();
+        $finanzas->anularMovimiento($movimiento, $tesorero);
 
         $movimiento->refresh();
         $this->assertSame('anulado', $movimiento->estadoMovimiento);
@@ -169,48 +147,24 @@ class FinanzasFlujoTest extends TestCase
 
     public function test_no_se_puede_anular_un_movimiento_que_ya_tiene_abonos(): void
     {
-        $colegio  = $this->crearColegioConFinanzas();
+        $colegio  = $this->crearColegio();
         $tesorero = $this->crearTesorero($colegio);
+        $finanzas = app(FinanzasService::class);
 
-        $this->actingAs($tesorero)->post('/finanzas', [
+        $movimiento = $finanzas->registrarMovimiento($colegio->idColegio, [
             'tipoMovimiento'  => 'egreso',
             'categoria'       => 'gasto_vario',
             'concepto'        => 'Con abono',
             'montoTotal'      => 5000,
             'fechaMovimiento' => today()->format('Y-m-d'),
-        ]);
+        ], null);
 
-        $movimiento = MovimientoFinanciero::where('idColegio', $colegio->idColegio)->firstOrFail();
+        $finanzas->registrarAbono($movimiento, [
+            'monto' => 5000, 'fechaAbono' => today()->format('Y-m-d'), 'metodoPago' => 'efectivo',
+        ], $tesorero);
 
-        $this->actingAs($tesorero)->post("/finanzas/{$movimiento->idMovimiento}/abonos", [
-            'monto'      => 5000,
-            'fechaAbono' => today()->format('Y-m-d'),
-            'metodoPago' => 'efectivo',
-        ]);
+        $this->expectException(\RuntimeException::class);
 
-        $this->actingAs($tesorero)->put("/finanzas/{$movimiento->idMovimiento}/anular")->assertRedirect();
-
-        $movimiento->refresh();
-        $this->assertSame('pagado', $movimiento->estadoMovimiento);
-    }
-
-    public function test_un_colegio_no_puede_ver_movimientos_de_otro_colegio(): void
-    {
-        $colegioA  = $this->crearColegioConFinanzas();
-        $colegioB  = $this->crearColegioConFinanzas();
-        $tesoreroA = $this->crearTesorero($colegioA);
-        $tesoreroB = $this->crearTesorero($colegioB);
-
-        $this->actingAs($tesoreroA)->post('/finanzas', [
-            'tipoMovimiento'  => 'ingreso',
-            'categoria'       => 'otro_ingreso',
-            'concepto'        => 'Solo de A',
-            'montoTotal'      => 1000,
-            'fechaMovimiento' => today()->format('Y-m-d'),
-        ]);
-
-        $movimiento = MovimientoFinanciero::where('idColegio', $colegioA->idColegio)->firstOrFail();
-
-        $this->actingAs($tesoreroB)->get("/finanzas/{$movimiento->idMovimiento}")->assertForbidden();
+        $finanzas->anularMovimiento($movimiento, $tesorero);
     }
 }

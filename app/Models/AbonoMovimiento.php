@@ -22,6 +22,20 @@ class AbonoMovimiento extends Model
     public const METODO_COMPENSACION_NOMINA = 'compensacion_nomina';
     public const METODO_OTRO                = 'otro';
 
+    /**
+     * Métodos que un usuario puede elegir a mano en un formulario — excluye
+     * compensacion_nomina, que solo lo asigna internamente
+     * FinanzasService::compensarDeudaConNomina(), nunca una selección de
+     * usuario. Única fuente de verdad para la validación Rule::in() de los
+     * Requests de abono.
+     */
+    public const METODOS_MANUALES = [
+        self::METODO_EFECTIVO,
+        self::METODO_TRANSFERENCIA,
+        self::METODO_CONSIGNACION,
+        self::METODO_OTRO,
+    ];
+
     protected $fillable = [
         'idMovimiento',
         'idColegio',

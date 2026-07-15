@@ -69,11 +69,11 @@ class BalanceFinancieroTest extends TestCase
         $this->assertSame(30000.0, $balance['saldoEnCaja']);
     }
 
-    public function test_calcula_le_debemos_y_nos_debe_por_arbitro_y_omite_arbitros_sin_saldo(): void
+    public function test_calcula_le_debemos_y_nos_debe_por_arbitro_e_incluye_arbitros_sin_saldo(): void
     {
         $colegio  = $this->crearColegioConFinanzas();
         $arbitroA = $this->crearArbitro($colegio);
-        $arbitroB = $this->crearArbitro($colegio); // sin movimientos — no debe aparecer
+        $arbitroB = $this->crearArbitro($colegio); // sin movimientos — debe aparecer en ceros, es el acceso a su ficha
         $finanzas = app(FinanzasService::class);
 
         $finanzas->registrarMovimiento($colegio->idColegio, [
@@ -90,11 +90,17 @@ class BalanceFinancieroTest extends TestCase
 
         $balance = app(ReporteFinanzasService::class)->balanceGeneral($colegio->idColegio);
 
-        $this->assertCount(1, $balance['porArbitro']);
+        $this->assertCount(2, $balance['porArbitro']);
+
         $fila = $balance['porArbitro']->first();
         $this->assertSame($arbitroA->idArbitro, $fila['arbitro']->idArbitro);
         $this->assertSame(60000.0, $fila['leDebemos']);
         $this->assertSame(15000.0, $fila['nosDebe']);
+
+        $filaB = $balance['porArbitro']->first(fn ($f) => $f['arbitro']->idArbitro === $arbitroB->idArbitro);
+        $this->assertSame(0.0, $filaB['leDebemos']);
+        $this->assertSame(0.0, $filaB['nosDebe']);
+
         $this->assertSame(60000.0, $balance['totalLeDebemos']);
         $this->assertSame(15000.0, $balance['totalNosDeben']);
     }

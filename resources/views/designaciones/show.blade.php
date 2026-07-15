@@ -232,9 +232,9 @@
                         @endif
                         @if($h->estadoAnterior && $h->estadoNuevo)
                         <div class="historial-transicion">
-                            <span class="estado-chip">{{ $h->estadoAnterior }}</span>
+                            <span class="estado-chip">{{ $estadoMapa[$h->estadoAnterior] ?? $h->estadoAnterior }}</span>
                             <i class="fa-solid fa-arrow-right"></i>
-                            <span class="estado-chip estado-chip--nuevo">{{ $h->estadoNuevo }}</span>
+                            <span class="estado-chip estado-chip--nuevo">{{ $estadoMapa[$h->estadoNuevo] ?? $h->estadoNuevo }}</span>
                         </div>
                         @endif
                         @if($h->detalle)
@@ -298,7 +298,16 @@
                 <div class="info-row"><span>Torneo</span><strong>{{ $partido->torneo?->nombreTorneo }}</strong></div>
                 <div class="info-row"><span>División</span><strong>{{ $partido->division?->nombreDivision ?? '—' }}</strong></div>
                 <div class="info-row"><span>Formato</span><strong>{{ $partido->formato?->nombre ?? '—' }}</strong></div>
-                <div class="info-row"><span>Modalidad</span><strong>{{ $partido->modalidadPago ?? '—' }}</strong></div>
+                <div class="info-row">
+                    <span>Modalidad</span>
+                    @if($partido->modalidadPago === 'nomina')
+                        <span class="pago-chip pago-chip--nomina"><i class="fa-solid fa-file-invoice-dollar"></i> Nómina</span>
+                    @elseif($partido->modalidadPago === 'campo')
+                        <span class="pago-chip pago-chip--campo"><i class="fa-solid fa-coins"></i> Pago en campo</span>
+                    @else
+                        <strong>—</strong>
+                    @endif
+                </div>
                 <div class="info-row"><span>Sede</span><strong>{{ $partido->sede?->nombreSede ?? '—' }}</strong></div>
                 <div class="info-row"><span>Municipio</span><strong>{{ $partido->sede?->municipio ?? '—' }}</strong></div>
                 @if($partido->sede?->urlMaps)
@@ -334,12 +343,18 @@
 
             {{-- Revertir finalizado — solo ejecutivo --}}
             @if($estado === 'finalizado' && in_array($rolUsuario, ['ejecutivo', 'superadmin'], true))
-            <div class="info-card">
-                <div class="info-card__title"><i class="fa-solid fa-rotate-left"></i> Reversión</div>
+            <div class="info-card info-card--advertencia">
+                <div class="info-card__title"><i class="fa-solid fa-triangle-exclamation"></i> Reversión</div>
                 <p class="publicar-nota">
-                    Como ejecutivo puedes revertir este partido finalizado a programado.
+                    Revierte este partido a <strong>programado</strong>.
+                    @if($partido->modalidadPago === 'nomina')
+                        También anula la nómina que se generó al finalizarlo —
+                        si algún árbitro ya cobró ese pago, la reversión se bloquea
+                        hasta que lo resuelvas desde su ficha financiera.
+                    @endif
+                    Esta acción queda registrada en el historial.
                 </p>
-                <button class="btn btn-secondary" style="width:100%"
+                <button class="btn btn-warning" style="width:100%"
                         onclick="revertirFinalizado({{ $partido->idPartido }}, {{ $partido->version }})">
                     <i class="fa-solid fa-rotate-left"></i> Revertir a programado
                 </button>

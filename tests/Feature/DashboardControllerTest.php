@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Models\Colegio;
 use App\Models\User;
 use App\Services\FinanzasService;
+use App\Services\ReporteFinanzasService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -104,7 +105,7 @@ class DashboardControllerTest extends TestCase
         $response->assertViewIs('dashboard.arbitro');
         $response->assertSee('$60.000'); // formato COP sin decimales
         $this->assertSame(
-            $finanzas->saldoPendienteArbitro($arbitro->fresh()),
+            app(ReporteFinanzasService::class)->saldoPendienteArbitro($arbitro->fresh()),
             $response->viewData('saldoPendienteCobrar'),
         );
     }

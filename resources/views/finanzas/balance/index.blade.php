@@ -13,7 +13,7 @@
     <div class="page-header">
         <div class="page-header-left">
             <h1 class="page-heading">Balance financiero</h1>
-            <p class="page-subheading">Bolsillos del colegio y cuánto se debe con cada árbitro, hoy.</p>
+            <p class="page-subheading">Bolsillos del colegio y estado de cuenta de cada árbitro — entra a su ficha desde cualquier fila.</p>
         </div>
         @can('crear-finanzas')
             <div class="page-header-actions">
@@ -75,10 +75,14 @@
 
     @if ($balance['porArbitro']->isEmpty())
         <div class="empty-state">
-            <i class="fa-solid fa-circle-check"></i>
-            <p>No hay saldos pendientes con ningún árbitro en este momento.</p>
+            <i class="fa-solid fa-user-slash"></i>
+            <p>Este colegio todavía no tiene árbitros registrados.</p>
         </div>
     @else
+        <div class="cm-toolbar">
+            <input type="search" data-balance-filtro placeholder="Buscar árbitro…" class="form-input cm-toolbar__buscar" autocomplete="off">
+        </div>
+
         <div class="table-card">
             <table class="data-table">
                 <thead>
@@ -86,15 +90,16 @@
                         <th>Árbitro</th>
                         <th class="text-right">Le debemos</th>
                         <th class="text-right">Nos debe</th>
-                        <th class="text-right">Neto</th>
-                        <th class="text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($balance['porArbitro'] as $fila)
-                        @php $neto = $fila['leDebemos'] - $fila['nosDebe']; @endphp
-                        <tr>
-                            <td class="td-primary">{{ $fila['arbitro']->usuario->nombreUsuario ?? 'Árbitro #' . $fila['arbitro']->idArbitro }}</td>
+                        <tr data-balance-fila data-nombre="{{ mb_strtolower($fila['arbitro']->usuario->nombreUsuario ?? '') }}">
+                            <td>
+                                <a href="{{ route('finanzas.arbitro.show', $fila['arbitro']->idArbitro) }}" class="td-primary">
+                                    {{ $fila['arbitro']->usuario->nombreUsuario ?? 'Árbitro #' . $fila['arbitro']->idArbitro }}
+                                </a>
+                            </td>
                             <td class="text-right">
                                 @if ($fila['leDebemos'] > 0)
                                     <span class="monto-egreso">${{ number_format($fila['leDebemos'], 0, ',', '.') }}</span>
@@ -108,19 +113,6 @@
                                 @else
                                     —
                                 @endif
-                            </td>
-                            <td class="text-right">
-                                <span class="{{ $neto >= 0 ? 'monto-egreso' : 'monto-ingreso' }}">${{ number_format(abs($neto), 0, ',', '.') }}</span>
-                                <span class="td-secondary">{{ $neto >= 0 ? 'a favor del árbitro' : 'a favor del colegio' }}</span>
-                            </td>
-                            <td class="text-right">
-                                @can('crear-finanzas')
-                                    @if ($fila['leDebemos'] > 0)
-                                        <a href="{{ route('finanzas.pagos-arbitro.index', ['idArbitro' => $fila['arbitro']->idArbitro]) }}" class="btn btn-secondary btn-sm">
-                                            <i class="fa-solid fa-hand-holding-dollar"></i> Pagar
-                                        </a>
-                                    @endif
-                                @endcan
                             </td>
                         </tr>
                     @endforeach

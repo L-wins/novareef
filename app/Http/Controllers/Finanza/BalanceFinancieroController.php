@@ -28,7 +28,7 @@ class BalanceFinancieroController extends Controller
         $idColegio = $this->idColegioActivo();
 
         $balance   = $this->reportes->balanceGeneral($idColegio);
-        $bolsillos = $this->reportes->bolsillos($idColegio);
+        $bolsillos = $this->reportes->bolsillosDesdeBalance($balance);
 
         $tieneSaldoInicial = MovimientoFinanciero::where('idColegio', $idColegio)
             ->where('categoria', MovimientoFinanciero::CATEGORIA_SALDO_INICIAL)

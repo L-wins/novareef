@@ -5,8 +5,11 @@
 /* ── Botones extra ───── */
 .btn-success { background: linear-gradient(135deg, #16a34a, #15803d); color: #fff; }
 .btn-success:hover { opacity: .9; }
-.btn-danger  { background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; }
-.btn-danger:hover  { opacity: .9; }
+/* .btn.btn-danger, no solo .btn-danger: mismo motivo que .btn.btn-warning en
+   partido-show.css — empata en especificidad con el .btn-danger "outline" de
+   app/components.css y no hay que depender del orden de carga real. */
+.btn.btn-danger  { background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; }
+.btn.btn-danger:hover  { opacity: .9; }
 .btn-lg  { padding: 14px 24px; font-size: 1rem; }
 .btn-xs  { padding: 4px 10px; font-size: .72rem; }
 
@@ -68,3 +71,10 @@
    pierden contraste sobre fondo blanco; se oscurecen aquí.
    ═══════════════════════════════════════════════════════════════ */
 :root[data-theme="light"] .req { color: #dc2626; }
+
+/* app/components.css fuerza color en .btn-danger/.btn-warning para tema
+   claro (pensado para su propio estilo "outline" translúcido) — acá esos
+   botones usan fondo sólido en gradiente, así que esos overrides dejan
+   texto oscuro sobre fondo oscuro. Se restaura el blanco explícitamente. */
+:root[data-theme="light"] .btn.btn-danger,
+:root[data-theme="light"] .btn.btn-warning { color: #fff; }

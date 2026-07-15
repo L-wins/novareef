@@ -207,7 +207,20 @@
                     <div class="pago-card__valor pago-card__valor--nomina">
                         <i class="fa-solid fa-file-invoice-dollar"></i> Nómina
                     </div>
-                    <div class="pago-card__nota">Incluido en tu nómina mensual.</div>
+                    @if(($pago['valor'] ?? null) !== null)
+                        <div class="pago-card__valor">
+                            ${{ number_format($pago['valor'], 0, ',', '.') }} <span class="pago-card__moneda">COP</span>
+                        </div>
+                    @endif
+                    <div class="pago-card__nota">
+                        @if($partido->estadoPartido === 'finalizado')
+                            <i class="fa-solid fa-circle-check"></i>
+                            Ya se cargó a tu cuenta — <a href="{{ route('arbitros.estado-cuenta') }}">ver estado de cuenta</a>
+                        @else
+                            <i class="fa-regular fa-clock"></i>
+                            Se carga a tu cuenta automáticamente cuando el partido se finalice.
+                        @endif
+                    </div>
                 </div>
                 @elseif(($pago['valor'] ?? null) !== null)
                 <div class="pago-card__body">

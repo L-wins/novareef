@@ -84,6 +84,21 @@ class MovimientoFinanciero extends Model
         self::CATEGORIA_GASTO_VARIO         => 'Gasto vario',
     ];
 
+    /**
+     * Categorías que nunca están ligadas a un árbitro — gastos e ingresos
+     * institucionales del colegio (torneo, gastos fijos/varios). Se
+     * gestionan desde /finanzas/gastos-ingresos, separado de la ficha del
+     * árbitro (que cubre nómina, mensualidad, multa) y de saldo_inicial
+     * (que solo se crea vía FinanzasService::registrarSaldoInicial()).
+     */
+    public const CATEGORIAS_INSTITUCIONALES = [
+        self::CATEGORIA_INGRESO_TORNEO,
+        self::CATEGORIA_OTRO_INGRESO,
+        self::CATEGORIA_GASTO_FIJO,
+        self::CATEGORIA_GASTO_INSTITUCIONAL,
+        self::CATEGORIA_GASTO_VARIO,
+    ];
+
     /** Etiqueta + color de badge por estado. */
     public const ETIQUETAS_ESTADO = [
         self::ESTADO_PENDIENTE => ['Pendiente', 'gray'],
@@ -113,6 +128,7 @@ class MovimientoFinanciero extends Model
         'idDesignacion',
         'tipoOrigenMulta',
         'idOrigenMulta',
+        'idLoteCobro',
         'idUsuarioRegistro',
         'observaciones',
     ];

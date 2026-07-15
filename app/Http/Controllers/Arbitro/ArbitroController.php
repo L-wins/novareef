@@ -15,6 +15,7 @@ use App\Models\CategoriaArbitro;
 use App\Models\EstadoArbitro;
 use App\Services\ArbitroService;
 use App\Services\LimiteService;
+use App\Services\ReporteFinanzasService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,7 @@ class ArbitroController extends Controller
     public function __construct(
         private readonly ArbitroService $arbitros,
         private readonly LimiteService  $limites,
+        private readonly ReporteFinanzasService $reportesFinanzas,
     ) {}
 
     public function index(Request $request): View|JsonResponse
@@ -97,9 +99,21 @@ class ArbitroController extends Controller
             'estado', 'historialEstados.usuarioCambio', 'historialEstados.estadoNuevoModel',
         ]);
 
+        // Resumen financiero: solo se calcula si el usuario puede verlo — la
+        // mayoría de roles con ver-arbitros (designador, técnico, sanciones)
+        // no tienen ver-finanzas.
+        $resumenFinanciero = null;
+        if (Auth::user()->can('ver-finanzas')) {
+            $resumenFinanciero = [
+                'leDebemos' => $this->reportesFinanzas->saldoPendienteArbitro($arbitro),
+                'nosDebe'   => $this->reportesFinanzas->saldoPorCobrarArbitro($arbitro),
+            ];
+        }
+
         return view('arbitros.show', [
-            'arbitro' => $arbitro,
-            'estados' => $this->estados(),
+            'arbitro'           => $arbitro,
+            'estados'           => $this->estados(),
+            'resumenFinanciero' => $resumenFinanciero,
         ]);
     }
 

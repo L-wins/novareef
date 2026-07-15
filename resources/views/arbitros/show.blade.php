@@ -144,6 +144,29 @@
             </div>
         </div>
 
+        {{-- Estado financiero --}}
+        @if ($resumenFinanciero !== null)
+            <div class="detail-card">
+                <p class="detail-section-title">Estado financiero</p>
+                <div class="detail-grid">
+                    <div class="detail-field">
+                        <span class="detail-label">Le debemos</span>
+                        <span class="detail-value monto-negativo">${{ number_format($resumenFinanciero['leDebemos'], 0, ',', '.') }}</span>
+                    </div>
+                    <div class="detail-field">
+                        <span class="detail-label">Nos debe</span>
+                        <span class="detail-value monto-positivo">${{ number_format($resumenFinanciero['nosDebe'], 0, ',', '.') }}</span>
+                    </div>
+                </div>
+                <div style="margin-top:1rem;">
+                    <a href="{{ route('finanzas.arbitro.show', $arbitro->idArbitro) }}" class="btn btn-secondary">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        Ver ficha financiera completa
+                    </a>
+                </div>
+            </div>
+        @endif
+
         {{-- Identificación --}}
         <div class="detail-card">
             <p class="detail-section-title">Identificación</p>

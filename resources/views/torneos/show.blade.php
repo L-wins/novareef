@@ -82,20 +82,14 @@
                     <span class="detail-pair-value">${{ number_format($resumenCobro['ingresos']['totalIngresos'], 0, ',', '.') }}</span>
                 </div>
             </div>
-            <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
-                @can('ver-finanzas')
-                    <a href="{{ route('finanzas.index', ['idTorneo' => $torneo->idTorneo, 'categoria' => 'ingreso_torneo']) }}" class="btn btn-secondary btn-sm">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        Ver movimientos en Finanzas
+            @can('crear-finanzas')
+                @if ($pendienteDeRegistrar > 0)
+                    <a href="{{ route('finanzas.institucional.index', ['abrir' => 'registrar', 'categoria' => 'ingreso_torneo', 'idTorneo' => $torneo->idTorneo]) }}"
+                       class="btn btn-secondary btn-sm" style="margin-top:.75rem">
+                        <i class="fa-solid fa-plus"></i> Registrar ingreso de torneo
                     </a>
-                @endcan
-                @can('crear-finanzas')
-                    <a href="{{ route('finanzas.create', ['idTorneo' => $torneo->idTorneo]) }}" class="btn btn-primary btn-sm">
-                        <i class="fa-solid fa-plus"></i>
-                        Registrar ingreso de este torneo
-                    </a>
-                @endcan
-            </div>
+                @endif
+            @endcan
         </div>
     @endif
 

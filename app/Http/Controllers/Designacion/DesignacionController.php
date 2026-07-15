@@ -446,7 +446,7 @@ class DesignacionController extends Controller
             return response()->json(['success' => true]);
         } catch (OptimisticLockException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 409);
-        } catch (\InvalidArgumentException $e) {
+        } catch (\InvalidArgumentException|\RuntimeException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }

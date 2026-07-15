@@ -131,49 +131,6 @@ class ReporteFinanzasTest extends TestCase
         $this->assertNull($reporte['comparativa']['variacionEgresos']);        // sin base
     }
 
-    public function test_export_csv_descarga_el_listado_filtrado(): void
-    {
-        $colegio  = $this->crearColegioConFinanzas();
-        $tesorero = $this->crearTesorero($colegio);
-        $finanzas = app(FinanzasService::class);
-
-        $finanzas->registrarMovimiento($colegio->idColegio, [
-            'tipoMovimiento' => 'ingreso', 'categoria' => 'mensualidad',
-            'concepto' => 'Cuota CSV', 'montoTotal' => 45000, 'fechaMovimiento' => '2026-06-10',
-        ], null);
-        $finanzas->registrarMovimiento($colegio->idColegio, [
-            'tipoMovimiento' => 'egreso', 'categoria' => 'gasto_fijo',
-            'concepto' => 'No debe salir', 'montoTotal' => 1000, 'fechaMovimiento' => '2026-06-11',
-        ], null);
-
-        $respuesta = $this->actingAs($tesorero)
-            ->get('/finanzas/exportar?tipoMovimiento=ingreso');
-
-        $respuesta->assertOk();
-        $this->assertStringContainsString('text/csv', $respuesta->headers->get('Content-Type'));
-
-        $contenido = $respuesta->streamedContent();
-        $this->assertStringContainsString('Cuota CSV', $contenido);
-        $this->assertStringNotContainsString('No debe salir', $contenido);
-    }
-
-    public function test_el_indice_muestra_el_resumen_del_periodo(): void
-    {
-        $colegio  = $this->crearColegioConFinanzas();
-        $tesorero = $this->crearTesorero($colegio);
-        $finanzas = app(FinanzasService::class);
-
-        $finanzas->registrarMovimiento($colegio->idColegio, [
-            'tipoMovimiento' => 'ingreso', 'categoria' => 'mensualidad',
-            'concepto' => 'Cuota', 'montoTotal' => 123456, 'fechaMovimiento' => today()->format('Y-m-d'),
-        ], null);
-
-        $this->actingAs($tesorero)
-            ->get('/finanzas')
-            ->assertOk()
-            ->assertSee('$123.456'); // formato COP sin decimales
-    }
-
     public function test_la_pagina_de_reportes_renderiza_el_grafico(): void
     {
         $colegio  = $this->crearColegioConFinanzas();

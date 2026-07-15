@@ -14,6 +14,7 @@ use App\Jobs\GenerarPagosJob;
 use App\Models\HistorialDesignacion;
 use App\Models\Partido;
 use App\Models\User;
+use App\Services\FinanzasService;
 use Illuminate\Support\Facades\DB;
 
 class PartidoStateMachine
@@ -117,7 +118,7 @@ class PartidoStateMachine
                 'detalle'        => $detalle,
             ]);
 
-            self::ejecutarEfectos($partido, $estadoAnterior, $estadoNuevo);
+            self::ejecutarEfectos($partido, $estadoAnterior, $estadoNuevo, $usuario);
 
             broadcast(new PartidoActualizadoEvent($partido))->toOthers();
         });
@@ -141,11 +142,19 @@ class PartidoStateMachine
         }
     }
 
-    private static function ejecutarEfectos(Partido $partido, string $estadoAnterior, string $estadoNuevo): void
+    private static function ejecutarEfectos(Partido $partido, string $estadoAnterior, string $estadoNuevo, ?User $usuario): void
     {
         // Publicación: borrador → programado notifica a todos los árbitros designados
         if ($estadoAnterior === 'borrador' && $estadoNuevo === 'programado') {
             NotificarPublicacionJob::dispatch($partido);
+            return;
+        }
+
+        // Reversión: finalizado → programado anula la nómina que se generó
+        // al finalizar — validarPermisosEspeciales() ya garantizó que
+        // $usuario no es null acá (solo un ejecutivo llega a este punto).
+        if ($estadoAnterior === 'finalizado' && $estadoNuevo === 'programado') {
+            app(FinanzasService::class)->anularMovimientosPorReversionPartido($partido, $usuario);
             return;
         }
 

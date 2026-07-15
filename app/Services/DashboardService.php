@@ -19,7 +19,7 @@ final class DashboardService
         ['key' => 'arbitros',      'permiso' => 'ver-arbitros',      'ruta' => 'arbitros.index',           'icono' => 'fa-users',           'color' => 'ic-teal',    'nombre' => 'Árbitros',      'desc' => 'Expedientes, categorías y estadísticas'],
         ['key' => 'torneos',       'permiso' => 'ver-torneos',       'ruta' => 'torneos.index',            'icono' => 'fa-trophy',          'color' => 'ic-amber',   'nombre' => 'Torneos',       'desc' => 'Competencias, equipos y partidos'],
         ['key' => 'designaciones', 'permiso' => 'ver-designaciones', 'ruta' => 'designaciones.index',      'icono' => 'fa-clipboard-list',  'color' => 'ic-emerald', 'nombre' => 'Designaciones', 'desc' => 'Asignación de árbitros a partidos'],
-        ['key' => 'finanzas',      'permiso' => 'ver-finanzas',      'ruta' => 'finanzas.index',           'icono' => 'fa-money-bill-wave', 'color' => 'ic-blue',    'nombre' => 'Finanzas',      'desc' => 'Pagos, cuotas e ingresos del colegio'],
+        ['key' => 'finanzas',      'permiso' => 'ver-finanzas',      'ruta' => 'finanzas.balance.index',   'icono' => 'fa-money-bill-wave', 'color' => 'ic-blue',    'nombre' => 'Finanzas',      'desc' => 'Pagos, cuotas e ingresos del colegio'],
         ['key' => 'academico',     'permiso' => 'ver-academico',     'ruta' => 'academico.sesiones.index', 'icono' => 'fa-graduation-cap',  'color' => 'ic-purple',  'nombre' => 'Académico',     'desc' => 'Cursos, evaluaciones y formación'],
         ['key' => 'sanciones',     'permiso' => 'ver-sanciones',     'ruta' => 'sanciones.index',          'icono' => 'fa-gavel',           'color' => 'ic-red',     'nombre' => 'Sanciones',     'desc' => 'Gestión disciplinaria de árbitros'],
     ];
@@ -69,7 +69,7 @@ final class DashboardService
         $balance = $this->reporteFinanzas->balanceGeneral($idColegio);
 
         return [
-            'bolsillos' => $this->reporteFinanzas->bolsillos($idColegio),
+            'bolsillos' => $this->reporteFinanzas->bolsillosDesdeBalance($balance),
             'topDeudas' => $balance['porArbitro']->take(5),
         ];
     }
@@ -118,7 +118,7 @@ final class DashboardService
     public function paraArbitro(Arbitro $arbitro): array
     {
         return [
-            'saldoPendienteCobrar'    => $this->finanzas->saldoPendienteArbitro($arbitro),
+            'saldoPendienteCobrar'    => $this->reporteFinanzas->saldoPendienteArbitro($arbitro),
             'proximosPartidos'        => $this->designaciones->proximasDesignacionesArbitro($arbitro),
             'proximasClases'          => $this->sesiones->proximasDelArbitro($arbitro),
             'yaReportoDisponibilidad' => $this->disponibilidad->yaReportoEstaSemana($arbitro),

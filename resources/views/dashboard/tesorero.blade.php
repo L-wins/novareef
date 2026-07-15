@@ -11,32 +11,18 @@
         <div class="stats-grid">
             <x-dashboard.stat-card icon="fa-vault" color="emerald" :value="'$' . number_format($bolsillos['saldoEnCaja'], 0, ',', '.')" label="Caja en banco" href="{{ route('finanzas.balance.index') }}" sub="Dinero realmente cobrado menos realmente pagado" />
             <x-dashboard.stat-card class="stat-card--hero" icon="fa-sack-dollar" color="teal" :value="'$' . number_format($bolsillos['disponibleReal'], 0, ',', '.')" label="Disponible real" href="{{ route('finanzas.balance.index') }}" sub="Caja menos lo que aún falta pagar" />
-            <x-dashboard.stat-card icon="fa-arrow-down" color="blue" :value="'$' . number_format($bolsillos['pendientePorCobrar'], 0, ',', '.')" label="Por cobrar" href="{{ route('finanzas.index') }}" />
-            <x-dashboard.stat-card icon="fa-arrow-up" color="amber" :value="'$' . number_format($bolsillos['pendientePorPagar'], 0, ',', '.')" label="Por pagar" href="{{ route('finanzas.index') }}" />
+            <x-dashboard.stat-card icon="fa-arrow-down" color="blue" :value="'$' . number_format($bolsillos['pendientePorCobrar'], 0, ',', '.')" label="Por cobrar" href="{{ route('finanzas.balance.index') }}" />
+            <x-dashboard.stat-card icon="fa-arrow-up" color="amber" :value="'$' . number_format($bolsillos['pendientePorPagar'], 0, ',', '.')" label="Por pagar" href="{{ route('finanzas.balance.index') }}" />
         </div>
     </x-dashboard.section>
 
     <x-dashboard.section label="Acciones frecuentes">
         <div class="modules-grid">
-            <a href="{{ route('finanzas.pagos-arbitro.index') }}" class="module-card module-card--link">
-                <div class="mod-icon-box ic-emerald"><i class="fa-solid fa-hand-holding-dollar"></i></div>
-                <div class="mod-info">
-                    <div class="mod-name">Pagar a un árbitro</div>
-                    <div class="mod-desc">Pago acumulado, masivo o por partido</div>
-                </div>
-            </a>
             <a href="{{ route('finanzas.reportes.index') }}" class="module-card module-card--link">
                 <div class="mod-icon-box ic-blue"><i class="fa-solid fa-chart-column"></i></div>
                 <div class="mod-info">
                     <div class="mod-name">Reportes</div>
                     <div class="mod-desc">Ingresos y egresos por período</div>
-                </div>
-            </a>
-            <a href="{{ route('finanzas.create') }}" class="module-card module-card--link">
-                <div class="mod-icon-box ic-amber"><i class="fa-solid fa-plus"></i></div>
-                <div class="mod-info">
-                    <div class="mod-name">Nuevo movimiento</div>
-                    <div class="mod-desc">Registrar un ingreso o egreso</div>
                 </div>
             </a>
         </div>

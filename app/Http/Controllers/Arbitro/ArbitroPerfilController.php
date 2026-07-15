@@ -8,7 +8,7 @@ use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Arbitro\MiPerfilRequest;
 use App\Services\ArbitroService;
-use App\Services\FinanzasService;
+use App\Services\ReporteFinanzasService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -18,7 +18,7 @@ class ArbitroPerfilController extends Controller
 
     public function __construct(
         private readonly ArbitroService $arbitros,
-        private readonly FinanzasService $finanzas,
+        private readonly ReporteFinanzasService $reportes,
     ) {}
 
     public function show(): View
@@ -27,7 +27,7 @@ class ArbitroPerfilController extends Controller
 
         return view('arbitros.mi-perfil', [
             'arbitro'              => $arbitro,
-            'saldoPendienteCobrar' => $this->finanzas->saldoPendienteArbitro($arbitro),
+            'saldoPendienteCobrar' => $this->reportes->saldoPendienteArbitro($arbitro),
         ]);
     }
 

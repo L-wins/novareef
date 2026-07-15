@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\MovimientoFinanciero;
 use App\Services\FinanzasService;
+use App\Services\ReporteFinanzasService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\CreaColegioDePrueba;
 use Tests\TestCase;
@@ -70,7 +71,7 @@ class EstadoCuentaArbitroTest extends TestCase
             'metodoPago' => 'transferencia',
         ], $tesorero);
 
-        $estadoCuenta = $finanzas->estadoCuentaArbitro($arbitro->fresh());
+        $estadoCuenta = app(ReporteFinanzasService::class)->estadoCuentaArbitro($arbitro->fresh());
 
         $this->assertSame(0.0, $estadoCuenta['saldoPendienteCobrar']);
         $this->assertCount(1, $estadoCuenta['historialPagos']);
@@ -92,7 +93,7 @@ class EstadoCuentaArbitroTest extends TestCase
             'tipoOrigenMulta' => MovimientoFinanciero::ORIGEN_MULTA_MANUAL,
         ], null);
 
-        $estadoCuenta = $finanzas->estadoCuentaArbitro($arbitro->fresh());
+        $estadoCuenta = app(ReporteFinanzasService::class)->estadoCuentaArbitro($arbitro->fresh());
 
         $this->assertCount(1, $estadoCuenta['historialMultas']);
         $this->assertSame('multa', $estadoCuenta['historialMultas']->first()->categoria);
@@ -120,7 +121,7 @@ class EstadoCuentaArbitroTest extends TestCase
             'metodoPago' => 'compensacion_nomina',
         ], $usuario);
 
-        $estadoCuenta = $finanzas->estadoCuentaArbitro($arbitro->fresh());
+        $estadoCuenta = app(ReporteFinanzasService::class)->estadoCuentaArbitro($arbitro->fresh());
 
         $this->assertCount(0, $estadoCuenta['historialPagos']);
         $this->assertCount(1, $estadoCuenta['descuentosNomina']);

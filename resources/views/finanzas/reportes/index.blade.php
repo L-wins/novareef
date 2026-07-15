@@ -24,7 +24,7 @@
 @section('contenido')
 <div class="container">
 
-    <a href="{{ route('finanzas.index') }}" class="back-link">
+    <a href="{{ route('finanzas.balance.index') }}" class="back-link">
         <i class="fa-solid fa-arrow-left"></i>
         Volver a finanzas
     </a>
@@ -72,13 +72,16 @@
             <p class="fin-stat__value monto-egreso">${{ number_format($reporte['totalEgresos'], 0, ',', '.') }}</p>
             <p class="fin-stat__delta {{ $deltaClase($comparativa['variacionEgresos'], subirEsBueno: false) }}">{{ $deltaTexto($comparativa['variacionEgresos']) }}</p>
         </div>
+        @php
+            $formatoNeto = fn (float $v): string => $v >= 0 ? '$' . number_format($v, 0, ',', '.') : '(-$' . number_format(abs($v), 0, ',', '.') . ')';
+        @endphp
         <div class="fin-stat">
             <p class="fin-stat__label">Neto</p>
-            <p class="fin-stat__value">${{ number_format($reporte['neto'], 0, ',', '.') }}</p>
+            <p class="fin-stat__value {{ $reporte['neto'] >= 0 ? 'monto-ingreso' : 'monto-egreso' }}">{{ $formatoNeto($reporte['neto']) }}</p>
             <p class="fin-stat__sub">
                 Período anterior ({{ \Illuminate\Support\Carbon::parse($comparativa['desde'])->format('d/m/Y') }}
                 – {{ \Illuminate\Support\Carbon::parse($comparativa['hasta'])->format('d/m/Y') }}):
-                ${{ number_format($comparativa['neto'], 0, ',', '.') }}
+                {{ $formatoNeto($comparativa['neto']) }}
             </p>
         </div>
     </div>

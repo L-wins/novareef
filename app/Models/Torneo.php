@@ -86,8 +86,4 @@ class Torneo extends Model
         return $this->hasMany(EmergenteTorneo::class, 'idTorneo', 'idTorneo');
     }
 
-    public function movimientosFinancieros(): HasMany
-    {
-        return $this->hasMany(MovimientoFinanciero::class, 'idTorneo', 'idTorneo');
-    }
 }

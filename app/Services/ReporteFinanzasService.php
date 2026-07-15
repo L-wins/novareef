@@ -28,7 +28,8 @@ final class ReporteFinanzasService
      * stat cards siempre reflejen exactamente lo que se está filtrando.
      *
      * @param  array{tipoMovimiento?: ?string, categoria?: ?string, estado?: ?string,
-     *     idArbitro?: ?string|int, idTorneo?: ?string|int, q?: ?string, desde?: ?string, hasta?: ?string}  $filtros
+     *     idArbitro?: ?string|int, idTorneo?: ?string|int, idLoteCobro?: ?string,
+     *     q?: ?string, desde?: ?string, hasta?: ?string}  $filtros
      */
     public function queryFiltrada(int $idColegio, array $filtros): Builder
     {
@@ -38,6 +39,7 @@ final class ReporteFinanzasService
             ->when(! empty($filtros['estado']), fn ($q) => $q->where('estadoMovimiento', $filtros['estado']))
             ->when(! empty($filtros['idArbitro']), fn ($q) => $q->where('idArbitro', (int) $filtros['idArbitro']))
             ->when(! empty($filtros['idTorneo']), fn ($q) => $q->where('idTorneo', (int) $filtros['idTorneo']))
+            ->when(! empty($filtros['idLoteCobro']), fn ($q) => $q->where('idLoteCobro', $filtros['idLoteCobro']))
             ->when(! empty($filtros['q']), fn ($q) => $q->where('concepto', 'like', '%' . $filtros['q'] . '%'))
             ->when(! empty($filtros['desde']), fn ($q) => $q->where('fechaMovimiento', '>=', $filtros['desde']))
             ->when(! empty($filtros['hasta']), fn ($q) => $q->where('fechaMovimiento', '<=', $filtros['hasta']));
@@ -71,6 +73,39 @@ final class ReporteFinanzasService
             'pendientePorCobrar' => (float) $fila->pendientePorCobrar,
             'pendientePorPagar'  => (float) $fila->pendientePorPagar,
             'cantidad'           => (int) $fila->cantidad,
+        ];
+    }
+
+    /**
+     * Movimientos institucionales del colegio (sin árbitro asociado) con los
+     * mismos filtros que queryFiltrada — la vista de "Gastos e ingresos".
+     */
+    public function queryInstitucional(int $idColegio, array $filtros): Builder
+    {
+        return $this->queryFiltrada($idColegio, $filtros)
+            ->whereNull('idArbitro')
+            ->whereIn('categoria', MovimientoFinanciero::CATEGORIAS_INSTITUCIONALES);
+    }
+
+    /**
+     * Totales del listado institucional filtrado: ingresos, egresos y neto.
+     * No hay "pendiente" que calcular acá — estos movimientos nacen pagados
+     * (ver FinanzasService::registrarMovimientoPagado()), así que siempre
+     * sería cero.
+     */
+    public function resumenInstitucional(int $idColegio, array $filtros): array
+    {
+        $fila = $this->queryInstitucional($idColegio, $filtros)
+            ->selectRaw("
+                COALESCE(SUM(CASE WHEN tipoMovimiento = 'ingreso' AND estadoMovimiento != 'anulado' THEN montoTotal END), 0) as totalIngresos,
+                COALESCE(SUM(CASE WHEN tipoMovimiento = 'egreso'  AND estadoMovimiento != 'anulado' THEN montoTotal END), 0) as totalEgresos
+            ")
+            ->first();
+
+        return [
+            'totalIngresos'  => (float) $fila->totalIngresos,
+            'totalEgresos'   => (float) $fila->totalEgresos,
+            'neto'           => (float) $fila->totalIngresos - (float) $fila->totalEgresos,
         ];
     }
 
@@ -179,7 +214,7 @@ final class ReporteFinanzasService
         $abonosIngreso = $this->totalAbonosReales($idColegio, MovimientoFinanciero::TIPO_INGRESO);
         $abonosEgreso  = $this->totalAbonosReales($idColegio, MovimientoFinanciero::TIPO_EGRESO);
 
-        $filas = MovimientoFinanciero::where('movimientos_financieros.idColegio', $idColegio)
+        $agregados = MovimientoFinanciero::where('movimientos_financieros.idColegio', $idColegio)
             ->whereNotNull('idArbitro')
             ->where('estadoMovimiento', '!=', MovimientoFinanciero::ESTADO_ANULADO)
             ->whereIn('categoria', [
@@ -195,23 +230,20 @@ final class ReporteFinanzasService
                 COALESCE(SUM(CASE WHEN categoria IN ('mensualidad', 'multa') THEN montoTotal - COALESCE(ab.abonado, 0) ELSE 0 END), 0) as nosDebe
             ")
             ->groupBy('idArbitro')
-            ->havingRaw('leDebemos > 0 OR nosDebe > 0')
-            ->get();
-
-        $arbitros = Arbitro::whereIn('idArbitro', $filas->pluck('idArbitro'))
-            ->with('usuario')
             ->get()
             ->keyBy('idArbitro');
 
-        $porArbitro = $filas
-            // Árbitros archivados (soft delete) no aparecen en el balance —
-            // mismo comportamiento que la versión anterior, que iteraba
-            // solo los árbitros activos del colegio.
-            ->filter(fn ($fila) => $arbitros->has($fila->idArbitro))
-            ->map(fn ($fila) => [
-                'arbitro'   => $arbitros[$fila->idArbitro],
-                'leDebemos' => (float) $fila->leDebemos,
-                'nosDebe'   => (float) $fila->nosDebe,
+        // Todos los árbitros del colegio, no solo los que tienen saldo
+        // pendiente — la fila es también el punto de entrada a su ficha
+        // financiera, así que debe poder accederse aunque esté en ceros.
+        // Arbitro::where(idColegio) ya excluye archivados (soft delete).
+        $porArbitro = Arbitro::where('idColegio', $idColegio)
+            ->with('usuario')
+            ->get()
+            ->map(fn (Arbitro $arbitro) => [
+                'arbitro'   => $arbitro,
+                'leDebemos' => (float) ($agregados[$arbitro->idArbitro]->leDebemos ?? 0),
+                'nosDebe'   => (float) ($agregados[$arbitro->idArbitro]->nosDebe ?? 0),
             ])
             ->sortByDesc('leDebemos')
             ->values();
@@ -224,26 +256,175 @@ final class ReporteFinanzasService
         ];
     }
 
+    /** Categorías de egreso que representan pago a un árbitro por su labor. */
+    private const CATEGORIAS_PAGO_ARBITRO = [
+        MovimientoFinanciero::CATEGORIA_NOMINA_ARBITRO,
+        MovimientoFinanciero::CATEGORIA_ARBITRO_EXTERNO,
+    ];
+
+    /** Categorías de ingreso que representan una deuda del árbitro hacia el colegio. */
+    private const CATEGORIAS_DEUDA_ARBITRO = [
+        MovimientoFinanciero::CATEGORIA_MENSUALIDAD,
+        MovimientoFinanciero::CATEGORIA_MULTA,
+    ];
+
     /**
-     * "Bolsillos" del colegio — compone balanceGeneral() y resumenListado()
-     * (sin filtros) para separar la caja bruta de lo realmente disponible:
-     * `disponibleReal` es cuánto del saldo en caja NO está ya comprometido
-     * con pagos pendientes (nómina de árbitros + gastos institucionales/fijos/
-     * varios pendientes). Las deudas de árbitros hacia el colegio no cuentan
-     * porque todavía no son caja.
+     * Egresos de nómina/externo del árbitro aún no saldados por completo, con
+     * el partido y torneo de origen — lado "se le debe" del estado de cuenta.
+     *
+     * @return Collection<int, MovimientoFinanciero>
+     */
+    private function egresosPendientesArbitro(Arbitro $arbitro): Collection
+    {
+        return MovimientoFinanciero::where('idArbitro', $arbitro->idArbitro)
+            ->whereIn('categoria', self::CATEGORIAS_PAGO_ARBITRO)
+            ->where('estadoMovimiento', '!=', MovimientoFinanciero::ESTADO_ANULADO)
+            ->with(['partido', 'torneo', 'historial.usuarioAccion'])
+            ->conTotalAbonado()
+            ->get()
+            ->filter(fn (MovimientoFinanciero $m) => $m->saldoPendiente() > 0.0)
+            ->sortBy('fechaMovimiento')
+            ->values();
+    }
+
+    /**
+     * Mensualidades/multas del árbitro aún no saldadas — lado "nos debe" del
+     * estado de cuenta, simétrico a egresosPendientesArbitro().
+     *
+     * @return Collection<int, MovimientoFinanciero>
+     */
+    private function ingresosPendientesArbitro(Arbitro $arbitro): Collection
+    {
+        return MovimientoFinanciero::where('idArbitro', $arbitro->idArbitro)
+            ->whereIn('categoria', self::CATEGORIAS_DEUDA_ARBITRO)
+            ->where('estadoMovimiento', '!=', MovimientoFinanciero::ESTADO_ANULADO)
+            ->with('historial.usuarioAccion')
+            ->conTotalAbonado()
+            ->get()
+            ->filter(fn (MovimientoFinanciero $m) => $m->saldoPendiente() > 0.0)
+            ->sortBy('fechaMovimiento')
+            ->values();
+    }
+
+    /** Saldo total pendiente por cobrar del árbitro (lo que se le debe) — usado por el badge del perfil. */
+    public function saldoPendienteArbitro(Arbitro $arbitro): float
+    {
+        return $this->egresosPendientesArbitro($arbitro)->sum(fn (MovimientoFinanciero $m) => $m->saldoPendiente());
+    }
+
+    /** Saldo total que el árbitro le debe al colegio (mensualidad/multa pendiente). */
+    public function saldoPorCobrarArbitro(Arbitro $arbitro): float
+    {
+        return $this->ingresosPendientesArbitro($arbitro)->sum(fn (MovimientoFinanciero $m) => $m->saldoPendiente());
+    }
+
+    /**
+     * Estado de cuenta completo del árbitro en las dos direcciones: lo que el
+     * colegio le debe (nómina/externo pendiente) y lo que el árbitro le debe
+     * al colegio (mensualidad/multa pendiente), con historial de pagos en
+     * ambos sentidos y descuentos por compensación de nómina. Un solo método
+     * alimenta tanto /mi-estado-cuenta (autoservicio del árbitro) como la
+     * ficha financiera que el tesorero ve de cualquier árbitro.
+     *
+     * @return array{
+     *     saldoPendienteCobrar: float,
+     *     pendientesPorPartido: Collection<int, MovimientoFinanciero>,
+     *     saldoPorCobrar: float,
+     *     pendientesPorCuota: Collection<int, MovimientoFinanciero>,
+     *     historialPagos: Collection<int, AbonoMovimiento>,
+     *     historialPagosHechos: Collection<int, AbonoMovimiento>,
+     *     historialMultas: Collection<int, MovimientoFinanciero>,
+     *     descuentosNomina: Collection<int, AbonoMovimiento>,
+     * }
+     */
+    public function estadoCuentaArbitro(Arbitro $arbitro): array
+    {
+        $pendientesPorPartido = $this->egresosPendientesArbitro($arbitro);
+        $saldoPendienteCobrar = (float) $pendientesPorPartido->sum(fn (MovimientoFinanciero $m) => $m->saldoPendiente());
+
+        $pendientesPorCuota = $this->ingresosPendientesArbitro($arbitro);
+        $saldoPorCobrar     = (float) $pendientesPorCuota->sum(fn (MovimientoFinanciero $m) => $m->saldoPendiente());
+
+        $historialPagos = AbonoMovimiento::whereHas('movimiento', function ($q) use ($arbitro): void {
+                $q->where('idArbitro', $arbitro->idArbitro)->whereIn('categoria', self::CATEGORIAS_PAGO_ARBITRO);
+            })
+            ->where('anulado', false)
+            ->where('metodoPago', '!=', AbonoMovimiento::METODO_COMPENSACION_NOMINA)
+            ->with('movimiento.torneo')
+            ->orderByDesc('fechaAbono')
+            ->get();
+
+        $historialPagosHechos = AbonoMovimiento::whereHas('movimiento', function ($q) use ($arbitro): void {
+                $q->where('idArbitro', $arbitro->idArbitro)->whereIn('categoria', self::CATEGORIAS_DEUDA_ARBITRO);
+            })
+            ->where('anulado', false)
+            ->where('metodoPago', '!=', AbonoMovimiento::METODO_COMPENSACION_NOMINA)
+            ->with('movimiento')
+            ->orderByDesc('fechaAbono')
+            ->get();
+
+        $historialMultas = MovimientoFinanciero::where('idArbitro', $arbitro->idArbitro)
+            ->where('categoria', MovimientoFinanciero::CATEGORIA_MULTA)
+            ->orderByDesc('fechaMovimiento')
+            ->get();
+
+        $descuentosNomina = AbonoMovimiento::whereHas('movimiento', fn ($q) => $q->where('idArbitro', $arbitro->idArbitro))
+            ->where('metodoPago', AbonoMovimiento::METODO_COMPENSACION_NOMINA)
+            ->where('anulado', false)
+            ->with('movimiento')
+            ->orderByDesc('fechaAbono')
+            ->get();
+
+        return [
+            'saldoPendienteCobrar' => $saldoPendienteCobrar,
+            'pendientesPorPartido' => $pendientesPorPartido,
+            'saldoPorCobrar'       => $saldoPorCobrar,
+            'pendientesPorCuota'   => $pendientesPorCuota,
+            'historialPagos'       => $historialPagos,
+            'historialPagosHechos' => $historialPagosHechos,
+            'historialMultas'      => $historialMultas,
+            'descuentosNomina'     => $descuentosNomina,
+        ];
+    }
+
+    /**
+     * "Bolsillos" del colegio — a partir de balanceGeneral() separa la caja
+     * bruta de lo realmente disponible: `disponibleReal` es cuánto del saldo
+     * en caja NO está ya comprometido con nómina pendiente de árbitros. Las
+     * deudas de árbitros hacia el colegio no cuentan porque todavía no son
+     * caja.
+     *
+     * Antes componía balanceGeneral() + resumenListado() sin filtros — dos
+     * agregados completos calculando el mismo número por caminos SQL
+     * distintos. Desde que gastos/ingresos institucionales nacen pagados
+     * (FinanzasService::registrarMovimientoPagado()), esas categorías nunca
+     * aportan nada a "pendiente", así que resumenListado()['pendientePorPagar']
+     * y ['pendientePorCobrar'] siempre terminaban siendo exactamente
+     * totalLeDebemos/totalNosDeben de balanceGeneral() — se eliminó la
+     * segunda consulta y se derivan directamente de ahí.
      *
      * @return array{saldoEnCaja: float, disponibleReal: float, pendientePorCobrar: float, pendientePorPagar: float}
      */
     public function bolsillos(int $idColegio): array
     {
-        $balance = $this->balanceGeneral($idColegio);
-        $global  = $this->resumenListado($idColegio, []);
+        return $this->bolsillosDesdeBalance($this->balanceGeneral($idColegio));
+    }
 
+    /**
+     * Igual que bolsillos(), pero a partir de un balanceGeneral() que el
+     * caller ya calculó — evita repetir el agregado cuando ambos hacen falta
+     * a la vez (ej. DashboardService::paraTesorero()).
+     *
+     * @param  array{saldoEnCaja: float, totalLeDebemos: float, totalNosDeben: float, porArbitro: Collection}  $balance
+     * @return array{saldoEnCaja: float, disponibleReal: float, pendientePorCobrar: float, pendientePorPagar: float}
+     */
+    public function bolsillosDesdeBalance(array $balance): array
+    {
         return [
             'saldoEnCaja'        => $balance['saldoEnCaja'],
-            'disponibleReal'     => $balance['saldoEnCaja'] - $global['pendientePorPagar'],
-            'pendientePorCobrar' => $global['pendientePorCobrar'],
-            'pendientePorPagar'  => $global['pendientePorPagar'],
+            'disponibleReal'     => $balance['saldoEnCaja'] - $balance['totalLeDebemos'],
+            'pendientePorCobrar' => $balance['totalNosDeben'],
+            'pendientePorPagar'  => $balance['totalLeDebemos'],
         ];
     }
 

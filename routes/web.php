@@ -18,9 +18,10 @@ use App\Http\Controllers\Configuracion\ConfiguracionController;
 use App\Http\Controllers\Configuracion\CuentaAdminController;
 use App\Http\Controllers\Designacion\CalificacionController;
 use App\Http\Controllers\Designacion\DesignacionController;
-use App\Http\Controllers\Finanza\MovimientoFinancieroController;
 use App\Http\Controllers\Finanza\BalanceFinancieroController;
-use App\Http\Controllers\Finanza\PagoArbitroController;
+use App\Http\Controllers\Finanza\CobroMasivoController;
+use App\Http\Controllers\Finanza\FichaFinancieraArbitroController;
+use App\Http\Controllers\Finanza\MovimientoInstitucionalController;
 use App\Http\Controllers\Finanza\ReporteFinancieroController;
 use App\Http\Controllers\Sancion\JustificacionRevisionController;
 use App\Http\Controllers\Sancion\SancionController;
@@ -237,16 +238,9 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
 
     //  Finanzas — M06
     Route::prefix('finanzas')->name('finanzas.')->middleware(['permission:ver-finanzas', 'modulo:finanzas'])->group(function () {
-        Route::get('/',         [MovimientoFinancieroController::class, 'index'])->name('index');
-        Route::get('/crear',    [MovimientoFinancieroController::class, 'create'])->middleware('permission:crear-finanzas')->name('create');
-        Route::get('/exportar', [MovimientoFinancieroController::class, 'exportarCsv'])->name('exportar');
-        Route::post('/',        [MovimientoFinancieroController::class, 'store'])->middleware('permission:crear-finanzas')->name('store');
-
-        // Pago acumulado al árbitro y reportes — antes de /{id} para que no los capture como id
-        Route::prefix('pagos-arbitro')->name('pagos-arbitro.')->group(function () {
-            Route::get('/',  [PagoArbitroController::class, 'index'])->name('index');
-            Route::post('/', [PagoArbitroController::class, 'store'])->middleware('permission:crear-finanzas')->name('store');
-            Route::get('/comprobante/{lote}', [PagoArbitroController::class, 'comprobante'])->name('comprobante');
+        Route::prefix('cobro-masivo')->name('cobro-masivo.')->group(function () {
+            Route::get('/',  [CobroMasivoController::class, 'index'])->name('index');
+            Route::post('/', [CobroMasivoController::class, 'store'])->middleware('permission:crear-finanzas')->name('store');
         });
 
         Route::get('/reportes',     [ReporteFinancieroController::class, 'index'])->name('reportes.index');
@@ -255,9 +249,33 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::post('/saldo-inicial', [BalanceFinancieroController::class, 'registrarSaldoInicial'])
             ->middleware('permission:crear-finanzas')->name('saldo-inicial.store');
 
-        Route::get('/{id}',  [MovimientoFinancieroController::class, 'show'])->name('show');
-        Route::post('/{id}/abonos', [MovimientoFinancieroController::class, 'abonar'])->middleware('permission:crear-finanzas')->name('abonar');
-        Route::put('/{id}/anular',  [MovimientoFinancieroController::class, 'anular'])->middleware('permission:editar-finanzas')->name('anular');
+        // Gastos e ingresos institucionales — los 5 tipos de movimiento sin
+        // árbitro asociado (ingreso_torneo, otro_ingreso, gasto_fijo,
+        // gasto_institucional, gasto_vario). Separado de la ficha de árbitro.
+        Route::prefix('gastos-ingresos')->name('institucional.')->group(function () {
+            Route::get('/',  [MovimientoInstitucionalController::class, 'index'])->name('index');
+            Route::post('/', [MovimientoInstitucionalController::class, 'store'])
+                ->middleware('permission:crear-finanzas')->name('store');
+        });
+
+        // Ficha financiera de un árbitro — único lugar de pago/abono/anulación
+        // individual, siempre scopeado a un árbitro concreto. Reemplaza la
+        // vieja vista de "pago acumulado": pagar nómina (uno a la vez o en
+        // lote) y compensar una deuda contra la nómina disponible viven acá.
+        Route::prefix('arbitro/{idArbitro}')->name('arbitro.')->group(function () {
+            Route::get('/', [FichaFinancieraArbitroController::class, 'show'])->name('show');
+            Route::post('/cargos', [FichaFinancieraArbitroController::class, 'store'])
+                ->middleware('permission:crear-finanzas')->name('cargos.store');
+            Route::post('/cargos/{idMovimiento}/abonos', [FichaFinancieraArbitroController::class, 'abonar'])
+                ->middleware('permission:crear-finanzas')->name('cargos.abonar');
+            Route::put('/cargos/{idMovimiento}/anular', [FichaFinancieraArbitroController::class, 'anular'])
+                ->middleware('permission:editar-finanzas')->name('cargos.anular');
+            Route::post('/cargos/{idMovimiento}/compensar', [FichaFinancieraArbitroController::class, 'compensar'])
+                ->middleware('permission:crear-finanzas')->name('cargos.compensar');
+            Route::post('/nomina/pagar', [FichaFinancieraArbitroController::class, 'pagarNomina'])
+                ->middleware('permission:crear-finanzas')->name('nomina.pagar');
+            Route::get('/comprobante/{lote}', [FichaFinancieraArbitroController::class, 'comprobante'])->name('comprobante');
+        });
     });
 
     //  Académico — M08
