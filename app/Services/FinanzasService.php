@@ -332,7 +332,7 @@ final class FinanzasService
     public function estadoCuentaArbitro(Arbitro $arbitro): array
     {
         $pendientesPorPartido = $this->egresosPendientesArbitro($arbitro);
-        $saldoPendienteCobrar = $pendientesPorPartido->sum(fn (MovimientoFinanciero $m) => $m->saldoPendiente());
+        $saldoPendienteCobrar = (float) $pendientesPorPartido->sum(fn (MovimientoFinanciero $m) => $m->saldoPendiente());
 
         $historialPagos = AbonoMovimiento::whereHas('movimiento', function ($q) use ($arbitro): void {
                 $q->where('idArbitro', $arbitro->idArbitro)->whereIn('categoria', self::CATEGORIAS_PAGO_ARBITRO);
