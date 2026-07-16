@@ -12,10 +12,12 @@ use App\Http\Middleware\VerificarPerfilCompleto;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -48,5 +50,32 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Sesión/CSRF vencida (419): en vez de la página de error cruda,
+        // redirige al login correspondiente (admin o usuario según la URL)
+        // con un mensaje amable. Sin esto, un logout con token vencido
+        // devolvía un 419 desnudo y, si el usuario volvía atrás, el
+        // navegador reenviaba el mismo formulario vencido en bucle.
         //
+        // Excluye peticiones que esperan JSON (fetch/axios del scanner de
+        // académico, etc.) — esas ya manejan el 419 explícitamente en JS
+        // (ver leerRespuestaJson en academico.js) y necesitan seguir
+        // recibiendo el status 419 real, no un redirect que fetch seguiría
+        // silenciosamente y confundiría con un 200 de HTML.
+        //
+        // Laravel convierte TokenMismatchException en HttpException(419) en
+        // Handler::prepareException() ANTES de pasarla por los renderables
+        // registrados aquí — por eso el tipo del callback debe ser la
+        // interfaz de excepción HTTP con chequeo manual del status code, no
+        // TokenMismatchException directamente (nunca haría match).
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
+            if ($e->getStatusCode() !== 419 || $request->expectsJson()) {
+                return null;
+            }
+
+            $esAdmin = $request->is(config('admin.prefix', 'novareef-panel').'*');
+            $login = $esAdmin ? route('admin.login') : route('login');
+
+            return redirect()->guest($login)
+                ->with('error', 'Tu sesión expiró por inactividad. Ingresa de nuevo para continuar.');
+        });
     })->create();
