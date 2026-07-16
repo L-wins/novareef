@@ -14,6 +14,7 @@ use App\Http\Controllers\Auth\CambioContrasenaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Colegio\ColegioController;
 use App\Http\Controllers\DashboardController;
+use App\Models\Plan;
 use App\Http\Controllers\Configuracion\ConfiguracionController;
 use App\Http\Controllers\Configuracion\CuentaAdminController;
 use App\Http\Controllers\Designacion\CalificacionController;
@@ -35,7 +36,14 @@ use App\Http\Controllers\Torneo\TorneoController;
 use Illuminate\Support\Facades\Route;
 
 // Página pública
-Route::get('/', fn () => view('welcome'))->name('welcome');
+Route::get('/', function () {
+    $planes = Plan::where('esVisible', true)
+        ->where('esActivo', true)
+        ->orderBy('orden')
+        ->get();
+
+    return view('welcome', compact('planes'));
+})->name('welcome');
 
 // Autenticación (solo para invitados)
 Route::middleware('guest')->group(function () {

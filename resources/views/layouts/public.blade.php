@@ -6,7 +6,7 @@
     <meta name="description" content="@yield('descripcion', 'NovaReef — La plataforma digital para la gestión integral de colegios de árbitros de fútbol en Colombia.')">
     <title>@yield('titulo', 'NovaReef — Gestión de Árbitros de Fútbol')</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900|barlow-condensed:600,700,800&display=swap" rel="stylesheet" />
     @vite(['resources/css/welcome.css', 'resources/js/welcome.js'])
 </head>
 <body class="bg-slate-950 text-white antialiased">
