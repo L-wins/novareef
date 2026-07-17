@@ -8,12 +8,7 @@
 @endpush
 
 @php
-    $etiquetasEstado = [
-        'activa'   => ['Activa', 'amber'],
-        'cumplida' => ['Cumplida', 'green'],
-        'anulada'  => ['Anulada', 'red'],
-        'apelada'  => ['Apelada', 'blue'],
-    ];
+    $etiquetasEstado = \App\Models\Sancion::ETIQUETAS_ESTADO;
 @endphp
 
 @section('contenido')

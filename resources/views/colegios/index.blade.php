@@ -107,6 +107,7 @@
                 </tbody>
             </table>
         </div>
+        <div class="pagination-wrapper">{{ $colegios->links() }}</div>
     </div>
 
 </div>

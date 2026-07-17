@@ -22,13 +22,17 @@ class ColegioController extends Controller
     public function index(): View
     {
         // El plan viene de la suscripción activa — 'colegios' no tiene columna de plan propia.
+        // Paginado: sin esto, la lista crece sin control a medida que se
+        // registran colegios — mismo criterio que Admin/AdminColegioController,
+        // que ya pagina la misma data.
         $colegios = Colegio::select([
                 'idColegio', 'nombreColegio', 'codigoColegio',
                 'ciudadColegio', 'estadoColegio',
             ])
             ->with('suscripcionActiva.plan:idPlan,nombre')
             ->orderBy('nombreColegio')
-            ->get();
+            ->paginate(20)
+            ->withQueryString();
 
         return view('colegios.index', compact('colegios'));
     }

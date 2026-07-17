@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\CambiarPlanColegioRequest;
+use App\Http\Requests\Admin\ExtenderSuscripcionRequest;
 use App\Models\Colegio;
 use App\Models\Plan;
 use App\Models\Suscripcion;
@@ -39,11 +41,9 @@ class AdminSuscripcionController extends Controller
         return view('admin.suscripciones.index', compact('suscripciones', 'planes'));
     }
 
-    public function cambiarPlan(Request $request, int $idColegio): RedirectResponse
+    public function cambiarPlan(CambiarPlanColegioRequest $request, int $idColegio): RedirectResponse
     {
-        $validated = $request->validate([
-            'idPlan' => ['required', 'integer', 'exists:planes,idPlan'],
-        ]);
+        $validated = $request->validated();
 
         $colegio = Colegio::findOrFail($idColegio);
         $plan    = Plan::findOrFail($validated['idPlan']);
@@ -53,11 +53,9 @@ class AdminSuscripcionController extends Controller
         return back()->with('success', "Plan de {$colegio->nombreColegio} cambiado a \"{$plan->nombre}\".");
     }
 
-    public function extender(Request $request, int $idColegio): RedirectResponse
+    public function extender(ExtenderSuscripcionRequest $request, int $idColegio): RedirectResponse
     {
-        $validated = $request->validate([
-            'dias' => ['required', 'integer', 'min:1', 'max:365'],
-        ]);
+        $validated = $request->validated();
 
         $colegio = Colegio::findOrFail($idColegio);
 

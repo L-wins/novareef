@@ -41,6 +41,14 @@ class SesionAcademica extends Model
     public const ESTADO_FINALIZADA = 'finalizada';
     public const ESTADO_CANCELADA  = 'cancelada';
 
+    /** Igual patrón que MovimientoFinanciero::ETIQUETAS_ESTADO — una sola fuente de verdad para las vistas. */
+    public const ETIQUETAS_ESTADO = [
+        self::ESTADO_PROGRAMADA => ['Programada', 'gray'],
+        self::ESTADO_EN_CURSO   => ['En curso', 'amber'],
+        self::ESTADO_FINALIZADA => ['Finalizada', 'green'],
+        self::ESTADO_CANCELADA  => ['Cancelada', 'red'],
+    ];
+
     protected $fillable = [
         'idColegio',
         'idInstructor',

@@ -33,23 +33,15 @@ class PartidoController extends Controller
 
         $this->autorizarTorneo($torneo);
 
-        $query = Partido::with(['division', 'sede', 'formato'])
-            ->where('idTorneo', $torneo->idTorneo);
-
-        if ($estado = $request->query('estado')) {
-            $query->where('estadoPartido', $estado);
-        }
-
-        if ($divisionId = $request->query('division')) {
-            $query->where('idDivision', (int) $divisionId);
-        }
-
-        if ($fecha = $request->query('fecha')) {
-            $query->whereDate('fechaPartido', $fecha);
-        }
-
-        $partidos = $query->orderBy('fechaPartido')->orderBy('horaPartido')
-            ->paginate(20)->withQueryString();
+        $partidos = Partido::with(['division', 'sede', 'formato'])
+            ->where('idTorneo', $torneo->idTorneo)
+            ->when($request->filled('estado'), fn ($q) => $q->where('estadoPartido', $request->query('estado')))
+            ->when($request->filled('division'), fn ($q) => $q->where('idDivision', $request->integer('division')))
+            ->when($request->filled('fecha'), fn ($q) => $q->whereDate('fechaPartido', $request->query('fecha')))
+            ->orderBy('fechaPartido')
+            ->orderBy('horaPartido')
+            ->paginate(20)
+            ->withQueryString();
 
         $formatos = FormatoDesignacion::activos()->get();
 

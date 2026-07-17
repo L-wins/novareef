@@ -1,0 +1,73 @@
+/*
+   TORNEO CARDS (index)
+    */
+.torneos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.1rem;
+}
+
+.torneo-card {
+    background: var(--t-bg-card);
+    border: 1px solid var(--t-border);
+    border-radius: var(--t-radius);
+    padding: 1.25rem 1.25rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    transition: border-color .2s, transform .2s, box-shadow .2s;
+}
+.torneo-card:hover {
+    border-color: rgba(79,142,247,0.30);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -10px rgba(0,0,0,0.45);
+}
+
+.torneo-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+.torneo-card__title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--t-text);
+    line-height: 1.3;
+    margin: 0;
+}
+.torneo-card__season {
+    font-size: 0.78rem;
+    color: var(--t-text-mute);
+    font-variant-numeric: tabular-nums;
+}
+
+.torneo-card__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+.torneo-card__meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem 0.85rem;
+    font-size: 0.82rem;
+    color: var(--t-text-2);
+}
+.torneo-card__meta i { color: var(--t-text-mute); margin-right: 0.3rem; }
+
+.torneo-card__counts {
+    display: flex;
+    gap: 0.65rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--t-border);
+    font-size: 0.78rem;
+    color: var(--t-text-mute);
+}
+.torneo-card__counts strong { color: var(--t-text); font-weight: 700; }
+
+.torneo-card__actions {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+}

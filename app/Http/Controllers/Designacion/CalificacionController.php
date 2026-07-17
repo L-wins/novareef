@@ -6,11 +6,11 @@ namespace App\Http\Controllers\Designacion;
 
 use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Designacion\StoreCalificacionRequest;
 use App\Models\CalificacionArbitro;
 use App\Models\Designacion;
 use App\Models\Partido;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -42,14 +42,11 @@ class CalificacionController extends Controller
     /**
      * Registra la calificación de un árbitro por designación (AJAX).
      */
-    public function store(Request $request, int $designacionId): JsonResponse
+    public function store(StoreCalificacionRequest $request, int $designacionId): JsonResponse
     {
         $idColegio = $this->idColegioActivo();
 
-        $validated = $request->validate([
-            'nota'       => 'required|numeric|in:1,1.5,2,2.5,3,3.5,4,4.5,5',
-            'comentario' => 'required|string|min:10|max:500',
-        ]);
+        $validated = $request->validated();
 
         $designacion = Designacion::where('idDesignacion', $designacionId)
             ->where('idColegio', $idColegio)

@@ -1,0 +1,18 @@
+/*
+   NovaReef — Módulo M03 Torneos
+   Hereda de app.css (mismas vars: --accent, --bg-card, etc.)
+    */
+
+:root {
+    --t-bg-card:    var(--nv-card-alt);
+    --t-bg-card-2:  var(--nv-card-hover);
+    --t-border:     var(--nv-border);
+    --t-border-h:   var(--nv-fill-2);
+    --t-text:       var(--nv-text);
+    --t-text-2:     var(--nv-text-2);
+    --t-text-mute:  var(--nv-text-3);
+    --t-accent:     var(--nv-accent);
+    --t-accent-2:   var(--nv-accent-2);
+    --t-radius:     0.75rem;
+    --t-radius-sm:  0.5rem;
+}

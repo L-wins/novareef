@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\Activar2FARequest;
+use App\Http\Requests\Admin\Desactivar2FARequest;
 use App\Models\Admin;
 use App\Services\AdminTwoFactorService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -34,15 +35,8 @@ class Admin2FAController extends Controller
         ]);
     }
 
-    public function enable(Request $request): RedirectResponse
+    public function enable(Activar2FARequest $request): RedirectResponse
     {
-        $request->validate([
-            'codigo' => ['required', 'digits:6'],
-        ], [
-            'codigo.required' => 'El código de verificación es obligatorio.',
-            'codigo.digits'   => 'El código debe tener exactamente 6 dígitos.',
-        ]);
-
         try {
             $this->twoFactor->activar($this->adminAutenticado(), $request->string('codigo')->toString());
         } catch (\RuntimeException $e) {
@@ -54,14 +48,8 @@ class Admin2FAController extends Controller
             ->with('success', '2FA activado correctamente. Tu cuenta ahora está protegida.');
     }
 
-    public function disable(Request $request): RedirectResponse
+    public function disable(Desactivar2FARequest $request): RedirectResponse
     {
-        $request->validate([
-            'password' => ['required', 'string'],
-        ], [
-            'password.required' => 'La contraseña es obligatoria para desactivar el 2FA.',
-        ]);
-
         try {
             $this->twoFactor->desactivar($this->adminAutenticado(), $request->string('password')->toString());
         } catch (\RuntimeException $e) {

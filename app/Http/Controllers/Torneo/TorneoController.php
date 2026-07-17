@@ -36,23 +36,15 @@ class TorneoController extends Controller
     {
         $idColegio = $this->idColegioActivo();
 
-        $query = Torneo::with(['divisiones'])
+        $torneos = Torneo::with(['divisiones'])
             ->withCount(['partidos', 'divisiones'])
-            ->where('idColegio', $idColegio);
-
-        if ($estado = $request->query('estado')) {
-            $query->where('estadoTorneo', $estado);
-        }
-
-        if ($tipo = $request->query('tipo')) {
-            $query->where('tipoTorneo', $tipo);
-        }
-
-        if ($temporada = $request->query('temporada')) {
-            $query->where('temporada', (int) $temporada);
-        }
-
-        $torneos = $query->orderByDesc('fechaInicio')->paginate(15)->withQueryString();
+            ->where('idColegio', $idColegio)
+            ->when($request->filled('estado'), fn ($q) => $q->where('estadoTorneo', $request->query('estado')))
+            ->when($request->filled('tipo'), fn ($q) => $q->where('tipoTorneo', $request->query('tipo')))
+            ->when($request->filled('temporada'), fn ($q) => $q->where('temporada', $request->integer('temporada')))
+            ->orderByDesc('fechaInicio')
+            ->paginate(15)
+            ->withQueryString();
 
         $temporadasDisponibles = Torneo::where('idColegio', $idColegio)
             ->distinct()

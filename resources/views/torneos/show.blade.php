@@ -58,6 +58,18 @@
                     <i class="fa-solid fa-arrows-rotate"></i>
                     Cambiar estado
                 </button>
+                <form method="POST" action="{{ route('torneos.archivar', $torneo->idTorneo) }}"
+                      style="display:contents;"
+                      data-confirm-submit
+                      data-confirm-title="Archivar torneo"
+                      data-confirm-text="¿Archivar «{{ $torneo->nombreTorneo }}»? Dejará de aparecer en el listado. Esta acción no se puede deshacer desde la interfaz."
+                      data-confirm-btn="Sí, archivar">
+                    @csrf
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa-solid fa-box-archive"></i>
+                        Archivar
+                    </button>
+                </form>
             @endcan
         </div>
     </div>
@@ -266,12 +278,19 @@
     <div class="detail-grid-card">
         <p class="detail-grid-card-title">
             <i class="fa-solid fa-user-clock"></i> Árbitros Emergentes
-            @if ($torneo->valorEmergente !== null)
-                <span style="margin-left:auto;font-size:0.78rem;color:var(--t-text-2);">
-                    Disponibilidad:
-                    <strong style="color:var(--t-accent);">$ {{ number_format((float) $torneo->valorEmergente, 0, ',', '.') }} COP</strong>
-                </span>
-            @endif
+            <span style="margin-left:auto;display:flex;align-items:center;gap:0.75rem;">
+                @if ($torneo->valorEmergente !== null)
+                    <span style="font-size:0.78rem;color:var(--t-text-2);">
+                        Disponibilidad:
+                        <strong style="color:var(--t-accent);">$ {{ number_format((float) $torneo->valorEmergente, 0, ',', '.') }} COP</strong>
+                    </span>
+                @endif
+                @can('crear-designaciones')
+                    <a href="{{ route('emergentes.index', $torneo->idTorneo) }}" class="btn btn-secondary btn-sm">
+                        <i class="fa-solid fa-user-gear"></i> Gestionar
+                    </a>
+                @endcan
+            </span>
         </p>
 
         {{-- Próximos --}}

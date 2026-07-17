@@ -8,12 +8,7 @@
 @endpush
 
 @php
-    $etiquetasEstado = [
-        'programada' => ['Programada', 'gray'],
-        'en_curso'   => ['En curso', 'amber'],
-        'finalizada' => ['Finalizada', 'green'],
-        'cancelada'  => ['Cancelada', 'red'],
-    ];
+    $etiquetasEstado = \App\Models\SesionAcademica::ETIQUETAS_ESTADO;
 @endphp
 
 @section('contenido')

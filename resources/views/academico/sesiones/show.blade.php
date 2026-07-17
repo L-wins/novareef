@@ -8,13 +8,7 @@
 @endpush
 
 @php
-    $etiquetasEstadoSesion = [
-        'programada' => ['Programada', 'gray'],
-        'en_curso'   => ['En curso', 'amber'],
-        'finalizada' => ['Finalizada', 'green'],
-        'cancelada'  => ['Cancelada', 'red'],
-    ];
-    [$estadoLabel, $estadoColor] = $etiquetasEstadoSesion[$sesion->estadoSesion] ?? ['—', 'gray'];
+    [$estadoLabel, $estadoColor] = \App\Models\SesionAcademica::ETIQUETAS_ESTADO[$sesion->estadoSesion] ?? ['—', 'gray'];
 
     $etiquetasAsistencia = [
         'presente'                 => ['Presente', 'green'],
@@ -108,6 +102,15 @@
                         <i class="fa-solid fa-play"></i> Abrir sesión
                     </button>
                 </form>
+                <form method="POST" action="{{ route('academico.sesiones.destroy', $sesion->idSesion) }}"
+                      data-confirm-submit
+                      data-confirm-title="Eliminar sesión"
+                      data-confirm-text="¿Eliminar «{{ $sesion->tema }}»? Esta acción no se puede deshacer.">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa-solid fa-trash"></i> Eliminar
+                    </button>
+                </form>
             @endif
             @if ($sesion->estadoSesion === 'en_curso')
                 <form method="POST" action="{{ route('academico.sesiones.cerrar', $sesion->idSesion) }}"
@@ -117,6 +120,17 @@
                     @csrf @method('PUT')
                     <button type="submit" class="btn btn-primary">
                         <i class="fa-solid fa-check-double"></i> Confirmar y cerrar
+                    </button>
+                </form>
+            @endif
+            @if (in_array($sesion->estadoSesion, ['programada', 'en_curso'], true))
+                <form method="POST" action="{{ route('academico.sesiones.cancelar', $sesion->idSesion) }}"
+                      data-confirm-submit
+                      data-confirm-title="Cancelar sesión"
+                      data-confirm-text="¿Cancelar «{{ $sesion->tema }}»? Quedará marcada como cancelada en el historial.">
+                    @csrf @method('PUT')
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa-solid fa-ban"></i> Cancelar
                     </button>
                 </form>
             @endif

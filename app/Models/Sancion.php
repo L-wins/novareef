@@ -24,6 +24,14 @@ class Sancion extends Model
     public const ESTADO_ANULADA  = 'anulada';
     public const ESTADO_APELADA  = 'apelada';
 
+    /** Igual patrón que MovimientoFinanciero::ETIQUETAS_ESTADO — una sola fuente de verdad para las vistas. */
+    public const ETIQUETAS_ESTADO = [
+        self::ESTADO_ACTIVA   => ['Activa', 'amber'],
+        self::ESTADO_CUMPLIDA => ['Cumplida', 'green'],
+        self::ESTADO_ANULADA  => ['Anulada', 'red'],
+        self::ESTADO_APELADA  => ['Apelada', 'blue'],
+    ];
+
     protected $fillable = [
         'idColegio',
         'idArbitro',

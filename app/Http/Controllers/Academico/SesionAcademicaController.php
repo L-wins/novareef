@@ -101,6 +101,8 @@ class SesionAcademicaController extends Controller
     public function destroy(int $id): RedirectResponse
     {
         $sesion = $this->sesionDelColegio($id);
+        abort_unless($sesion->estadoSesion === SesionAcademica::ESTADO_PROGRAMADA, 403, 'Solo se puede eliminar una sesión que aún no se ha abierto — cancélala en vez de eliminarla si ya tiene asistencia registrada.');
+
         $sesion->delete();
 
         return redirect()->route('academico.sesiones.index')->with('success', 'Sesión eliminada correctamente.');

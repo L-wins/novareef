@@ -8,13 +8,7 @@
 @endpush
 
 @php
-    $etiquetasEstado = [
-        'activa'   => ['Activa', 'amber'],
-        'cumplida' => ['Cumplida', 'green'],
-        'anulada'  => ['Anulada', 'red'],
-        'apelada'  => ['Apelada', 'blue'],
-    ];
-    [$estadoLabel, $estadoColor] = $etiquetasEstado[$sancion->estadoSancion] ?? ['—', 'gray'];
+    [$estadoLabel, $estadoColor] = \App\Models\Sancion::ETIQUETAS_ESTADO[$sancion->estadoSancion] ?? ['—', 'gray'];
     $esArbitro = auth()->user()->rolUsuario === 'arbitro';
 @endphp
 

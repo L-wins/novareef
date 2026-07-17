@@ -7,6 +7,8 @@ namespace App\Services;
 use App\Models\Arbitro;
 use App\Models\Designacion;
 use App\Models\Partido;
+use App\Models\Torneo;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 /**
@@ -50,9 +52,63 @@ final class ReporteDesignacionesService
     }
 
     /**
+     * Grid de torneos del colegio con conteo de partidos totales, críticos y
+     * de hoy — para DesignacionController::index() cuando no hay ?torneo=.
+     *
+     * @return Collection<int, Torneo>
+     */
+    public function gridTorneosConConteos(int $idColegio): Collection
+    {
+        return Torneo::where('idColegio', $idColegio)
+            ->withCount([
+                'partidos',
+                'partidos as partidos_criticos_count' => fn ($q) => $q->where('estadoPartido', Partido::ESTADO_CRITICO),
+                'partidos as partidos_hoy_count' => fn ($q) => $q->whereDate('fechaPartido', now()->toDateString()),
+            ])
+            ->orderByDesc('temporada')
+            ->orderBy('nombreTorneo')
+            ->get();
+    }
+
+    /** Cantidad de partidos en estado crítico del colegio, opcionalmente acotado a un torneo. */
+    public function criticosCount(int $idColegio, ?int $idTorneo = null): int
+    {
+        return Partido::where('idColegio', $idColegio)
+            ->where('estadoPartido', Partido::ESTADO_CRITICO)
+            ->when($idTorneo !== null, fn ($q) => $q->where('idTorneo', $idTorneo))
+            ->count();
+    }
+
+    /**
+     * Listado paginado de partidos de un torneo con filtros de estado/fecha/
+     * división — para DesignacionController::index() cuando hay ?torneo=X.
+     *
+     * @param  array{estado?: ?string, fecha?: ?string, division?: ?int}  $filtros
+     */
+    public function listadoPartidosDeTorneo(int $idColegio, Torneo $torneo, array $filtros): LengthAwarePaginator
+    {
+        return Partido::where('idColegio', $idColegio)
+            ->where('idTorneo', $torneo->idTorneo)
+            ->with([
+                'torneo',
+                'division',
+                'sede',
+                'formato',
+                'designaciones.arbitro.usuario',
+                'designaciones.rol',
+            ])
+            ->when(! empty($filtros['estado']), fn ($q) => $q->where('estadoPartido', $filtros['estado']))
+            ->when(! empty($filtros['fecha']), fn ($q) => $q->whereDate('fechaPartido', $filtros['fecha']))
+            ->when(! empty($filtros['division']), fn ($q) => $q->where('idDivision', $filtros['division']))
+            ->orderBy('fechaPartido', 'asc')
+            ->paginate(20)
+            ->withQueryString();
+    }
+
+    /**
      * Próximas designaciones (pendientes o confirmadas) del árbitro autenticado
      * a partir de hoy — versión liviana de lo que ya calcula
-     * DesignacionController::misPartidos() para la vista completa, pensada
+     * MisPartidosController::misPartidos() para la vista completa, pensada
      * para un widget de dashboard (sin cargar el historial completo del árbitro).
      *
      * @return Collection<int, Designacion>
