@@ -126,7 +126,7 @@ class ArbitroCrudControllerTest extends TestCase
         $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
         $arbitro   = $this->crearArbitro($colegio, ['arbitro' => ['estadoArbitro' => 'activo']]);
 
-        $this->actingAs($ejecutivo)->put(route('arbitros.toggleEstado', $arbitro->idArbitro), [
+        $this->actingAs($ejecutivo)->put(route('arbitros.estado', $arbitro->idArbitro), [
             'estadoNuevo' => 'suspendido',
             'motivo'      => 'Sanción disciplinaria',
             'fechaInicio' => today()->format('Y-m-d'),
@@ -142,7 +142,7 @@ class ArbitroCrudControllerTest extends TestCase
         $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
         $arbitro   = $this->crearArbitro($colegio, ['arbitro' => ['estadoArbitro' => 'activo']]);
 
-        $this->actingAs($ejecutivo)->put(route('arbitros.toggleEstado', $arbitro->idArbitro), [
+        $this->actingAs($ejecutivo)->put(route('arbitros.estado', $arbitro->idArbitro), [
             'estadoNuevo' => 'suspendido',
         ])->assertSessionHasErrors(['motivo', 'fechaInicio']);
 
@@ -197,7 +197,7 @@ class ArbitroCrudControllerTest extends TestCase
             ->where('nombreCategoria', 'Segunda categoría')
             ->firstOrFail();
 
-        $this->actingAs($ejecutivo)->put(route('categorias.arbitro.toggleActiva', $categoria->idCategoria))
+        $this->actingAs($ejecutivo)->put(route('categorias.arbitro.estado', $categoria->idCategoria))
             ->assertRedirect(route('categorias.arbitro.index'));
         $this->assertFalse($categoria->fresh()->activa);
 

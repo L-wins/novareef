@@ -343,7 +343,7 @@
 <div class="modal" id="modal-cambio-estado" role="dialog" aria-modal="true">
     <div class="modal-overlay" data-close-modal></div>
     <div class="modal-dialog">
-        <form method="POST" action="{{ route('arbitros.toggleEstado', $arbitro->idArbitro) }}"
+        <form method="POST" action="{{ route('arbitros.estado', $arbitro->idArbitro) }}"
               id="form-cambio-estado"
               data-confirm-nombre="{{ $arbitro->usuario->nombreUsuario }}">
             @csrf

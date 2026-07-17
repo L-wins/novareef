@@ -286,7 +286,7 @@
                     </span>
                 @endif
                 @can('crear-designaciones')
-                    <a href="{{ route('emergentes.index', $torneo->idTorneo) }}" class="btn btn-secondary btn-sm">
+                    <a href="{{ route('torneos.emergentes.index', $torneo->idTorneo) }}" class="btn btn-secondary btn-sm">
                         <i class="fa-solid fa-user-gear"></i> Gestionar
                     </a>
                 @endcan

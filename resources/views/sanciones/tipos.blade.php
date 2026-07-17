@@ -67,7 +67,7 @@
                             </td>
                             <td class="text-right">
                                 <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
-                                    <form method="POST" action="{{ route('tipos-sancion.toggleActivo', $tipo->idTipoSancion) }}">
+                                    <form method="POST" action="{{ route('tipos-sancion.estado', $tipo->idTipoSancion) }}">
                                         @csrf
                                         @method('PUT')
                                         <button type="submit" class="btn btn-secondary btn-sm">

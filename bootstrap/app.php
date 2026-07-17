@@ -3,7 +3,6 @@
 use App\Http\Middleware\AdminAuth;
 use App\Http\Middleware\BlockResendWebhook;
 use App\Http\Middleware\ProtegerEscrituraMasiva;
-use App\Http\Middleware\SoloSuperAdmin;
 use App\Http\Middleware\TerminarImpersonacionExpirada;
 use App\Http\Middleware\VerificarCambioContrasena;
 use App\Http\Middleware\VerificarEstadoColegio;
@@ -34,7 +33,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin.auth'          => AdminAuth::class,
             'verificar.colegio'   => VerificarEstadoColegio::class,
-            'solo.superadmin'     => SoloSuperAdmin::class,
             'verificar.perfil'    => VerificarPerfilCompleto::class,
             'modulo'              => VerificarModuloPlan::class,
             'permission'          => PermissionMiddleware::class,

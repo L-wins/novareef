@@ -250,15 +250,6 @@
                 </a>
                 @endcan
 
-                @if(Auth::user()->rolUsuario === 'superadmin')
-                <div class="sidebar-divider"></div>
-                <a href="{{ route('colegios.index') }}"
-                   class="sidebar-link {{ request()->routeIs('colegios.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-building-columns"></i>
-                    <span>Colegios</span>
-                </a>
-                @endif
-
             </nav>
         </aside>
 

@@ -39,7 +39,7 @@ class CategoriaArbitroController extends Controller
             ->with('success', 'Categoría creada correctamente.');
     }
 
-    public function toggleActiva(int $id): RedirectResponse
+    public function cambiarEstado(int $id): RedirectResponse
     {
         $categoria = $this->categoriaDelColegio($id);
         $estado    = $this->categorias->alternarActiva($categoria);
@@ -68,7 +68,7 @@ class CategoriaArbitroController extends Controller
 
     /**
      * Resuelve una categoría por ID verificando que pertenezca al colegio activo.
-     * Centraliza lo que antes se repetía en toggleActiva() y destroy().
+     * Centraliza lo que antes se repetía en cambiarEstado() y destroy().
      */
     private function categoriaDelColegio(int $id): CategoriaArbitro
     {

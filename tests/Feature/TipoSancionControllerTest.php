@@ -95,7 +95,7 @@ class TipoSancionControllerTest extends TestCase
         $comite  = $this->crearMiembroComite($colegio);
         $tipo    = $this->crearTipoSancion($colegio);
 
-        $this->actingAs($comite)->put(route('tipos-sancion.toggleActivo', $tipo->idTipoSancion))
+        $this->actingAs($comite)->put(route('tipos-sancion.estado', $tipo->idTipoSancion))
             ->assertRedirect(route('tipos-sancion.index'));
 
         $this->assertFalse($tipo->fresh()->esActivo);
@@ -145,7 +145,7 @@ class TipoSancionControllerTest extends TestCase
         $comiteA  = $this->crearMiembroComite($colegioA);
         $tipoB    = $this->crearTipoSancion($colegioB);
 
-        $this->actingAs($comiteA)->put(route('tipos-sancion.toggleActivo', $tipoB->idTipoSancion))
+        $this->actingAs($comiteA)->put(route('tipos-sancion.estado', $tipoB->idTipoSancion))
             ->assertForbidden();
 
         $this->actingAs($comiteA)->delete(route('tipos-sancion.destroy', $tipoB->idTipoSancion))

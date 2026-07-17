@@ -52,18 +52,18 @@ class TorneoSubRecursosTest extends TestCase
         $ejecutivo = $this->crearEjecutivo($colegio);
         $torneo    = $this->crearTorneo($colegio, $ejecutivo);
 
-        $this->actingAs($ejecutivo)->post(route('divisiones.store', $torneo->idTorneo), [
+        $this->actingAs($ejecutivo)->post(route('torneos.divisiones.store', $torneo->idTorneo), [
             'nombreDivision' => 'Primera',
         ])->assertRedirect();
 
         $division = DivisionTorneo::where('idTorneo', $torneo->idTorneo)->firstOrFail();
 
-        $this->actingAs($ejecutivo)->put(route('divisiones.update', $division->idDivision), [
+        $this->actingAs($ejecutivo)->put(route('torneos.divisiones.update', $division->idDivision), [
             'nombreDivision' => 'Primera A',
         ])->assertRedirect();
         $this->assertSame('Primera A', $division->fresh()->nombreDivision);
 
-        $this->actingAs($ejecutivo)->delete(route('divisiones.destroy', $division->idDivision))
+        $this->actingAs($ejecutivo)->delete(route('torneos.divisiones.destroy', $division->idDivision))
             ->assertRedirect();
         $this->assertDatabaseMissing('divisiones_torneo', ['idDivision' => $division->idDivision]);
     }
@@ -85,7 +85,7 @@ class TorneoSubRecursosTest extends TestCase
             'modalidadPago' => 'campo', 'estadoPartido' => Partido::ESTADO_BORRADOR,
         ]);
 
-        $this->actingAs($ejecutivo)->delete(route('divisiones.destroy', $division->idDivision))
+        $this->actingAs($ejecutivo)->delete(route('torneos.divisiones.destroy', $division->idDivision))
             ->assertStatus(422);
 
         $this->assertDatabaseHas('divisiones_torneo', ['idDivision' => $division->idDivision]);
@@ -100,7 +100,7 @@ class TorneoSubRecursosTest extends TestCase
         $torneoB    = $this->crearTorneo($colegioB, $ejecutivoB);
         $divisionB  = $this->crearDivision($torneoB);
 
-        $this->actingAs($ejecutivoA)->put(route('divisiones.update', $divisionB->idDivision), [
+        $this->actingAs($ejecutivoA)->put(route('torneos.divisiones.update', $divisionB->idDivision), [
             'nombreDivision' => 'Intento cruzado',
         ])->assertForbidden();
     }
@@ -119,17 +119,17 @@ class TorneoSubRecursosTest extends TestCase
             'municipio'  => 'Tenjo',
         ];
 
-        $this->actingAs($ejecutivo)->post(route('sedes.store', $torneo->idTorneo), $datos)
+        $this->actingAs($ejecutivo)->post(route('torneos.sedes.store', $torneo->idTorneo), $datos)
             ->assertRedirect();
 
         $sede = SedeTorneo::where('idTorneo', $torneo->idTorneo)->firstOrFail();
 
-        $this->actingAs($ejecutivo)->put(route('sedes.update', $sede->idSede), array_merge($datos, [
+        $this->actingAs($ejecutivo)->put(route('torneos.sedes.update', $sede->idSede), array_merge($datos, [
             'nombreSede' => 'Coliseo Renovado',
         ]))->assertRedirect();
         $this->assertSame('Coliseo Renovado', $sede->fresh()->nombreSede);
 
-        $this->actingAs($ejecutivo)->delete(route('sedes.destroy', $sede->idSede))->assertRedirect();
+        $this->actingAs($ejecutivo)->delete(route('torneos.sedes.destroy', $sede->idSede))->assertRedirect();
         $this->assertDatabaseMissing('sedes_torneo', ['idSede' => $sede->idSede]);
     }
 
@@ -150,7 +150,7 @@ class TorneoSubRecursosTest extends TestCase
             'modalidadPago' => 'campo', 'estadoPartido' => Partido::ESTADO_BORRADOR,
         ]);
 
-        $this->actingAs($ejecutivo)->delete(route('sedes.destroy', $sede->idSede))
+        $this->actingAs($ejecutivo)->delete(route('torneos.sedes.destroy', $sede->idSede))
             ->assertStatus(422);
     }
 
@@ -165,7 +165,7 @@ class TorneoSubRecursosTest extends TestCase
         $this->crearRolesPartido();
         $formato = $this->crearFormatoDupla();
 
-        $this->actingAs($ejecutivo)->post(route('tarifas.store', $division->idDivision), [
+        $this->actingAs($ejecutivo)->post(route('torneos.divisiones.tarifas.store', $division->idDivision), [
             'idRol'     => $this->idRolPorNombre('Central'),
             'idFormato' => $formato->idFormato,
             'valorPago' => 60000,
@@ -174,12 +174,12 @@ class TorneoSubRecursosTest extends TestCase
         $tarifa = TarifaTorneo::where('idDivision', $division->idDivision)->firstOrFail();
         $this->assertEquals(60000, $tarifa->valorPago);
 
-        $this->actingAs($ejecutivo)->put(route('tarifas.update', $tarifa->idTarifa), [
+        $this->actingAs($ejecutivo)->put(route('torneos.divisiones.tarifas.update', $tarifa->idTarifa), [
             'valorPago' => 65000,
         ])->assertRedirect();
         $this->assertEquals(65000, $tarifa->fresh()->valorPago);
 
-        $this->actingAs($ejecutivo)->delete(route('tarifas.destroy', $tarifa->idTarifa))->assertRedirect();
+        $this->actingAs($ejecutivo)->delete(route('torneos.divisiones.tarifas.destroy', $tarifa->idTarifa))->assertRedirect();
         $this->assertDatabaseMissing('tarifas_torneo', ['idTarifa' => $tarifa->idTarifa]);
     }
 
@@ -198,8 +198,8 @@ class TorneoSubRecursosTest extends TestCase
             'valorPago' => 60000,
         ];
 
-        $this->actingAs($ejecutivo)->post(route('tarifas.store', $division->idDivision), $payload);
-        $this->actingAs($ejecutivo)->post(route('tarifas.store', $division->idDivision), array_merge($payload, ['valorPago' => 70000]));
+        $this->actingAs($ejecutivo)->post(route('torneos.divisiones.tarifas.store', $division->idDivision), $payload);
+        $this->actingAs($ejecutivo)->post(route('torneos.divisiones.tarifas.store', $division->idDivision), array_merge($payload, ['valorPago' => 70000]));
 
         $this->assertSame(1, TarifaTorneo::where('idDivision', $division->idDivision)->count());
         $this->assertEquals(70000, TarifaTorneo::where('idDivision', $division->idDivision)->value('valorPago'));
@@ -215,9 +215,9 @@ class TorneoSubRecursosTest extends TestCase
         $sede      = $this->crearSede($torneo);
         $arbitro   = $this->crearArbitro($colegio, ['arbitro' => ['estadoArbitro' => 'activo']]);
 
-        $this->actingAs($ejecutivo)->get(route('emergentes.index', $torneo->idTorneo))->assertOk();
+        $this->actingAs($ejecutivo)->get(route('torneos.emergentes.index', $torneo->idTorneo))->assertOk();
 
-        $this->actingAs($ejecutivo)->post(route('emergentes.store', $torneo->idTorneo), [
+        $this->actingAs($ejecutivo)->post(route('torneos.emergentes.store', $torneo->idTorneo), [
             'idArbitro'      => $arbitro->idArbitro,
             'idSede'         => $sede->idSede,
             'fechaEmergente' => today()->addDay()->format('Y-m-d'),
@@ -226,7 +226,7 @@ class TorneoSubRecursosTest extends TestCase
         $emergente = EmergenteTorneo::where('idTorneo', $torneo->idTorneo)->firstOrFail();
         $this->assertSame($arbitro->idArbitro, $emergente->idArbitro);
 
-        $this->actingAs($ejecutivo)->delete(route('emergentes.destroy', [$torneo->idTorneo, $emergente->idEmergente]))
+        $this->actingAs($ejecutivo)->delete(route('torneos.emergentes.destroy', [$torneo->idTorneo, $emergente->idEmergente]))
             ->assertRedirect();
         $this->assertDatabaseMissing('emergentes_torneo', ['idEmergente' => $emergente->idEmergente]);
     }
@@ -239,7 +239,7 @@ class TorneoSubRecursosTest extends TestCase
         $ejecutivoB = $this->crearEjecutivo($colegioB);
         $torneoB    = $this->crearTorneo($colegioB, $ejecutivoB);
 
-        $this->actingAs($ejecutivoA)->get(route('emergentes.index', $torneoB->idTorneo))
+        $this->actingAs($ejecutivoA)->get(route('torneos.emergentes.index', $torneoB->idTorneo))
             ->assertForbidden();
     }
 }

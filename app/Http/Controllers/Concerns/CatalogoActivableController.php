@@ -53,7 +53,7 @@ abstract class CatalogoActivableController extends Controller
         return view($this->vista(), ['tipos' => $query->get()]);
     }
 
-    public function toggleActivo(int $id): RedirectResponse
+    public function cambiarEstado(int $id): RedirectResponse
     {
         $tipo   = $this->registroDelColegio($id);
         $estado = $this->alternarActivo($tipo);

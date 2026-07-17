@@ -92,7 +92,7 @@ class TipoSesionAcademicaControllerTest extends TestCase
         $instructor = $this->crearInstructor($colegio);
         $tipo       = $this->crearTipoSesion($colegio);
 
-        $this->actingAs($instructor)->put(route('tipos-sesion-academica.toggleActivo', $tipo->idTipoSesion))
+        $this->actingAs($instructor)->put(route('tipos-sesion-academica.estado', $tipo->idTipoSesion))
             ->assertRedirect(route('tipos-sesion-academica.index'));
 
         $this->assertFalse($tipo->fresh()->esActivo);
@@ -144,7 +144,7 @@ class TipoSesionAcademicaControllerTest extends TestCase
         $instructorA = $this->crearInstructor($colegioA);
         $tipoB       = $this->crearTipoSesion($colegioB);
 
-        $this->actingAs($instructorA)->put(route('tipos-sesion-academica.toggleActivo', $tipoB->idTipoSesion))
+        $this->actingAs($instructorA)->put(route('tipos-sesion-academica.estado', $tipoB->idTipoSesion))
             ->assertForbidden();
 
         $this->actingAs($instructorA)->delete(route('tipos-sesion-academica.destroy', $tipoB->idTipoSesion))

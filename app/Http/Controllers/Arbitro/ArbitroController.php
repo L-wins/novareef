@@ -194,7 +194,7 @@ class ArbitroController extends Controller
 
     // ── Gestión de estados ────────────────
 
-    public function toggleEstado(ToggleEstadoArbitroRequest $request, int $id): RedirectResponse
+    public function cambiarEstado(ToggleEstadoArbitroRequest $request, int $id): RedirectResponse
     {
         $arbitro = $this->arbitroDelColegio($id);
         $datos   = $request->validated();
@@ -253,7 +253,7 @@ class ArbitroController extends Controller
     /**
      * Resuelve un árbitro por ID dentro del colegio activo — centraliza el
      * filtro de tenant (`idColegio`) que antes se repetía en cada método
-     * (show, edit, update, toggleEstado, archivar, restaurar).
+     * (show, edit, update, cambiarEstado, archivar, restaurar).
      *
      * @param  string[]  $with
      */

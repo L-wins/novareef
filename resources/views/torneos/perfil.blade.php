@@ -73,7 +73,7 @@
                                         data-open-modal="editar-division"
                                         data-div-nombre="{{ $div->nombreDivision }}"
                                         data-div-descripcion="{{ $div->descripcion ?? '' }}"
-                                        data-div-action="{{ route('divisiones.update', $div->idDivision) }}">
+                                        data-div-action="{{ route('torneos.divisiones.update', $div->idDivision) }}">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 <button type="button"
@@ -86,7 +86,7 @@
                                 </button>
                             </div>
                             <form id="form-del-div-{{ $div->idDivision }}" method="POST"
-                                  action="{{ route('divisiones.destroy', $div->idDivision) }}" style="display:none;">
+                                  action="{{ route('torneos.divisiones.destroy', $div->idDivision) }}" style="display:none;">
                                 @csrf
                                 @method('DELETE')
                             </form>
@@ -95,7 +95,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('divisiones.store', $torneo->idTorneo) }}" class="perfil-add-form">
+            <form method="POST" action="{{ route('torneos.divisiones.store', $torneo->idTorneo) }}" class="perfil-add-form">
                 @csrf
                 <div class="form-group">
                     <label class="form-label">Nombre de la división <span class="req">*</span></label>
@@ -160,7 +160,7 @@
                                         data-sede-departamento="{{ $sede->departamento ?? '' }}"
                                         data-sede-urlmaps="{{ $sede->urlMaps ?? '' }}"
                                         data-sede-observaciones="{{ $sede->observaciones ?? '' }}"
-                                        data-sede-action="{{ route('sedes.update', $sede->idSede) }}">
+                                        data-sede-action="{{ route('torneos.sedes.update', $sede->idSede) }}">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 <button type="button"
@@ -173,7 +173,7 @@
                                 </button>
                             </div>
                             <form id="form-del-sede-{{ $sede->idSede }}" method="POST"
-                                  action="{{ route('sedes.destroy', $sede->idSede) }}" style="display:none;">
+                                  action="{{ route('torneos.sedes.destroy', $sede->idSede) }}" style="display:none;">
                                 @csrf
                                 @method('DELETE')
                             </form>
@@ -182,7 +182,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('sedes.store', $torneo->idTorneo) }}" class="perfil-add-form">
+            <form method="POST" action="{{ route('torneos.sedes.store', $torneo->idTorneo) }}" class="perfil-add-form">
                 @csrf
                 <div class="form-group">
                     <label class="form-label">Nombre de la sede <span class="req">*</span></label>
@@ -270,7 +270,7 @@
                                                             data-open-modal="editar-tarifa"
                                                             data-tarifa-valor="{{ (int) $tarifa->valorPago }}"
                                                             data-tarifa-nombre="{{ ($tarifa->rol->nombre ?? '') . ' · ' . ($tarifa->formato->nombre ?? '') }}"
-                                                            data-tarifa-action="{{ route('tarifas.update', $tarifa->idTarifa) }}">
+                                                            data-tarifa-action="{{ route('torneos.divisiones.tarifas.update', $tarifa->idTarifa) }}">
                                                         <i class="fa-solid fa-pen"></i>
                                                     </button>
                                                     <button type="button"
@@ -283,7 +283,7 @@
                                                     </button>
                                                 </div>
                                                 <form id="form-del-tarifa-{{ $tarifa->idTarifa }}" method="POST"
-                                                      action="{{ route('tarifas.destroy', $tarifa->idTarifa) }}" style="display:none;">
+                                                      action="{{ route('torneos.divisiones.tarifas.destroy', $tarifa->idTarifa) }}" style="display:none;">
                                                     @csrf
                                                     @method('DELETE')
                                                 </form>
@@ -294,7 +294,7 @@
                             </table>
                         @endif
 
-                        <form method="POST" action="{{ route('tarifas.store', $div->idDivision) }}" class="perfil-add-form">
+                        <form method="POST" action="{{ route('torneos.divisiones.tarifas.store', $div->idDivision) }}" class="perfil-add-form">
                             @csrf
                             <div class="form-group">
                                 <label class="form-label">Rol</label>

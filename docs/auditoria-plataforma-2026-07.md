@@ -50,35 +50,37 @@ mismo dos veces.
 **Verificación de toda la sesión:** suite completa de tests en verde después
 de cada cambio (última corrida: ver commit), `npm run build` limpio.
 
+**Ronda 3 — limpieza final:**
+- **Superadmin cross-tenant en guard `web` eliminado por completo**
+  (era el punto #1 de "lo que queda", el único que requería decisión de
+  producto). Se confirmó por grep exhaustivo de los 12 seeders que ningún
+  camino legítimo crea `usuarios.rolUsuario = 'superadmin'` — la fila solo
+  podía existir como "fantasma" (ver `LimpiarUsuariosFantasma`). Eliminados:
+  `ColegioController` (guard web), `SoloSuperAdmin` middleware, vistas
+  `resources/views/colegios/*`, ruta `/colegios`, el bloque de nav
+  condicional en `layouts/app.blade.php`, y su test. El único superadmin
+  real del sistema sigue siendo el del guard `admin`.
+- **Nomenclatura de rutas unificada** (era el punto #6): sub-recursos de
+  Torneo renombrados a `torneos.divisiones.*`, `torneos.sedes.*`,
+  `torneos.divisiones.tarifas.*`, `torneos.emergentes.*`. "Cambiar estado"
+  unificado a un único patrón (`PUT /{id}/estado` + método `cambiarEstado`)
+  en Arbitro, CategoriaArbitro, TipoSancion y TipoSesionAcademica —
+  `AdminPlanController::toggleActivo/toggleVisible` se dejó fuera a
+  propósito: son dos flags independientes (visible y activo), no un único
+  estado, y forzarlos al mismo patrón sería incorrecto.
+
 ---
 
 ## Lo que queda — todo bajo, nada urgente
 
-### 1. Superadmin cross-tenant en guard `web` (Bajo — decisión de producto pendiente)
-
-`app/Http/Controllers/Colegio/ColegioController.php` y
-`app/Http/Middleware/SoloSuperAdmin.php` — existe un "superadmin"
-cross-tenant por diseño en el guard `web` (tabla `usuarios`, columna
-`rolUsuario = 'superadmin'`), separado del superadmin real del guard
-`admin`. `app/Console/Commands/LimpiarUsuariosFantasma.php` documenta
-cualquier fila así como "fantasma" y la elimina — diseño internamente
-contradictorio. No explotable hoy (ningún formulario permite asignar
-`rolUsuario = superadmin`); ya tiene cobertura de test
-(`ColegioControllerTest`) que fija el comportamiento actual.
-
-**Corrección:** formalizar uno de los dos caminos — endurecer y auditar el
-superadmin del guard `web`, o eliminarlo por completo y depender solo del
-guard `admin`. Requiere decisión de producto (¿se usa hoy en producción?),
-no es un fix de código.
-
-### 2. Mass assignment — defensa adicional opcional (Bajo, no urgente)
+### 1. Mass assignment — defensa adicional opcional (Bajo, no urgente)
 
 Sin hallazgos explotables (cero `$request->all()` pasado a `create()`), la
 seguridad depende de que esa disciplina se mantenga. Recomendación
 opcional: migrar modelos con columnas sensibles a `$guarded` o DTOs
 explícitos como defensa adicional. Hardening preventivo, no un hallazgo activo.
 
-### 3. Patrón "listado con filtros" — centralización incompleta (Bajo)
+### 2. Patrón "listado con filtros" — centralización incompleta (Bajo)
 
 El idioma quedó unificado (`->when()` en todos lados) y Designaciones ya
 tiene su propio Service de lectura, pero Torneo/Partido/Sancion siguen
@@ -86,14 +88,14 @@ armando el filtro directo en el controlador en vez de delegarlo a un
 Service dedicado, a diferencia de Finanzas. No urgente — son métodos
 cortos (15-20 líneas) y ya consistentes entre sí.
 
-### 4. Read/write split incompleto en Sanciones y Académico (Bajo)
+### 3. Read/write split incompleto en Sanciones y Académico (Bajo)
 
 `SancionService` y `SesionAcademicaService`/`AsistenciaAcademicaService`
 mezclan escritura y lectura/agregación en un solo Service, a diferencia de
 Finanzas y ahora Designaciones. Ninguno de los dos se acerca al límite de
 tamaño — dividir ahora sería abstracción prematura. Revisar si crecen.
 
-### 5. Métodos largos a vigilar (Bajo, no roto)
+### 4. Métodos largos a vigilar (Bajo, no roto)
 
 `DesignacionService::reasignarArbitro` (~90 líneas, una sola transacción
 que valida + escribe historial + reasigna + despacha job + emite 2
@@ -101,22 +103,7 @@ eventos) y `FinanzasService::registrarCobroMasivo` (~108 líneas, mejor
 organizado internamente). Candidatos a dividir si se tocan de nuevo, no
 urgente por sí solos.
 
-### 6. Inconsistencias de nomenclatura (deliberadamente no tocado)
-
-- **Torneo rompe la convención `modulo.recurso.accion`** — sus sub-recursos
-  (`divisiones`, `tarifas`, `sedes`, `emergentes`) son rutas de nivel
-  superior en vez de `torneos.divisiones.*`.
-- **3 convenciones distintas para "cambiar estado"**: `PUT .../estado` +
-  `toggleEstado`/`cambiarEstado`; `PUT /{id}` sin sufijo + `toggleActivo`/
-  `toggleActiva` (catálogos); `POST .../archivar` (Arbitro, Torneo).
-
-**Por qué no se tocó:** renombrar una ruta nombrada cascada a cada
-`route()`/`route:name` en vistas Blade, JS y tests — alto radio de impacto,
-bajo riesgo real hoy (es un problema de legibilidad, no un bug). Se deja
-para una sesión dedicada con grep exhaustivo de cada nombre antes de
-renombrar, uno a la vez, con la suite completa corriendo entre cada cambio.
-
-### 7. Admin/AdminUsuarioController.php (Bajo, aceptado por ahora)
+### 5. Admin/AdminUsuarioController.php (Bajo, aceptado por ahora)
 
 Lista completa de colegios para un `<select>` de filtro — aceptable hoy,
 necesitará búsqueda async cuando el número de colegios crezca. No es
@@ -126,9 +113,8 @@ acción inmediata.
 
 ## Cómo usar este documento
 
-Todo lo que queda arriba es legibilidad/consistencia o decisiones de
-producto — no hay ningún bug funcional ni hallazgo de seguridad abierto.
-El único punto que requiere una decisión humana antes de tocar código es
-el #1 (superadmin cross-tenant); el resto se puede abordar en cualquier
+Todo lo que queda arriba es legibilidad/consistencia o hardening
+preventivo opcional — no hay ningún bug funcional, hallazgo de seguridad
+abierto, ni decisión de producto pendiente. Se puede abordar en cualquier
 momento sin apuro, idealmente cuando se vuelva a tocar el archivo en
 cuestión por otra razón.

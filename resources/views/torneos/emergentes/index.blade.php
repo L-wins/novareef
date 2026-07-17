@@ -91,7 +91,7 @@
                                 </button>
                             </div>
                             <form id="form-del-em-{{ $em->idEmergente }}" method="POST"
-                                  action="{{ route('emergentes.destroy', [$torneo->idTorneo, $em->idEmergente]) }}" style="display:none;">
+                                  action="{{ route('torneos.emergentes.destroy', [$torneo->idTorneo, $em->idEmergente]) }}" style="display:none;">
                                 @csrf
                                 @method('DELETE')
                             </form>
@@ -145,7 +145,7 @@
     <div class="detail-grid-card">
         <p class="detail-grid-card-title"><i class="fa-solid fa-user-plus"></i> Asignar emergente</p>
 
-        <form method="POST" action="{{ route('emergentes.store', $torneo->idTorneo) }}" class="perfil-add-form">
+        <form method="POST" action="{{ route('torneos.emergentes.store', $torneo->idTorneo) }}" class="perfil-add-form">
             @csrf
             <div class="form-group">
                 <label class="form-label">Árbitro activo <span class="req">*</span></label>

@@ -113,7 +113,7 @@
                             </td>
                             <td class="text-right">
                                 <div class="acciones-fila">
-                                    <form method="POST" action="{{ route('tipos-sesion-academica.toggleActivo', $tipo->idTipoSesion) }}">
+                                    <form method="POST" action="{{ route('tipos-sesion-academica.estado', $tipo->idTipoSesion) }}">
                                         @csrf
                                         @method('PUT')
                                         <button type="submit" class="btn btn-secondary btn-sm">

@@ -12,7 +12,6 @@ use App\Http\Controllers\Arbitro\CategoriaArbitroController;
 use App\Http\Controllers\Arbitro\EstadoCuentaArbitroController;
 use App\Http\Controllers\Auth\CambioContrasenaController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Colegio\ColegioController;
 use App\Http\Controllers\DashboardController;
 use App\Models\Plan;
 use App\Http\Controllers\Configuracion\ConfiguracionController;
@@ -105,17 +104,17 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::get('/{id}',          [ArbitroController::class, 'show'])->name('show');
         Route::get('/{id}/editar',   [ArbitroController::class, 'edit'])->middleware('permission:editar-arbitros')->name('edit');
         Route::put('/{id}',          [ArbitroController::class, 'update'])->middleware('permission:editar-arbitros')->name('update');
-        Route::put('/{id}/estado',   [ArbitroController::class, 'toggleEstado'])->middleware('permission:editar-arbitros')->name('toggleEstado');
+        Route::put('/{id}/estado',   [ArbitroController::class, 'cambiarEstado'])->middleware('permission:editar-arbitros')->name('estado');
         Route::post('/{id}/archivar',  [ArbitroController::class, 'archivar'])->middleware('permission:editar-arbitros')->name('archivar');
         Route::post('/{id}/restaurar', [ArbitroController::class, 'restaurar'])->middleware('permission:editar-arbitros')->name('restaurar');
     });
 
     //  Categorías de árbitro ─
     Route::prefix('categorias-arbitro')->name('categorias.arbitro.')->middleware('permission:editar-arbitros')->group(function () {
-        Route::get('/',        [CategoriaArbitroController::class, 'index'])->name('index');
-        Route::post('/',       [CategoriaArbitroController::class, 'store'])->name('store');
-        Route::put('/{id}',    [CategoriaArbitroController::class, 'toggleActiva'])->name('toggleActiva');
-        Route::delete('/{id}', [CategoriaArbitroController::class, 'destroy'])->name('destroy');
+        Route::get('/',             [CategoriaArbitroController::class, 'index'])->name('index');
+        Route::post('/',            [CategoriaArbitroController::class, 'store'])->name('store');
+        Route::put('/{id}/estado',  [CategoriaArbitroController::class, 'cambiarEstado'])->name('estado');
+        Route::delete('/{id}',      [CategoriaArbitroController::class, 'destroy'])->name('destroy');
     });
 
     //  Torneos 
@@ -134,23 +133,23 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
 
     //  Divisiones del torneo ─
     Route::middleware('permission:editar-torneos')->group(function () {
-        Route::post('/torneos/{torneoId}/divisiones', [DivisionTorneoController::class, 'store'])->name('divisiones.store');
-        Route::put('/divisiones/{id}',                [DivisionTorneoController::class, 'update'])->name('divisiones.update');
-        Route::delete('/divisiones/{id}',             [DivisionTorneoController::class, 'destroy'])->name('divisiones.destroy');
+        Route::post('/torneos/{torneoId}/divisiones', [DivisionTorneoController::class, 'store'])->name('torneos.divisiones.store');
+        Route::put('/divisiones/{id}',                [DivisionTorneoController::class, 'update'])->name('torneos.divisiones.update');
+        Route::delete('/divisiones/{id}',             [DivisionTorneoController::class, 'destroy'])->name('torneos.divisiones.destroy');
     });
 
     //  Sedes del torneo
     Route::middleware('permission:editar-torneos')->group(function () {
-        Route::post('/torneos/{torneoId}/sedes', [SedeTorneoController::class, 'store'])->name('sedes.store');
-        Route::put('/sedes/{id}',                [SedeTorneoController::class, 'update'])->name('sedes.update');
-        Route::delete('/sedes/{id}',             [SedeTorneoController::class, 'destroy'])->name('sedes.destroy');
+        Route::post('/torneos/{torneoId}/sedes', [SedeTorneoController::class, 'store'])->name('torneos.sedes.store');
+        Route::put('/sedes/{id}',                [SedeTorneoController::class, 'update'])->name('torneos.sedes.update');
+        Route::delete('/sedes/{id}',             [SedeTorneoController::class, 'destroy'])->name('torneos.sedes.destroy');
     });
 
     //  Tarifas por división
     Route::middleware('permission:editar-torneos')->group(function () {
-        Route::post('/divisiones/{divisionId}/tarifas', [TarifaTorneoController::class, 'store'])->name('tarifas.store');
-        Route::put('/tarifas/{id}',                     [TarifaTorneoController::class, 'update'])->name('tarifas.update');
-        Route::delete('/tarifas/{id}',                  [TarifaTorneoController::class, 'destroy'])->name('tarifas.destroy');
+        Route::post('/divisiones/{divisionId}/tarifas', [TarifaTorneoController::class, 'store'])->name('torneos.divisiones.tarifas.store');
+        Route::put('/tarifas/{id}',                     [TarifaTorneoController::class, 'update'])->name('torneos.divisiones.tarifas.update');
+        Route::delete('/tarifas/{id}',                  [TarifaTorneoController::class, 'destroy'])->name('torneos.divisiones.tarifas.destroy');
     });
 
     //  Reglamentos
@@ -159,7 +158,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     });
 
     //  Emergentes del torneo
-    Route::prefix('torneos/{torneoId}/emergentes')->name('emergentes.')
+    Route::prefix('torneos/{torneoId}/emergentes')->name('torneos.emergentes.')
         ->middleware('permission:crear-designaciones')->group(function () {
             Route::get('/',       [EmergenteTorneoController::class, 'index'])->name('index');
             Route::post('/',      [EmergenteTorneoController::class, 'store'])->name('store');
@@ -327,7 +326,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     Route::prefix('tipos-sesion-academica')->name('tipos-sesion-academica.')->middleware(['permission:editar-academico', 'modulo:academico'])->group(function () {
         Route::get('/',        [TipoSesionAcademicaController::class, 'index'])->name('index');
         Route::post('/',       [TipoSesionAcademicaController::class, 'store'])->name('store');
-        Route::put('/{id}',    [TipoSesionAcademicaController::class, 'toggleActivo'])->name('toggleActivo');
+        Route::put('/{id}/estado', [TipoSesionAcademicaController::class, 'cambiarEstado'])->name('estado');
         Route::delete('/{id}', [TipoSesionAcademicaController::class, 'destroy'])->name('destroy');
     });
 
@@ -356,7 +355,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     Route::prefix('tipos-sancion')->name('tipos-sancion.')->middleware(['permission:editar-sanciones', 'modulo:sanciones'])->group(function () {
         Route::get('/',        [TipoSancionController::class, 'index'])->name('index');
         Route::post('/',       [TipoSancionController::class, 'store'])->name('store');
-        Route::put('/{id}',    [TipoSancionController::class, 'toggleActivo'])->name('toggleActivo');
+        Route::put('/{id}/estado', [TipoSancionController::class, 'cambiarEstado'])->name('estado');
         Route::delete('/{id}', [TipoSancionController::class, 'destroy'])->name('destroy');
     });
 
@@ -380,15 +379,4 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
             Route::put('/{id}/revocar',  [CuentaAdminController::class, 'revocar'])->name('revocar');
             Route::put('/{id}/reactivar',[CuentaAdminController::class, 'reactivar'])->name('reactivar');
         });
-
-    //  Colegios — solo superadmin
-    Route::prefix('colegios')->name('colegios.')->middleware('solo.superadmin')->group(function () {
-        Route::get('/',            [ColegioController::class, 'index'])->name('index');
-        Route::get('/crear',       [ColegioController::class, 'create'])->name('create');
-        Route::post('/',           [ColegioController::class, 'store'])->name('store');
-        Route::get('/{id}',        [ColegioController::class, 'show'])->name('show');
-        Route::get('/{id}/editar', [ColegioController::class, 'edit'])->name('edit');
-        Route::put('/{id}',        [ColegioController::class, 'update'])->name('update');
-        Route::put('/{id}/estado', [ColegioController::class, 'toggleEstado'])->name('toggleEstado');
-    });
 });

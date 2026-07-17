@@ -74,7 +74,7 @@
                                 <div style="display:flex;gap:0.5rem;justify-content:flex-end;align-items:center;">
 
                                     {{-- Toggle activa --}}
-                                    <form method="POST" action="{{ route('categorias.arbitro.toggleActiva', $categoria->idCategoria) }}">
+                                    <form method="POST" action="{{ route('categorias.arbitro.estado', $categoria->idCategoria) }}">
                                         @csrf
                                         @method('PUT')
                                         <button type="submit" class="btn btn-secondary btn-sm"
