@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Mail\PartidoAplazadoMail;
+use App\Models\NotificacionEnviada;
 use App\Models\Partido;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,9 +38,19 @@ class NotificarAplazamientoJob implements ShouldQueue
                 continue;
             }
 
+            // version en la referencia: un partido puede aplazarse más de una
+            // vez en su historial, cada aplazamiento es una notificación
+            // legítima distinta — solo se deduplica contra reintentos de cola
+            // de la misma transición.
+            $referencia = "{$partido->idPartido}:{$partido->version}";
+            if (! NotificacionEnviada::reclamar('aplazamiento', $referencia, $email)) {
+                continue;
+            }
+
             try {
                 Mail::to($email)->send(new PartidoAplazadoMail($partido, $designacion));
             } catch (\Throwable $e) {
+                report($e);
                 Log::error("NotificarAplazamientoJob: fallo email. idPartido={$partido->idPartido}, idArbitro={$designacion->idArbitro}", [
                     'error' => $e->getMessage(),
                 ]);

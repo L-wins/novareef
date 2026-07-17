@@ -89,11 +89,15 @@ final class SancionService
      */
     public function cumplir(Sancion $sancion, ?User $usuario, ?string $motivo = null): void
     {
-        if (! in_array($sancion->estadoSancion, [Sancion::ESTADO_ACTIVA, Sancion::ESTADO_APELADA], true)) {
-            throw new \RuntimeException('Solo se pueden cumplir sanciones activas o apeladas.');
-        }
+        DB::transaction(function () use ($sancion, $usuario, $motivo): void {
+            $sancion = $this->bloquear($sancion);
 
-        $this->transicionar($sancion, Sancion::ESTADO_CUMPLIDA, $usuario, HistorialSancion::TIPO_CUMPLIDA, $motivo);
+            if (! in_array($sancion->estadoSancion, [Sancion::ESTADO_ACTIVA, Sancion::ESTADO_APELADA], true)) {
+                throw new \RuntimeException('Solo se pueden cumplir sanciones activas o apeladas.');
+            }
+
+            $this->transicionar($sancion, Sancion::ESTADO_CUMPLIDA, $usuario, HistorialSancion::TIPO_CUMPLIDA, $motivo);
+        });
     }
 
     /**
@@ -105,11 +109,13 @@ final class SancionService
      */
     public function anular(Sancion $sancion, User $usuario, string $motivo): void
     {
-        if ($sancion->estadoSancion === Sancion::ESTADO_ANULADA) {
-            throw new \RuntimeException('La sanción ya está anulada.');
-        }
-
         DB::transaction(function () use ($sancion, $usuario, $motivo): void {
+            $sancion = $this->bloquear($sancion);
+
+            if ($sancion->estadoSancion === Sancion::ESTADO_ANULADA) {
+                throw new \RuntimeException('La sanción ya está anulada.');
+            }
+
             $this->transicionar($sancion, Sancion::ESTADO_ANULADA, $usuario, HistorialSancion::TIPO_ANULADA, $motivo);
 
             if ($sancion->idMovimientoFinanciero !== null) {
@@ -129,11 +135,15 @@ final class SancionService
      */
     public function apelar(Sancion $sancion, User $usuario, ?string $motivo = null): void
     {
-        if (! $sancion->estaActiva()) {
-            throw new \RuntimeException('Solo se pueden apelar sanciones activas.');
-        }
+        DB::transaction(function () use ($sancion, $usuario, $motivo): void {
+            $sancion = $this->bloquear($sancion);
 
-        $this->transicionar($sancion, Sancion::ESTADO_APELADA, $usuario, HistorialSancion::TIPO_APELADA, $motivo);
+            if (! $sancion->estaActiva()) {
+                throw new \RuntimeException('Solo se pueden apelar sanciones activas.');
+            }
+
+            $this->transicionar($sancion, Sancion::ESTADO_APELADA, $usuario, HistorialSancion::TIPO_APELADA, $motivo);
+        });
     }
 
     /**
@@ -145,15 +155,17 @@ final class SancionService
      */
     public function resolverApelacion(Sancion $sancion, string $resultado, User $usuario, ?string $motivo = null): void
     {
-        if (! $sancion->estaApelada()) {
-            throw new \RuntimeException('Solo se pueden resolver apelaciones de sanciones en estado apelada.');
-        }
-
         if (! in_array($resultado, ['confirmada', 'revocada'], true)) {
             throw new \RuntimeException('El resultado de la apelación debe ser "confirmada" o "revocada".');
         }
 
         DB::transaction(function () use ($sancion, $resultado, $usuario, $motivo): void {
+            $sancion = $this->bloquear($sancion);
+
+            if (! $sancion->estaApelada()) {
+                throw new \RuntimeException('Solo se pueden resolver apelaciones de sanciones en estado apelada.');
+            }
+
             if ($resultado === 'confirmada') {
                 $this->transicionar($sancion, Sancion::ESTADO_CUMPLIDA, $usuario, HistorialSancion::TIPO_APELACION_RESUELTA, $motivo ?? 'Apelación confirmada — sanción sostenida');
                 return;
@@ -200,28 +212,40 @@ final class SancionService
         return compact('activasCount', 'apelacionesPendientes', 'recientes');
     }
 
-    // ── Helper privado ──────────────────
+    // ── Helpers privados ──────────────────
+
+    /**
+     * Relee la sanción con lockForUpdate() dentro de la transacción activa —
+     * sin esto, dos acciones casi simultáneas sobre la misma sanción (ej.
+     * apelar() vs cumplir(), o VencerSancionesJob corriendo contra una
+     * acción manual) pueden ambas validar el estado sobre la misma instancia
+     * obsoleta y la que escribe último pisa silenciosamente a la otra,
+     * dejando historial contradictorio. Mismo patrón que
+     * FinanzasService::registrarAbono()/anularMovimiento().
+     */
+    private function bloquear(Sancion $sancion): Sancion
+    {
+        return Sancion::whereKey($sancion->getKey())->lockForUpdate()->firstOrFail();
+    }
 
     private function transicionar(Sancion $sancion, string $estadoNuevo, ?User $usuario, string $tipoAccion, ?string $detalle): void
     {
-        DB::transaction(function () use ($sancion, $estadoNuevo, $usuario, $tipoAccion, $detalle): void {
-            $estadoAnterior = $sancion->estadoSancion;
+        $estadoAnterior = $sancion->estadoSancion;
 
-            $sancion->update([
-                'estadoSancion' => $estadoNuevo,
-                'version'       => $sancion->version + 1,
-            ]);
+        $sancion->update([
+            'estadoSancion' => $estadoNuevo,
+            'version'       => $sancion->version + 1,
+        ]);
 
-            HistorialSancion::create([
-                'idSancion'       => $sancion->idSancion,
-                'idColegio'       => $sancion->idColegio,
-                'idArbitro'       => $sancion->idArbitro,
-                'idUsuarioAccion' => $usuario?->idUsuario,
-                'tipoAccion'      => $tipoAccion,
-                'estadoAnterior'  => $estadoAnterior,
-                'estadoNuevo'     => $estadoNuevo,
-                'detalle'         => $detalle,
-            ]);
-        });
+        HistorialSancion::create([
+            'idSancion'       => $sancion->idSancion,
+            'idColegio'       => $sancion->idColegio,
+            'idArbitro'       => $sancion->idArbitro,
+            'idUsuarioAccion' => $usuario?->idUsuario,
+            'tipoAccion'      => $tipoAccion,
+            'estadoAnterior'  => $estadoAnterior,
+            'estadoNuevo'     => $estadoNuevo,
+            'detalle'         => $detalle,
+        ]);
     }
 }

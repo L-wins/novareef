@@ -57,7 +57,7 @@
                         <span>Cambiar foto</span>
                     </label>
                     <input type="file" id="input-foto" name="foto"
-                           accept="image/jpeg,image/png,image/gif,image/webp,image/bmp,image/svg+xml"
+                           accept="image/jpeg,image/png,image/gif,image/webp,image/bmp"
                            style="display:none;">
                 </form>
 

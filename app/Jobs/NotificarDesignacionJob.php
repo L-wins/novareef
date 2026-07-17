@@ -33,6 +33,13 @@ class NotificarDesignacionJob implements ShouldQueue
             'rol',
         ]);
 
+        // Sin este guard, un reintento de cola tras una caída parcial del
+        // worker (Mail::send() ya llegó a destino, pero el job "falla" antes
+        // de llegar al update de abajo) reenvía el mismo correo/SMS.
+        if ($designacion->notificacionEnviada) {
+            return;
+        }
+
         $email = $designacion->arbitro?->usuario?->emailUsuario;
 
         if (! $email) {
@@ -43,6 +50,7 @@ class NotificarDesignacionJob implements ShouldQueue
         try {
             Mail::to($email)->send(new DesignacionNotificacionMail($designacion));
         } catch (\Throwable $e) {
+            report($e);
             Log::error("NotificarDesignacionJob: fallo email. idDesignacion={$designacion->idDesignacion}", [
                 'error' => $e->getMessage(),
             ]);

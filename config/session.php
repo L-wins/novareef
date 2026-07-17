@@ -170,7 +170,14 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // Sin default explícito, un operador que olvide setear SESSION_SECURE_COOKIE
+    // en producción deja la cookie de sesión viajar sin flag Secure. Cae a
+    // true automáticamente fuera de local/testing en vez de depender de que
+    // alguien recuerde agregarlo al .env del servidor. Usa env('APP_ENV') en
+    // vez de app()->environment(): este archivo se evalúa mientras Laravel
+    // todavía está cargando la config, antes de que el binding 'env' del
+    // contenedor exista — app()->environment() aquí revienta el boot entero.
+    'secure' => env('SESSION_SECURE_COOKIE', ! in_array(env('APP_ENV', 'production'), ['local', 'testing'], true)),
 
     /*
     |--------------------------------------------------------------------------

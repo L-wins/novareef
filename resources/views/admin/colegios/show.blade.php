@@ -55,7 +55,12 @@
                 @foreach(['activo' => ['label'=>'Activo','class'=>'badge--green'],
                            'suspendido' => ['label'=>'Suspendido','class'=>'badge--red']] as $estado => $opts)
                 @if($colegio->estadoColegio !== $estado)
-                <form method="POST" action="{{ route('admin.colegios.toggleEstado', $colegio->idColegio) }}">
+                <form method="POST" action="{{ route('admin.colegios.toggleEstado', $colegio->idColegio) }}"
+                      data-confirm-submit
+                      data-confirm-title="Cambiar estado"
+                      data-confirm-text="¿Cambiar el estado de «{{ $colegio->nombreColegio }}» a {{ strtolower($opts['label']) }}?{{ $estado === 'suspendido' ? ' Todos los usuarios del colegio perderán acceso de inmediato.' : '' }}"
+                      data-confirm-color="{{ $estado === 'suspendido' ? '#ef4444' : '#22c55e' }}"
+                      data-confirm-btn="Sí, cambiar">
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="estado" value="{{ $estado }}">

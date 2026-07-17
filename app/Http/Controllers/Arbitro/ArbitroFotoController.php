@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Arbitro;
 
+use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Arbitro\SubirFotoArbitroRequest;
 use App\Models\Arbitro;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ArbitroFotoController extends Controller
 {
+    use ResuelveColegio;
+
     public function __construct(
         private readonly ArbitroFotoService $fotos,
     ) {}
@@ -48,7 +51,7 @@ class ArbitroFotoController extends Controller
         $arbitro = Arbitro::findOrFail($id);
 
         $esPropietario = (int) $arbitro->idUsuario === (int) Auth::id();
-        $puedeEditar   = (int) $arbitro->idColegio === (int) Auth::user()->idColegio
+        $puedeEditar   = (int) $arbitro->idColegio === $this->idColegioActivo()
             && Auth::user()->can('editar-arbitros');
 
         abort_unless($esPropietario || $puedeEditar, 403);

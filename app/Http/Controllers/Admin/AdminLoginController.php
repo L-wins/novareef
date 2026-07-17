@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AdminLoginRequest;
+use App\Http\Requests\Admin\Verificar2FALoginRequest;
 use App\Models\Admin;
 use App\Services\AdminTwoFactorService;
 use Illuminate\Http\RedirectResponse;
@@ -28,13 +30,8 @@ class AdminLoginController extends Controller
         return view('admin.login');
     }
 
-    public function login(Request $request): RedirectResponse
+    public function login(AdminLoginRequest $request): RedirectResponse
     {
-        $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ]);
-
         if (RateLimiter::tooManyAttempts($this->throttleKey($request), config('admin.max_intentos'))) {
             $segundos = RateLimiter::availableIn($this->throttleKey($request));
             return back()
@@ -76,16 +73,22 @@ class AdminLoginController extends Controller
         return view('admin.2fa');
     }
 
-    public function verify2fa(Request $request): RedirectResponse
+    public function verify2fa(Verificar2FALoginRequest $request): RedirectResponse
     {
-        $request->validate([
-            'code' => ['required', 'digits:6'],
-        ]);
-
         $adminId = $request->session()->get('admin_2fa_pending');
 
         if (! $adminId) {
             return redirect()->route('admin.login');
+        }
+
+        $throttleKey = $this->throttleKey2fa($request, $adminId);
+
+        // Defensa en profundidad: el throttle genérico de escritura (30/60s) ya
+        // limita el ritmo, pero un TOTP de 6 dígitos merece su propio límite en
+        // vez de depender de uno compartido con el resto de rutas admin.
+        if (RateLimiter::tooManyAttempts($throttleKey, config('admin.max_intentos'))) {
+            $segundos = RateLimiter::availableIn($throttleKey);
+            return back()->withErrors(['code' => "Demasiados intentos fallidos. Intenta nuevamente en {$segundos} segundos."]);
         }
 
         $admin = Admin::find($adminId);
@@ -100,9 +103,11 @@ class AdminLoginController extends Controller
         $this->registrarLog($request, $admin->email, $valido);
 
         if (! $valido) {
+            RateLimiter::hit($throttleKey, config('admin.bloqueo_segundos'));
             return back()->withErrors(['code' => 'Código incorrecto. Verifica tu aplicación de autenticación.']);
         }
 
+        RateLimiter::clear($throttleKey);
         $request->session()->forget('admin_2fa_pending');
         Auth::guard('admin')->login($admin);
 
@@ -126,6 +131,15 @@ class AdminLoginController extends Controller
     private function throttleKey(Request $request): string
     {
         return 'admin-login:' . $request->ip() . '|' . $request->input('email');
+    }
+
+    /**
+     * Clave única por IP + admin pendiente de verificar — el 2FA no viaja con
+     * email en el payload, así que la identidad la da la sesión, no el input.
+     */
+    private function throttleKey2fa(Request $request, int $adminId): string
+    {
+        return 'admin-2fa:' . $request->ip() . '|' . $adminId;
     }
 
     /**

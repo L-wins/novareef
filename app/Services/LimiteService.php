@@ -8,6 +8,7 @@ use App\Models\Arbitro;
 use App\Models\Colegio;
 use App\Models\Plan;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 final class LimiteService
 {
@@ -123,6 +124,28 @@ final class LimiteService
                 "Alcanzaste el límite de cuentas administrativas de tu plan actual ({$this->limiteCuentasAdmin($idColegio)}). Actualiza tu plan para crear más cuentas."
             );
         }
+    }
+
+    /**
+     * Bloquea la fila del colegio dentro de la transacción activa del caller —
+     * debe ser el primer statement antes de chequear cupo y crear. Sin esto,
+     * dos altas simultáneas cuando el colegio está a 1 de su límite pueden
+     * ambas pasar el chequeo `COUNT(*) < límite` y terminar superando el plan
+     * pagado sin ningún error visible (mismo bug de carrera ya corregido en
+     * Finanzas, aplicado a cupos en vez de dinero). Al bloquear la fila del
+     * colegio, la segunda transacción espera a que la primera confirme (o
+     * revierta) antes de hacer su propio conteo, así que siempre ve el
+     * resultado ya escrito.
+     *
+     * @throws \RuntimeException  Si se llama fuera de una transacción activa.
+     */
+    public function bloquearColegio(int $idColegio): void
+    {
+        if (DB::transactionLevel() < 1) {
+            throw new \RuntimeException('bloquearColegio() debe llamarse dentro de una transacción activa.');
+        }
+
+        Colegio::whereKey($idColegio)->lockForUpdate()->firstOrFail();
     }
 
     private function plan(int $idColegio): ?Plan

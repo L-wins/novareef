@@ -38,7 +38,10 @@ abstract class ColegioRequest extends FormRequest
             'ciudadColegio'       => ['nullable', 'string', 'max:100'],
             'departamentoColegio' => ['nullable', 'string', 'max:100'],
             'paisColegio'         => ['required', 'string', 'max:100'],
-            'logoColegio'         => ['nullable', 'url', 'max:500'],
+            // 'url:http,https' restringe el esquema — la regla 'url' genérica
+            // acepta cualquier esquema válido, incluido 'javascript:', lo que
+            // abriría auto-XSS al renderizar <img src="..."> con ese valor.
+            'logoColegio'         => ['nullable', 'url:http,https', 'max:500'],
         ];
     }
 

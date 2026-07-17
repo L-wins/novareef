@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Mail\DesignacionRechazadaMail;
 use App\Models\Designacion;
+use App\Models\NotificacionEnviada;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -41,12 +42,15 @@ class NotificarRechazoJob implements ShouldQueue
             return;
         }
 
-        try {
-            Mail::to($emailDesignador)->send(new DesignacionRechazadaMail($designacion));
-        } catch (\Throwable $e) {
-            Log::error("NotificarRechazoJob: fallo email. idDesignacion={$designacion->idDesignacion}", [
-                'error' => $e->getMessage(),
-            ]);
+        if (NotificacionEnviada::reclamar('rechazo', (string) $designacion->idDesignacion, $emailDesignador)) {
+            try {
+                Mail::to($emailDesignador)->send(new DesignacionRechazadaMail($designacion));
+            } catch (\Throwable $e) {
+                report($e);
+                Log::error("NotificarRechazoJob: fallo email. idDesignacion={$designacion->idDesignacion}", [
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         $this->enviarSmsDesignador($designacion);

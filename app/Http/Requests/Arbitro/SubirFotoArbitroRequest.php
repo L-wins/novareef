@@ -15,8 +15,11 @@ class SubirFotoArbitroRequest extends FormRequest
 
     public function rules(): array
     {
+        // Sin 'svg': es XML y puede embeber <script>/manejadores de evento — se
+        // guarda en disco público y se sirve por URL directa, así que un SVG
+        // malicioso "como foto" sería XSS almacenado contra quien abra el link.
         return [
-            'foto' => ['required', 'image', 'mimes:jpg,jpeg,png,gif,webp,bmp,svg', 'max:5120'],
+            'foto' => ['required', 'image', 'mimes:jpg,jpeg,png,gif,webp,bmp', 'max:5120'],
         ];
     }
 
@@ -25,7 +28,7 @@ class SubirFotoArbitroRequest extends FormRequest
         return [
             'foto.required' => 'Debes seleccionar una imagen.',
             'foto.image'    => 'El archivo debe ser una imagen.',
-            'foto.mimes'    => 'Formatos permitidos: jpg, jpeg, png, gif, webp, bmp, svg.',
+            'foto.mimes'    => 'Formatos permitidos: jpg, jpeg, png, gif, webp, bmp.',
             'foto.max'      => 'La imagen no puede superar 5 MB.',
         ];
     }

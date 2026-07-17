@@ -32,19 +32,24 @@ final class CuentaAdminService
         string  $emailColegioNotificacion,
         string  $rol,
     ): User {
-        $this->limites->asegurarPuedeCrearCuentaAdmin($idColegio);
+        return DB::transaction(function () use (
+            $idColegio, $nombreColegio, $urlAcceso, $nombre, $username, $email, $emailColegioNotificacion, $rol,
+        ): User {
+            $this->limites->bloquearColegio($idColegio);
+            $this->limites->asegurarPuedeCrearCuentaAdmin($idColegio);
 
-        return $this->credenciales->registrarConCredenciales(
-            idColegio:         $idColegio,
-            nombre:            $nombre,
-            email:             $email,
-            telefono:          '',
-            rol:               $rol,
-            nombreColegio:     $nombreColegio,
-            urlAcceso:         $urlAcceso,
-            usernameUsuario:   $username,
-            emailNotificacion: $emailColegioNotificacion,
-        );
+            return $this->credenciales->registrarConCredenciales(
+                idColegio:         $idColegio,
+                nombre:            $nombre,
+                email:             $email,
+                telefono:          '',
+                rol:               $rol,
+                nombreColegio:     $nombreColegio,
+                urlAcceso:         $urlAcceso,
+                usernameUsuario:   $username,
+                emailNotificacion: $emailColegioNotificacion,
+            );
+        });
     }
 
     /** Revoca el acceso de la cuenta sin borrar el registro (bloquea el login). */
@@ -61,9 +66,12 @@ final class CuentaAdminService
      */
     public function reactivar(User $usuario): void
     {
-        $this->limites->asegurarPuedeCrearCuentaAdmin($usuario->idColegio);
+        DB::transaction(function () use ($usuario): void {
+            $this->limites->bloquearColegio($usuario->idColegio);
+            $this->limites->asegurarPuedeCrearCuentaAdmin($usuario->idColegio);
 
-        $usuario->update(['estadoUsuario' => 'activo']);
+            $usuario->update(['estadoUsuario' => 'activo']);
+        });
     }
 
     /**

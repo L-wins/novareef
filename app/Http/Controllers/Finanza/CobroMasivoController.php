@@ -24,12 +24,16 @@ class CobroMasivoController extends Controller
     {
         $idColegio = $this->idColegioActivo();
 
-        $arbitros = Arbitro::where('idColegio', $idColegio)
-            ->whereNotIn('estadoArbitro', ['retirado'])
+        // orderBy vía join en vez de ->get()->sortBy() en PHP: el ordenamiento
+        // lo hace el motor de BD (con índice), no una carga completa a memoria
+        // para ordenar después — importa en colegios de ~300 árbitros.
+        $arbitros = Arbitro::where('arbitros.idColegio', $idColegio)
+            ->whereNotIn('arbitros.estadoArbitro', ['retirado'])
+            ->join('usuarios', 'usuarios.idUsuario', '=', 'arbitros.idUsuario')
             ->with('usuario')
-            ->get()
-            ->sortBy(fn (Arbitro $a) => $a->usuario->nombreUsuario ?? '')
-            ->values();
+            ->orderBy('usuarios.nombreUsuario')
+            ->select('arbitros.*')
+            ->get();
 
         $categorias = [
             MovimientoFinanciero::CATEGORIA_MENSUALIDAD  => MovimientoFinanciero::ETIQUETAS_CATEGORIA[MovimientoFinanciero::CATEGORIA_MENSUALIDAD],

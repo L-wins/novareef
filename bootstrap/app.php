@@ -14,6 +14,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Sentry\Laravel\Integration;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
@@ -78,4 +79,9 @@ return Application::configure(basePath: dirname(__DIR__))
             return redirect()->guest($login)
                 ->with('error', 'Tu sesión expiró por inactividad. Ingresa de nuevo para continuar.');
         });
+
+        // Sin esto, sentry/sentry-laravel queda instalado pero inerte: ninguna
+        // excepción (de request ni de job en cola) llega a Sentry, solo al log
+        // local. Requisito documentado por el propio paquete para Laravel 11.
+        Integration::handles($exceptions);
     })->create();

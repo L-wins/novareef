@@ -44,13 +44,14 @@ final class ArbitroService
         string  $fechaIngresoColegio,
         ?string $lugarExpedicionCC,
     ): Arbitro {
-        $this->limites->asegurarPuedeCrearArbitro($idColegio);
-
         return DB::transaction(function () use (
             $idColegio, $nombreColegio, $urlAcceso, $nombreUsuario, $emailUsuario,
             $telefonoUsuario, $idCategoria, $tipoDocumento, $numeroDocumento,
             $fechaIngresoColegio, $lugarExpedicionCC,
         ): Arbitro {
+            $this->limites->bloquearColegio($idColegio);
+            $this->limites->asegurarPuedeCrearArbitro($idColegio);
+
             $usuario = $this->registrarConCredenciales(
                 idColegio:     $idColegio,
                 nombre:        $nombreUsuario,
@@ -162,9 +163,10 @@ final class ArbitroService
      */
     public function restaurar(Arbitro $arbitro): void
     {
-        $this->limites->asegurarPuedeReactivarArbitro($arbitro->idColegio);
-
         DB::transaction(function () use ($arbitro): void {
+            $this->limites->bloquearColegio($arbitro->idColegio);
+            $this->limites->asegurarPuedeReactivarArbitro($arbitro->idColegio);
+
             $arbitro->restore();
             $arbitro->update(['estadoArbitro' => 'inactivo']);
             $arbitro->usuario?->update(['estadoUsuario' => 'activo']);

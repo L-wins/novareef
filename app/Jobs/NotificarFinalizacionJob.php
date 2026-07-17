@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Mail\PartidoFinalizadoMail;
+use App\Models\NotificacionEnviada;
 use App\Models\Partido;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,15 +34,22 @@ class NotificarFinalizacionJob implements ShouldQueue
             'division',
         ]);
 
+        $referencia = "{$partido->idPartido}:{$partido->version}";
+
         foreach ($partido->designaciones as $designacion) {
             $email = $designacion->arbitro?->usuario?->emailUsuario;
             if (! $email) {
                 continue;
             }
 
+            if (! NotificacionEnviada::reclamar('finalizacion', $referencia, $email)) {
+                continue;
+            }
+
             try {
                 Mail::to($email)->send(new PartidoFinalizadoMail($partido, $designacion));
             } catch (\Throwable $e) {
+                report($e);
                 Log::error("NotificarFinalizacionJob: fallo email. idPartido={$partido->idPartido}, idArbitro={$designacion->idArbitro}", [
                     'error' => $e->getMessage(),
                 ]);
