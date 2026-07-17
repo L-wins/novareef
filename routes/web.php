@@ -18,6 +18,7 @@ use App\Models\Plan;
 use App\Http\Controllers\Configuracion\ConfiguracionController;
 use App\Http\Controllers\Configuracion\CuentaAdminController;
 use App\Http\Controllers\Designacion\CalificacionController;
+use App\Http\Controllers\Designacion\DesignacionAccionesController;
 use App\Http\Controllers\Designacion\DesignacionController;
 use App\Http\Controllers\Finanza\BalanceFinancieroController;
 use App\Http\Controllers\Finanza\CobroMasivoController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\Sancion\JustificacionRevisionController;
 use App\Http\Controllers\Sancion\SancionController;
 use App\Http\Controllers\Sancion\TipoSancionController;
 use App\Http\Controllers\Designacion\DisponibilidadController;
+use App\Http\Controllers\Designacion\MisPartidosController;
 use App\Http\Controllers\Torneo\DivisionTorneoController;
 use App\Http\Controllers\Torneo\EmergenteTorneoController;
 use App\Http\Controllers\Torneo\PartidoController;
@@ -180,36 +182,36 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::get('/{id}',     [DesignacionController::class, 'show'])->name('show');
 
         // AJAX — requieren permiso crear-designaciones
-        Route::post('/{id}/asignar',           [DesignacionController::class, 'asignarArbitro'])->middleware('permission:crear-designaciones')->name('asignar');
-        Route::delete('/designacion/{id}',     [DesignacionController::class, 'quitarDesignacion'])->middleware('permission:crear-designaciones')->name('quitar');
-        Route::put('/designacion/{id}/reasignar', [DesignacionController::class, 'reasignarArbitro'])->middleware('permission:crear-designaciones')->name('reasignar');
-        Route::put('/{id}/estado',             [DesignacionController::class, 'cambiarEstadoPartido'])->middleware('permission:crear-designaciones')->name('estado');
+        Route::post('/{id}/asignar',           [DesignacionAccionesController::class, 'asignarArbitro'])->middleware('permission:crear-designaciones')->name('asignar');
+        Route::delete('/designacion/{id}',     [DesignacionAccionesController::class, 'quitarDesignacion'])->middleware('permission:crear-designaciones')->name('quitar');
+        Route::put('/designacion/{id}/reasignar', [DesignacionAccionesController::class, 'reasignarArbitro'])->middleware('permission:crear-designaciones')->name('reasignar');
+        Route::put('/{id}/estado',             [DesignacionAccionesController::class, 'cambiarEstadoPartido'])->middleware('permission:crear-designaciones')->name('estado');
         Route::put('/partido/{id}',            [DesignacionController::class, 'actualizarPartido'])->middleware('permission:crear-designaciones')->name('partido.actualizar');
         Route::post('/partido/{id}/publicar',  [DesignacionController::class, 'publicarPartido'])->middleware('permission:crear-designaciones')->name('partido.publicar');
         Route::delete('/partido/{id}',         [DesignacionController::class, 'eliminarPartido'])->middleware('permission:crear-designaciones')->name('partido.eliminar');
-        Route::put('/partido/{id}/veedor',     [DesignacionController::class, 'asignarVeedor'])->middleware('permission:crear-designaciones')->name('partido.veedor');
+        Route::put('/partido/{id}/veedor',     [DesignacionAccionesController::class, 'asignarVeedor'])->middleware('permission:crear-designaciones')->name('partido.veedor');
         Route::get('/partido/{id}/acta',       [DesignacionController::class, 'generarActa'])->middleware('permission:ver-designaciones')->name('partido.acta');
         Route::get('/partido/{id}/calificaciones', [CalificacionController::class, 'index'])->middleware('permission:crear-calificaciones')->name('calificaciones.index');
     });
 
     //  Finalizar partido — solo el árbitro Central (validado en el controlador,
     //  fuera del grupo designaciones porque el árbitro no tiene ver-designaciones)
-    Route::post('/designaciones/partido/{id}/finalizar', [DesignacionController::class, 'finalizarPartido'])
+    Route::post('/designaciones/partido/{id}/finalizar', [MisPartidosController::class, 'finalizarPartido'])
         ->name('designaciones.partido.finalizar');
 
     //  Mis partidos (árbitro)
     Route::prefix('mis-partidos')->name('mis-partidos.')->group(function () {
-        Route::get('/',           [DesignacionController::class, 'misPartidos'])->name('index');
-        Route::get('/historial',  [DesignacionController::class, 'historialPartidos'])->name('historial');
-        Route::get('/historial/pdf', [DesignacionController::class, 'historialPdf'])->name('historial.pdf');
-        Route::get('/{id}',       [DesignacionController::class, 'detallePartido'])->name('detalle');
-        Route::post('/{id}/confirmar', [DesignacionController::class, 'confirmarDesignacion'])->name('confirmar');
+        Route::get('/',           [MisPartidosController::class, 'misPartidos'])->name('index');
+        Route::get('/historial',  [MisPartidosController::class, 'historialPartidos'])->name('historial');
+        Route::get('/historial/pdf', [MisPartidosController::class, 'historialPdf'])->name('historial.pdf');
+        Route::get('/{id}',       [MisPartidosController::class, 'detallePartido'])->name('detalle');
+        Route::post('/{id}/confirmar', [MisPartidosController::class, 'confirmarDesignacion'])->name('confirmar');
         // Fallback GET: los correos de designación antiguos traían el botón
         // "Confirmar" como enlace directo a la URL POST — un clic desde el
         // correo hace GET y explotaba con MethodNotAllowed. Redirige a la
         // card correspondiente en Mis partidos.
-        Route::get('/{id}/confirmar',  [DesignacionController::class, 'redirigirConfirmacionEmail'])->name('confirmar.email');
-        Route::post('/{id}/rechazar',  [DesignacionController::class, 'rechazarDesignacion'])->name('rechazar');
+        Route::get('/{id}/confirmar',  [MisPartidosController::class, 'redirigirConfirmacionEmail'])->name('confirmar.email');
+        Route::post('/{id}/rechazar',  [MisPartidosController::class, 'rechazarDesignacion'])->name('rechazar');
     });
 
     //  Calificaciones (veedor/ejecutivo)
@@ -221,7 +223,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     Route::middleware('permission:ver-designaciones')->group(function () {
         Route::get('/api/torneos/{id}/divisiones',            [DesignacionController::class, 'getDivisiones'])->name('api.torneos.divisiones');
         Route::get('/api/torneos/{id}/sedes',                 [DesignacionController::class, 'getSedes'])->name('api.torneos.sedes');
-        Route::get('/api/partidos/{id}/arbitros-disponibles', [DesignacionController::class, 'getArbitrosDisponibles'])->name('api.partidos.arbitros-disponibles');
+        Route::get('/api/partidos/{id}/arbitros-disponibles', [DesignacionAccionesController::class, 'getArbitrosDisponibles'])->name('api.partidos.arbitros-disponibles');
     });
 
     //  Disponibilidad — árbitro (registro semanal e indisponibilidad extraordinaria)
@@ -235,7 +237,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         });
 
     //  Disponibilidad general (designador/ejecutivo)
-    Route::get('/disponibilidad/general', [DesignacionController::class, 'disponibilidadGeneral'])
+    Route::get('/disponibilidad/general', [DisponibilidadController::class, 'general'])
         ->name('disponibilidad.general')
         ->middleware('permission:crear-designaciones');
 

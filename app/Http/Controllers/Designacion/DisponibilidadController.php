@@ -17,6 +17,7 @@ use App\Services\DisponibilidadService;
 use App\Support\SemanaNavegacion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -139,6 +140,45 @@ class DisponibilidadController extends Controller
             'arbitro'            => ['idArbitro' => $arbitro->idArbitro, 'nombre' => $arbitro->usuario?->nombreUsuario ?? '—'],
             'disponibilidad'     => $resumen['disponibilidades'],
             'indisponibilidades' => $resumen['indisponibilidades'],
+        ]);
+    }
+
+    /**
+     * Vista de disponibilidad semanal de todo el colegio (designador/ejecutivo)
+     * — movido desde DesignacionController, donde estaba fuera de lugar (ese
+     * archivo superaba las ~700 líneas documentadas; ver auditoría de
+     * plataforma, punto 3.1). Usa los mismos modelos/helpers que el resto de
+     * esta clase, solo que agregados para todo el colegio en vez de un árbitro.
+     */
+    public function general(Request $request): View
+    {
+        $idColegio = $this->idColegioActivo();
+        $semana    = SemanaNavegacion::desde(
+            $request->query('semana'),
+            ConfiguracionColegio::getDiaDisponibilidad($idColegio),
+            recortarAHoy: false,
+        );
+
+        $arbitros = Arbitro::where('idColegio', $idColegio)
+            ->where('estadoArbitro', 'activo')
+            ->with([
+                'usuario',
+                'disponibilidades' => fn ($q) => $q->whereBetween(
+                    'fechaDisponibilidad',
+                    [$semana->lunes->toDateString(), $semana->domingo->toDateString()]
+                ),
+                'indisponibilidadesExtraordinarias' => fn ($q) => $q->whereBetween(
+                    'fechaAfectada',
+                    [$semana->lunes->toDateString(), $semana->domingo->toDateString()]
+                ),
+            ])
+            ->orderBy('idArbitro')
+            ->get();
+
+        return view('disponibilidad.general', [
+            'arbitros' => $arbitros,
+            'semana'   => $semana,
+            'franjas'  => DisponibilidadArbitro::getFranjas(),
         ]);
     }
 }
