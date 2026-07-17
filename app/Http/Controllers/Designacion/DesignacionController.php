@@ -315,4 +315,43 @@ class DesignacionController extends Controller
 
         return $pdf->download($nombre);
     }
+
+    /**
+     * PDF con todos los partidos del torneo en el mismo formato visual del
+     * Word que envían las asociaciones (ver importador, M04), ya con los
+     * árbitros designados. Útil para reenviarle a la asociación el mismo
+     * documento con los nombres puestos.
+     */
+    public function generarListado(Request $request, int $idTorneo): mixed
+    {
+        $idColegio = $this->idColegioActivo();
+
+        $torneo = Torneo::where('idTorneo', $idTorneo)
+            ->where('idColegio', $idColegio)
+            ->firstOrFail();
+
+        $query = Partido::where('idColegio', $idColegio)
+            ->where('idTorneo', $idTorneo)
+            ->with(['division', 'sede', 'slots.rol', 'slots.designacion.arbitro.usuario'])
+            ->orderBy('fechaPartido')
+            ->orderBy('horaPartido');
+
+        if ($request->filled('division')) {
+            $query->where('idDivision', $request->integer('division'));
+        }
+        if ($request->filled('desde')) {
+            $query->whereDate('fechaPartido', '>=', $request->string('desde'));
+        }
+        if ($request->filled('hasta')) {
+            $query->whereDate('fechaPartido', '<=', $request->string('hasta'));
+        }
+
+        $partidos = $query->get();
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('pdf.listado-partidos', ['partidos' => $partidos, 'torneo' => $torneo, 'generadoPor' => Auth::user()]);
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download("listado-partidos-{$torneo->nombreTorneo}-" . now()->format('Y-m-d') . '.pdf');
+    }
 }

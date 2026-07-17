@@ -38,12 +38,19 @@
             </p>
         </div>
 
-        @can('crear-designaciones')
-        <a href="{{ route('designaciones.create') }}" class="btn btn-primary desi-btn-nuevo">
-            <i class="fa-solid fa-plus"></i>
-            Nuevo partido
-        </a>
-        @endcan
+        <div class="desi-hero__acciones">
+            <a href="{{ route('designaciones.listado.pdf', array_merge(['idTorneo' => $torneo->idTorneo], request()->only('division'))) }}"
+               class="btn btn-ghost desi-btn-nuevo" target="_blank">
+                <i class="fa-solid fa-file-pdf"></i>
+                Exportar PDF
+            </a>
+            @can('crear-designaciones')
+            <a href="{{ route('designaciones.create') }}" class="btn btn-primary desi-btn-nuevo">
+                <i class="fa-solid fa-plus"></i>
+                Nuevo partido
+            </a>
+            @endcan
+        </div>
     </div>
 
     {{-- ═══ FILTROS ═══ --}}

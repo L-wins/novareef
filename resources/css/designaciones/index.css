@@ -20,6 +20,7 @@
 }
 .desi-hero__sub { font-size: .88rem; color: var(--disp-text-2); }
 .desi-btn-nuevo { white-space: nowrap; }
+.desi-hero__acciones { display: flex; gap: .75rem; flex-wrap: wrap; }
 
 .desi-alerta-critico {
   display: inline-flex; align-items: center; gap: 5px;

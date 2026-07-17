@@ -104,6 +104,11 @@ class Partido extends Model
                     ->where('estadoDesignacion', Designacion::ESTADO_CONFIRMADA);
     }
 
+    public function slots(): HasMany
+    {
+        return $this->hasMany(SlotDesignacion::class, 'idPartido', 'idPartido');
+    }
+
     public function historial(): HasMany
     {
         return $this->hasMany(HistorialDesignacion::class, 'idPartido', 'idPartido')

@@ -28,6 +28,7 @@ use App\Http\Controllers\Sancion\JustificacionRevisionController;
 use App\Http\Controllers\Sancion\SancionController;
 use App\Http\Controllers\Sancion\TipoSancionController;
 use App\Http\Controllers\Designacion\DisponibilidadController;
+use App\Http\Controllers\Designacion\ImportacionDesignacionesController;
 use App\Http\Controllers\Designacion\MisPartidosController;
 use App\Http\Controllers\Torneo\DivisionTorneoController;
 use App\Http\Controllers\Torneo\EmergenteTorneoController;
@@ -178,6 +179,21 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::get('/',         [DesignacionController::class, 'index'])->name('index');
         Route::get('/crear',    [DesignacionController::class, 'crearPartido'])->middleware('permission:crear-designaciones')->name('create');
         Route::post('/',        [DesignacionController::class, 'guardarPartido'])->middleware('permission:crear-designaciones')->name('store');
+
+        //  Importador de partidos desde .docx — rutas de prefijo fijo,
+        //  deben ir antes de '/{id}' (linea siguiente) o Laravel las
+        //  capturaria como si {id} fuera el literal "importar".
+        Route::prefix('importar')->name('importar.')->middleware('permission:crear-designaciones')->group(function () {
+            Route::get('/',           [ImportacionDesignacionesController::class, 'mostrar'])->name('mostrar');
+            Route::post('/',          [ImportacionDesignacionesController::class, 'procesar'])->name('procesar');
+            Route::post('/revisar',   [ImportacionDesignacionesController::class, 'revisar'])->name('revisar');
+            Route::post('/confirmar', [ImportacionDesignacionesController::class, 'confirmar'])->name('confirmar');
+            Route::post('/cancelar',  [ImportacionDesignacionesController::class, 'cancelar'])->name('cancelar');
+        });
+
+        Route::get('/torneo/{idTorneo}/listado-pdf', [DesignacionController::class, 'generarListado'])
+            ->middleware('permission:ver-designaciones')->name('listado.pdf');
+
         Route::get('/{id}',     [DesignacionController::class, 'show'])->name('show');
 
         // AJAX — requieren permiso crear-designaciones

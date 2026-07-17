@@ -11,6 +11,7 @@
         "laravel/framework": "^11.0",
         "laravel/reverb": "^1.10",
         "laravel/tinker": "^2.9",
+        "phpoffice/phpword": "^1.1",
         "pragmarx/google2fa-laravel": "^3.0",
         "predis/predis": "^3.5",
         "resend/resend-laravel": "^1.4",

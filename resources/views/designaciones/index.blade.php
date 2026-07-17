@@ -27,10 +27,16 @@
         </div>
 
         @can('crear-designaciones')
-        <a href="{{ route('designaciones.create') }}" class="btn btn-primary desi-btn-nuevo">
-            <i class="fa-solid fa-plus"></i>
-            Nuevo partido
-        </a>
+        <div class="desi-hero__acciones">
+            <a href="{{ route('designaciones.importar.mostrar') }}" class="btn btn-ghost desi-btn-nuevo">
+                <i class="fa-solid fa-file-word"></i>
+                Importar desde Word
+            </a>
+            <a href="{{ route('designaciones.create') }}" class="btn btn-primary desi-btn-nuevo">
+                <i class="fa-solid fa-plus"></i>
+                Nuevo partido
+            </a>
+        </div>
         @endcan
     </div>
 

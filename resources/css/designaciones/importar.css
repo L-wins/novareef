@@ -1,0 +1,46 @@
+/* ── Importador de partidos desde Word ── */
+
+.importar-resumen {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem;
+  background: var(--nv-surface); border: 1px solid var(--disp-border);
+  border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
+}
+.importar-resumen__item { display: flex; flex-direction: column; gap: .15rem; }
+.importar-resumen__valor { font-size: 1.5rem; font-weight: 800; color: var(--nv-text); line-height: 1; }
+.importar-resumen__label { font-size: .72rem; color: var(--disp-text-2); text-transform: uppercase; letter-spacing: .05em; }
+.importar-resumen__item--error .importar-resumen__valor { color: #ef4444; }
+.importar-resumen__item--warn  .importar-resumen__valor { color: #f59e0b; }
+.importar-resumen__archivo {
+  margin-left: auto; display: flex; align-items: center; gap: .5rem;
+  color: var(--disp-text-2); font-size: .85rem;
+}
+
+.importar-desglose { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.5rem; }
+.badge-fila-desglose {
+  background: var(--nv-fill); border: 1px solid var(--disp-border);
+  border-radius: 20px; padding: 4px 12px; font-size: .78rem; color: var(--disp-text-2);
+}
+
+.importar-grupo { margin-bottom: 2rem; }
+.importar-grupo__titulo {
+  font-size: .95rem; font-weight: 700; color: var(--nv-text);
+  margin-bottom: .6rem; padding-bottom: .4rem; border-bottom: 1px solid var(--disp-border);
+}
+
+.importar-tabla .importar-input-sm { min-width: 110px; padding: 6px 10px; font-size: .82rem; }
+.importar-tabla td { vertical-align: top; }
+.importar-campo-deshabilitado { opacity: .45; }
+.importar-fila--error { background: rgba(239, 68, 68, .06); }
+.importar-fila--warn  { background: rgba(245, 158, 11, .05); }
+
+.badge-fila-estado {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 20px; padding: 4px 10px; font-size: .72rem; font-weight: 700; white-space: nowrap;
+}
+.badge-fila-estado--ok    { background: rgba(34, 197, 94, .14);  color: #22c55e; }
+.badge-fila-estado--warn  { background: rgba(245, 158, 11, .14); color: #f59e0b; }
+.badge-fila-estado--error { background: rgba(239, 68, 68, .14);  color: #ef4444; }
+
+@media (max-width: 900px) {
+  .importar-resumen__archivo { margin-left: 0; width: 100%; }
+}

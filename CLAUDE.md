@@ -82,7 +82,7 @@ php artisan permission:cache-reset
 | `/colegios/*` | auth, verificar.colegio, solo.superadmin | CRUD colegios |
 | `/torneos/*` | auth, verificar.colegio, permission:ver-torneos | CRUD torneos |
 | `/torneos/{id}/partidos/*` | auth, verificar.colegio, permission:ver-torneos | CRUD partidos |
-| `/designaciones/*` | auth, verificar.colegio, permission:ver-designaciones, modulo:designaciones | M04 completo: creación de partido, asignación/reasignación de árbitros, publicación, veedor, acta, historial |
+| `/designaciones/*` | auth, verificar.colegio, permission:ver-designaciones, modulo:designaciones | M04 completo: creación de partido, asignación/reasignación de árbitros, publicación, veedor, acta, historial, importador de partidos desde Word (`.docx`) y listado PDF con árbitros designados |
 | `/finanzas/*` | auth, verificar.colegio, permission:ver-finanzas, modulo:finanzas | M06 completo: movimientos (ingreso/egreso), abonos, pago acumulado con neteo, balance, reportes (PDF/CSV) — ver tabla detallada abajo |
 | `/academico/*` | auth, verificar.colegio, permission:ver-academico, modulo:academico | M08 completo: sesiones académicas, asistencia manual/scanner en tiempo real (Reverb), justificaciones, catálogo de tipos por colegio — ver tabla detallada abajo |
 | `/sanciones/*` | auth, verificar.colegio, permission:ver-sanciones, modulo:sanciones | M07 completo: sanciones disciplinarias con multa económica opcional, catálogo de tipos por colegio — ver tabla detallada abajo |
