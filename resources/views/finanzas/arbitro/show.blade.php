@@ -78,7 +78,10 @@
             <p class="form-section-title">Partidos pendientes de pago</p>
         </div>
         @if ($estadoCuenta['pendientesPorPartido']->isEmpty())
-            <div class="card-empty-note">No hay partidos pendientes de pago.</div>
+            <div class="card-empty-note">
+                <i class="fa-solid fa-circle-check"></i>
+                <p>No hay partidos pendientes de pago.</p>
+            </div>
         @else
             <div class="table-scroll">
                 <table class="data-table">
@@ -129,7 +132,10 @@
             <p class="form-section-title">Cuotas y multas pendientes</p>
         </div>
         @if ($estadoCuenta['pendientesPorCuota']->isEmpty())
-            <div class="card-empty-note">No hay cuotas ni multas pendientes.</div>
+            <div class="card-empty-note">
+                <i class="fa-solid fa-circle-check"></i>
+                <p>No hay cuotas ni multas pendientes.</p>
+            </div>
         @else
             <div class="table-scroll">
                 <table class="data-table">
@@ -205,7 +211,10 @@
             <p class="form-section-title">Historial de pagos recibidos</p>
         </div>
         @if ($estadoCuenta['historialPagos']->isEmpty())
-            <div class="card-empty-note">Aún no se han registrado pagos a este árbitro.</div>
+            <div class="card-empty-note">
+                <i class="fa-regular fa-clock"></i>
+                <p>Aún no se han registrado pagos a este árbitro.</p>
+            </div>
         @else
             <div class="table-scroll">
                 <table class="data-table">
@@ -238,7 +247,10 @@
             <p class="form-section-title">Historial de pagos hechos por el árbitro</p>
         </div>
         @if ($estadoCuenta['historialPagosHechos']->isEmpty())
-            <div class="card-empty-note">Este árbitro aún no ha pagado ninguna cuota ni multa.</div>
+            <div class="card-empty-note">
+                <i class="fa-regular fa-clock"></i>
+                <p>Este árbitro aún no ha pagado ninguna cuota ni multa.</p>
+            </div>
         @else
             <div class="table-scroll">
                 <table class="data-table">
@@ -271,7 +283,10 @@
             <p class="form-section-title">Historial de multas</p>
         </div>
         @if ($estadoCuenta['historialMultas']->isEmpty())
-            <div class="card-empty-note">Este árbitro no tiene multas registradas.</div>
+            <div class="card-empty-note">
+                <i class="fa-solid fa-shield-heart"></i>
+                <p>Este árbitro no tiene multas registradas.</p>
+            </div>
         @else
             <div class="table-scroll">
                 <table class="data-table">
@@ -305,7 +320,10 @@
             <p class="form-section-title">Descuentos aplicados en nómina</p>
         </div>
         @if ($estadoCuenta['descuentosNomina']->isEmpty())
-            <div class="card-empty-note">No se han aplicado descuentos en nómina a este árbitro.</div>
+            <div class="card-empty-note">
+                <i class="fa-solid fa-scissors"></i>
+                <p>No se han aplicado descuentos en nómina a este árbitro.</p>
+            </div>
         @else
             <div class="table-scroll">
                 <table class="data-table">

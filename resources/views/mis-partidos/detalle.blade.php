@@ -188,8 +188,8 @@
                 <div class="info-row"><span>Formato</span><strong>{{ $partido->formato?->nombre ?? '—' }}</strong></div>
                 <div class="info-row"><span>Modalidad</span><strong>{{ $partido->modalidadPago ?? '—' }}</strong></div>
                 <div class="info-row"><span>Sede</span><strong>{{ $partido->sede?->nombreSede ?? '—' }}</strong></div>
-                @if($partido->sede?->municipio)
-                <div class="info-row"><span>Municipio</span><strong>{{ $partido->sede->municipio }}</strong></div>
+                @if($partido->sede?->ciudad)
+                <div class="info-row"><span>Ciudad</span><strong>{{ $partido->sede->ciudad }}</strong></div>
                 @endif
                 @if($partido->sede?->urlMaps)
                 <a href="{{ $partido->sede->urlMaps }}" target="_blank"

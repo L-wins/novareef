@@ -27,11 +27,110 @@
   margin-bottom: .6rem; padding-bottom: .4rem; border-bottom: 1px solid var(--disp-border);
 }
 
-.importar-tabla .importar-input-sm { min-width: 110px; padding: 6px 10px; font-size: .82rem; }
-.importar-tabla td { vertical-align: top; }
+/* ── Preview: una tarjeta por partido, no una tabla de 10 columnas ──
+   Una tabla con Grupo/División/Local/Visitante/Sede/Fecha/Hora/Formato/
+   Árbitros/Estado nunca cabe legible en un .container de 1200px — termina
+   en scroll horizontal silencioso o texto truncado sin aviso. El layout de
+   tarjeta agrupa los campos por bloque lógico (cabecera con el partido en
+   sí, cuerpo con los datos del encuentro, sección aparte para árbitros) y
+   se adapta con flex-wrap en vez de columnas fijas. */
+.importar-lista { display: flex; flex-direction: column; gap: .85rem; }
+
+.importar-card {
+  background: var(--nv-card); border: 1px solid var(--disp-border);
+  border-left: 3px solid var(--disp-border); border-radius: 12px; padding: 1rem 1.15rem;
+}
+.importar-card--error { border-left-color: #ef4444; background: rgba(239, 68, 68, .045); }
+.importar-card--warn  { border-left-color: #f59e0b; background: rgba(245, 158, 11, .04); }
+.importar-card--ok    { border-left-color: #22c55e; }
+
+.importar-card__cabecera {
+  display: flex; align-items: center; gap: .9rem; flex-wrap: wrap;
+  padding-bottom: .85rem; margin-bottom: .95rem; border-bottom: 1px solid var(--disp-border);
+}
+.importar-card__incluir { display: flex; align-items: center; flex-shrink: 0; }
+.importar-card__incluir input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--nv-accent, #4f8ef7); }
+
+.importar-card__partido { display: flex; align-items: center; gap: .6rem; flex: 1 1 320px; min-width: 0; }
+.importar-input-equipo { flex: 1 1 140px; min-width: 0; font-weight: 600; }
+.importar-card__vs { color: var(--disp-text-2); font-size: .78rem; font-weight: 700; text-transform: uppercase; flex-shrink: 0; }
+
+.importar-card__estados { display: flex; gap: .4rem; flex-wrap: wrap; margin-left: auto; }
+
+.importar-card__cuerpo {
+  display: flex; flex-wrap: wrap; gap: .85rem 1rem;
+}
+.importar-campo { display: flex; flex-direction: column; gap: .3rem; flex: 1 1 130px; min-width: 0; }
+.importar-campo--grupo    { flex-basis: 150px; }
+.importar-campo--division { flex-basis: 190px; }
+.importar-campo--sede     { flex-basis: 190px; }
+.importar-campo--fecha    { flex-basis: 130px; flex-grow: 0; }
+.importar-campo--hora     { flex-basis: 90px;  flex-grow: 0; }
+.importar-campo--formato  { flex-basis: 170px; }
+
+.importar-campo__label {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--disp-text-2); display: flex; align-items: center; gap: .35rem;
+}
+.importar-campo__ayuda { color: var(--disp-text-2); opacity: .65; cursor: help; font-size: .85em; }
+.importar-campo__ayuda:hover { opacity: 1; color: var(--nv-accent, #4f8ef7); }
+
+.importar-input-sm { padding: 7px 10px; font-size: .84rem; width: 100%; box-sizing: border-box; }
+.importar-input-hora { text-align: center; letter-spacing: .04em; }
 .importar-campo-deshabilitado { opacity: .45; }
-.importar-fila--error { background: rgba(239, 68, 68, .06); }
-.importar-fila--warn  { background: rgba(245, 158, 11, .05); }
+
+.importar-card__arbitros {
+  margin-top: .95rem; padding-top: .9rem; border-top: 1px solid var(--disp-border);
+}
+.importar-card__arbitros-titulo {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--disp-text-2); margin-bottom: .65rem;
+}
+.importar-card__arbitros-grid { display: flex; flex-wrap: wrap; gap: .85rem 1.25rem; }
+
+/* Selects del preview (división/sede/formato/árbitro por rol) — Choices.js
+   compacto.
+
+   IMPORTANTE: Choices.js NO le agrega su clase .choices al <select>
+   original — envuelve el select dentro de un <div class="choices"> nuevo
+   (Container.prototype.wrap hace el.appendChild(element)), así que el
+   select con .importar-select queda DENTRO de .choices, nunca es el mismo
+   nodo. ".importar-select.choices" no matchea nada — hay que apuntar al
+   div contenedor generado por contexto (.importar-campo .choices /
+   .importar-rol-linea .choices). */
+.importar-campo .choices,
+.importar-rol-linea .choices {
+  width: 100%; font-size: .84rem;
+}
+.importar-campo .choices__inner,
+.importar-rol-linea .choices__inner {
+  min-height: 36px !important; padding: 4px 8px !important; font-size: .84rem !important;
+  display: flex !important; align-items: center !important;
+}
+.importar-campo .choices__list--single,
+.importar-rol-linea .choices__list--single {
+  padding: 2px 16px 2px 2px !important; display: flex !important; align-items: center !important;
+}
+.importar-campo .choices__list--single .choices__item,
+.importar-rol-linea .choices__list--single .choices__item {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.importar-campo .choices__list--dropdown,
+.importar-campo .choices__list[aria-expanded],
+.importar-rol-linea .choices__list--dropdown,
+.importar-rol-linea .choices__list[aria-expanded] {
+  width: max-content !important; min-width: 100% !important; max-width: 280px !important;
+}
+.importar-campo .choices__list--dropdown .choices__item,
+.importar-campo .choices__list[aria-expanded] .choices__item,
+.importar-rol-linea .choices__list--dropdown .choices__item,
+.importar-rol-linea .choices__list[aria-expanded] .choices__item {
+  font-size: .82rem !important; padding: 8px 10px !important; white-space: nowrap;
+}
+.importar-campo .choices__input,
+.importar-rol-linea .choices__input {
+  font-size: .82rem !important; min-width: 80px;
+}
 
 .badge-fila-estado {
   display: inline-flex; align-items: center; gap: 5px;
@@ -41,6 +140,61 @@
 .badge-fila-estado--warn  { background: rgba(245, 158, 11, .14); color: #f59e0b; }
 .badge-fila-estado--error { background: rgba(239, 68, 68, .14);  color: #ef4444; }
 
+.importar-rol-linea { display: flex; flex-direction: column; gap: .3rem; flex: 1 1 190px; min-width: 0; }
+.importar-rol-etiqueta {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--disp-text-2); display: flex; align-items: center; gap: .35rem;
+}
+
+/* ── Guía de formato obligatorio (pantalla de subida) ── */
+.importar-guia {
+  background: var(--nv-surface); border: 1px solid var(--disp-border);
+  border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+}
+.importar-guia summary {
+  cursor: pointer; font-size: .88rem; font-weight: 700; color: var(--nv-text);
+  display: flex; align-items: center; gap: .55rem; user-select: none; list-style: none;
+}
+.importar-guia summary::-webkit-details-marker { display: none; }
+.importar-guia summary i { color: var(--accent, #4f8ef7); }
+.importar-guia[open] summary { margin-bottom: 1rem; }
+
+.importar-guia__contenido { display: flex; flex-direction: column; gap: 1.1rem; }
+.importar-guia__intro { font-size: .84rem; color: var(--disp-text-2); line-height: 1.5; }
+
+.importar-guia__titulo-bloque {
+  font-size: .82rem; font-weight: 700; color: var(--nv-text); margin-bottom: .4rem;
+}
+.importar-guia__texto { font-size: .82rem; color: var(--disp-text-2); line-height: 1.55; }
+.importar-guia__texto code, .importar-guia__lista code {
+  background: var(--nv-fill); border-radius: 4px; padding: 1px 5px; font-size: .78rem;
+}
+
+.importar-guia__tabla { width: 100%; border-collapse: collapse; margin-top: .6rem; font-size: .8rem; }
+.importar-guia__tabla th, .importar-guia__tabla td {
+  border: 1px solid var(--disp-border); padding: 6px 10px; text-align: left; vertical-align: top;
+}
+.importar-guia__tabla th { background: var(--nv-fill); font-weight: 700; color: var(--nv-text); }
+.importar-guia__tabla td { color: var(--disp-text-2); }
+
+.importar-guia__lista { list-style: none; display: flex; flex-direction: column; gap: .5rem; font-size: .82rem; }
+.importar-guia__lista li { padding-left: 1.4rem; position: relative; line-height: 1.5; color: var(--disp-text-2); }
+.importar-guia__lista--ok li::before { content: "\2713"; position: absolute; left: 0; color: #22c55e; font-weight: 700; }
+.importar-guia__lista--error li::before { content: "\2715"; position: absolute; left: 0; color: #ef4444; font-weight: 700; }
+
+.importar-guia__nota {
+  font-size: .8rem; color: var(--disp-text-2); font-style: italic;
+  border-top: 1px solid var(--disp-border); padding-top: .75rem;
+}
+
 @media (max-width: 900px) {
   .importar-resumen__archivo { margin-left: 0; width: 100%; }
+  .importar-guia__tabla { font-size: .75rem; }
+}
+
+@media (max-width: 640px) {
+  .importar-card__cabecera { align-items: flex-start; }
+  .importar-card__partido { flex-basis: 100%; order: 3; }
+  .importar-card__estados { margin-left: 0; order: 2; }
+  .importar-campo { flex-basis: 100% !important; }
 }

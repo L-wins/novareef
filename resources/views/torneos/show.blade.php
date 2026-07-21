@@ -202,7 +202,7 @@
                     <div class="perfil-list-item" style="cursor:default;">
                         <div class="perfil-list-info">
                             <strong>{{ $sede->nombreSede }}</strong>
-                            <small>{{ $sede->direccion }} · {{ $sede->municipio }}</small>
+                            <small>{{ $sede->ciudad }}</small>
                             @if ($sede->observaciones)
                                 <small>{{ $sede->observaciones }}</small>
                             @endif

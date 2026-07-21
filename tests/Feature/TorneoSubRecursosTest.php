@@ -115,8 +115,7 @@ class TorneoSubRecursosTest extends TestCase
 
         $datos = [
             'nombreSede' => 'Coliseo Central',
-            'direccion'  => 'Cra 1 # 2-3',
-            'municipio'  => 'Tenjo',
+            'ciudad'     => 'Tenjo',
         ];
 
         $this->actingAs($ejecutivo)->post(route('torneos.sedes.store', $torneo->idTorneo), $datos)

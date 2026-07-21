@@ -3,6 +3,41 @@ document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('form-cobro-masivo');
     if (!form) return;
 
+    // ── Resumen del cargo en el <summary> cuando el bloque está colapsado ──
+    var detallesCargo   = document.getElementById('cm-datos-cargo');
+    var resumenCargoEl   = form.querySelector('[data-cm-resumen-cargo]');
+    var categoriaSelect  = document.getElementById('categoria');
+    var conceptoInput    = document.getElementById('concepto');
+    var montoDefaultEl   = document.getElementById('montoTotal');
+
+    function actualizarResumenCargo() {
+        if (!resumenCargoEl) return;
+
+        var partes = [];
+        var etiquetaCategoria = categoriaSelect && categoriaSelect.selectedIndex > 0
+            ? categoriaSelect.options[categoriaSelect.selectedIndex].text
+            : null;
+
+        if (etiquetaCategoria) partes.push(etiquetaCategoria);
+        if (conceptoInput && conceptoInput.value.trim()) partes.push(conceptoInput.value.trim());
+        if (montoDefaultEl && montoDefaultEl.value) {
+            partes.push('$' + parseFloat(montoDefaultEl.value).toLocaleString('es-CO', { maximumFractionDigits: 0 }));
+        }
+
+        resumenCargoEl.textContent = partes.length ? partes.join(' · ') : 'Sin definir aún';
+    }
+
+    if (categoriaSelect) categoriaSelect.addEventListener('change', actualizarResumenCargo);
+    if (conceptoInput) conceptoInput.addEventListener('input', actualizarResumenCargo);
+    if (montoDefaultEl) montoDefaultEl.addEventListener('input', actualizarResumenCargo);
+    actualizarResumenCargo();
+
+    // Se abre solo al primer clic sobre el resumen colapsado — si el usuario
+    // ya lo cerró después de configurarlo, no se le vuelve a forzar abierto.
+    if (detallesCargo && !detallesCargo.open) {
+        detallesCargo.addEventListener('toggle', actualizarResumenCargo);
+    }
+
     var filas                  = Array.prototype.slice.call(form.querySelectorAll('[data-cm-fila]'));
     var filtroInput            = form.querySelector('[data-cm-filtro]');
     var contador               = form.querySelector('[data-cm-contador]');

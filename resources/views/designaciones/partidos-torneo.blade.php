@@ -39,11 +39,10 @@
         </div>
 
         <div class="desi-hero__acciones">
-            <a href="{{ route('designaciones.listado.pdf', array_merge(['idTorneo' => $torneo->idTorneo], request()->only('division'))) }}"
-               class="btn btn-ghost desi-btn-nuevo" target="_blank">
+            <button type="button" class="btn btn-ghost desi-btn-nuevo" id="btn-abrir-exportar-pdf">
                 <i class="fa-solid fa-file-pdf"></i>
                 Exportar PDF
-            </a>
+            </button>
             @can('crear-designaciones')
             <a href="{{ route('designaciones.create') }}" class="btn btn-primary desi-btn-nuevo">
                 <i class="fa-solid fa-plus"></i>
@@ -52,6 +51,31 @@
             @endcan
         </div>
     </div>
+
+    {{-- ═══ EXPORTAR PDF: rango de fechas ═══ --}}
+    <form method="GET" action="{{ route('designaciones.listado.pdf', ['idTorneo' => $torneo->idTorneo]) }}"
+          id="form-exportar-pdf" class="desi-filter-bar" style="display:none;" target="_blank">
+        @if(request()->filled('division'))
+            <input type="hidden" name="division" value="{{ request('division') }}">
+        @endif
+
+        <div class="desi-filter-item">
+            <label class="desi-filter-label">Desde</label>
+            <input type="text" name="desde" class="form-input" data-nova-date placeholder="dd/mm/aaaa" style="max-width:160px">
+        </div>
+
+        <div class="desi-filter-item">
+            <label class="desi-filter-label">Hasta</label>
+            <input type="text" name="hasta" class="form-input" data-nova-date placeholder="dd/mm/aaaa" style="max-width:160px">
+        </div>
+
+        <div class="desi-filter-actions">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-file-pdf"></i> Generar PDF
+            </button>
+            <p class="field-hint" style="margin:0;">Deja los campos vacíos para exportar todo el torneo.</p>
+        </div>
+    </form>
 
     {{-- ═══ FILTROS ═══ --}}
     <form method="GET" action="{{ route('designaciones.index') }}" class="desi-filter-bar" data-auto-filter>
@@ -189,7 +213,7 @@
                     <span class="desi-meta-item">
                         <i class="fa-solid fa-location-dot"></i>
                         {{ $partido->sede?->nombreSede ?? 'Sin sede' }}
-                        @if($partido->sede?->municipio) · {{ $partido->sede->municipio }}@endif
+                        @if($partido->sede?->ciudad) · {{ $partido->sede->ciudad }}@endif
                     </span>
                     @if($partido->modalidadPago)
                     <span class="desi-meta-item">

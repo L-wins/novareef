@@ -149,6 +149,26 @@
 }
 .empty-state i { color: var(--fin-text-mute); display: block; margin-bottom: 1rem; }
 
+/* Estado vacío compacto dentro de una tarjeta que ya tiene su propio borde
+   (ej. cada bloque de la ficha financiera del árbitro) — sin el borde
+   punteado ni el padding grande de .empty-state, que está pensado para
+   ocupar toda una sección de página. */
+.card-empty-note {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 1rem 0.25rem;
+    color: var(--fin-text-mute);
+    font-size: 0.85rem;
+}
+.card-empty-note i {
+    font-size: 1.1rem;
+    color: var(--fin-text-mute);
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+.card-empty-note p { margin: 0; }
+
 .cuenta-resumen-pago {
     display: flex;
     gap: 2rem;

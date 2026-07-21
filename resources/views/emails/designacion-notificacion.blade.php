@@ -95,8 +95,8 @@
                 <div class="info-value">{{ $sede?->nombreSede ?? '—' }}</div>
             </div>
             <div class="info-item">
-                <div class="info-label">Municipio</div>
-                <div class="info-value">{{ $sede?->municipio ?? '—' }}</div>
+                <div class="info-label">Ciudad</div>
+                <div class="info-value">{{ $sede?->ciudad ?? '—' }}</div>
             </div>
         </div>
 

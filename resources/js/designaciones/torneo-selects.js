@@ -47,7 +47,7 @@ export async function cargarDivisionesYSedes(torneoId) {
         selSede.innerHTML = sedes.length === 0
             ? '<option value="">Este torneo no tiene sedes</option>'
             : '<option value="">Selecciona sede</option>' +
-              sedes.map(s => `<option value="${s.idSede}">${s.nombreSede}${s.municipio ? ' — ' + s.municipio : ''}</option>`).join('');
+              sedes.map(s => `<option value="${s.idSede}">${s.nombreSede}${s.ciudad ? ' — ' + s.ciudad : ''}</option>`).join('');
 
     } catch (e) {
         console.error('cargarDivisionesYSedes error', e);

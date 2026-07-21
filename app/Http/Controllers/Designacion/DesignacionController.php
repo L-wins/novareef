@@ -280,7 +280,7 @@ class DesignacionController extends Controller
 
         $sedes = SedeTorneo::where('idTorneo', $id)
             ->whereHas('torneo', fn ($q) => $q->where('idColegio', $idColegio))
-            ->select('idSede', 'nombreSede', 'municipio')
+            ->select('idSede', 'nombreSede', 'ciudad')
             ->get();
 
         return response()->json($sedes);

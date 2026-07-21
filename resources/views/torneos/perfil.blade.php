@@ -138,7 +138,7 @@
                         <div class="perfil-list-item">
                             <div class="perfil-list-info">
                                 <strong>{{ $sede->nombreSede }}</strong>
-                                <small><i class="fa-solid fa-location-dot"></i> {{ $sede->direccion }} · {{ $sede->municipio }}</small>
+                                <small><i class="fa-solid fa-location-dot"></i> {{ $sede->ciudad }}</small>
                                 @if ($sede->observaciones)
                                     <small>{{ $sede->observaciones }}</small>
                                 @endif
@@ -155,9 +155,7 @@
                                         title="Editar sede"
                                         data-open-modal="editar-sede"
                                         data-sede-nombre="{{ $sede->nombreSede }}"
-                                        data-sede-direccion="{{ $sede->direccion }}"
-                                        data-sede-municipio="{{ $sede->municipio }}"
-                                        data-sede-departamento="{{ $sede->departamento ?? '' }}"
+                                        data-sede-ciudad="{{ $sede->ciudad }}"
                                         data-sede-urlmaps="{{ $sede->urlMaps ?? '' }}"
                                         data-sede-observaciones="{{ $sede->observaciones ?? '' }}"
                                         data-sede-action="{{ route('torneos.sedes.update', $sede->idSede) }}">
@@ -189,16 +187,8 @@
                     <input type="text" name="nombreSede" maxlength="150" required class="form-input">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Dirección <span class="req">*</span></label>
-                    <input type="text" name="direccion" maxlength="255" required class="form-input">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Municipio <span class="req">*</span></label>
-                    <input type="text" name="municipio" maxlength="100" required class="form-input">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Departamento</label>
-                    <input type="text" name="departamento" maxlength="100" class="form-input" placeholder="Opcional">
+                    <label class="form-label">Ciudad <span class="req">*</span></label>
+                    <input type="text" name="ciudad" maxlength="100" required class="form-input">
                 </div>
                 <div class="form-group" style="grid-column:1/-1;">
                     <label class="form-label">URL de Google Maps</label>
@@ -523,16 +513,8 @@
                         <input type="text" id="edit-sede-nombre" name="nombreSede" maxlength="150" required class="form-input">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Municipio <span class="req">*</span></label>
-                        <input type="text" id="edit-sede-municipio" name="municipio" maxlength="100" required class="form-input">
-                    </div>
-                    <div class="form-group" style="grid-column:1/-1;">
-                        <label class="form-label">Dirección <span class="req">*</span></label>
-                        <input type="text" id="edit-sede-direccion" name="direccion" maxlength="255" required class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Departamento</label>
-                        <input type="text" id="edit-sede-departamento" name="departamento" maxlength="100" placeholder="Opcional" class="form-input">
+                        <label class="form-label">Ciudad <span class="req">*</span></label>
+                        <input type="text" id="edit-sede-ciudad" name="ciudad" maxlength="100" required class="form-input">
                     </div>
                     <div class="form-group" style="grid-column:1/-1;">
                         <label class="form-label">URL de Google Maps</label>
@@ -623,9 +605,7 @@
             btn.addEventListener('click', function () {
                 document.getElementById('form-editar-sede').action        = btn.dataset.sedeAction;
                 document.getElementById('edit-sede-nombre').value         = btn.dataset.sedeNombre;
-                document.getElementById('edit-sede-direccion').value      = btn.dataset.sedeDireccion;
-                document.getElementById('edit-sede-municipio').value      = btn.dataset.sedeMunicipio;
-                document.getElementById('edit-sede-departamento').value   = btn.dataset.sedeDepartamento;
+                document.getElementById('edit-sede-ciudad').value        = btn.dataset.sedeCiudad;
                 document.getElementById('edit-sede-urlmaps').value        = btn.dataset.sedeUrlmaps;
                 document.getElementById('edit-sede-observaciones').value  = btn.dataset.sedeObservaciones;
             });

@@ -189,6 +189,9 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
             Route::post('/revisar',   [ImportacionDesignacionesController::class, 'revisar'])->name('revisar');
             Route::post('/confirmar', [ImportacionDesignacionesController::class, 'confirmar'])->name('confirmar');
             Route::post('/cancelar',  [ImportacionDesignacionesController::class, 'cancelar'])->name('cancelar');
+            // Rango fijo — igual que arriba, deben ir antes de cualquier {id}.
+            Route::get('/historial',            [ImportacionDesignacionesController::class, 'historial'])->name('historial');
+            Route::put('/{idImportacion}/revertir', [ImportacionDesignacionesController::class, 'revertir'])->name('revertir');
         });
 
         Route::get('/torneo/{idTorneo}/listado-pdf', [DesignacionController::class, 'generarListado'])

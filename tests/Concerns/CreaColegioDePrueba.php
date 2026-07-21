@@ -129,10 +129,9 @@ trait CreaColegioDePrueba
     private function crearSede(Torneo $torneo): SedeTorneo
     {
         return SedeTorneo::create([
-            'idTorneo'    => $torneo->idTorneo,
-            'nombreSede'  => 'Sede de prueba',
-            'direccion'   => 'Calle 1 # 2-3',
-            'municipio'   => 'Tenjo',
+            'idTorneo'   => $torneo->idTorneo,
+            'nombreSede' => 'Sede de prueba',
+            'ciudad'     => 'Tenjo',
         ]);
     }
 

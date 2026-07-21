@@ -309,7 +309,7 @@
                     @endif
                 </div>
                 <div class="info-row"><span>Sede</span><strong>{{ $partido->sede?->nombreSede ?? '—' }}</strong></div>
-                <div class="info-row"><span>Municipio</span><strong>{{ $partido->sede?->municipio ?? '—' }}</strong></div>
+                <div class="info-row"><span>Ciudad</span><strong>{{ $partido->sede?->ciudad ?? '—' }}</strong></div>
                 @if($partido->sede?->urlMaps)
                 <a href="{{ $partido->sede->urlMaps }}" target="_blank" class="btn btn-ghost btn-sm" style="width:100%;margin-top:.75rem;justify-content:center">
                     <i class="fa-solid fa-map-location-dot"></i> Ver en Maps

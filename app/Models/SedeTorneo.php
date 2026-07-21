@@ -21,9 +21,7 @@ class SedeTorneo extends Model
     protected $fillable = [
         'idTorneo',
         'nombreSede',
-        'direccion',
-        'municipio',
-        'departamento',
+        'ciudad',
         'urlMaps',
         'observaciones',
     ];

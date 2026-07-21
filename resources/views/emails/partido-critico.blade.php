@@ -42,7 +42,7 @@
             <div class="match-meta">
                 📋 {{ $partido->torneo?->nombreTorneo }}<br>
                 📅 {{ ucfirst($fecha ?? '—') }} · 🕐 {{ $partido->horaPartido ?? '—' }}<br>
-                📍 {{ $partido->sede?->nombreSede ?? '—' }}{{ $partido->sede?->municipio ? ', ' . $partido->sede->municipio : '' }}
+                📍 {{ $partido->sede?->nombreSede ?? '—' }}{{ $partido->sede?->ciudad ? ', ' . $partido->sede->ciudad : '' }}
             </div>
         </div>
 

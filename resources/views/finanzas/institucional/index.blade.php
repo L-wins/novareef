@@ -179,14 +179,14 @@
                                     $tipoPrefill      = old('tipoMovimiento', in_array($categoriaPrefill, array_keys($categoriasEgreso), true) ? 'egreso' : 'ingreso');
                                     $torneoPrefill    = old('idTorneo', request('idTorneo'));
                                 @endphp
-                                <select name="tipoMovimiento" id="inst-tipo" class="form-select">
+                                <select name="tipoMovimiento" id="inst-tipo" class="form-select" data-nova-select>
                                     <option value="ingreso" @selected($tipoPrefill === 'ingreso')>Ingreso</option>
                                     <option value="egreso" @selected($tipoPrefill === 'egreso')>Egreso</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Categoría <span class="req">*</span></label>
-                                <select name="categoria" id="inst-categoria" class="form-select">
+                                <select name="categoria" id="inst-categoria" class="form-select" data-nova-select>
                                     @foreach ($categoriasIngreso as $valor => $etiqueta)
                                         <option value="{{ $valor }}" data-tipo="ingreso" @selected($categoriaPrefill === $valor)>{{ $etiqueta }}</option>
                                     @endforeach
@@ -261,5 +261,11 @@
 @endsection
 
 @push('scripts')
+<script>
+    window.institucionalCategorias = {
+        ingreso: @json(collect($categoriasIngreso)->map(fn ($etiqueta, $valor) => ['value' => $valor, 'label' => $etiqueta])->values()),
+        egreso:  @json(collect($categoriasEgreso)->map(fn ($etiqueta, $valor) => ['value' => $valor, 'label' => $etiqueta])->values()),
+    };
+</script>
     @vite(['resources/js/finanzas/finanzas.js', 'resources/js/finanzas/institucional.js'])
 @endpush

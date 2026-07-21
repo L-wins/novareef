@@ -53,4 +53,20 @@ document.addEventListener('DOMContentLoaded', function () {
         checkbox.addEventListener('change', aplicarEstado);
         aplicarEstado();
     });
+
+    // ── Campo hora del preview: texto plano con auto-formato "HH:MM" ──
+    // Se evitó a propósito el widget de hora de Flatpickr aquí — sus dos
+    // <input type="number"> con flechas de incremento no caben en una celda
+    // de tabla angosta (se ven truncados). Un input de texto simple con
+    // auto-inserción de ":" es más robusto en ese espacio.
+    document.querySelectorAll('.importar-input-hora').forEach(function (input) {
+        input.addEventListener('input', function () {
+            let digitos = input.value.replace(/\D/g, '').slice(0, 4);
+            if (digitos.length >= 3) {
+                input.value = digitos.slice(0, 2) + ':' + digitos.slice(2);
+            } else {
+                input.value = digitos;
+            }
+        });
+    });
 });

@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\Colegio;
-use App\Models\Designacion;
 use App\Models\DivisionTorneo;
 use App\Models\HistorialDesignacion;
+use App\Models\ImportacionPartidoFila;
+use App\Models\ImportacionPartidos;
 use App\Models\Partido;
-use App\Models\SedeTorneo;
 use App\Models\SlotDesignacion;
-use App\Models\Torneo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Testing\File;
@@ -23,9 +22,10 @@ use Tests\TestCase;
 
 /**
  * Cobertura end-to-end del importador de partidos desde Word (docs/plan-
- * importador-word-designaciones.md): subir .docx -> preview -> corregir ->
- * confirmar -> Partido/slots/historial reales, reutilizando
- * DesignacionService::crearPartido() (no Partido::create() directo).
+ * importador-word-designaciones.md): subir .docx -> preview (persistido en
+ * BD, no sesión) -> corregir -> confirmar -> Partido/slots/historial reales,
+ * reutilizando DesignacionService::crearPartido() (no Partido::create()
+ * directo). Incluye matching de árbitros por rol y reversión.
  */
 class ImportacionDesignacionesControllerTest extends TestCase
 {
@@ -47,8 +47,12 @@ class ImportacionDesignacionesControllerTest extends TestCase
         return $usuario;
     }
 
-    /** Genera un .docx con dos bloques GRUPO+tabla, una vez ubicable/matcheable y otra sin división. */
-    private function generarDocxDePrueba(): string
+    /**
+     * Genera un .docx con dos bloques GRUPO+tabla, uno ubicable/matcheable
+     * (incluyendo un árbitro real en la fila ARBITRO cuando $nombreArbitro
+     * se pasa) y otro sin división.
+     */
+    private function generarDocxDePrueba(?string $nombreArbitro = null): string
     {
         $phpWord = new PhpWord();
         $section = $phpWord->addSection();
@@ -56,7 +60,7 @@ class ImportacionDesignacionesControllerTest extends TestCase
         $section->addText("GRUPO 15\t\t\tSUB 15\t\t\t01 MARZO 07/08\t\t\tASOCIACION DE", ['color' => 'FF0000']);
         $table = $section->addTable();
         $table->addRow();
-        foreach (['PARTIDO', 'SANTA FE', 'BETHEL', 'ARBITRO', '', 'ASOCAFA'] as $t) {
+        foreach (['PARTIDO', 'SANTA FE', 'BETHEL', 'ARBITRO', $nombreArbitro ?? '', 'ASOCAFA'] as $t) {
             $table->addCell()->addText($t);
         }
         $table->addRow();
@@ -104,7 +108,7 @@ class ImportacionDesignacionesControllerTest extends TestCase
         return $ruta;
     }
 
-    public function test_sube_el_docx_y_muestra_el_preview_con_matching_correcto(): void
+    public function test_sube_el_docx_y_persiste_el_preview_en_bd_con_matching_correcto(): void
     {
         $colegio    = $this->crearColegio();
         $designador = $this->crearDesignadorConPermisos($colegio);
@@ -121,22 +125,24 @@ class ImportacionDesignacionesControllerTest extends TestCase
             'archivoWord' => new \Illuminate\Http\UploadedFile($ruta, 'muestra.docx', null, null, true),
         ])->assertRedirect(route('designaciones.importar.mostrar'));
 
+        $importacion = ImportacionPartidos::where('idColegio', $colegio->idColegio)->sole();
+        $this->assertSame(ImportacionPartidos::ESTADO_PROCESANDO, $importacion->estado);
+        $this->assertSame('muestra.docx', $importacion->nombreArchivoOriginal);
+        $this->assertSame(2, $importacion->filas()->count());
+
         $response = $this->actingAs($designador)->get(route('designaciones.importar.mostrar'));
         $response->assertOk();
 
-        $partidos = session('importacion_designaciones')['partidos'];
-        $this->assertCount(2, $partidos);
+        $conMatch = $importacion->filas()->where('equipoLocal', 'SANTA FE')->sole();
+        $this->assertNotNull($conMatch->idDivisionMatch);
+        $this->assertNotNull($conMatch->idSedeMatch);
+        $this->assertSame([], $conMatch->errores);
+        $this->assertTrue($conMatch->incluir);
 
-        $conMatch = collect($partidos)->firstWhere('equipoLocal', 'SANTA FE');
-        $this->assertNotNull($conMatch['idDivisionMatch']);
-        $this->assertNotNull($conMatch['idSedeMatch']);
-        $this->assertSame([], $conMatch['errores']);
-        $this->assertTrue($conMatch['incluir']);
-
-        $sinMatch = collect($partidos)->firstWhere('equipoLocal', 'CLUB REY');
-        $this->assertNull($sinMatch['idDivisionMatch']);
-        $this->assertNotEmpty($sinMatch['errores']);
-        $this->assertFalse($sinMatch['incluir']);
+        $sinMatch = $importacion->filas()->where('equipoLocal', 'CLUB REY')->sole();
+        $this->assertNull($sinMatch->idDivisionMatch);
+        $this->assertNotEmpty($sinMatch->errores);
+        $this->assertFalse($sinMatch->incluir);
     }
 
     public function test_confirmar_crea_partidos_reales_con_slots_e_historial(): void
@@ -158,15 +164,16 @@ class ImportacionDesignacionesControllerTest extends TestCase
             'archivoWord' => new \Illuminate\Http\UploadedFile($ruta, 'muestra.docx', null, null, true),
         ]);
 
-        // Ambos partidos ahora matchean division (la segunda ya existe) -> confirmar sin correcciones.
-        $sesion = session('importacion_designaciones');
-        $filas  = [];
-        foreach ($sesion['partidos'] as $p) {
-            $filas[$p['clave']] = [
+        $importacion = ImportacionPartidos::where('idColegio', $colegio->idColegio)->sole();
+
+        // Ambos partidos ahora matchean división (la segunda ya existe) -> confirmar sin correcciones.
+        $filas = [];
+        foreach ($importacion->filas as $f) {
+            $filas[$f->clave] = [
                 'incluir'    => '1',
                 'idDivision' => (string) DivisionTorneo::where('idTorneo', $torneo->idTorneo)
-                    ->where('nombreDivision', $p['categoriaTexto'])->value('idDivision'),
-                'idSede'     => (string) $p['idSedeMatch'],
+                    ->where('nombreDivision', $f->categoriaTexto)->value('idDivision'),
+                'idSede'     => (string) $f->idSedeMatch,
                 'idFormato'  => (string) $formato->idFormato,
             ];
         }
@@ -175,11 +182,15 @@ class ImportacionDesignacionesControllerTest extends TestCase
             ->assertRedirect(route('designaciones.index', ['torneo' => $torneo->idTorneo]));
 
         $this->assertSame(2, Partido::where('idTorneo', $torneo->idTorneo)->count());
-        $this->assertNull(session('importacion_designaciones'));
+
+        $importacion->refresh();
+        $this->assertSame(ImportacionPartidos::ESTADO_CONFIRMADA, $importacion->estado);
+        $this->assertSame(2, $importacion->totalCreados);
 
         $partidoSantaFe = Partido::where('idTorneo', $torneo->idTorneo)->where('equipoLocal', 'SANTA FE')->firstOrFail();
         $this->assertSame('GRUPO 15', $partidoSantaFe->observaciones);
         $this->assertSame(Partido::ESTADO_BORRADOR, $partidoSantaFe->estadoPartido);
+        $this->assertSame($importacion->idImportacion, $partidoSantaFe->idImportacion);
         $this->assertSame(2, SlotDesignacion::where('idPartido', $partidoSantaFe->idPartido)->count());
         $this->assertSame(
             1,
@@ -189,28 +200,124 @@ class ImportacionDesignacionesControllerTest extends TestCase
     }
 
     /**
-     * El controller ya blinda esto (aplicarEdiciones fuerza incluir=false
-     * si la fila tiene errores, así que nunca llega así vía HTTP) — pero
-     * ImportacionPartidosService debe rechazarlo igual como segunda capa
-     * de seguridad, por si algún día se llama desde otro lado.
+     * El emergente (o cualquier otro rol) puede pertenecer a otra asociación
+     * — cuando el nombre del Word SÍ matchea a un árbitro real del colegio
+     * que importa, la designación se crea automáticamente al confirmar.
+     */
+    public function test_confirmar_designa_automaticamente_al_arbitro_que_matchea_por_nombre(): void
+    {
+        $this->seed(\Database\Seeders\RolesPartidoSeeder::class);
+        $colegio    = $this->crearColegio();
+        $designador = $this->crearDesignadorConPermisos($colegio);
+        $torneo     = $this->crearTorneo($colegio, $designador, ['temporada' => 2026]);
+        DivisionTorneo::create(['idTorneo' => $torneo->idTorneo, 'nombreDivision' => 'SUB 15']);
+        DivisionTorneo::create(['idTorneo' => $torneo->idTorneo, 'nombreDivision' => 'SUB 20 SIN DIVISION']);
+        $this->crearSede($torneo)->update(['nombreSede' => 'Centro Deportivo 1']);
+        $formato = $this->crearFormatoDupla();
+
+        $arbitroCentral = $this->crearArbitro($colegio, ['usuario' => ['nombreUsuario' => 'Juan Pérez']]);
+
+        $ruta = $this->generarDocxDePrueba('Juan Pérez');
+
+        $this->actingAs($designador)->post(route('designaciones.importar.procesar'), [
+            'idTorneo'    => $torneo->idTorneo,
+            'idFormato'   => $formato->idFormato,
+            'archivoWord' => new \Illuminate\Http\UploadedFile($ruta, 'muestra.docx', null, null, true),
+        ]);
+
+        $importacion = ImportacionPartidos::where('idColegio', $colegio->idColegio)->sole();
+
+        $filaSantaFe = $importacion->filas()->where('equipoLocal', 'SANTA FE')->sole();
+        $rolArbitro  = collect($filaSantaFe->designacionesMatch)->firstWhere('rolTexto', 'ARBITRO');
+        $this->assertNotNull($rolArbitro, 'El parser debe extraer la fila del rol ARBITRO.');
+        $this->assertSame($arbitroCentral->idArbitro, $rolArbitro['idArbitroMatch']);
+
+        $filas = [];
+        foreach ($importacion->filas as $f) {
+            $filas[$f->clave] = [
+                'incluir'    => '1',
+                'idDivision' => (string) DivisionTorneo::where('idTorneo', $torneo->idTorneo)
+                    ->where('nombreDivision', $f->categoriaTexto)->value('idDivision'),
+                'idSede'     => (string) $f->idSedeMatch,
+                'idFormato'  => (string) $formato->idFormato,
+            ];
+        }
+
+        $this->actingAs($designador)->post(route('designaciones.importar.confirmar'), ['filas' => $filas]);
+
+        $partidoSantaFe = Partido::where('idTorneo', $torneo->idTorneo)->where('equipoLocal', 'SANTA FE')->firstOrFail();
+        $this->assertTrue(
+            $partidoSantaFe->designaciones()->where('idArbitro', $arbitroCentral->idArbitro)->exists(),
+            'El árbitro que matcheó por nombre debe quedar designado automáticamente.',
+        );
+    }
+
+    public function test_marca_fila_como_posible_duplicado_si_ya_existe_un_partido_igual(): void
+    {
+        $this->seed(\Database\Seeders\RolesPartidoSeeder::class);
+        $colegio    = $this->crearColegio();
+        $designador = $this->crearDesignadorConPermisos($colegio);
+        $torneo     = $this->crearTorneo($colegio, $designador, ['temporada' => 2026]);
+        $division   = DivisionTorneo::create(['idTorneo' => $torneo->idTorneo, 'nombreDivision' => 'SUB 15']);
+        $sede       = $this->crearSede($torneo);
+        $sede->update(['nombreSede' => 'Centro Deportivo 1']);
+        $formato = $this->crearFormatoDupla();
+
+        // Partido ya existente idéntico al que trae el Word.
+        app(\App\Services\DesignacionService::class)->crearPartido($colegio->idColegio, [
+            'idTorneo' => $torneo->idTorneo, 'idDivision' => $division->idDivision,
+            'idSede' => $sede->idSede, 'idFormato' => $formato->idFormato,
+            'equipoLocal' => 'SANTA FE', 'equipoVisitante' => 'BETHEL',
+            'fechaPartido' => '2026-03-07', 'horaPartido' => '09:00', 'observaciones' => null,
+        ], $designador->idUsuario);
+
+        $ruta = $this->generarDocxDePrueba();
+
+        $this->actingAs($designador)->post(route('designaciones.importar.procesar'), [
+            'idTorneo'    => $torneo->idTorneo,
+            'idFormato'   => $formato->idFormato,
+            'archivoWord' => new \Illuminate\Http\UploadedFile($ruta, 'muestra.docx', null, null, true),
+        ]);
+
+        $importacion = ImportacionPartidos::where('idColegio', $colegio->idColegio)->sole();
+        $filaSantaFe = $importacion->filas()->where('equipoLocal', 'SANTA FE')->sole();
+
+        $this->assertTrue($filaSantaFe->esPosibleDuplicado);
+        $this->assertNotEmpty(array_filter(
+            $filaSantaFe->advertencias,
+            fn ($a) => str_contains($a, 'duplicado'),
+        ));
+    }
+
+    /**
+     * ImportacionPartidosService::confirmar() debe rechazar una fila
+     * incluida con errores sin resolver como segunda capa de seguridad
+     * (el controller ya fuerza incluir=false en aplicarEdiciones()).
      */
     public function test_no_confirma_si_una_fila_incluida_sigue_con_errores(): void
     {
         $colegio    = $this->crearColegio();
         $designador = $this->crearDesignadorConPermisos($colegio);
         $torneo     = $this->crearTorneo($colegio, $designador, ['temporada' => 2026]);
+        $formato    = $this->crearFormatoDupla();
 
-        $filaConError = [
-            'clave' => 'x', 'grupoTexto' => null, 'equipoLocal' => 'A', 'equipoVisitante' => 'B',
-            'idDivisionMatch' => null, 'idSedeMatch' => null, 'idFormato' => null,
+        $importacion = ImportacionPartidos::create([
+            'idColegio' => $colegio->idColegio, 'idTorneo' => $torneo->idTorneo,
+            'idUsuario' => $designador->idUsuario, 'nombreArchivoOriginal' => 'test.docx',
+            'idFormatoDefault' => $formato->idFormato, 'estado' => ImportacionPartidos::ESTADO_PROCESANDO,
+        ]);
+
+        ImportacionPartidoFila::create([
+            'idImportacion' => $importacion->idImportacion, 'clave' => 'x',
+            'equipoLocal' => 'A', 'equipoVisitante' => 'B',
             'fechaPartido' => '2026-03-07', 'horaPartido' => '09:00',
             'incluir' => true, 'errores' => ['División no encontrada.'], 'advertencias' => [],
-        ];
+        ]);
 
         $this->expectException(\RuntimeException::class);
 
         app(\App\Services\Importacion\ImportacionPartidosService::class)
-            ->importarLote($colegio->idColegio, $torneo->idTorneo, [$filaConError], $designador->idUsuario);
+            ->confirmar($importacion, $designador->idUsuario);
 
         $this->assertSame(0, Partido::where('idTorneo', $torneo->idTorneo)->count());
     }
@@ -245,5 +352,85 @@ class ImportacionDesignacionesControllerTest extends TestCase
             'idFormato'   => $formato->idFormato,
             'archivoWord' => new \Illuminate\Http\UploadedFile($ruta, 'muestra.docx', null, null, true),
         ])->assertNotFound();
+    }
+
+    public function test_revertir_una_importacion_confirmada_elimina_los_partidos_que_creo(): void
+    {
+        $this->seed(\Database\Seeders\RolesPartidoSeeder::class);
+        $colegio    = $this->crearColegio();
+        $designador = $this->crearDesignadorConPermisos($colegio);
+        $torneo     = $this->crearTorneo($colegio, $designador, ['temporada' => 2026]);
+        DivisionTorneo::create(['idTorneo' => $torneo->idTorneo, 'nombreDivision' => 'SUB 15']);
+        DivisionTorneo::create(['idTorneo' => $torneo->idTorneo, 'nombreDivision' => 'SUB 20 SIN DIVISION']);
+        $this->crearSede($torneo)->update(['nombreSede' => 'Centro Deportivo 1']);
+        $formato = $this->crearFormatoDupla();
+
+        $ruta = $this->generarDocxDePrueba();
+        $this->actingAs($designador)->post(route('designaciones.importar.procesar'), [
+            'idTorneo' => $torneo->idTorneo, 'idFormato' => $formato->idFormato,
+            'archivoWord' => new \Illuminate\Http\UploadedFile($ruta, 'muestra.docx', null, null, true),
+        ]);
+
+        $importacion = ImportacionPartidos::where('idColegio', $colegio->idColegio)->sole();
+        $filas = [];
+        foreach ($importacion->filas as $f) {
+            $filas[$f->clave] = [
+                'incluir'    => '1',
+                'idDivision' => (string) DivisionTorneo::where('idTorneo', $torneo->idTorneo)
+                    ->where('nombreDivision', $f->categoriaTexto)->value('idDivision'),
+                'idSede'     => (string) $f->idSedeMatch,
+                'idFormato'  => (string) $formato->idFormato,
+            ];
+        }
+        $this->actingAs($designador)->post(route('designaciones.importar.confirmar'), ['filas' => $filas]);
+
+        $this->assertSame(2, Partido::where('idTorneo', $torneo->idTorneo)->count());
+
+        $this->actingAs($designador)
+            ->put(route('designaciones.importar.revertir', $importacion->idImportacion))
+            ->assertRedirect();
+
+        $this->assertSame(0, Partido::where('idTorneo', $torneo->idTorneo)->count());
+        $this->assertSame(ImportacionPartidos::ESTADO_REVERTIDA, $importacion->fresh()->estado);
+    }
+
+    public function test_no_se_puede_revertir_un_partido_ya_publicado(): void
+    {
+        $this->seed(\Database\Seeders\RolesPartidoSeeder::class);
+        $colegio    = $this->crearColegio();
+        $designador = $this->crearDesignadorConPermisos($colegio);
+        $torneo     = $this->crearTorneo($colegio, $designador, ['temporada' => 2026]);
+        $division   = DivisionTorneo::create(['idTorneo' => $torneo->idTorneo, 'nombreDivision' => 'SUB 15']);
+        $sede       = $this->crearSede($torneo);
+        $formato    = $this->crearFormatoDupla();
+
+        $importacion = ImportacionPartidos::create([
+            'idColegio' => $colegio->idColegio, 'idTorneo' => $torneo->idTorneo,
+            'idUsuario' => $designador->idUsuario, 'nombreArchivoOriginal' => 'test.docx',
+            'idFormatoDefault' => $formato->idFormato, 'estado' => ImportacionPartidos::ESTADO_CONFIRMADA,
+            'totalCreados' => 1, 'confirmadaEn' => now(),
+        ]);
+
+        $arbitroCentral   = $this->crearArbitro($colegio);
+        $arbitroAsistente = $this->crearArbitro($colegio);
+        $servicio = app(\App\Services\DesignacionService::class);
+
+        $partido = $servicio->crearPartido($colegio->idColegio, [
+            'idTorneo' => $torneo->idTorneo, 'idDivision' => $division->idDivision,
+            'idSede' => $sede->idSede, 'idFormato' => $formato->idFormato, 'idImportacion' => $importacion->idImportacion,
+            'equipoLocal' => 'SANTA FE', 'equipoVisitante' => 'BETHEL',
+            'fechaPartido' => '2026-03-07', 'horaPartido' => '09:00', 'observaciones' => null,
+        ], $designador->idUsuario);
+
+        $servicio->asignarArbitro($partido, $arbitroCentral->idArbitro, $this->idRolPorNombre('Central'), $colegio->idColegio, $designador->idUsuario);
+        $servicio->asignarArbitro($partido, $arbitroAsistente->idArbitro, $this->idRolPorNombre('Asistente'), $colegio->idColegio, $designador->idUsuario);
+        $servicio->publicarPartido($partido->fresh('formato'), $designador);
+
+        $this->actingAs($designador)
+            ->put(route('designaciones.importar.revertir', $importacion->idImportacion))
+            ->assertRedirect();
+
+        $this->assertSame(1, Partido::where('idTorneo', $torneo->idTorneo)->count());
+        $this->assertSame(ImportacionPartidos::ESTADO_CONFIRMADA, $importacion->fresh()->estado);
     }
 }

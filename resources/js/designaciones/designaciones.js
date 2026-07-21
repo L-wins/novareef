@@ -22,6 +22,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     suscribirCanalesTiempoReal();
 
+    // ── Exportar PDF con rango de fechas (partidos-torneo.blade)
+    const btnAbrirExportarPdf = document.getElementById('btn-abrir-exportar-pdf');
+    const formExportarPdf     = document.getElementById('form-exportar-pdf');
+    btnAbrirExportarPdf?.addEventListener('click', function () {
+        formExportarPdf.style.display = formExportarPdf.style.display === 'none' ? 'flex' : 'none';
+    });
+
     // ── Búsqueda de árbitros (show.blade)
     document.querySelectorAll('.arbitro-search').forEach(function (wrap) {
         const input        = wrap.querySelector('.arbitro-search__input');

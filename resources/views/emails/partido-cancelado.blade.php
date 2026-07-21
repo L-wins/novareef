@@ -42,7 +42,7 @@
             <div class="match-meta">
                 📋 {{ $partido->torneo?->nombreTorneo }}<br>
                 📅 {{ ucfirst($fecha ?? '—') }} · 🕐 {{ $partido->horaPartido ?? '—' }}<br>
-                📍 {{ $partido->sede?->nombreSede ?? '—' }}, {{ $partido->sede?->municipio ?? '' }}<br>
+                📍 {{ $partido->sede?->nombreSede ?? '—' }}, {{ $partido->sede?->ciudad ?? '' }}<br>
                 Tu rol: {{ $designacion->rol?->nombre ?? 'Árbitro' }}
             </div>
         </div>

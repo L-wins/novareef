@@ -33,6 +33,7 @@ class Partido extends Model
         'idDivision',
         'idSede',
         'idFormato',
+        'idImportacion',
         'equipoLocal',
         'equipoVisitante',
         'fechaPartido',
@@ -90,6 +91,11 @@ class Partido extends Model
     public function formato(): BelongsTo
     {
         return $this->belongsTo(FormatoDesignacion::class, 'idFormato', 'idFormato');
+    }
+
+    public function importacion(): BelongsTo
+    {
+        return $this->belongsTo(ImportacionPartidos::class, 'idImportacion', 'idImportacion');
     }
 
     public function designaciones(): HasMany

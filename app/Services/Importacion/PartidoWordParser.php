@@ -35,12 +35,17 @@ final class PartidoWordParser
         'noviembre' => 11, 'diciembre' => 12,
     ];
 
+    /** Roles que puede traer la tabla, en el orden en que aparecen en el documento real. */
+    private const ROLES_TABLA = ['ARBITRO', 'LINEA UNO', 'LINEA DOS', 'EMERGENTE'];
+
     /**
      * @return array<int, array{
      *     clave: string, grupoTexto: ?string, categoriaTexto: string, fechaTexto: string,
      *     asociacionTexto: ?string, equipoLocal: string, equipoVisitante: string,
      *     nombreSedeTexto: string, diaTexto: string, ciudadTexto: string,
      *     fechaPartido: ?string, horaPartido: ?string, errorFecha: bool,
+     *     roles: array<int, array{rolTexto: string, nombreTexto: string, asociacionTexto: ?string}>,
+     *     errorParseo: ?string,
      * }>
      */
     public function parsear(string $rutaArchivo, int $anioTorneo): array
@@ -49,11 +54,22 @@ final class PartidoWordParser
 
         $partidos = [];
         $contexto = null;
+        $numeroTabla = 0;
 
         foreach ($phpWord->getSections() as $section) {
             foreach ($section->getElements() as $elemento) {
                 if ($elemento instanceof Table) {
-                    $partidos[] = $this->parsearTabla($elemento, $contexto, $anioTorneo);
+                    $numeroTabla++;
+
+                    // Una tabla corrupta/inesperada no debe tumbar el resto
+                    // del documento — se reporta como fila con error propio,
+                    // aislado, y el resto se sigue procesando con normalidad.
+                    try {
+                        $partidos[] = $this->parsearTabla($elemento, $contexto, $anioTorneo);
+                    } catch (\Throwable $e) {
+                        $partidos[] = $this->filaConErrorDeParseo($contexto, $numeroTabla, $e);
+                    }
+
                     $contexto = null;
                     continue;
                 }
@@ -66,6 +82,30 @@ final class PartidoWordParser
         }
 
         return $partidos;
+    }
+
+    /** @return array<string, mixed> */
+    private function filaConErrorDeParseo(?array $contexto, int $numeroTabla, \Throwable $e): array
+    {
+        report($e);
+
+        return [
+            'clave'           => (string) \Illuminate\Support\Str::uuid(),
+            'grupoTexto'      => $contexto['grupoTexto'] ?? null,
+            'categoriaTexto'  => $contexto['categoriaTexto'] ?? '',
+            'fechaTexto'      => $contexto['fechaTexto'] ?? '',
+            'asociacionTexto' => null,
+            'equipoLocal'     => '',
+            'equipoVisitante' => '',
+            'nombreSedeTexto' => '',
+            'diaTexto'        => '',
+            'ciudadTexto'     => '',
+            'fechaPartido'    => null,
+            'horaPartido'     => null,
+            'errorFecha'      => true,
+            'roles'           => [],
+            'errorParseo'     => "No se pudo leer la tabla #{$numeroTabla} del documento — revisa manualmente esta fila o corrige el Word y vuelve a subirlo.",
+        ];
     }
 
     private function parsearContexto(string $texto): array
@@ -104,7 +144,8 @@ final class PartidoWordParser
         $nombreSedeTexto = $this->valorConEtiquetaPosiblementePegada($celdasPlano, 'ESTADIO');
         $ciudadTexto     = $this->valorConEtiquetaPosiblementePegada($celdasPlano, 'CIUDAD');
 
-        $asociacionTexto = $this->asociacionDesdeRoles($celdasPlano);
+        $roles           = $this->extraerRoles($celdasPlano);
+        $asociacionTexto = $roles[0]['asociacionTexto'] ?? null;
 
         [$fechaPartido, $horaPartido, $errorFecha] = $this->interpretarFechaHora($diaTexto, $horaTexto, $anioTorneo);
 
@@ -122,6 +163,8 @@ final class PartidoWordParser
             'fechaPartido'    => $fechaPartido,
             'horaPartido'     => $horaPartido,
             'errorFecha'      => $errorFecha,
+            'roles'           => $roles,
+            'errorParseo'     => null,
         ];
     }
 
@@ -170,21 +213,36 @@ final class PartidoWordParser
     }
 
     /**
-     * La asociación real ("ASOCAFA") no viene en el bloque de contexto rojo
-     * (ese solo trae el literal "ASOCIACION DE" sin valor) — viene repetida
-     * en la tabla, en la celda siguiente al valor de cada rol (ARBITRO,
-     * LINEA UNO, etc). Se toma la primera que aparezca.
+     * Extrae, para cada uno de los 4 roles (ARBITRO/LINEA UNO/LINEA DOS/
+     * EMERGENTE), el nombre del árbitro designado por la asociación y SU
+     * PROPIA asociación — no se puede asumir que solo el emergente cambia
+     * de asociación: cualquiera de los 4 roles puede venir de una asociación
+     * (colegio) distinta al dueño del torneo, la del contexto rojo no
+     * aplica ("ASOCIACION DE" ahí siempre viene sin valor).
+     *
+     * @return array<int, array{rolTexto: string, nombreTexto: string, asociacionTexto: ?string}>
      */
-    private function asociacionDesdeRoles(array $celdas): ?string
+    private function extraerRoles(array $celdas): array
     {
-        foreach (['ARBITRO', 'LINEA UNO', 'LINEA DOS', 'EMERGENTE'] as $rol) {
-            $idx = $this->indiceCelda($celdas, $rol);
-            if ($idx >= 0 && trim($celdas[$idx + 2] ?? '') !== '') {
-                return trim($celdas[$idx + 2]);
+        $roles = [];
+
+        foreach (self::ROLES_TABLA as $rolTexto) {
+            $idx = $this->indiceCelda($celdas, $rolTexto);
+            if ($idx < 0) {
+                continue;
             }
+
+            $nombreTexto     = trim($celdas[$idx + 1] ?? '');
+            $asociacionTexto = trim($celdas[$idx + 2] ?? '');
+
+            $roles[] = [
+                'rolTexto'        => $rolTexto,
+                'nombreTexto'     => $nombreTexto,
+                'asociacionTexto' => $asociacionTexto !== '' ? $asociacionTexto : null,
+            ];
         }
 
-        return null;
+        return $roles;
     }
 
     /**

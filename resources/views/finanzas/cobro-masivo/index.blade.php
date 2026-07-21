@@ -39,8 +39,16 @@
           data-confirm-btn="Sí, registrar">
         @csrf
 
-        <div class="form-section">
-            <p class="form-section-title">Datos del cargo</p>
+        @php
+            $cmTieneErroresCargo = $errors->hasAny(['categoria', 'fechaMovimiento', 'concepto', 'montoTotal']);
+        @endphp
+        <details class="form-section cm-datos-cargo" id="cm-datos-cargo" {{ $cmTieneErroresCargo ? 'open' : '' }}>
+            <summary class="cm-datos-cargo__summary">
+                <span class="form-section-title" style="margin-bottom:0;">Datos del cargo</span>
+                <span class="cm-datos-cargo__resumen" data-cm-resumen-cargo>Sin definir aún</span>
+                <i class="fa-solid fa-chevron-down cm-datos-cargo__chevron"></i>
+            </summary>
+
             <div class="form-grid form-grid-2">
                 <div class="form-group">
                     <label class="form-label" for="categoria">Categoría <span class="req">*</span></label>
@@ -84,7 +92,7 @@
                     <textarea id="observaciones" name="observaciones" class="form-textarea">{{ old('observaciones') }}</textarea>
                 </div>
             </div>
-        </div>
+        </details>
 
         <div class="form-section">
             <p class="form-section-title">Árbitros ({{ $arbitros->count() }})</p>

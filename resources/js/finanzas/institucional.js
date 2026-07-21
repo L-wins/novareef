@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var tipoSelect      = document.getElementById('inst-tipo');
     var categoriaSelect = document.getElementById('inst-categoria');
     var torneoWrap       = document.getElementById('inst-torneo-wrap');
+    var categoriasPorTipo = window.institucionalCategorias || { ingreso: [], egreso: [] };
 
     if (!tipoSelect || !categoriaSelect) return;
 
@@ -13,28 +14,43 @@ document.addEventListener('DOMContentLoaded', function () {
         torneoWrap.style.display = categoriaSelect.value === 'ingreso_torneo' ? '' : 'none';
     }
 
-    function sincronizarCategorias() {
-        var tipo = tipoSelect.value;
-        var tieneSeleccionValida = false;
-        var primeraVisible = null;
+    // Con Choices.js activo, el <select> original queda oculto y sus
+    // options ya no reflejan nada en pantalla — filtrar por tipo se hace
+    // reemplazando las choices de la instancia (setChoices), no tocando
+    // option.hidden sobre el select nativo subyacente.
+    function sincronizarCategorias(valorPreferido) {
+        var tipo     = tipoSelect.value;
+        var opciones = categoriasPorTipo[tipo] || [];
+        var instancia = categoriaSelect._choicesInstance;
 
-        Array.prototype.forEach.call(categoriaSelect.options, function (opt) {
-            var visible = opt.dataset.tipo === tipo;
-            opt.hidden = !visible;
-            opt.disabled = !visible;
-            if (visible && !primeraVisible) primeraVisible = opt.value;
-            if (visible && opt.selected) tieneSeleccionValida = true;
+        var hayPreferido = valorPreferido && opciones.some(function (o) { return o.value === valorPreferido; });
+        var valorFinal   = hayPreferido ? valorPreferido : (opciones[0] ? opciones[0].value : '');
+
+        var choices = opciones.map(function (o) {
+            return { value: o.value, label: o.label, selected: o.value === valorFinal };
         });
 
-        if (!tieneSeleccionValida && primeraVisible) {
-            categoriaSelect.value = primeraVisible;
+        if (instancia) {
+            instancia.clearStore();
+            instancia.setChoices(choices, 'value', 'label', true);
+        } else {
+            categoriaSelect.innerHTML = '';
+            choices.forEach(function (o) {
+                var opt = document.createElement('option');
+                opt.value = o.value;
+                opt.textContent = o.label;
+                opt.selected = o.selected;
+                categoriaSelect.appendChild(opt);
+            });
         }
 
         sincronizarTorneo();
     }
 
-    tipoSelect.addEventListener('change', sincronizarCategorias);
+    tipoSelect.addEventListener('change', function () { sincronizarCategorias(); });
     categoriaSelect.addEventListener('change', sincronizarTorneo);
 
-    sincronizarCategorias();
+    // Primera carga: respeta la categoría precargada por el servidor
+    // (old()/request()) — antes de tocar nada, esa es la fuente de verdad.
+    sincronizarCategorias(categoriaSelect.value);
 });

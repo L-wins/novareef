@@ -11,6 +11,7 @@ use App\Models\DivisionTorneo;
 use App\Models\FormatoDesignacion;
 use App\Models\Partido;
 use App\Models\RolPartido;
+use App\Models\SedeTorneo;
 use App\Models\SlotDesignacion;
 use App\Models\User;
 use Database\Seeders\RolesPartidoSeeder;
@@ -141,5 +142,47 @@ class ListadoPartidosPdfTest extends TestCase
         $this->actingAs($designador)
             ->get(route('designaciones.listado.pdf', ['idTorneo' => $torneo->idTorneo, 'division' => $divisionA->idDivision]))
             ->assertOk();
+    }
+
+    /**
+     * El campo CIUDAD del listado sale directo de SedeTorneo::ciudad (único
+     * campo de ubicación de la sede, ver simplificación de M04) — nunca
+     * depende de un match parcial ni de un dato ausente, porque es
+     * obligatorio al crear la sede. El PDF generado por dompdf comprime el
+     * contenido (FlateDecode), así que no es buscable como texto plano en la
+     * respuesta — se verifica renderizando la misma vista Blade que usa el
+     * controller, con los datos reales del partido.
+     */
+    public function test_la_ciudad_de_la_sede_aparece_completa_en_el_listado(): void
+    {
+        $colegio    = $this->crearColegio();
+        $designador = $this->crearDesignadorConPermisos($colegio);
+        $torneo     = $this->crearTorneo($colegio, $designador);
+        $division   = $this->crearDivision($torneo);
+        $formato    = $this->crearFormatoDupla();
+
+        $sede = SedeTorneo::create([
+            'idTorneo'   => $torneo->idTorneo,
+            'nombreSede' => 'Estadio Metropolitano',
+            'ciudad'     => 'Barranquilla',
+        ]);
+
+        $partido = Partido::create([
+            'idColegio' => $colegio->idColegio, 'idTorneo' => $torneo->idTorneo,
+            'idDivision' => $division->idDivision, 'idSede' => $sede->idSede,
+            'idFormato' => $formato->idFormato,
+            'equipoLocal' => 'Junior', 'equipoVisitante' => 'Unión',
+            'fechaPartido' => '2026-03-07', 'horaPartido' => '09:00',
+            'estadoPartido' => Partido::ESTADO_BORRADOR, 'modalidadPago' => 'campo', 'version' => 0,
+        ]);
+
+        $this->actingAs($designador)
+            ->get(route('designaciones.listado.pdf', ['idTorneo' => $torneo->idTorneo]))
+            ->assertOk();
+
+        $partido->load(['division', 'sede', 'slots.rol', 'slots.designacion.arbitro.usuario']);
+        $html = view('pdf.listado-partidos', ['partidos' => collect([$partido]), 'torneo' => $torneo, 'generadoPor' => $designador])->render();
+
+        $this->assertStringContainsString('Barranquilla', $html);
     }
 }

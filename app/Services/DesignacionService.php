@@ -43,7 +43,7 @@ final class DesignacionService
      *
      * @param  array{idTorneo:int, idDivision:int, idSede:int, idFormato:int,
      *                equipoLocal:string, equipoVisitante:string, fechaPartido:string,
-     *                horaPartido:string, observaciones:?string}  $datos
+     *                horaPartido:string, observaciones:?string, idImportacion?:?int}  $datos
      */
     public function crearPartido(int $idColegio, array $datos, int $idUsuarioAccion): Partido
     {
@@ -61,6 +61,7 @@ final class DesignacionService
                 'idDivision'      => $datos['idDivision'],
                 'idSede'          => $datos['idSede'],
                 'idFormato'       => $datos['idFormato'],
+                'idImportacion'   => $datos['idImportacion'] ?? null,
                 'equipoLocal'     => $datos['equipoLocal'],
                 'equipoVisitante' => $datos['equipoVisitante'],
                 'fechaPartido'    => $datos['fechaPartido'],

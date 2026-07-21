@@ -87,7 +87,7 @@
             </tr>
             <tr>
                 <td class="label">CIUDAD</td>
-                <td class="valor" colspan="2" style="border-right:2px solid #000;">{{ $partido->sede?->municipio ?? '—' }}</td>
+                <td class="valor" colspan="2" style="border-right:2px solid #000;">{{ $partido->sede?->ciudad ?? '—' }}</td>
                 <td class="label-rol">EMERGENTE</td>
                 <td class="valor-rol">{{ $nombreArbitro('Cuarto') }}</td>
             </tr>

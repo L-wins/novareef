@@ -20,9 +20,7 @@ class SedeRequest extends FormRequest
     {
         return [
             'nombreSede'    => ['required', 'string', 'max:150'],
-            'direccion'     => ['required', 'string', 'max:255'],
-            'municipio'     => ['required', 'string', 'max:100'],
-            'departamento'  => ['nullable', 'string', 'max:100'],
+            'ciudad'        => ['required', 'string', 'max:100'],
             'urlMaps'       => ['nullable', 'url', 'max:500'],
             'observaciones' => ['nullable', 'string'],
         ];
@@ -32,8 +30,7 @@ class SedeRequest extends FormRequest
     {
         return [
             'nombreSede.required' => 'El nombre de la sede es obligatorio.',
-            'direccion.required'  => 'La dirección es obligatoria.',
-            'municipio.required'  => 'El municipio es obligatorio.',
+            'ciudad.required'     => 'La ciudad es obligatoria.',
             'urlMaps.url'         => 'La URL de Google Maps no es válida.',
         ];
     }

@@ -75,7 +75,7 @@
 
             <div class="mis-meta-grid">
                 <div><i class="fa-regular fa-clock"></i> {{ $partido->horaPartido }}</div>
-                <div><i class="fa-solid fa-location-dot"></i> {{ $partido->sede?->nombreSede ?? '—' }}{{ $partido->sede?->municipio ? ', '.$partido->sede->municipio : '' }}</div>
+                <div><i class="fa-solid fa-location-dot"></i> {{ $partido->sede?->nombreSede ?? '—' }}{{ $partido->sede?->ciudad ? ', '.$partido->sede->ciudad : '' }}</div>
                 <div><i class="fa-solid fa-trophy"></i> {{ $partido->torneo?->nombreTorneo }}</div>
                 <div><i class="fa-solid fa-user-tie"></i> Mi rol: <strong>{{ $desig->rol?->nombre ?? 'Árbitro' }}</strong></div>
             </div>

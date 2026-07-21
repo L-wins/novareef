@@ -55,7 +55,7 @@
             <div class="match-detail">
                 {{ $partido->torneo?->nombreTorneo }} — {{ $partido->division?->nombreDivision }}<br>
                 📅 {{ ucfirst($fecha ?? '—') }} · 🕐 {{ $partido->horaPartido ?? '—' }}<br>
-                📍 {{ $partido->sede?->nombreSede ?? '—' }}, {{ $partido->sede?->municipio ?? '' }}<br>
+                📍 {{ $partido->sede?->nombreSede ?? '—' }}, {{ $partido->sede?->ciudad ?? '' }}<br>
                 Rol: {{ $designacion->rol?->nombre ?? 'Árbitro' }}
             </div>
         </div>
