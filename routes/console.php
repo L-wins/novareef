@@ -1,7 +1,9 @@
 <?php
 
 use App\Jobs\CerrarJustificacionesVencidasJob;
+use App\Jobs\GenerarCuotasMensualesJob;
 use App\Jobs\VencerSancionesJob;
+use App\Jobs\VencerSuscripcionesJob;
 use App\Jobs\VerificarConfirmacionesJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -36,6 +38,17 @@ Schedule::job(new VerificarConfirmacionesJob)->everyFifteenMinutes();
 // ya pasó, marcándolas como cumplidas. Las de fecha indefinida no se tocan.
 Schedule::job(new VencerSancionesJob)->daily();
 
+// Pasa a 'vencida' cualquier suscripción activa/trial cuya fechaVencimiento
+// ya pasó — es lo que efectivamente corta el acceso de una cancelación
+// programada (SuscripcionService::cancelar() ya no lo hace de inmediato).
+Schedule::job(new VencerSuscripcionesJob)->daily();
+
 // Cierra la ventana de justificación de asistencias académicas vencidas sin
 // justificar, y finaliza sesiones pasadas que el instructor nunca cerró.
 Schedule::job(new CerrarJustificacionesVencidasJob)->daily();
+
+// Genera el cargo de mensualidad del mes para cada árbitro activo de cada
+// colegio con cobro automático configurado
+// (ConfiguracionColegio::MONTO_MENSUALIDAD > 0). La idempotencia por mes vive
+// en FinanzasService::generarCuotaMensualAutomatica().
+Schedule::job(new GenerarCuotasMensualesJob)->dailyAt('05:00');

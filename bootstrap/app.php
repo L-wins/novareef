@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AdminAuth;
 use App\Http\Middleware\BlockResendWebhook;
+use App\Http\Middleware\ExigirAceptacionPolitica;
 use App\Http\Middleware\ProtegerEscrituraMasiva;
 use App\Http\Middleware\TerminarImpersonacionExpirada;
 use App\Http\Middleware\VerificarCambioContrasena;
@@ -45,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             TerminarImpersonacionExpirada::class,
             VerificarCambioContrasena::class,
+            ExigirAceptacionPolitica::class,
             ProtegerEscrituraMasiva::class,
         ]);
     })

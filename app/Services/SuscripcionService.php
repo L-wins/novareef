@@ -59,11 +59,15 @@ final class SuscripcionService
     }
 
     /**
-     * Cancela la suscripción vigente del colegio. El esquema no tiene un
-     * estado "cancelada" propio — se usa 'suspendida' (el mismo que usaría
-     * un impago), que ya excluye al colegio de ESTADOS_VIGENTES.
+     * Marca la suscripción vigente del colegio para no renovar. No corta el
+     * acceso de inmediato — el colegio ya pagó ese período, así que lo
+     * conserva hasta fechaVencimiento (mismo criterio que Netflix/Spotify al
+     * cancelar). VencerSuscripcionesJob es quien, ese día, pasa el estado a
+     * 'vencida'. Un corte inmediato (impago/abuso) es una decisión distinta
+     * y usa el toggle de Colegio.estadoColegio, no este método.
      *
-     * @throws \RuntimeException  Si el colegio no tiene una suscripción vigente.
+     * @throws \RuntimeException  Si el colegio no tiene una suscripción vigente
+     *                            o ya tiene una cancelación programada.
      */
     public function cancelar(Colegio $colegio, ?string $notas = null): Suscripcion
     {
@@ -73,9 +77,13 @@ final class SuscripcionService
             throw new \RuntimeException('Este colegio no tiene una suscripción vigente para cancelar.');
         }
 
+        if ($suscripcion->fechaCancelacion !== null) {
+            throw new \RuntimeException('Esta suscripción ya tiene una cancelación programada.');
+        }
+
         $suscripcion->update([
-            'estado' => 'suspendida',
-            'notas'  => $notas ?? trim(($suscripcion->notas ? $suscripcion->notas . ' — ' : '') . 'Cancelada desde el panel admin.'),
+            'fechaCancelacion' => now(),
+            'notas'            => $notas ?? trim(($suscripcion->notas ? $suscripcion->notas . ' — ' : '') . 'Cancelación programada desde el panel admin — acceso hasta fechaVencimiento.'),
         ]);
 
         return $suscripcion->fresh();

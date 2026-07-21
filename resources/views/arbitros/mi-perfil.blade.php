@@ -180,6 +180,17 @@
                         @error('epsArbitro') <p class="field-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
+                @unless($yaAceptoDatosSensibles ?? false)
+                <div class="form-check" style="margin-top:0.75rem;">
+                    <input type="checkbox" id="consentimientoDatosSensibles" name="consentimientoDatosSensibles" value="1"
+                           class="form-check-input"
+                           {{ old('consentimientoDatosSensibles') ? 'checked' : '' }}>
+                    <label for="consentimientoDatosSensibles" class="form-check-label">
+                        Autorizo el tratamiento de mis datos de salud (RH, EPS) — son opcionales.
+                    </label>
+                </div>
+                @error('consentimientoDatosSensibles') <p class="field-error">{{ $message }}</p> @enderror
+                @endunless
             </div>
 
             {{-- Datos físicos --}}

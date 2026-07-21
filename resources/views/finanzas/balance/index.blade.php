@@ -73,6 +73,24 @@
         </div>
     </div>
 
+    {{-- Desglose de la caja por método de pago — seguimiento simple de dónde
+         está el dinero (efectivo en mano vs. digital/banco) sin necesitar
+         cuentas bancarias configurables. --}}
+    <div class="cuenta-resumen-pago mb-fin">
+        <div>
+            <p class="form-label"><i class="fa-solid fa-money-bill-wave"></i> Efectivo</p>
+            <p class="{{ $saldoPorMetodo['efectivo'] < 0 ? 'monto-egreso' : 'monto-ingreso' }} monto-lg">
+                ${{ number_format($saldoPorMetodo['efectivo'], 0, ',', '.') }}
+            </p>
+        </div>
+        <div>
+            <p class="form-label"><i class="fa-solid fa-mobile-screen-button"></i> Pago digital</p>
+            <p class="{{ $saldoPorMetodo['pago_digital'] < 0 ? 'monto-egreso' : 'monto-ingreso' }} monto-lg">
+                ${{ number_format($saldoPorMetodo['pago_digital'], 0, ',', '.') }}
+            </p>
+        </div>
+    </div>
+
     @if ($balance['porArbitro']->isEmpty())
         <div class="empty-state">
             <i class="fa-solid fa-user-slash"></i>
@@ -154,6 +172,13 @@
                             <div class="form-group">
                                 <label class="form-label">Fecha <span class="req">*</span></label>
                                 <input type="text" name="fecha" data-nova-date placeholder="dd/mm/aaaa" class="form-input">
+                            </div>
+                            <div class="form-group span-2">
+                                <label class="form-label">Método de pago <span class="req">*</span></label>
+                                <select name="metodoPago" data-nova-select class="form-select">
+                                    <option value="efectivo">Efectivo</option>
+                                    <option value="pago_digital">Pago digital</option>
+                                </select>
                             </div>
                             <div class="form-group span-2">
                                 <label class="form-label">Observaciones</label>

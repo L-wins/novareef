@@ -12,10 +12,8 @@
     use App\Models\MovimientoFinanciero;
     $etiquetasCategoria = MovimientoFinanciero::ETIQUETAS_CATEGORIA;
     $etiquetasMetodo = [
-        AbonoMovimiento::METODO_EFECTIVO      => 'Efectivo',
-        AbonoMovimiento::METODO_TRANSFERENCIA => 'Transferencia',
-        AbonoMovimiento::METODO_CONSIGNACION  => 'Consignación',
-        AbonoMovimiento::METODO_OTRO          => 'Otro',
+        AbonoMovimiento::METODO_EFECTIVO     => 'Efectivo',
+        AbonoMovimiento::METODO_PAGO_DIGITAL => 'Pago digital',
     ];
     $categoriasIngreso   = array_intersect_key($etiquetasCategoria, array_flip([
         MovimientoFinanciero::CATEGORIA_INGRESO_TORNEO,
@@ -216,18 +214,12 @@
                                 <label class="form-label">Concepto <span class="req">*</span></label>
                                 <input type="text" name="concepto" maxlength="255" placeholder="Ej. Arriendo de sede julio 2026" class="form-input" value="{{ old('concepto') }}">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group span-2">
                                 <label class="form-label">Método de pago <span class="req">*</span></label>
                                 <select name="metodoPago" data-nova-select class="form-select">
                                     <option value="efectivo" @selected(old('metodoPago', 'efectivo') === 'efectivo')>Efectivo</option>
-                                    <option value="transferencia" @selected(old('metodoPago') === 'transferencia')>Transferencia</option>
-                                    <option value="consignacion" @selected(old('metodoPago') === 'consignacion')>Consignación</option>
-                                    <option value="otro" @selected(old('metodoPago') === 'otro')>Otro</option>
+                                    <option value="pago_digital" @selected(old('metodoPago') === 'pago_digital')>Pago digital</option>
                                 </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Referencia</label>
-                                <input type="text" name="referencia" maxlength="100" class="form-input" value="{{ old('referencia') }}">
                             </div>
                             <div class="form-group span-2">
                                 <label class="form-label">Observaciones</label>

@@ -283,7 +283,7 @@ En `bootstrap/app.php`:
 
 ### `AbonoMovimiento` (`abonos_movimiento`) — M06
 - Pagos parciales o totales sobre un `MovimientoFinanciero`; inmutables (solo se anulan, no se editan), `timestamps=false` con `created_at` manual
-- `metodoPago`: efectivo\|transferencia\|consignacion\|compensacion_nomina\|otro — `compensacion_nomina` es el ajuste interno que hace `FinanzasService::pagarAcumuladoArbitro()`, nunca dinero real (se excluye de "saldo en caja" y de "historial de pagos recibidos")
+- `metodoPago`: efectivo\|pago_digital\|nomina — `nomina` es el ajuste interno que hace `FinanzasService::compensarDeudaConNomina()` (neteo contra la nómina pendiente del árbitro), nunca dinero real (se excluye de "saldo en caja" y de "historial de pagos recibidos"). `pago_digital` cubre cualquier transferencia/consignación/otro medio digital — no se distingue el banco/canal concreto. Sin campo `referencia` (se eliminó, se consideró innecesario)
 - `idLotePago` (UUID) agrupa los abonos de una misma operación de pago acumulado — es la clave para comprobantes de pago y `lotesRecientes()`
 
 ### `Sancion` (`sanciones`) / `TipoSancion` (`tipos_sancion`, catálogo **por colegio**) — M07

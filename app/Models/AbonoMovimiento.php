@@ -16,24 +16,20 @@ class AbonoMovimiento extends Model
     public    $timestamps   = false;
 
     // ── Métodos de pago ────────────────────
-    public const METODO_EFECTIVO            = 'efectivo';
-    public const METODO_TRANSFERENCIA       = 'transferencia';
-    public const METODO_CONSIGNACION        = 'consignacion';
-    public const METODO_COMPENSACION_NOMINA = 'compensacion_nomina';
-    public const METODO_OTRO                = 'otro';
+    public const METODO_EFECTIVO      = 'efectivo';
+    public const METODO_PAGO_DIGITAL  = 'pago_digital';
+    public const METODO_NOMINA        = 'nomina';
 
     /**
      * Métodos que un usuario puede elegir a mano en un formulario — excluye
-     * compensacion_nomina, que solo lo asigna internamente
+     * nomina, que solo lo asigna internamente
      * FinanzasService::compensarDeudaConNomina(), nunca una selección de
      * usuario. Única fuente de verdad para la validación Rule::in() de los
      * Requests de abono.
      */
     public const METODOS_MANUALES = [
         self::METODO_EFECTIVO,
-        self::METODO_TRANSFERENCIA,
-        self::METODO_CONSIGNACION,
-        self::METODO_OTRO,
+        self::METODO_PAGO_DIGITAL,
     ];
 
     protected $fillable = [
@@ -42,7 +38,6 @@ class AbonoMovimiento extends Model
         'monto',
         'fechaAbono',
         'metodoPago',
-        'referencia',
         'idLotePago',
         'anulado',
         'idUsuarioRegistro',

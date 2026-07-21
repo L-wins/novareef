@@ -1,0 +1,82 @@
+/*
+   Configuración — subnav General / Colegio (mismo patrón que
+   finanzas/partials/subnav.blade.php + fin-subnav, adaptado a los tokens
+   genéricos del panel usuario en vez de los alias locales de Finanzas).
+    */
+.cfg-subnav {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--c-border);
+    padding-bottom: 0.75rem;
+}
+.cfg-subnav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--c-radius-sm, 8px);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--c-text-secondary);
+    text-decoration: none;
+    transition: background .15s, color .15s;
+}
+.cfg-subnav-link:hover  { background: var(--c-bg-hover, rgba(255,255,255,.04)); color: var(--c-text-primary); }
+.cfg-subnav-link.active { background: var(--accent); color: #fff; }
+
+/*
+   Acciones del page-header (Editar/Guardar/Cancelar) — el botón de edición
+   vive arriba, junto al título, no al final de la página después de las
+   tarjetas (patrón de panel de administración: la acción principal siempre
+   visible sin hacer scroll). Los botones apuntan al form vía form="id" en
+   vez de anidar — initEditMode() en configuracion.js los resuelve por esa
+   asociación, no por jerarquía del DOM.
+    */
+.page-header-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+/*
+   Grilla de tarjetas — ocupa todo el ancho disponible en vez de quedar
+   angosta a la izquierda; cada tarjeta define su propio ancho mínimo y se
+   reacomoda sola según cuántas entren por fila (no una cantidad fija de
+   columnas). overflow:visible + align-items:start para que los dropdowns de
+   Choices.js puedan salirse de su celda sin cortarse (mismo motivo que
+   .form-card-grid en designaciones/partido-show.css).
+    */
+.cfg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+    overflow: visible;
+}
+.cfg-grid .detail-card { width: 100%; margin: 0; }
+
+@media (max-width: 640px) {
+    .cfg-grid { grid-template-columns: 1fr; }
+}
+
+/*
+   Ficha de identidad del colegio (sección General) — datos de solo lectura,
+   gestionados por el superadmin, junto al logo que sí es editable acá.
+    */
+.cfg-perfil-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem 1.5rem;
+    margin-top: 0.5rem;
+}
+.cfg-perfil-item { display: flex; flex-direction: column; gap: 0.2rem; }
+.cfg-perfil-item__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--c-text-secondary);
+}
+.cfg-perfil-item__valor { font-size: 0.9rem; color: var(--c-text-primary); }
+
+@media (max-width: 640px) {
+    .cfg-perfil-grid { grid-template-columns: 1fr; }
+}

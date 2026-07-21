@@ -88,6 +88,18 @@
                     </div>
 
                     <div class="form-group span-2">
+                        <div class="form-check">
+                            <input type="checkbox" id="consentimientoDatosSensibles" name="consentimientoDatosSensibles" value="1"
+                                   class="form-check-input"
+                                   {{ old('consentimientoDatosSensibles') ? 'checked' : '' }}>
+                            <label for="consentimientoDatosSensibles" class="form-check-label">
+                                Autorizo el tratamiento de mis datos de salud (RH, EPS) — son opcionales, puedes dejarlos vacíos si prefieres no compartirlos.
+                            </label>
+                        </div>
+                        @error('consentimientoDatosSensibles') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group span-2">
                         <label for="profesionArbitro" class="form-label">Profesión</label>
                         <input type="text" id="profesionArbitro" name="profesionArbitro"
                                value="{{ old('profesionArbitro', $arbitro->profesionArbitro) }}"

@@ -108,12 +108,20 @@ function pintar(el, estado, texto) {
    [data-edit-btn] los habilita; [data-edit-cancel] restaura y vuelve a bloquear.
    Los selects Choices.js se manejan via su instancia (el disabled nativo
    no aplica al DOM que Choices renderiza encima).
+
+   Los botones NO tienen que ser descendientes del <form> — pueden vivir en
+   el page-header (arriba) asociados vía el atributo HTML form="<id-del-form>",
+   que el navegador resuelve igual que si estuvieran anidados
+   (HTMLButtonElement.form). Por eso se buscan en todo el documento y se
+   filtran por esa asociación, no con form.querySelector().
     */
 function initEditMode() {
     document.querySelectorAll('form[data-edit-mode]').forEach((form) => {
-        const btnEditar  = form.querySelector('[data-edit-btn]');
-        const btnGuardar = form.querySelector('[data-edit-save]');
-        const btnCancel  = form.querySelector('[data-edit-cancel]');
+        const botonDe = (selector) => Array.from(document.querySelectorAll(selector)).find((el) => el.form === form);
+
+        const btnEditar  = botonDe('[data-edit-btn]');
+        const btnGuardar = botonDe('[data-edit-save]');
+        const btnCancel  = botonDe('[data-edit-cancel]');
         // Excluye los hidden (_token, _method): deshabilitarlos rompería el POST.
         const campos     = form.querySelectorAll('input:not([type="hidden"]), select, textarea');
 

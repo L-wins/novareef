@@ -21,7 +21,6 @@ class StoreAbonoArbitroRequest extends FormRequest
             'monto'         => ['required', 'numeric', 'min:0.01'],
             'fechaAbono'    => ['required', 'date'],
             'metodoPago'    => ['required', Rule::in(AbonoMovimiento::METODOS_MANUALES)],
-            'referencia'    => ['nullable', 'string', 'max:100'],
             'observaciones' => ['nullable', 'string'],
         ];
     }

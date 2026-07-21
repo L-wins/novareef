@@ -1,5 +1,49 @@
 /* ── Importador de partidos desde Word ── */
 
+/* Formulario de subida — .form-card/.form-section/.form-section-title/
+   .form-grid no tenían ninguna definición en este módulo (cada dominio del
+   panel las redefine con sus propios tokens, ver sanciones/form.css,
+   torneos/forms.css) — el formulario se veía sin tarjeta ni espaciado. */
+.form-card {
+  background: var(--disp-bg-card); border: 1px solid var(--disp-border);
+  border-radius: var(--disp-radius); padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.form-section { padding-bottom: 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--disp-border); }
+.form-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.form-section-title {
+  font-size: .76rem; font-weight: 700; color: var(--disp-text-2);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 1.1rem;
+}
+.form-grid { display: grid; grid-template-columns: 1fr; gap: 1.1rem; }
+.form-grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+/* Selector de archivo con arrastrar-y-soltar */
+.importar-dropzone {
+  display: flex; align-items: center; gap: .9rem; cursor: pointer;
+  border: 2px dashed var(--disp-border); border-radius: 12px;
+  padding: 1rem 1.25rem; background: var(--nv-fill);
+  transition: border-color .15s, background .15s;
+}
+.importar-dropzone:hover { border-color: var(--accent, #4f8ef7); }
+.importar-dropzone--sobre { border-color: var(--accent, #4f8ef7); background: rgba(79, 142, 247, .08); }
+.importar-dropzone--valido { border-color: #22c55e; border-style: solid; }
+.importar-dropzone--invalido { border-color: #ef4444; border-style: solid; }
+.importar-dropzone input[type="file"] {
+  position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; pointer-events: none;
+}
+.importar-dropzone__icono {
+  flex-shrink: 0; width: 42px; height: 42px; border-radius: 10px;
+  background: rgba(79, 142, 247, .12); color: var(--accent, #4f8ef7);
+  display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+}
+.importar-dropzone--valido .importar-dropzone__icono { background: rgba(34, 197, 94, .14); color: #22c55e; }
+.importar-dropzone--invalido .importar-dropzone__icono { background: rgba(239, 68, 68, .14); color: #ef4444; }
+.importar-dropzone__texto { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.importar-dropzone__texto strong {
+  font-size: .86rem; color: var(--nv-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.importar-dropzone__texto span { font-size: .76rem; color: var(--disp-text-2); }
+
 .importar-resumen {
   display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem;
   background: var(--nv-surface); border: 1px solid var(--disp-border);
@@ -146,27 +190,58 @@
   color: var(--disp-text-2); display: flex; align-items: center; gap: .35rem;
 }
 
-/* ── Guía de formato obligatorio (pantalla de subida) ── */
+/* ── Guía de formato obligatorio (pantalla de subida) ──
+   Pensada para un usuario principiante: el <summary> es un CTA vistoso
+   (no una simple línea de texto), y el contenido abierto va de lo general
+   (los 3 pasos del proceso) a lo específico (etiqueta por etiqueta), con
+   un mockup visual del propio documento Word como ancla principal —
+   comparar contra una imagen es más rápido que leer una lista de reglas. */
 .importar-guia {
-  background: var(--nv-surface); border: 1px solid var(--disp-border);
-  border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+  background: linear-gradient(180deg, var(--nv-surface), var(--nv-card));
+  border: 1px solid var(--disp-border); border-radius: 16px;
+  padding: 1.1rem 1.35rem; margin-bottom: 1.5rem;
 }
 .importar-guia summary {
-  cursor: pointer; font-size: .88rem; font-weight: 700; color: var(--nv-text);
-  display: flex; align-items: center; gap: .55rem; user-select: none; list-style: none;
+  cursor: pointer; user-select: none; list-style: none;
+  display: flex; align-items: center; gap: .85rem;
 }
 .importar-guia summary::-webkit-details-marker { display: none; }
-.importar-guia summary i { color: var(--accent, #4f8ef7); }
-.importar-guia[open] summary { margin-bottom: 1rem; }
+.importar-guia[open] summary { margin-bottom: 1.35rem; padding-bottom: 1.1rem; border-bottom: 1px dashed var(--disp-border); }
 
-.importar-guia__contenido { display: flex; flex-direction: column; gap: 1.1rem; }
-.importar-guia__intro { font-size: .84rem; color: var(--disp-text-2); line-height: 1.5; }
+.importar-guia__summary-icono {
+  flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 1.05rem;
+  background: rgba(79, 142, 247, .14); color: var(--accent, #4f8ef7);
+}
+.importar-guia__summary-texto { display: flex; flex-direction: column; gap: .1rem; flex: 1; min-width: 0; }
+.importar-guia__summary-texto strong { font-size: .92rem; color: var(--nv-text); }
+.importar-guia__summary-texto span { font-size: .8rem; color: var(--disp-text-2); }
+.importar-guia__summary-flecha { color: var(--disp-text-2); transition: transform .2s; flex-shrink: 0; }
+.importar-guia[open] .importar-guia__summary-flecha { transform: rotate(180deg); }
+
+.importar-guia__contenido { display: flex; flex-direction: column; gap: 1.35rem; }
+.importar-guia__intro { font-size: .84rem; color: var(--disp-text-2); line-height: 1.55; }
+
+/* Mini-stepper: ubica al usuario en el proceso completo antes del detalle */
+.importar-pasos {
+  display: flex; align-items: stretch; gap: .75rem; flex-wrap: wrap;
+  background: var(--nv-fill); border-radius: 12px; padding: .9rem 1rem;
+}
+.importar-paso { display: flex; align-items: flex-start; gap: .6rem; flex: 1 1 160px; min-width: 0; }
+.importar-paso__numero {
+  flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent, #4f8ef7); color: #fff; font-size: .76rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.importar-paso__titulo { font-size: .8rem; font-weight: 700; color: var(--nv-text); margin-bottom: .1rem; }
+.importar-paso__texto { font-size: .74rem; color: var(--disp-text-2); line-height: 1.45; }
+.importar-paso__flecha { color: var(--disp-text-2); opacity: .5; align-self: center; flex-shrink: 0; }
 
 .importar-guia__titulo-bloque {
   font-size: .82rem; font-weight: 700; color: var(--nv-text); margin-bottom: .4rem;
 }
 .importar-guia__texto { font-size: .82rem; color: var(--disp-text-2); line-height: 1.55; }
-.importar-guia__texto code, .importar-guia__lista code {
+.importar-guia__texto code, .importar-tolerancia code {
   background: var(--nv-fill); border-radius: 4px; padding: 1px 5px; font-size: .78rem;
 }
 
@@ -177,19 +252,75 @@
 .importar-guia__tabla th { background: var(--nv-fill); font-weight: 700; color: var(--nv-text); }
 .importar-guia__tabla td { color: var(--disp-text-2); }
 
-.importar-guia__lista { list-style: none; display: flex; flex-direction: column; gap: .5rem; font-size: .82rem; }
-.importar-guia__lista li { padding-left: 1.4rem; position: relative; line-height: 1.5; color: var(--disp-text-2); }
-.importar-guia__lista--ok li::before { content: "\2713"; position: absolute; left: 0; color: #22c55e; font-weight: 700; }
-.importar-guia__lista--error li::before { content: "\2715"; position: absolute; left: 0; color: #ef4444; font-weight: 700; }
+/* Mockup: "papel" blanco con el contexto en rojo (igual que en el .docx
+   real, ver PartidoWordParserTest) y una tabla real, no una descripción. */
+.importar-mockup { display: flex; flex-direction: column; gap: .55rem; }
+.importar-mockup__etiqueta {
+  display: flex; align-items: center; gap: .5rem;
+  font-size: .74rem; font-weight: 700; color: var(--disp-text-2);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.importar-mockup__numero {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent, #4f8ef7); color: #fff; font-size: .7rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.importar-mockup__pagina {
+  background: #fff; border-radius: 10px; padding: 1.1rem 1.25rem;
+  box-shadow: 0 6px 20px rgba(0,0,0,.18); border: 1px solid rgba(0,0,0,.06);
+  overflow-x: auto;
+}
+.importar-mockup__contexto {
+  font-family: Georgia, 'Times New Roman', serif; color: #c0392b; font-weight: 700;
+  font-size: .82rem; margin-bottom: .8rem; white-space: nowrap;
+}
+.importar-mockup__tabla {
+  border-collapse: collapse; font-family: Georgia, 'Times New Roman', serif;
+  font-size: .8rem; color: #1a1a1a; min-width: 100%;
+}
+.importar-mockup__tabla td {
+  border: 1px solid #999; padding: 5px 10px; white-space: nowrap;
+}
+.importar-mockup__tabla td.et { font-weight: 700; background: #f0f0f0; }
+.importar-mockup__pie {
+  font-size: .78rem; color: var(--disp-text-2); line-height: 1.5;
+  display: flex; align-items: flex-start; gap: .5rem; margin-top: .2rem;
+}
+.importar-mockup__pie i { color: #f59e0b; flex-shrink: 0; margin-top: .15rem; }
+
+/* Tolera / no tolera — tarjetas en vez de listas sueltas */
+.importar-tolerancia { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.importar-tolerancia__panel {
+  border-radius: 12px; padding: 1rem 1.15rem; border: 1px solid var(--disp-border);
+}
+.importar-tolerancia__panel--ok    { background: rgba(34, 197, 94, .06);  border-color: rgba(34, 197, 94, .25); }
+.importar-tolerancia__panel--error { background: rgba(239, 68, 68, .06); border-color: rgba(239, 68, 68, .25); }
+.importar-tolerancia__titulo {
+  font-size: .82rem; font-weight: 700; display: flex; align-items: center; gap: .45rem;
+  margin-bottom: .65rem;
+}
+.importar-tolerancia__panel--ok    .importar-tolerancia__titulo { color: #22c55e; }
+.importar-tolerancia__panel--error .importar-tolerancia__titulo { color: #ef4444; }
+.importar-tolerancia__panel ul { list-style: none; display: flex; flex-direction: column; gap: .55rem; margin: 0; padding: 0; }
+.importar-tolerancia__panel li {
+  font-size: .8rem; line-height: 1.5; color: var(--disp-text-2); padding-left: 1.1rem; position: relative;
+}
+.importar-tolerancia__panel li::before { content: "\2022"; position: absolute; left: 0; font-weight: 900; }
+.importar-tolerancia__panel--ok li::before    { color: #22c55e; }
+.importar-tolerancia__panel--error li::before { color: #ef4444; }
 
 .importar-guia__nota {
-  font-size: .8rem; color: var(--disp-text-2); font-style: italic;
-  border-top: 1px solid var(--disp-border); padding-top: .75rem;
+  font-size: .82rem; color: var(--disp-text-2); line-height: 1.5;
+  border-top: 1px solid var(--disp-border); padding-top: .9rem;
+  display: flex; align-items: flex-start; gap: .55rem;
 }
+.importar-guia__nota i { color: #ef4444; flex-shrink: 0; margin-top: .15rem; }
 
 @media (max-width: 900px) {
   .importar-resumen__archivo { margin-left: 0; width: 100%; }
   .importar-guia__tabla { font-size: .75rem; }
+  .importar-tolerancia { grid-template-columns: 1fr; }
+  .form-grid-2 { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 640px) {
@@ -197,4 +328,6 @@
   .importar-card__partido { flex-basis: 100%; order: 3; }
   .importar-card__estados { margin-left: 0; order: 2; }
   .importar-campo { flex-basis: 100% !important; }
+  .importar-pasos { flex-direction: column; }
+  .importar-paso__flecha { display: none; }
 }

@@ -7,14 +7,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdatePlan;
 use App\Models\Plan;
+use App\Services\AdminAuditService;
 use App\Services\PlanService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class AdminPlanController extends Controller
 {
     public function __construct(
         private readonly PlanService $planes,
+        private readonly AdminAuditService $auditoria,
     ) {}
 
     public function index(): View
@@ -68,6 +71,14 @@ class AdminPlanController extends Controller
         // prepareForValidation() ya renombró 'modulos' → 'modulosJSON' y casteó los booleanos.
         $plan->update($request->validated());
 
+        $this->auditoria->registrar(
+            Auth::guard('admin')->user(),
+            'editar',
+            'plan',
+            $plan->idPlan,
+            "Plan \"{$plan->nombre}\" editado.",
+        );
+
         return redirect()
             ->route('admin.planes.show', $id)
             ->with('success', 'Plan actualizado correctamente.');
@@ -87,6 +98,14 @@ class AdminPlanController extends Controller
     {
         $plan  = Plan::findOrFail($id);
         $label = $this->planes->alternarCampo($plan, $campo);
+
+        $this->auditoria->registrar(
+            Auth::guard('admin')->user(),
+            'cambiar_estado',
+            'plan',
+            $plan->idPlan,
+            "Plan \"{$plan->nombre}\" marcado como {$label}.",
+        );
 
         return back()->with('success', "Plan marcado como {$label}.");
     }

@@ -36,7 +36,6 @@ class StoreCobroMasivoRequest extends FormRequest
             'cargos.*.yaPago'      => ['nullable', 'boolean'],
             'cargos.*.metodoPago'  => ['nullable', Rule::in(AbonoMovimiento::METODOS_MANUALES)],
             'cargos.*.fechaAbono' => ['nullable', 'date'],
-            'cargos.*.referencia' => ['nullable', 'string', 'max:100'],
         ];
     }
 

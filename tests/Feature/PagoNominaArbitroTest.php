@@ -58,7 +58,7 @@ class PagoNominaArbitroTest extends TestCase
         $this->actingAs($tesorero)->post("/finanzas/arbitro/{$arbitro->idArbitro}/nomina/pagar", [
             'idsMovimientos' => [$mov->idMovimiento],
             'fecha'          => today()->format('Y-m-d'),
-            'metodoPago'     => 'transferencia',
+            'metodoPago'     => 'pago_digital',
         ])->assertRedirect();
 
         $mov->refresh();

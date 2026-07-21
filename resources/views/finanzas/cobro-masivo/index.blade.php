@@ -139,13 +139,9 @@
                                     <div class="cm-pago-fields" data-cm-pago-fields>
                                         <select name="cargos[{{ $i }}][metodoPago]" class="form-select form-select-sm">
                                             <option value="efectivo">Efectivo</option>
-                                            <option value="transferencia">Transferencia</option>
-                                            <option value="consignacion">Consignación</option>
-                                            <option value="otro">Otro</option>
+                                            <option value="pago_digital">Pago digital</option>
                                         </select>
                                         <input type="date" name="cargos[{{ $i }}][fechaAbono]" class="form-input form-input-sm">
-                                        <input type="text" name="cargos[{{ $i }}][referencia]" maxlength="100"
-                                               placeholder="Referencia" class="form-input form-input-sm">
                                     </div>
                                 </td>
                             </tr>

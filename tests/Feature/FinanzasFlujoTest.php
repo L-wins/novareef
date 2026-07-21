@@ -88,7 +88,7 @@ class FinanzasFlujoTest extends TestCase
         ], null);
 
         $finanzas->registrarAbono($movimiento, [
-            'monto' => 40000, 'fechaAbono' => today()->format('Y-m-d'), 'metodoPago' => 'transferencia',
+            'monto' => 40000, 'fechaAbono' => today()->format('Y-m-d'), 'metodoPago' => 'pago_digital',
         ], $tesorero);
 
         $movimiento->refresh();

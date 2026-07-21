@@ -66,4 +66,32 @@ class ConfiguracionColegioTest extends TestCase
 
         $this->assertSame(1, ConfiguracionColegio::getDiaDisponibilidad($colegio->idColegio));
     }
+
+    public function test_colegio_sin_configuracion_de_mensualidad_tiene_cobro_automatico_desactivado(): void
+    {
+        $colegio = $this->crearColegio($this->crearPlan());
+
+        $this->assertSame(0.0, ConfiguracionColegio::getMontoMensualidad($colegio->idColegio));
+        $this->assertSame(5, ConfiguracionColegio::getDiaVencimientoMensualidad($colegio->idColegio));
+    }
+
+    public function test_monto_y_dia_de_mensualidad_hacen_round_trip_correcto(): void
+    {
+        $colegio = $this->crearColegio($this->crearPlan());
+
+        ConfiguracionColegio::set($colegio->idColegio, ConfiguracionColegio::MONTO_MENSUALIDAD, '25000');
+        ConfiguracionColegio::set($colegio->idColegio, ConfiguracionColegio::DIA_VENCIMIENTO_MENSUALIDAD, '10');
+
+        $this->assertSame(25000.0, ConfiguracionColegio::getMontoMensualidad($colegio->idColegio));
+        $this->assertSame(10, ConfiguracionColegio::getDiaVencimientoMensualidad($colegio->idColegio));
+    }
+
+    public function test_dia_de_vencimiento_fuera_de_rango_cae_al_default_5(): void
+    {
+        $colegio = $this->crearColegio($this->crearPlan());
+
+        ConfiguracionColegio::set($colegio->idColegio, ConfiguracionColegio::DIA_VENCIMIENTO_MENSUALIDAD, '31');
+
+        $this->assertSame(5, ConfiguracionColegio::getDiaVencimientoMensualidad($colegio->idColegio));
+    }
 }

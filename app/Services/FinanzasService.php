@@ -92,7 +92,7 @@ final class FinanzasService
      * y recalcula su estado (pendiente/parcial/pagado).
      *
      * @param  array{monto: float|string, fechaAbono: string, metodoPago: string,
-     *     referencia?: ?string, idLotePago?: ?string, observaciones?: ?string}  $datos
+     *     idLotePago?: ?string, observaciones?: ?string}  $datos
      *
      * @throws \RuntimeException  Si el movimiento está anulado o el abono excede el saldo pendiente.
      */
@@ -131,7 +131,6 @@ final class FinanzasService
                 'monto'              => $monto,
                 'fechaAbono'         => $datos['fechaAbono'],
                 'metodoPago'         => $datos['metodoPago'],
-                'referencia'         => $datos['referencia'] ?? null,
                 'idLotePago'         => $datos['idLotePago'] ?? null,
                 'idUsuarioRegistro'  => $usuario->idUsuario,
                 'observaciones'      => $datos['observaciones'] ?? null,
@@ -145,7 +144,7 @@ final class FinanzasService
 
             $movimiento->update(['estadoMovimiento' => $estadoNuevo]);
 
-            $esCompensacion = $datos['metodoPago'] === AbonoMovimiento::METODO_COMPENSACION_NOMINA;
+            $esCompensacion = $datos['metodoPago'] === AbonoMovimiento::METODO_NOMINA;
 
             HistorialMovimientoFinanciero::create([
                 'idMovimiento'    => $movimiento->idMovimiento,
@@ -310,7 +309,7 @@ final class FinanzasService
      * @param  array{
      *     tipoMovimiento: string, categoria: string, concepto: string,
      *     montoTotal: float|string, fechaMovimiento: string, metodoPago: string,
-     *     idArbitro?: ?int, idTorneo?: ?int, referencia?: ?string, observaciones?: ?string,
+     *     idArbitro?: ?int, idTorneo?: ?int, observaciones?: ?string,
      * }  $datos
      */
     public function registrarMovimientoPagado(int $idColegio, array $datos, User $usuario): MovimientoFinanciero
@@ -322,7 +321,6 @@ final class FinanzasService
                 'monto'         => $datos['montoTotal'],
                 'fechaAbono'    => $datos['fechaMovimiento'],
                 'metodoPago'    => $datos['metodoPago'],
-                'referencia'    => $datos['referencia'] ?? null,
                 'observaciones' => $datos['observacionesAbono'] ?? null,
             ], $usuario);
 
@@ -337,7 +335,7 @@ final class FinanzasService
      * colegio tenía antes de usar NovaReef, no una cuenta por cobrar. Nunca
      * se edita el original: una corrección es un nuevo registro.
      *
-     * @param  array{monto: float|string, fecha: string, observaciones?: ?string}  $datos
+     * @param  array{monto: float|string, fecha: string, metodoPago: string, observaciones?: ?string}  $datos
      */
     public function registrarSaldoInicial(int $idColegio, array $datos, User $usuario): MovimientoFinanciero
     {
@@ -348,7 +346,7 @@ final class FinanzasService
             'montoTotal'           => $datos['monto'],
             'fechaMovimiento'      => $datos['fecha'],
             'observaciones'        => $datos['observaciones'] ?? null,
-            'metodoPago'           => AbonoMovimiento::METODO_OTRO,
+            'metodoPago'           => $datos['metodoPago'],
             'observacionesAbono'   => 'Saldo inicial — ya es efectivo disponible, no un cobro pendiente.',
         ], $usuario);
     }
@@ -376,12 +374,12 @@ final class FinanzasService
      *     montoTotal: float|string, observaciones?: ?string,
      *     cargos: array<int, array{
      *         idArbitro: int, incluir?: bool, monto?: float|string|null,
-     *         yaPago?: bool, metodoPago?: ?string, fechaAbono?: ?string, referencia?: ?string,
+     *         yaPago?: bool, metodoPago?: ?string, fechaAbono?: ?string,
      *     }>,
      * }  $datos
      *
      * @return array{
-     *     idLoteCobro: string,
+     *     idLoteCobro: string, idLotePago: string,
      *     creados: Collection<int, MovimientoFinanciero>,
      *     omitidos: Collection<int, array{idArbitro: int, motivo: string}>,
      *     totalCreados: int, totalPagados: int, totalOmitidos: int,
@@ -403,6 +401,11 @@ final class FinanzasService
 
         return DB::transaction(function () use ($idColegio, $datos, $categoria, $incluidos, $usuario): array {
             $idLoteCobro = (string) Str::uuid();
+            // Distinto de idLoteCobro (agrupa los MOVIMIENTOS de esta corrida)
+            // — idLotePago agrupa los ABONOS de los "ya pagó" de esta misma
+            // corrida, para que generen un comprobante descargable igual que
+            // un pago de nómina (ver datosComprobanteCobro()).
+            $idLotePago = (string) Str::uuid();
 
             // Una sola query resuelve pertenencia al colegio + estado del
             // árbitro — evita N queries y sirve de guardia de tenant a la vez.
@@ -424,55 +427,31 @@ final class FinanzasService
                     continue;
                 }
 
-                $fecha     = $datos['fechaMovimiento'];
-                $inicioMes = Carbon::parse($fecha)->startOfMonth()->toDateString();
-                $finMes    = Carbon::parse($fecha)->endOfMonth()->toDateString();
+                $fecha = $datos['fechaMovimiento'];
+                $monto = (float) ($cargo['monto'] ?? $datos['montoTotal']);
 
-                // Duplicado = misma categoría + mismo árbitro + mismo mes,
-                // sin importar el texto exacto del concepto — comparar por
-                // concepto literal dejaba pasar dobles cobros con el mismo
-                // significado escrito distinto (ej. "Mensualidad julio" vs
-                // "Mensualidad Julio 2026").
-                $yaExiste = MovimientoFinanciero::where('idColegio', $idColegio)
-                    ->where('idArbitro', $idArbitro)
-                    ->where('categoria', $categoria)
-                    ->where('estadoMovimiento', '!=', MovimientoFinanciero::ESTADO_ANULADO)
-                    ->whereBetween('fechaMovimiento', [$inicioMes, $finMes])
-                    ->exists();
+                $datosAbono = ! empty($cargo['yaPago']) ? [
+                    'fechaAbono'  => $cargo['fechaAbono'] ?? $fecha,
+                    'metodoPago'  => $cargo['metodoPago'],
+                    'idLotePago'  => $idLotePago,
+                ] : null;
 
-                if ($yaExiste) {
-                    $omitidos->push(['idArbitro' => $idArbitro, 'motivo' => 'Ya existe un cobro de este concepto en el mismo mes.']);
+                $resultado = $this->procesarCargoIndividual(
+                    $idColegio, $idArbitro, $categoria, $datos['concepto'],
+                    $monto, $fecha, $idLoteCobro, $datosAbono, $usuario,
+                );
+
+                if ($resultado['movimiento'] === null) {
+                    $omitidos->push(['idArbitro' => $idArbitro, 'motivo' => $resultado['omitido']]);
                     continue;
                 }
 
-                $monto = (float) ($cargo['monto'] ?? $datos['montoTotal']);
-
-                $movimiento = $this->registrarMovimiento($idColegio, [
-                    'tipoMovimiento'  => MovimientoFinanciero::TIPO_INGRESO,
-                    'categoria'       => $categoria,
-                    'concepto'        => $datos['concepto'],
-                    'montoTotal'      => $monto,
-                    'fechaMovimiento' => $fecha,
-                    'idArbitro'       => $idArbitro,
-                    'observaciones'   => $datos['observaciones'] ?? null,
-                    'idLoteCobro'     => $idLoteCobro,
-                ], $usuario);
-
-                if (! empty($cargo['yaPago'])) {
-                    $this->registrarAbono($movimiento, [
-                        'monto'      => $monto,
-                        'fechaAbono' => $cargo['fechaAbono'] ?? $fecha,
-                        'metodoPago' => $cargo['metodoPago'],
-                        'referencia' => $cargo['referencia'] ?? null,
-                    ], $usuario);
-                    $movimiento->refresh();
-                }
-
-                $creados->push($movimiento);
+                $creados->push($resultado['movimiento']);
             }
 
             return [
                 'idLoteCobro'   => $idLoteCobro,
+                'idLotePago'    => $idLotePago,
                 'creados'       => $creados,
                 'omitidos'      => $omitidos,
                 'totalCreados'  => $creados->count(),
@@ -480,6 +459,93 @@ final class FinanzasService
                 'totalOmitidos' => $omitidos->count(),
             ];
         });
+    }
+
+    /**
+     * Cargo individual reutilizado por registrarCobroMasivo() (cobro manual
+     * disparado por un tesorero) y generarCuotaMensualAutomatica() (Job
+     * automático sin usuario detrás): valida duplicado por categoría+árbitro
+     * dentro del mismo mes calendario, crea el movimiento y opcionalmente lo
+     * salda de inmediato si $datosAbono viene informado.
+     *
+     * @return array{movimiento: ?MovimientoFinanciero, omitido: ?string}
+     */
+    private function procesarCargoIndividual(
+        int $idColegio,
+        int $idArbitro,
+        string $categoria,
+        string $concepto,
+        float $monto,
+        string $fecha,
+        ?string $idLoteCobro,
+        ?array $datosAbono,
+        ?User $usuario,
+    ): array {
+        $inicioMes = Carbon::parse($fecha)->startOfMonth()->toDateString();
+        $finMes    = Carbon::parse($fecha)->endOfMonth()->toDateString();
+
+        // Duplicado = misma categoría + mismo árbitro + mismo mes, sin
+        // importar el texto exacto del concepto — comparar por concepto
+        // literal dejaba pasar dobles cobros con el mismo significado
+        // escrito distinto (ej. "Mensualidad julio" vs "Mensualidad Julio 2026").
+        $yaExiste = MovimientoFinanciero::where('idColegio', $idColegio)
+            ->where('idArbitro', $idArbitro)
+            ->where('categoria', $categoria)
+            ->where('estadoMovimiento', '!=', MovimientoFinanciero::ESTADO_ANULADO)
+            ->whereBetween('fechaMovimiento', [$inicioMes, $finMes])
+            ->exists();
+
+        if ($yaExiste) {
+            return ['movimiento' => null, 'omitido' => 'Ya existe un cobro de este concepto en el mismo mes.'];
+        }
+
+        $movimiento = $this->registrarMovimiento($idColegio, [
+            'tipoMovimiento'  => MovimientoFinanciero::TIPO_INGRESO,
+            'categoria'       => $categoria,
+            'concepto'        => $concepto,
+            'montoTotal'      => $monto,
+            'fechaMovimiento' => $fecha,
+            'idArbitro'       => $idArbitro,
+            'idLoteCobro'     => $idLoteCobro,
+        ], $usuario);
+
+        if ($datosAbono !== null) {
+            if ($usuario === null) {
+                throw new \LogicException('No se puede registrar un abono sin un usuario responsable.');
+            }
+
+            $this->registrarAbono($movimiento, ['monto' => $monto, ...$datosAbono], $usuario);
+            $movimiento->refresh();
+        }
+
+        return ['movimiento' => $movimiento, 'omitido' => null];
+    }
+
+    /**
+     * Genera el cargo de mensualidad del mes vigente para un árbitro —
+     * invocado por GenerarCuotasMensualesJob, sin usuario detrás (mismo
+     * criterio que generarMovimientosPorFinalizacionPartido). Nace
+     * `pendiente` y nunca se autoabona: el cobro real lo registra el
+     * tesorero después, con un abono individual o desde Cobro Masivo.
+     * Reusa la misma deduplicación mensual de registrarCobroMasivo() — si el
+     * job corre más de una vez tras el vencimiento (ej. una caída), no
+     * duplica el cargo.
+     */
+    public function generarCuotaMensualAutomatica(int $idColegio, Arbitro $arbitro, float $monto, string $fecha, string $idLoteCobro): ?MovimientoFinanciero
+    {
+        $resultado = $this->procesarCargoIndividual(
+            $idColegio,
+            $arbitro->idArbitro,
+            MovimientoFinanciero::CATEGORIA_MENSUALIDAD,
+            'Mensualidad — ' . Carbon::parse($fecha)->translatedFormat('F Y'),
+            $monto,
+            $fecha,
+            $idLoteCobro,
+            null,
+            null,
+        );
+
+        return $resultado['movimiento'];
     }
 
     /**
@@ -491,7 +557,7 @@ final class FinanzasService
      * aparte por deuda).
      *
      * @param  int[]  $idsMovimientos  Egresos nomina_arbitro/arbitro_externo pendientes a pagar.
-     * @param  array{fecha: string, metodoPago: string, referencia?: ?string}  $datosPago
+     * @param  array{fecha: string, metodoPago: string}  $datosPago
      *
      * @return array{total: float, idLotePago: string}
      *
@@ -524,7 +590,6 @@ final class FinanzasService
                     'monto'      => $saldo,
                     'fechaAbono' => $datosPago['fecha'],
                     'metodoPago' => $datosPago['metodoPago'],
-                    'referencia' => $datosPago['referencia'] ?? null,
                     'idLotePago' => $idLotePago,
                 ], $usuario);
 
@@ -590,7 +655,7 @@ final class FinanzasService
             $this->registrarAbono($deuda, [
                 'monto'         => $monto,
                 'fechaAbono'    => $fecha,
-                'metodoPago'    => AbonoMovimiento::METODO_COMPENSACION_NOMINA,
+                'metodoPago'    => AbonoMovimiento::METODO_NOMINA,
                 'idLotePago'    => $idLotePago,
                 'observaciones' => 'Compensado contra nómina pendiente del árbitro',
             ], $usuario);
@@ -607,7 +672,7 @@ final class FinanzasService
                 $this->registrarAbono($movimiento, [
                     'monto'         => $montoAbonado,
                     'fechaAbono'    => $fecha,
-                    'metodoPago'    => AbonoMovimiento::METODO_COMPENSACION_NOMINA,
+                    'metodoPago'    => AbonoMovimiento::METODO_NOMINA,
                     'idLotePago'    => $idLotePago,
                     'observaciones' => "Compensado contra deuda #{$deuda->idMovimiento} del árbitro",
                 ], $usuario);

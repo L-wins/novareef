@@ -1,7 +1,11 @@
 @extends('layouts.app')
 
-@section('titulo', 'Configuración')
+@section('titulo', 'Configuración — Colegio')
 @section('seccion', 'Configuración')
+
+@push('styles')
+    @vite(['resources/css/configuracion/configuracion.css'])
+@endpush
 
 @push('scripts')
     @vite(['resources/js/configuracion/configuracion.js'])
@@ -12,76 +16,35 @@
 
     <div class="page-header">
         <div class="page-header-left">
-            <h1 class="page-heading">Configuración del colegio</h1>
-            <p class="page-subheading">Ajusta los parámetros del módulo de designaciones</p>
+            <h1 class="page-heading">Configuración</h1>
+            <p class="page-subheading">Reglas propias de este colegio — cada colegio define las suyas.</p>
+        </div>
+        <div class="page-header-right">
+            <button type="button" class="btn btn-primary" data-edit-btn form="cfg-colegio-form">
+                <i class="fa-solid fa-pen-to-square"></i>
+                Editar
+            </button>
+            <button type="submit" class="btn btn-primary" data-edit-save form="cfg-colegio-form" hidden>
+                <i class="fa-solid fa-floppy-disk"></i>
+                Guardar configuración
+            </button>
+            <button type="button" class="btn btn-secondary" data-edit-cancel form="cfg-colegio-form" hidden>
+                <i class="fa-solid fa-xmark"></i>
+                Cancelar
+            </button>
         </div>
     </div>
 
-    {{-- ── Identidad del colegio (logo) ──────── --}}
-    <div class="detail-card" style="max-width:640px;margin-bottom:1.5rem;">
-        <div class="detail-card-header">
-            <div class="detail-card-title">
-                <i class="fa-solid fa-shield-halved" style="color:var(--accent);margin-right:0.5rem;"></i>
-                Identidad del colegio
-            </div>
-        </div>
-        <div class="detail-card-body">
+    @include('configuracion.partials.subnav')
 
-            <div class="logo-colegio-row">
-                <div class="logo-colegio-preview">
-                    @if ($colegio?->logoUrl)
-                        <img src="{{ $colegio->logoUrl }}" alt="Logo de {{ $colegio->nombreColegio }}">
-                    @else
-                        <i class="fa-solid fa-building-columns"></i>
-                    @endif
-                </div>
-                <div class="logo-colegio-info">
-                    <p class="td-primary" style="margin:0;">{{ $colegio?->nombreColegio }}</p>
-                    <p class="td-secondary" style="margin:0.25rem 0 0;">
-                        El logo aparece en la barra superior para todos los usuarios del colegio.
-                    </p>
-                </div>
-            </div>
-
-            <div class="logo-colegio-actions" style="margin-top:1rem;display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
-                <form method="POST" action="{{ route('configuracion.logo.actualizar') }}" enctype="multipart/form-data" style="display:flex;gap:0.75rem;align-items:center;">
-                    @csrf
-                    <label class="btn btn-secondary" style="cursor:pointer;margin:0;">
-                        <i class="fa-solid fa-image"></i>
-                        {{ $colegio?->logoUrl ? 'Cambiar logo' : 'Subir logo' }}
-                        <input type="file" name="logo" accept=".jpg,.jpeg,.png,.webp"
-                               style="display:none;" data-submit-on-change>
-                    </label>
-                </form>
-                @if ($colegio?->logoUrl)
-                    <form method="POST" action="{{ route('configuracion.logo.eliminar') }}">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-secondary" style="color:var(--nv-danger);">
-                            <i class="fa-solid fa-trash-can"></i>
-                            Quitar logo
-                        </button>
-                    </form>
-                @endif
-            </div>
-            @error('logo')
-                <span class="form-error" style="display:block;margin-top:0.5rem;">{{ $message }}</span>
-            @enderror
-
-            <div class="form-note form-note--info" style="margin-top:1rem;">
-                <i class="fa-solid fa-circle-info"></i>
-                <span>Formatos: JPG, PNG o WebP · máximo 2 MB. Se recomienda una imagen cuadrada.</span>
-            </div>
-
-        </div>
-    </div>
-
-    <form method="POST" action="{{ route('configuracion.update') }}" data-edit-mode>
+    <form method="POST" action="{{ route('configuracion.update') }}" id="cfg-colegio-form" data-edit-mode>
         @csrf
         @method('PUT')
 
+        <div class="cfg-grid">
+
         {{-- ── Día de reporte de disponibilidad ──── --}}
-        <div class="detail-card" style="max-width:640px;">
+        <div class="detail-card">
             <div class="detail-card-header">
                 <div class="detail-card-title">
                     <i class="fa-solid fa-calendar-days" style="color:var(--accent);margin-right:0.5rem;"></i>
@@ -124,7 +87,7 @@
         </div>
 
         {{-- ── Confirmación de designaciones ─────── --}}
-        <div class="detail-card" style="max-width:640px;margin-top:1.5rem;">
+        <div class="detail-card">
             <div class="detail-card-header">
                 <div class="detail-card-title">
                     <i class="fa-solid fa-stopwatch" style="color:var(--accent);margin-right:0.5rem;"></i>
@@ -161,19 +124,63 @@
             </div>
         </div>
 
-        <div style="margin-top:1.5rem;display:flex;gap:0.75rem;">
-            <button type="button" class="btn btn-primary" data-edit-btn>
-                <i class="fa-solid fa-pen-to-square"></i>
-                Editar
-            </button>
-            <button type="submit" class="btn btn-primary" data-edit-save hidden>
-                <i class="fa-solid fa-floppy-disk"></i>
-                Guardar configuración
-            </button>
-            <button type="button" class="btn btn-secondary" data-edit-cancel hidden>
-                <i class="fa-solid fa-xmark"></i>
-                Cancelar
-            </button>
+        {{-- ── Cobro automático de mensualidad ───── --}}
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <div class="detail-card-title">
+                    <i class="fa-solid fa-money-check-dollar" style="color:var(--accent);margin-right:0.5rem;"></i>
+                    Cobro automático de mensualidad
+                </div>
+            </div>
+            <div class="detail-card-body">
+
+                <div class="form-group">
+                    <label class="form-label" for="monto_mensualidad">
+                        Valor de la cuota mensual
+                    </label>
+                    <input type="number"
+                           name="monto_mensualidad"
+                           id="monto_mensualidad"
+                           class="form-input"
+                           min="0"
+                           step="0.01"
+                           value="{{ old('monto_mensualidad', $montoMensualidad) }}"
+                           style="max-width:200px">
+                    @error('monto_mensualidad')
+                        <span class="form-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-group" style="margin-top:1rem;">
+                    <label class="form-label" for="dia_vencimiento_mensualidad">
+                        Día del mes en que se genera el cargo
+                    </label>
+                    <input type="number"
+                           name="dia_vencimiento_mensualidad"
+                           id="dia_vencimiento_mensualidad"
+                           class="form-input"
+                           min="1"
+                           max="28"
+                           value="{{ old('dia_vencimiento_mensualidad', $diaVencimientoMensualidad) }}"
+                           style="max-width:140px">
+                    @error('dia_vencimiento_mensualidad')
+                        <span class="form-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-note form-note--info" style="margin-top:0.75rem;">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>
+                        Deja el valor en <strong>0</strong> para desactivar el cobro automático — puedes
+                        seguir cobrando mensualidad manualmente desde <strong>Cobro masivo</strong>.
+                        Con un valor mayor a 0, cada árbitro activo recibe un cargo pendiente el día
+                        configurado; el tesorero registra el pago después, como cualquier otro cargo.
+                    </span>
+                </div>
+
+            </div>
+        </div>
+
         </div>
 
     </form>

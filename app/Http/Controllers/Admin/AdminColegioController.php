@@ -68,7 +68,7 @@ class AdminColegioController extends Controller
         $data = $request->validated();
 
         try {
-            $this->colegios->registrar(
+            $colegio = $this->colegios->registrar(
                 nombreColegio:       $data['nombreColegio'],
                 codigoColegio:       $data['codigoColegio'],
                 emailColegio:        $data['emailColegio'],
@@ -85,6 +85,14 @@ class AdminColegioController extends Controller
         } catch (\RuntimeException $e) {
             return back()->withInput()->withErrors(['emailAdmin' => $e->getMessage()]);
         }
+
+        $this->auditoria->registrar(
+            Auth::guard('admin')->user(),
+            'crear',
+            'colegio',
+            $colegio->idColegio,
+            "Colegio \"{$colegio->nombreColegio}\" registrado.",
+        );
 
         return redirect()
             ->route('admin.colegios.index')
@@ -104,6 +112,14 @@ class AdminColegioController extends Controller
 
         $colegio->update($request->validated());
 
+        $this->auditoria->registrar(
+            Auth::guard('admin')->user(),
+            'editar',
+            'colegio',
+            $colegio->idColegio,
+            "Colegio \"{$colegio->nombreColegio}\" editado.",
+        );
+
         return redirect()
             ->route('admin.colegios.show', $id)
             ->with('success', 'Colegio actualizado correctamente.');
@@ -113,6 +129,14 @@ class AdminColegioController extends Controller
     {
         $colegio = Colegio::findOrFail($id);
         $label   = $this->colegios->cambiarEstado($colegio, $request->input('estado'));
+
+        $this->auditoria->registrar(
+            Auth::guard('admin')->user(),
+            'cambiar_estado',
+            'colegio',
+            $colegio->idColegio,
+            "Colegio \"{$colegio->nombreColegio}\" marcado como {$label}.",
+        );
 
         return back()->with('success', "Colegio {$label} correctamente.");
     }

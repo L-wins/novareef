@@ -68,7 +68,7 @@ class EstadoCuentaArbitroTest extends TestCase
         $finanzas->registrarAbono($movimiento, [
             'monto'      => 60000,
             'fechaAbono' => today()->format('Y-m-d'),
-            'metodoPago' => 'transferencia',
+            'metodoPago' => 'pago_digital',
         ], $tesorero);
 
         $estadoCuenta = app(ReporteFinanzasService::class)->estadoCuentaArbitro($arbitro->fresh());
@@ -118,7 +118,7 @@ class EstadoCuentaArbitroTest extends TestCase
         $finanzas->registrarAbono($movimiento, [
             'monto'      => 60000,
             'fechaAbono' => today()->format('Y-m-d'),
-            'metodoPago' => 'compensacion_nomina',
+            'metodoPago' => 'nomina',
         ], $usuario);
 
         $estadoCuenta = app(ReporteFinanzasService::class)->estadoCuentaArbitro($arbitro->fresh());

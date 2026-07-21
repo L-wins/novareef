@@ -24,6 +24,7 @@ export default defineConfig({
                 'resources/js/designaciones/importar-designaciones.js',
                 'resources/js/disponibilidad/disponibilidad.js',
                 'resources/js/configuracion/configuracion.js',
+                'resources/css/configuracion/configuracion.css',
                 'resources/css/finanzas/finanzas.css',
                 'resources/js/finanzas/finanzas.js',
                 'resources/js/finanzas/cobro-masivo.js',

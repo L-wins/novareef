@@ -7,13 +7,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Colegio;
 use App\Models\User;
+use App\Services\AdminAuditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class AdminUsuarioController extends Controller
 {
     private const ROLES = ['arbitro', 'ejecutivo', 'tesorero', 'designador', 'sanciones', 'tecnico', 'superadmin'];
+
+    public function __construct(private readonly AdminAuditService $auditoria) {}
 
     public function index(Request $request): View
     {
@@ -54,6 +58,14 @@ class AdminUsuarioController extends Controller
 
         $usuario->estadoUsuario = $usuario->estadoUsuario === 'activo' ? 'suspendido' : 'activo';
         $usuario->save();
+
+        $this->auditoria->registrar(
+            Auth::guard('admin')->user(),
+            'cambiar_estado',
+            'usuario',
+            $usuario->idUsuario,
+            "Cuenta de \"{$usuario->nombreUsuario}\" cambiada a \"{$usuario->estadoUsuario}\".",
+        );
 
         return back()->with('success', "Cuenta de {$usuario->nombreUsuario} actualizada a \"{$usuario->estadoUsuario}\".");
     }

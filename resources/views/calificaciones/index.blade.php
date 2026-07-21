@@ -14,6 +14,8 @@
     <div class="breadcrumb">
         <a href="{{ route('designaciones.index') }}">Designaciones</a>
         <i class="fa-solid fa-chevron-right"></i>
+        <a href="{{ route('designaciones.index', ['torneo' => $partido->idTorneo]) }}">{{ $partido->torneo->nombreTorneo }}</a>
+        <i class="fa-solid fa-chevron-right"></i>
         <a href="{{ route('designaciones.show', $partido->idPartido) }}">{{ $partido->equipoLocal }} vs {{ $partido->equipoVisitante }}</a>
         <i class="fa-solid fa-chevron-right"></i>
         <span>Calificaciones</span>

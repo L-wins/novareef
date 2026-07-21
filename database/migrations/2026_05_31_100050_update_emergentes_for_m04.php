@@ -45,10 +45,19 @@ return new class extends Migration
     {
         Schema::table('emergentes_torneo', static function (Blueprint $table): void {
             $table->dropIndex('idx_emergentes_torneo_fecha');
+
+            // idx_emergentes_colegio quedó como el único índice que respalda
+            // fk_idColegio (se crearon en la misma sentencia ALTER en up(),
+            // sin índice implícito propio para la FK) — hay que soltar la FK
+            // antes de poder soltar el índice, o MySQL rechaza el DROP INDEX
+            // (error 1553), igual que en idx_arbitros_estado.
+            if (Schema::hasColumn('emergentes_torneo', 'idColegio')) {
+                $table->dropForeign(['idColegio']);
+            }
+
             $table->dropIndex('idx_emergentes_colegio');
 
             if (Schema::hasColumn('emergentes_torneo', 'idColegio')) {
-                $table->dropForeign(['idColegio']);
                 $table->dropColumn('idColegio');
             }
         });

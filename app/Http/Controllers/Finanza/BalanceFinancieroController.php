@@ -27,14 +27,15 @@ class BalanceFinancieroController extends Controller
     {
         $idColegio = $this->idColegioActivo();
 
-        $balance   = $this->reportes->balanceGeneral($idColegio);
-        $bolsillos = $this->reportes->bolsillosDesdeBalance($balance);
+        $balance          = $this->reportes->balanceGeneral($idColegio);
+        $bolsillos        = $this->reportes->bolsillosDesdeBalance($balance);
+        $saldoPorMetodo   = $this->reportes->saldoPorMetodoPago($idColegio);
 
         $tieneSaldoInicial = MovimientoFinanciero::where('idColegio', $idColegio)
             ->where('categoria', MovimientoFinanciero::CATEGORIA_SALDO_INICIAL)
             ->exists();
 
-        return view('finanzas.balance.index', compact('balance', 'bolsillos', 'tieneSaldoInicial'));
+        return view('finanzas.balance.index', compact('balance', 'bolsillos', 'saldoPorMetodo', 'tieneSaldoInicial'));
     }
 
     public function registrarSaldoInicial(StoreSaldoInicialRequest $request): RedirectResponse

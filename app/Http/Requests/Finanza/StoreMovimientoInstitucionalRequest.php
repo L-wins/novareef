@@ -34,7 +34,6 @@ class StoreMovimientoInstitucionalRequest extends FormRequest
             // si se está registrando es porque el dinero ya se movió, así que
             // el método de pago se captura de una vez, no en un paso aparte.
             'metodoPago'      => ['required', Rule::in(AbonoMovimiento::METODOS_MANUALES)],
-            'referencia'      => ['nullable', 'string', 'max:100'],
             'observaciones'   => ['nullable', 'string'],
         ];
     }

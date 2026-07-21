@@ -436,18 +436,12 @@
                                 <label class="form-label">Fecha <span class="req">*</span></label>
                                 <input type="text" name="fecha" data-nova-date placeholder="dd/mm/aaaa" class="form-input">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group span-2">
                                 <label class="form-label">Método de pago <span class="req">*</span></label>
                                 <select name="metodoPago" data-nova-select class="form-select">
                                     <option value="efectivo">Efectivo</option>
-                                    <option value="transferencia">Transferencia</option>
-                                    <option value="consignacion">Consignación</option>
-                                    <option value="otro">Otro</option>
+                                    <option value="pago_digital">Pago digital</option>
                                 </select>
-                            </div>
-                            <div class="form-group span-2">
-                                <label class="form-label">Referencia</label>
-                                <input type="text" name="referencia" maxlength="100" class="form-input">
                             </div>
                         </div>
                         <div id="ficha-pago-hidden-inputs"></div>
@@ -486,14 +480,8 @@
                                 <label class="form-label">Método de pago <span class="req">*</span></label>
                                 <select name="metodoPago" data-nova-select class="form-select">
                                     <option value="efectivo">Efectivo</option>
-                                    <option value="transferencia">Transferencia</option>
-                                    <option value="consignacion">Consignación</option>
-                                    <option value="otro">Otro</option>
+                                    <option value="pago_digital">Pago digital</option>
                                 </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Referencia</label>
-                                <input type="text" name="referencia" maxlength="100" class="form-input">
                             </div>
                         </div>
                     </div>

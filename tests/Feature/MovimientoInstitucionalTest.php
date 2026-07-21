@@ -50,7 +50,7 @@ class MovimientoInstitucionalTest extends TestCase
             'concepto'        => 'Arriendo julio',
             'montoTotal'      => 300000,
             'fechaMovimiento' => today()->format('Y-m-d'),
-            'metodoPago'      => 'transferencia',
+            'metodoPago'      => 'pago_digital',
         ])->assertRedirect();
 
         $movimiento = MovimientoFinanciero::where('categoria', 'gasto_fijo')->first();
@@ -61,7 +61,7 @@ class MovimientoInstitucionalTest extends TestCase
 
         $abono = $movimiento->abonos->first();
         $this->assertNotNull($abono);
-        $this->assertSame('transferencia', $abono->metodoPago);
+        $this->assertSame('pago_digital', $abono->metodoPago);
         $this->assertSame(300000.0, (float) $abono->monto);
     }
 
@@ -78,7 +78,7 @@ class MovimientoInstitucionalTest extends TestCase
             'montoTotal'      => 500000,
             'fechaMovimiento' => today()->format('Y-m-d'),
             'idTorneo'        => $torneo->idTorneo,
-            'metodoPago'      => 'consignacion',
+            'metodoPago'      => 'pago_digital',
         ])->assertRedirect();
 
         $movimiento = MovimientoFinanciero::where('categoria', 'ingreso_torneo')->first();

@@ -227,7 +227,8 @@ final class ReporteFinanzasService
             ->selectRaw("
                 idArbitro,
                 COALESCE(SUM(CASE WHEN categoria IN ('nomina_arbitro', 'arbitro_externo') THEN montoTotal - COALESCE(ab.abonado, 0) ELSE 0 END), 0) as leDebemos,
-                COALESCE(SUM(CASE WHEN categoria IN ('mensualidad', 'multa') THEN montoTotal - COALESCE(ab.abonado, 0) ELSE 0 END), 0) as nosDebe
+                COALESCE(SUM(CASE WHEN categoria IN ('mensualidad', 'multa') THEN montoTotal - COALESCE(ab.abonado, 0) ELSE 0 END), 0) as nosDebe,
+                MIN(CASE WHEN categoria IN ('mensualidad', 'multa') AND (montoTotal - COALESCE(ab.abonado, 0)) > 0 THEN fechaMovimiento END) as fechaDeudaMasAntigua
             ")
             ->groupBy('idArbitro')
             ->get()
@@ -241,9 +242,10 @@ final class ReporteFinanzasService
             ->with('usuario')
             ->get()
             ->map(fn (Arbitro $arbitro) => [
-                'arbitro'   => $arbitro,
-                'leDebemos' => (float) ($agregados[$arbitro->idArbitro]->leDebemos ?? 0),
-                'nosDebe'   => (float) ($agregados[$arbitro->idArbitro]->nosDebe ?? 0),
+                'arbitro'              => $arbitro,
+                'leDebemos'            => (float) ($agregados[$arbitro->idArbitro]->leDebemos ?? 0),
+                'nosDebe'              => (float) ($agregados[$arbitro->idArbitro]->nosDebe ?? 0),
+                'fechaDeudaMasAntigua' => $agregados[$arbitro->idArbitro]->fechaDeudaMasAntigua ?? null,
             ])
             ->sortByDesc('leDebemos')
             ->values();
@@ -254,6 +256,70 @@ final class ReporteFinanzasService
             'totalNosDeben'  => $porArbitro->sum('nosDebe'),
             'porArbitro'     => $porArbitro,
         ];
+    }
+
+    /**
+     * Filtra el balance a solo los árbitros en mora (nosDebe > 0), con
+     * antigüedad aproximada contada desde fechaMovimiento del cargo más
+     * viejo aún pendiente — mismo criterio que usa un AR Aging Report
+     * (QuickBooks/Xero) cuando el cliente no tiene términos de crédito
+     * configurados: se cuenta desde la emisión, no desde un vencimiento
+     * explícito (este colegio no tiene ese campo hoy).
+     *
+     * @param  array{porArbitro: Collection<int, array{arbitro: Arbitro, nosDebe: float, fechaDeudaMasAntigua: ?string}>}  $balance  Resultado de balanceGeneral().
+     * @return Collection<int, array{arbitro: Arbitro, nosDebe: float, diasMora: int, bucket: string}>
+     */
+    public function moraDesdeBalance(array $balance): Collection
+    {
+        return $balance['porArbitro']
+            ->filter(fn (array $f) => $f['nosDebe'] > 0.0)
+            ->map(function (array $f): array {
+                $diasMora = $f['fechaDeudaMasAntigua'] !== null
+                    ? (int) Carbon::parse($f['fechaDeudaMasAntigua'])->diffInDays(today())
+                    : 0;
+
+                return [
+                    'arbitro'  => $f['arbitro'],
+                    'nosDebe'  => $f['nosDebe'],
+                    'diasMora' => $diasMora,
+                    'bucket'   => match (true) {
+                        $diasMora <= 30 => '0-30',
+                        $diasMora <= 60 => '31-60',
+                        $diasMora <= 90 => '61-90',
+                        default         => '90+',
+                    },
+                ];
+            })
+            ->sortByDesc('diasMora')
+            ->values();
+    }
+
+    /**
+     * Desglosa saldoEnCaja por método de pago (efectivo vs. pago_digital) —
+     * el equivalente simple a "seguimiento de dónde entra/sale el dinero"
+     * sin necesitar una tabla de cuentas bancarias: cada abono ya registra
+     * si fue efectivo o digital, así que basta con agrupar por esa columna.
+     * Excluye `nomina` (compensación interna, no es dinero real).
+     *
+     * @return array<string, float>  Ej. ['efectivo' => 120000.0, 'pago_digital' => 45000.0]
+     */
+    public function saldoPorMetodoPago(int $idColegio): array
+    {
+        $filas = AbonoMovimiento::query()
+            ->join('movimientos_financieros', 'movimientos_financieros.idMovimiento', '=', 'abonos_movimiento.idMovimiento')
+            ->where('movimientos_financieros.idColegio', $idColegio)
+            ->where('abonos_movimiento.anulado', false)
+            ->whereIn('abonos_movimiento.metodoPago', AbonoMovimiento::METODOS_MANUALES)
+            ->selectRaw("
+                abonos_movimiento.metodoPago as metodoPago,
+                SUM(CASE WHEN tipoMovimiento = 'ingreso' THEN abonos_movimiento.monto ELSE -abonos_movimiento.monto END) as saldo
+            ")
+            ->groupBy('abonos_movimiento.metodoPago')
+            ->pluck('saldo', 'metodoPago');
+
+        return collect(AbonoMovimiento::METODOS_MANUALES)
+            ->mapWithKeys(fn (string $metodo) => [$metodo => (float) ($filas[$metodo] ?? 0)])
+            ->all();
     }
 
     /** Categorías de egreso que representan pago a un árbitro por su labor. */
@@ -349,7 +415,7 @@ final class ReporteFinanzasService
                 $q->where('idArbitro', $arbitro->idArbitro)->whereIn('categoria', self::CATEGORIAS_PAGO_ARBITRO);
             })
             ->where('anulado', false)
-            ->where('metodoPago', '!=', AbonoMovimiento::METODO_COMPENSACION_NOMINA)
+            ->where('metodoPago', '!=', AbonoMovimiento::METODO_NOMINA)
             ->with('movimiento.torneo')
             ->orderByDesc('fechaAbono')
             ->get();
@@ -358,7 +424,7 @@ final class ReporteFinanzasService
                 $q->where('idArbitro', $arbitro->idArbitro)->whereIn('categoria', self::CATEGORIAS_DEUDA_ARBITRO);
             })
             ->where('anulado', false)
-            ->where('metodoPago', '!=', AbonoMovimiento::METODO_COMPENSACION_NOMINA)
+            ->where('metodoPago', '!=', AbonoMovimiento::METODO_NOMINA)
             ->with('movimiento')
             ->orderByDesc('fechaAbono')
             ->get();
@@ -369,7 +435,7 @@ final class ReporteFinanzasService
             ->get();
 
         $descuentosNomina = AbonoMovimiento::whereHas('movimiento', fn ($q) => $q->where('idArbitro', $arbitro->idArbitro))
-            ->where('metodoPago', AbonoMovimiento::METODO_COMPENSACION_NOMINA)
+            ->where('metodoPago', AbonoMovimiento::METODO_NOMINA)
             ->where('anulado', false)
             ->with('movimiento')
             ->orderByDesc('fechaAbono')
@@ -434,7 +500,7 @@ final class ReporteFinanzasService
      * lote no existe para ese colegio.
      *
      * @return ?array{
-     *     arbitro: Arbitro, fecha: Carbon, metodoPago: string, referencia: ?string,
+     *     arbitro: Arbitro, fecha: Carbon, metodoPago: string,
      *     pagosNomina: Collection<int, AbonoMovimiento>, deudasCompensadas: Collection<int, AbonoMovimiento>,
      *     totalNomina: float, totalDeudas: float, netoDesembolsado: float,
      * }
@@ -470,13 +536,12 @@ final class ReporteFinanzasService
         $totalNomina = (float) $pagosNomina->sum('monto');
         $totalDeudas = (float) $deudasCompensadas->sum('monto');
 
-        $desembolsoReal = $pagosNomina->firstWhere('metodoPago', '!=', AbonoMovimiento::METODO_COMPENSACION_NOMINA);
+        $desembolsoReal = $pagosNomina->firstWhere('metodoPago', '!=', AbonoMovimiento::METODO_NOMINA);
 
         return [
             'arbitro'           => $arbitro,
             'fecha'             => $abonos->first()->fechaAbono,
-            'metodoPago'        => $desembolsoReal->metodoPago ?? AbonoMovimiento::METODO_COMPENSACION_NOMINA,
-            'referencia'        => $desembolsoReal->referencia ?? null,
+            'metodoPago'        => $desembolsoReal->metodoPago ?? AbonoMovimiento::METODO_NOMINA,
             'pagosNomina'       => $pagosNomina->groupBy('idMovimiento')->map(fn (Collection $grupo) => (object) [
                 'movimiento' => $grupo->first()->movimiento,
                 'monto'      => (float) $grupo->sum('monto'),
@@ -485,6 +550,53 @@ final class ReporteFinanzasService
             'totalNomina'       => $totalNomina,
             'totalDeudas'       => $totalDeudas,
             'netoDesembolsado'  => $totalNomina - $totalDeudas,
+        ];
+    }
+
+    /**
+     * Datos del recibo de un cobro (mensualidad/otro_ingreso) hecho vía
+     * Cobro Masivo — dirección inversa a datosComprobante() (ahí el colegio
+     * le paga al árbitro; acá el árbitro le paga al colegio), por eso es un
+     * método aparte y no una rama del mismo: forzarlo por el mismo builder
+     * produciría un comprobante con el texto narrado al revés. Un
+     * idLotePago de cobro masivo puede abarcar varios árbitros a la vez, así
+     * que se filtra también por $idArbitro para el recibo individual.
+     *
+     * @return ?array{
+     *     arbitro: Arbitro, fecha: Carbon, metodoPago: string,
+     *     conceptos: Collection<int, array{concepto: string, monto: float}>, total: float,
+     * }
+     */
+    public function datosComprobanteCobro(string $idLotePago, int $idColegio, int $idArbitro): ?array
+    {
+        $abonos = AbonoMovimiento::where('idLotePago', $idLotePago)
+            ->where('idColegio', $idColegio)
+            ->where('anulado', false)
+            ->whereHas('movimiento', fn (Builder $q) => $q
+                ->where('idArbitro', $idArbitro)
+                ->whereIn('categoria', [MovimientoFinanciero::CATEGORIA_MENSUALIDAD, MovimientoFinanciero::CATEGORIA_OTRO_INGRESO]))
+            ->with('movimiento.arbitro.usuario')
+            ->orderBy('idAbono')
+            ->get();
+
+        if ($abonos->isEmpty()) {
+            return null;
+        }
+
+        $arbitro = $abonos->first()->movimiento?->arbitro;
+        if ($arbitro === null) {
+            return null;
+        }
+
+        return [
+            'arbitro'    => $arbitro,
+            'fecha'      => $abonos->first()->fechaAbono,
+            'metodoPago' => $abonos->first()->metodoPago,
+            'conceptos'  => $abonos->map(fn (AbonoMovimiento $a) => [
+                'concepto' => $a->movimiento?->concepto ?? '—',
+                'monto'    => (float) $a->monto,
+            ])->values(),
+            'total' => (float) $abonos->sum('monto'),
         ];
     }
 
@@ -504,7 +616,7 @@ final class ReporteFinanzasService
                 idLotePago,
                 MAX(fechaAbono) as fecha,
                 COALESCE(SUM(CASE WHEN metodoPago != ? THEN monto ELSE 0 END), 0) as desembolsado
-            ", [AbonoMovimiento::METODO_COMPENSACION_NOMINA])
+            ", [AbonoMovimiento::METODO_NOMINA])
             ->groupBy('idLotePago')
             ->orderByDesc('fecha')
             ->limit($limite)
@@ -514,6 +626,53 @@ final class ReporteFinanzasService
                 'fecha'      => $fila->fecha,
                 'neto'       => (float) $fila->desembolsado,
             ]);
+    }
+
+    /**
+     * Archivo de comprobantes de un mes calendario: une lotes de pago de
+     * nómina (incluye los que compensaron una deuda de paso — ese detalle ya
+     * lo separa datosComprobante()) y lotes de cobro de mensualidad, cada
+     * fila agrupada por lote+árbitro. "esNomina" se decide por si el lote
+     * tocó alguna categoría de nómina — un lote de compensarDeudaConNomina()
+     * mezcla la deuda compensada y el pago de nómina bajo el mismo
+     * idLotePago para el mismo árbitro, y ese caso ya se narra completo en
+     * el comprobante de nómina existente, así que se enruta ahí.
+     *
+     * @return Collection<int, array{idLotePago: string, tipo: string, arbitro: ?Arbitro, monto: float, fecha: string}>
+     */
+    public function comprobantesDelMes(int $idColegio, string $mes): Collection
+    {
+        $fecha = Carbon::createFromFormat('Y-m', $mes)->startOfMonth();
+
+        $filas = AbonoMovimiento::query()
+            ->join('movimientos_financieros', 'movimientos_financieros.idMovimiento', '=', 'abonos_movimiento.idMovimiento')
+            ->where('movimientos_financieros.idColegio', $idColegio)
+            ->where('abonos_movimiento.anulado', false)
+            ->whereNotNull('abonos_movimiento.idLotePago')
+            ->whereBetween('abonos_movimiento.fechaAbono', [$fecha->toDateString(), $fecha->copy()->endOfMonth()->toDateString()])
+            ->selectRaw("
+                abonos_movimiento.idLotePago as idLotePago,
+                movimientos_financieros.idArbitro as idArbitro,
+                MAX(abonos_movimiento.fechaAbono) as fecha,
+                SUM(abonos_movimiento.monto) as monto,
+                MAX(CASE WHEN movimientos_financieros.categoria IN ('nomina_arbitro', 'arbitro_externo') THEN 1 ELSE 0 END) as esNomina
+            ")
+            ->groupBy('abonos_movimiento.idLotePago', 'movimientos_financieros.idArbitro')
+            ->orderByDesc('fecha')
+            ->get();
+
+        $arbitros = Arbitro::whereIn('idArbitro', $filas->pluck('idArbitro')->unique()->filter())
+            ->with('usuario')
+            ->get()
+            ->keyBy('idArbitro');
+
+        return $filas->map(fn ($fila) => [
+            'idLotePago' => $fila->idLotePago,
+            'tipo'       => $fila->esNomina ? 'nomina' : 'cobro',
+            'arbitro'    => $arbitros->get($fila->idArbitro),
+            'monto'      => (float) $fila->monto,
+            'fecha'      => $fila->fecha,
+        ])->values();
     }
 
     // ── Helpers privados ──────────────────
@@ -532,7 +691,7 @@ final class ReporteFinanzasService
     {
         return (float) AbonoMovimiento::whereHas('movimiento', fn ($q) => $q->where('idColegio', $idColegio)->where('tipoMovimiento', $tipoMovimiento))
             ->where('anulado', false)
-            ->where('metodoPago', '!=', AbonoMovimiento::METODO_COMPENSACION_NOMINA)
+            ->where('metodoPago', '!=', AbonoMovimiento::METODO_NOMINA)
             ->sum('monto');
     }
 

@@ -236,7 +236,7 @@
                 @can('editar-arbitros')
                 <div class="sidebar-divider"></div>
                 <a href="{{ route('configuracion.index') }}"
-                   class="sidebar-link {{ request()->routeIs('configuracion.index') ? 'active' : '' }}">
+                   class="sidebar-link {{ request()->routeIs('configuracion.index', 'configuracion.colegio') ? 'active' : '' }}">
                     <i class="fa-solid fa-gear"></i>
                     <span>Configuración</span>
                 </a>
@@ -249,6 +249,13 @@
                     <span>Cuentas Admin</span>
                 </a>
                 @endcan
+
+                <div class="sidebar-divider"></div>
+                <a href="{{ route('privacidad.solicitud.create') }}"
+                   class="sidebar-link {{ request()->routeIs('privacidad.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>Mis datos personales</span>
+                </a>
 
             </nav>
         </aside>

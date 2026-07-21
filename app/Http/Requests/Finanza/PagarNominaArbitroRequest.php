@@ -22,7 +22,6 @@ class PagarNominaArbitroRequest extends FormRequest
             'idsMovimientos.*' => ['integer', 'exists:movimientos_financieros,idMovimiento'],
             'fecha'      => ['required', 'date'],
             'metodoPago' => ['required', Rule::in(AbonoMovimiento::METODOS_MANUALES)],
-            'referencia' => ['nullable', 'string', 'max:100'],
         ];
     }
 

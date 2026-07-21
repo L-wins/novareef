@@ -7,6 +7,23 @@
 */
 
 document.addEventListener('DOMContentLoaded', function () {
+    // ── Guía de formato: recuerda si el usuario ya la colapsó ──
+    // Abierta por defecto la primera vez (ayuda a quien no conoce el
+    // formato); en cuanto alguien la cierra, se respeta esa preferencia
+    // en sus próximas visitas — no tiene sentido obligar a un usuario con
+    // experiencia a recogerla cada vez que entra a importar.
+    const guia = document.getElementById('importar-guia');
+    if (guia) {
+        const CLAVE = 'novareef.importarGuiaAbierta';
+        const preferencia = localStorage.getItem(CLAVE);
+        if (preferencia !== null) {
+            guia.open = preferencia === '1';
+        }
+        guia.addEventListener('toggle', () => {
+            localStorage.setItem(CLAVE, guia.open ? '1' : '0');
+        });
+    }
+
     const btnConfirmar = document.getElementById('btn-confirmar-importacion');
     const form          = document.getElementById('form-importar-preview');
 
@@ -15,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (btnConfirmar.dataset.confirmado === '1') return;
             e.preventDefault();
 
-            const incluidos = form.querySelectorAll('.importar-fila input[type="checkbox"]:checked').length;
+            const incluidos = form.querySelectorAll('.importar-card input[type="checkbox"]:checked').length;
 
             if (incluidos === 0) {
                 window.novaAlert?.error('No hay ningún partido marcado para incluir.');
@@ -38,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    document.querySelectorAll('.importar-fila').forEach(function (fila) {
+    document.querySelectorAll('.importar-card').forEach(function (fila) {
         const checkbox = fila.querySelector('input[type="checkbox"]');
         if (!checkbox) return;
 
@@ -53,6 +70,50 @@ document.addEventListener('DOMContentLoaded', function () {
         checkbox.addEventListener('change', aplicarEstado);
         aplicarEstado();
     });
+
+    // ── Dropzone del archivo .docx (pantalla de subida) ──
+    const dropzone = document.getElementById('importar-dropzone');
+    const inputArchivo = document.getElementById('input-archivo-word');
+    const textoArchivo = document.getElementById('importar-dropzone-texto');
+
+    if (dropzone && inputArchivo && textoArchivo) {
+        const mostrarArchivo = (archivo) => {
+            if (!archivo) {
+                textoArchivo.innerHTML = '<strong>Haz clic para elegir el archivo</strong><span>o arrástralo aquí — solo .docx</span>';
+                dropzone.classList.remove('importar-dropzone--valido', 'importar-dropzone--invalido');
+                return;
+            }
+
+            const esDocx = /\.docx$/i.test(archivo.name);
+            const pesoMb = (archivo.size / (1024 * 1024)).toFixed(1);
+
+            textoArchivo.innerHTML = `<strong>${archivo.name}</strong><span>${pesoMb} MB${esDocx ? '' : ' — este archivo no es .docx'}</span>`;
+            dropzone.classList.toggle('importar-dropzone--valido', esDocx);
+            dropzone.classList.toggle('importar-dropzone--invalido', !esDocx);
+        };
+
+        inputArchivo.addEventListener('change', () => mostrarArchivo(inputArchivo.files[0]));
+
+        ['dragenter', 'dragover'].forEach((evento) => {
+            dropzone.addEventListener(evento, (e) => {
+                e.preventDefault();
+                dropzone.classList.add('importar-dropzone--sobre');
+            });
+        });
+        ['dragleave', 'drop'].forEach((evento) => {
+            dropzone.addEventListener(evento, (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('importar-dropzone--sobre');
+            });
+        });
+        dropzone.addEventListener('drop', (e) => {
+            const archivo = e.dataTransfer?.files?.[0];
+            if (archivo) {
+                inputArchivo.files = e.dataTransfer.files;
+                mostrarArchivo(archivo);
+            }
+        });
+    }
 
     // ── Campo hora del preview: texto plano con auto-formato "HH:MM" ──
     // Se evitó a propósito el widget de hora de Flatpickr aquí — sus dos

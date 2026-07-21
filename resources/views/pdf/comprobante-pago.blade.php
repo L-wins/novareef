@@ -82,12 +82,6 @@
             <span class="dato-label">Método de pago</span>
             <span class="dato-valor">{{ ucfirst(str_replace('_', ' ', $datos['metodoPago'])) }}</span>
         </div>
-        @if ($datos['referencia'])
-        <div class="dato-row">
-            <span class="dato-label">Referencia</span>
-            <span class="dato-valor">{{ $datos['referencia'] }}</span>
-        </div>
-        @endif
     </div>
 
     <div class="seccion-titulo">Pagos de nómina saldados</div>

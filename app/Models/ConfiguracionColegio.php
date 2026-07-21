@@ -15,12 +15,16 @@ class ConfiguracionColegio extends Model
     public    $incrementing = true;
 
     // ── Claves de configuración ───────────
-    public const DIA_DISPONIBILIDAD        = 'dia_disponibilidad';
-    public const HORAS_LIMITE_CONFIRMACION = 'horas_limite_confirmacion';
+    public const DIA_DISPONIBILIDAD          = 'dia_disponibilidad';
+    public const HORAS_LIMITE_CONFIRMACION   = 'horas_limite_confirmacion';
+    public const MONTO_MENSUALIDAD           = 'monto_mensualidad';
+    public const DIA_VENCIMIENTO_MENSUALIDAD = 'dia_vencimiento_mensualidad';
 
     private const DESCRIPCIONES = [
-        self::DIA_DISPONIBILIDAD        => 'Día de la semana en que los árbitros deben reportar disponibilidad (1=Lunes ... 7=Domingo)',
-        self::HORAS_LIMITE_CONFIRMACION => 'Horas que tiene el árbitro para confirmar una designación antes de que el partido pase a CRÍTICO',
+        self::DIA_DISPONIBILIDAD          => 'Día de la semana en que los árbitros deben reportar disponibilidad (1=Lunes ... 7=Domingo)',
+        self::HORAS_LIMITE_CONFIRMACION   => 'Horas que tiene el árbitro para confirmar una designación antes de que el partido pase a CRÍTICO',
+        self::MONTO_MENSUALIDAD           => 'Valor de la cuota mensual que se cobra automáticamente a cada árbitro activo (0 = cobro automático desactivado)',
+        self::DIA_VENCIMIENTO_MENSUALIDAD => 'Día del mes (1-28) en que se genera el cargo de mensualidad',
     ];
 
     protected $fillable = [
@@ -94,6 +98,28 @@ class ConfiguracionColegio extends Model
         $valor = (int) static::get($idColegio, static::HORAS_LIMITE_CONFIRMACION, '4');
 
         return ($valor >= 1 && $valor <= 72) ? $valor : 4;
+    }
+
+    /**
+     * Valor de la cuota mensual que GenerarCuotasMensualesJob cobra
+     * automáticamente a cada árbitro activo del colegio. 0 (default)
+     * significa cobro automático desactivado — el colegio sigue pudiendo
+     * cobrar mensualidad a mano vía Cobro Masivo.
+     */
+    public static function getMontoMensualidad(int $idColegio): float
+    {
+        return (float) static::get($idColegio, static::MONTO_MENSUALIDAD, '0');
+    }
+
+    /**
+     * Día del mes (1–28, default 5) en que se genera el cargo de
+     * mensualidad automático.
+     */
+    public static function getDiaVencimientoMensualidad(int $idColegio): int
+    {
+        $valor = (int) static::get($idColegio, static::DIA_VENCIMIENTO_MENSUALIDAD, '5');
+
+        return ($valor >= 1 && $valor <= 28) ? $valor : 5;
     }
 
     /**

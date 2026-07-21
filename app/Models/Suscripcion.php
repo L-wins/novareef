@@ -27,11 +27,13 @@ class Suscripcion extends Model
         'fechaVencimiento',
         'estado',
         'notas',
+        'fechaCancelacion',
     ];
 
     protected $casts = [
         'fechaInicio'      => 'date',
         'fechaVencimiento' => 'date',
+        'fechaCancelacion' => 'datetime',
     ];
 
     public function colegio(): BelongsTo
@@ -48,6 +50,16 @@ class Suscripcion extends Model
     {
         return $this->fechaVencimiento !== null
             && $this->fechaVencimiento->gte(Carbon::today());
+    }
+
+    /**
+     * true si el colegio pidió cancelar pero todavía conserva acceso porque
+     * fechaVencimiento no ha llegado — VencerSuscripcionesJob es quien
+     * finalmente pasa el estado a 'vencida' ese día.
+     */
+    public function tieneCancelacionProgramada(): bool
+    {
+        return $this->fechaCancelacion !== null && in_array($this->estado, self::ESTADOS_VIGENTES, true);
     }
 
     public function scopeActivas(Builder $query): Builder

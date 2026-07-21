@@ -56,7 +56,7 @@ class BalanceFinancieroTest extends TestCase
             'tipoMovimiento' => 'egreso', 'categoria' => 'gasto_fijo',
             'concepto' => 'Arriendo', 'montoTotal' => 20000, 'fechaMovimiento' => today()->format('Y-m-d'),
         ], null);
-        $finanzas->registrarAbono($egreso, ['monto' => 20000, 'fechaAbono' => today()->format('Y-m-d'), 'metodoPago' => 'transferencia'], $tesorero);
+        $finanzas->registrarAbono($egreso, ['monto' => 20000, 'fechaAbono' => today()->format('Y-m-d'), 'metodoPago' => 'pago_digital'], $tesorero);
 
         // Movimiento pendiente (sin abonar) — no debe afectar el saldo en caja.
         $finanzas->registrarMovimiento($colegio->idColegio, [

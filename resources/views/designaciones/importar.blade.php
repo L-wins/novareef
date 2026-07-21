@@ -35,33 +35,97 @@
 
 @if(is_null($importacion))
 {{-- ══════════ ESTADO 1: formulario de subida ══════════ --}}
-    <details class="importar-guia">
+    <details class="importar-guia" id="importar-guia" open>
         <summary>
-            <i class="fa-solid fa-circle-info"></i>
-            ¿Qué formato debe tener el archivo .docx?
+            <span class="importar-guia__summary-icono"><i class="fa-solid fa-graduation-cap"></i></span>
+            <span class="importar-guia__summary-texto">
+                <strong>¿Primera vez importando?</strong>
+                <span>Haz clic aquí para ver, paso a paso, cómo debe verse tu Word</span>
+            </span>
+            <i class="fa-solid fa-chevron-down importar-guia__summary-flecha"></i>
         </summary>
 
         <div class="importar-guia__contenido">
+
+            {{-- Ubicación general: qué va a pasar después de subir el archivo --}}
+            <div class="importar-pasos">
+                <div class="importar-paso">
+                    <span class="importar-paso__numero">1</span>
+                    <div>
+                        <p class="importar-paso__titulo">Subes el archivo</p>
+                        <p class="importar-paso__texto">El .docx que te envía la asociación, tal cual lo recibes.</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-right importar-paso__flecha" aria-hidden="true"></i>
+                <div class="importar-paso">
+                    <span class="importar-paso__numero">2</span>
+                    <div>
+                        <p class="importar-paso__titulo">Revisas y corriges</p>
+                        <p class="importar-paso__texto">Verás cada partido detectado y podrás editar cualquier campo antes de confirmar.</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-right importar-paso__flecha" aria-hidden="true"></i>
+                <div class="importar-paso">
+                    <span class="importar-paso__numero">3</span>
+                    <div>
+                        <p class="importar-paso__titulo">Confirmas</p>
+                        <p class="importar-paso__texto">Se crean todos los partidos del torneo de una sola vez.</p>
+                    </div>
+                </div>
+            </div>
+
             <p class="importar-guia__intro">
-                No todas las asociaciones envían el Word con exactamente la misma estructura de tabla —
-                el importador tolera algunas variaciones, pero necesita estas dos partes en cada partido:
+                No todas las asociaciones envían el Word con exactamente la misma estructura —
+                el importador tolera bastantes variaciones (más abajo el detalle) — pero necesita
+                reconocer <strong>dos partes en cada partido</strong>. Así se ven en un documento real:
             </p>
 
-            <div class="importar-guia__bloque">
-                <p class="importar-guia__titulo-bloque">1. Un bloque de texto con el contexto del grupo</p>
-                <p class="importar-guia__texto">
-                    Antes de la tabla de cada partido debe haber una línea de texto con, en este orden:
-                    <strong>grupo</strong> (opcional), <strong>categoría/división</strong> y <strong>fecha</strong>,
-                    separados por tabulaciones. Ejemplo: <code>GRUPO 15&nbsp;&nbsp;&nbsp;SUB 15&nbsp;&nbsp;&nbsp;01 MARZO 07/08</code>
+            {{-- ═══ Ejemplo visual del documento Word ═══ --}}
+            <div class="importar-mockup">
+                <div class="importar-mockup__etiqueta">
+                    <span class="importar-mockup__numero">1</span>
+                    Línea de contexto: grupo, categoría y fecha
+                </div>
+                <div class="importar-mockup__pagina">
+                    <p class="importar-mockup__contexto">GRUPO 15&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SUB 15&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01 MARZO 07/08</p>
+
+                    <table class="importar-mockup__tabla">
+                        <tbody>
+                            <tr>
+                                <td class="et">PARTIDO</td><td>Santa Fe</td><td colspan="2">Bethel</td>
+                                <td class="et">ARBITRO</td><td>Juan Pérez</td>
+                            </tr>
+                            <tr>
+                                <td class="et">ESTADIO</td><td colspan="3">Centro Deportivo 1</td>
+                                <td class="et">LINEA UNO</td><td>Carlos Ruiz</td>
+                            </tr>
+                            <tr>
+                                <td class="et">DIA</td><td>Sábado 7 marzo</td>
+                                <td class="et">HORA</td><td>09:00</td>
+                                <td class="et">LINEA DOS</td><td>Pedro Gómez</td>
+                            </tr>
+                            <tr>
+                                <td class="et">CIUDAD</td><td colspan="3">Bogotá</td>
+                                <td class="et">EMERGENTE</td><td>Luis Torres</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="importar-mockup__etiqueta">
+                    <span class="importar-mockup__numero">2</span>
+                    Tabla de 4 filas con los datos del partido
+                </div>
+                <p class="importar-mockup__pie">
+                    <i class="fa-regular fa-lightbulb"></i>
+                    Tu tabla no tiene que verse idéntica a esta — el número de columnas por fila puede
+                    variar de una asociación a otra. Lo único que importa es que cada etiqueta
+                    (<code>PARTIDO</code>, <code>ESTADIO</code>...) esté escrita tal cual y su valor
+                    vaya justo después.
                 </p>
             </div>
 
             <div class="importar-guia__bloque">
-                <p class="importar-guia__titulo-bloque">2. Una tabla de 4 filas por partido, con estas etiquetas</p>
-                <p class="importar-guia__texto">
-                    El importador busca el texto exacto de cada etiqueta en la tabla (no importa en qué celda esté)
-                    y toma el valor de la celda siguiente. Las etiquetas obligatorias son:
-                </p>
+                <p class="importar-guia__titulo-bloque">Significado de cada etiqueta</p>
                 <table class="importar-guia__tabla">
                     <thead>
                         <tr><th>Columna izquierda</th><th>Columna derecha</th></tr>
@@ -75,28 +139,36 @@
                 </table>
             </div>
 
-            <div class="importar-guia__bloque">
-                <p class="importar-guia__titulo-bloque">Lo que SÍ tolera el importador</p>
-                <ul class="importar-guia__lista importar-guia__lista--ok">
-                    <li>Que la etiqueta y su valor vengan en la misma celda (ej. una celda que diga <code>ESTADIO&nbsp;&nbsp;&nbsp;Centro Deportivo 1</code>) o en celdas separadas — ambos casos funcionan.</li>
-                    <li>Celdas de más al final de una fila (restos de una plantilla reciclada) — se ignoran.</li>
-                    <li>Que el nombre del árbitro de cada rol (ARBITRO/LINEA UNO/LINEA DOS/EMERGENTE) pertenezca a otra asociación — si no existe en este colegio, ese rol queda sin asignar con una advertencia, pero el partido se importa igual.</li>
-                    <li>Mayúsculas/minúsculas y tildes en categoría y sede — el matching contra las divisiones/sedes del torneo las ignora.</li>
-                </ul>
-            </div>
-
-            <div class="importar-guia__bloque">
-                <p class="importar-guia__titulo-bloque">Lo que NO tolera</p>
-                <ul class="importar-guia__lista importar-guia__lista--error">
-                    <li>Archivos <code>.doc</code> (Word 97-2003) — deben guardarse como <code>.docx</code> primero.</li>
-                    <li>Una tabla sin la etiqueta <strong>PARTIDO</strong> — esa fila queda con error y no se puede incluir sin corregirla manualmente en el paso de revisión.</li>
-                    <li>Fechas fuera del año del torneo, o que no tengan el formato "día + nombre del mes" (ej. "7 marzo") y "HH:MM" para la hora.</li>
-                </ul>
+            {{-- ═══ Tolera / no tolera, como tarjetas ═══ --}}
+            <div class="importar-tolerancia">
+                <div class="importar-tolerancia__panel importar-tolerancia__panel--ok">
+                    <p class="importar-tolerancia__titulo">
+                        <i class="fa-solid fa-circle-check"></i> Esto SÍ lo tolera
+                    </p>
+                    <ul>
+                        <li>La etiqueta y su valor pegados en la misma celda (ej. <code>ESTADIO&nbsp;&nbsp;Centro Deportivo 1</code>) o en celdas separadas — ambos casos funcionan.</li>
+                        <li>Celdas de más al final de una fila (restos de una plantilla reciclada) — se ignoran.</li>
+                        <li>Un árbitro de otra asociación en cualquier rol — si no existe en tu colegio, ese rol queda sin asignar con una advertencia, pero el partido se importa igual.</li>
+                        <li>Mayúsculas/minúsculas y tildes distintas en categoría y sede — el emparejamiento las ignora.</li>
+                    </ul>
+                </div>
+                <div class="importar-tolerancia__panel importar-tolerancia__panel--error">
+                    <p class="importar-tolerancia__titulo">
+                        <i class="fa-solid fa-circle-xmark"></i> Esto NO lo tolera
+                    </p>
+                    <ul>
+                        <li>Archivos <code>.doc</code> (Word 97-2003) — guárdalo primero como <code>.docx</code> desde Word (<em>Archivo &gt; Guardar como</em>).</li>
+                        <li>Una tabla sin la etiqueta <strong>PARTIDO</strong> — esa fila queda con error y hay que corregirla a mano en el paso de revisión.</li>
+                        <li>Fechas fuera del año del torneo, o sin el formato "día + nombre del mes" (ej. "7 marzo") y "HH:MM" para la hora.</li>
+                    </ul>
+                </div>
             </div>
 
             <p class="importar-guia__nota">
-                Cualquier fila que no se pueda interpretar queda marcada en rojo en el paso de revisión, con el detalle
-                del problema — puedes corregirla ahí mismo antes de confirmar, no hace falta que el Word sea perfecto.
+                <i class="fa-solid fa-heart"></i>
+                Tranquilo si tu Word no es perfecto: cualquier fila que no se pueda interpretar queda
+                marcada en rojo en el paso de revisión, con el detalle exacto del problema — la corriges
+                ahí mismo, antes de confirmar.
             </p>
         </div>
     </details>
@@ -107,39 +179,49 @@
         <div class="form-section">
             <p class="form-section-title">Datos de la importación</p>
 
-            <div class="form-group">
-                <label class="form-label">Torneo <span class="req">*</span></label>
-                <select name="idTorneo" class="form-input" data-nova-select data-searchable="true"
-                        data-placeholder="Selecciona un torneo" required>
-                    <option value="">Selecciona un torneo</option>
-                    @foreach($torneos as $t)
-                    <option value="{{ $t->idTorneo }}" {{ old('idTorneo') == $t->idTorneo ? 'selected' : '' }}>
-                        {{ $t->nombreTorneo }} ({{ $t->temporada }})
-                    </option>
-                    @endforeach
-                </select>
-                <p class="field-hint">Las divisiones y sedes del Word se comparan contra las que ya existen en este torneo — créalas antes si faltan.</p>
-                @error('idTorneo')<div class="form-error">{{ $message }}</div>@enderror
-            </div>
+            <div class="form-grid form-grid-2">
+                <div class="form-group">
+                    <label class="form-label">Torneo <span class="req">*</span></label>
+                    <select name="idTorneo" class="form-input" data-nova-select data-searchable="true"
+                            data-placeholder="Selecciona un torneo" required>
+                        <option value="">Selecciona un torneo</option>
+                        @foreach($torneos as $t)
+                        <option value="{{ $t->idTorneo }}" {{ old('idTorneo') == $t->idTorneo ? 'selected' : '' }}>
+                            {{ $t->nombreTorneo }} ({{ $t->temporada }})
+                        </option>
+                        @endforeach
+                    </select>
+                    <p class="field-hint">Las divisiones y sedes del Word se comparan contra las que ya existen en este torneo — créalas antes si faltan.</p>
+                    @error('idTorneo')<div class="form-error">{{ $message }}</div>@enderror
+                </div>
 
-            <div class="form-group">
-                <label class="form-label">Formato de designación por defecto <span class="req">*</span></label>
-                <select name="idFormato" class="form-input" data-nova-select data-placeholder="Selecciona formato" required>
-                    <option value="">Selecciona formato</option>
-                    @foreach($formatos as $f)
-                    <option value="{{ $f->idFormato }}" {{ old('idFormato') == $f->idFormato ? 'selected' : '' }}>
-                        {{ $f->nombre }} ({{ $f->maxArbitros }} árbitro{{ $f->maxArbitros > 1 ? 's' : '' }})
-                    </option>
-                    @endforeach
-                </select>
-                <p class="field-hint">Se aplica a todos los partidos importados; puedes cambiarlo por fila en el paso siguiente.</p>
-                @error('idFormato')<div class="form-error">{{ $message }}</div>@enderror
+                <div class="form-group">
+                    <label class="form-label">Formato de designación por defecto <span class="req">*</span></label>
+                    <select name="idFormato" class="form-input" data-nova-select data-placeholder="Selecciona formato" required>
+                        <option value="">Selecciona formato</option>
+                        @foreach($formatos as $f)
+                        <option value="{{ $f->idFormato }}" {{ old('idFormato') == $f->idFormato ? 'selected' : '' }}>
+                            {{ $f->nombre }} ({{ $f->maxArbitros }} árbitro{{ $f->maxArbitros > 1 ? 's' : '' }})
+                        </option>
+                        @endforeach
+                    </select>
+                    <p class="field-hint">Se aplica a todos los partidos importados; puedes cambiarlo por fila en el paso siguiente.</p>
+                    @error('idFormato')<div class="form-error">{{ $message }}</div>@enderror
+                </div>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Archivo .docx <span class="req">*</span></label>
-                <input type="file" name="archivoWord" class="form-input" accept=".docx" required>
-                <p class="field-hint">Solo .docx. Si el archivo es .doc (Word 97-2003), ábrelo en Word y usa Archivo &gt; Guardar como &gt; Word (.docx).</p>
+
+                <label for="input-archivo-word" class="importar-dropzone" id="importar-dropzone">
+                    <input type="file" name="archivoWord" id="input-archivo-word" accept=".docx" required>
+                    <span class="importar-dropzone__icono"><i class="fa-solid fa-file-word"></i></span>
+                    <span class="importar-dropzone__texto" id="importar-dropzone-texto">
+                        <strong>Haz clic para elegir el archivo</strong>
+                        <span>o arrástralo aquí — solo .docx</span>
+                    </span>
+                </label>
+                <p class="field-hint">Si el archivo es .doc (Word 97-2003), ábrelo en Word y usa Archivo &gt; Guardar como &gt; Word (.docx).</p>
                 @error('archivoWord')<div class="form-error">{{ $message }}</div>@enderror
             </div>
         </div>

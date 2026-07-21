@@ -10,14 +10,19 @@ use App\Http\Requests\Admin\ExtenderSuscripcionRequest;
 use App\Models\Colegio;
 use App\Models\Plan;
 use App\Models\Suscripcion;
+use App\Services\AdminAuditService;
 use App\Services\SuscripcionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class AdminSuscripcionController extends Controller
 {
-    public function __construct(private readonly SuscripcionService $suscripciones) {}
+    public function __construct(
+        private readonly SuscripcionService $suscripciones,
+        private readonly AdminAuditService $auditoria,
+    ) {}
 
     /**
      * Listado transversal de todas las suscripciones (de todos los colegios),
@@ -50,6 +55,14 @@ class AdminSuscripcionController extends Controller
 
         $this->suscripciones->cambiarPlan($colegio, $plan);
 
+        $this->auditoria->registrar(
+            Auth::guard('admin')->user(),
+            'cambiar_plan',
+            'suscripcion',
+            $colegio->idColegio,
+            "Plan de \"{$colegio->nombreColegio}\" cambiado a \"{$plan->nombre}\".",
+        );
+
         return back()->with('success', "Plan de {$colegio->nombreColegio} cambiado a \"{$plan->nombre}\".");
     }
 
@@ -60,10 +73,18 @@ class AdminSuscripcionController extends Controller
         $colegio = Colegio::findOrFail($idColegio);
 
         try {
-            $this->suscripciones->extender($colegio, $validated['dias']);
+            $this->suscripciones->extender($colegio, (int) $validated['dias']);
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
+
+        $this->auditoria->registrar(
+            Auth::guard('admin')->user(),
+            'extender',
+            'suscripcion',
+            $colegio->idColegio,
+            "Suscripción de \"{$colegio->nombreColegio}\" extendida {$validated['dias']} días.",
+        );
 
         return back()->with('success', "Suscripción de {$colegio->nombreColegio} extendida {$validated['dias']} días.");
     }
@@ -73,11 +94,21 @@ class AdminSuscripcionController extends Controller
         $colegio = Colegio::findOrFail($idColegio);
 
         try {
-            $this->suscripciones->cancelar($colegio);
+            $suscripcion = $this->suscripciones->cancelar($colegio);
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', "Suscripción de {$colegio->nombreColegio} cancelada.");
+        $fecha = $suscripcion->fechaVencimiento?->format('d/m/Y') ?? '—';
+
+        $this->auditoria->registrar(
+            Auth::guard('admin')->user(),
+            'cancelar',
+            'suscripcion',
+            $colegio->idColegio,
+            "Cancelación programada para \"{$colegio->nombreColegio}\" — conserva acceso hasta el {$fecha}.",
+        );
+
+        return back()->with('success', "Suscripción de {$colegio->nombreColegio} marcada para no renovar. Conserva acceso hasta el {$fecha}.");
     }
 }

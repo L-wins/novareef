@@ -8,8 +8,10 @@ use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Arbitro\MiPerfilRequest;
 use App\Services\ArbitroService;
+use App\Services\PoliticaPrivacidadService;
 use App\Services\ReporteFinanzasService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ArbitroPerfilController extends Controller
@@ -19,6 +21,7 @@ class ArbitroPerfilController extends Controller
     public function __construct(
         private readonly ArbitroService $arbitros,
         private readonly ReporteFinanzasService $reportes,
+        private readonly PoliticaPrivacidadService $politica,
     ) {}
 
     public function show(): View
@@ -26,8 +29,9 @@ class ArbitroPerfilController extends Controller
         $arbitro = $this->arbitroAutenticado(['usuario', 'categoria', 'colegio', 'estado', 'documentos']);
 
         return view('arbitros.mi-perfil', [
-            'arbitro'              => $arbitro,
-            'saldoPendienteCobrar' => $this->reportes->saldoPendienteArbitro($arbitro),
+            'arbitro'                => $arbitro,
+            'saldoPendienteCobrar'   => $this->reportes->saldoPendienteArbitro($arbitro),
+            'yaAceptoDatosSensibles' => $this->politica->haAceptadoDatosSensibles($arbitro->usuario),
         ]);
     }
 
@@ -36,6 +40,7 @@ class ArbitroPerfilController extends Controller
         $arbitro = $this->arbitroAutenticado(['usuario']);
 
         $this->arbitros->actualizarPerfilPropio($arbitro, $request->validated());
+        $this->registrarConsentimientoDatosSensiblesSiAplica($request, $arbitro->usuario);
 
         return redirect()->route('arbitros.mi-perfil')->with('success', 'Perfil actualizado correctamente.');
     }
@@ -52,7 +57,15 @@ class ArbitroPerfilController extends Controller
         $arbitro = $this->arbitroAutenticado(['usuario']);
 
         $this->arbitros->actualizarPerfilPropio($arbitro, $request->validated());
+        $this->registrarConsentimientoDatosSensiblesSiAplica($request, $arbitro->usuario);
 
         return redirect()->route('dashboard')->with('success', 'Perfil completado correctamente. ¡Bienvenido a NovaReef!');
+    }
+
+    private function registrarConsentimientoDatosSensiblesSiAplica(Request $request, \App\Models\User $usuario): void
+    {
+        if ($request->boolean('consentimientoDatosSensibles')) {
+            $this->politica->registrarAceptacionDatosSensibles($usuario, $request->ip());
+        }
     }
 }

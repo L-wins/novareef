@@ -262,6 +262,22 @@ body {
     line-height: 1.5;
 }
 
+/*
+   Alerta de éxito general
+    */
+.alert-success {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
+    background-color: rgb(16 185 129 / 0.08);
+    border: 1px solid rgb(16 185 129 / 0.25);
+    border-radius: 0.625rem;
+    color: rgb(110 231 183);                    /* emerald-300 */
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
 /* 
    Checkbox personalizado
     */

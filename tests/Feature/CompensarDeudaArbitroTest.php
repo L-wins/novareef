@@ -79,7 +79,7 @@ class CompensarDeudaArbitroTest extends TestCase
         $this->assertSame('parcial', $nomina->estadoMovimiento);
         $this->assertSame(45000.0, $nomina->saldoPendiente());
 
-        $abonoCompensacion = $nomina->abonos()->where('metodoPago', 'compensacion_nomina')->first();
+        $abonoCompensacion = $nomina->abonos()->where('metodoPago', 'nomina')->first();
         $this->assertNotNull($abonoCompensacion);
         $this->assertSame(15000.0, (float) $abonoCompensacion->monto);
 

@@ -12,6 +12,7 @@ use App\Http\Controllers\Arbitro\CategoriaArbitroController;
 use App\Http\Controllers\Arbitro\EstadoCuentaArbitroController;
 use App\Http\Controllers\Auth\CambioContrasenaController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RecuperarContrasenaController;
 use App\Http\Controllers\DashboardController;
 use App\Models\Plan;
 use App\Http\Controllers\Configuracion\ConfiguracionController;
@@ -21,7 +22,10 @@ use App\Http\Controllers\Designacion\DesignacionAccionesController;
 use App\Http\Controllers\Designacion\DesignacionController;
 use App\Http\Controllers\Finanza\BalanceFinancieroController;
 use App\Http\Controllers\Finanza\CobroMasivoController;
+use App\Http\Controllers\Finanza\ComprobantesMensualesController;
+use App\Http\Controllers\Finanza\CuotasMensualesController;
 use App\Http\Controllers\Finanza\FichaFinancieraArbitroController;
+use App\Http\Controllers\Finanza\MoraArbitrosController;
 use App\Http\Controllers\Finanza\MovimientoInstitucionalController;
 use App\Http\Controllers\Finanza\ReporteFinancieroController;
 use App\Http\Controllers\Sancion\JustificacionRevisionController;
@@ -30,6 +34,8 @@ use App\Http\Controllers\Sancion\TipoSancionController;
 use App\Http\Controllers\Designacion\DisponibilidadController;
 use App\Http\Controllers\Designacion\ImportacionDesignacionesController;
 use App\Http\Controllers\Designacion\MisPartidosController;
+use App\Http\Controllers\PoliticaPrivacidadController;
+use App\Http\Controllers\SolicitudArcoController;
 use App\Http\Controllers\Torneo\DivisionTorneoController;
 use App\Http\Controllers\Torneo\EmergenteTorneoController;
 use App\Http\Controllers\Torneo\PartidoController;
@@ -54,6 +60,17 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
 });
 
+// Recuperación de contraseña (solo invitados) — guard 'web'
+Route::middleware('guest')->prefix('recuperar-contrasena')->group(function () {
+    Route::get('/', [RecuperarContrasenaController::class, 'mostrarSolicitud'])->name('password.request');
+    Route::post('/', [RecuperarContrasenaController::class, 'enviarEnlace'])
+        ->middleware('throttle:6,1')->name('password.email');
+
+    Route::get('/restablecer/{token}', [RecuperarContrasenaController::class, 'mostrarFormulario'])->name('password.reset');
+    Route::post('/restablecer', [RecuperarContrasenaController::class, 'restablecer'])
+        ->middleware('throttle:6,1')->name('password.update');
+});
+
 // Completar perfil — solo auth, sin verificar.colegio ni verificar.perfil
 Route::middleware('auth')->group(function () {
     Route::get('/mi-perfil/completar',  [ArbitroPerfilController::class, 'completar'])->name('arbitros.completar-perfil');
@@ -68,6 +85,19 @@ Route::middleware('auth')->group(function () {
     // colegio impersonado esté suspendido o el perfil incompleto.
     Route::post('/impersonacion/salir', [\App\Http\Controllers\ImpersonacionController::class, 'salir'])
         ->name('impersonacion.salir');
+
+    // Política de tratamiento de datos (Ley 1581 de 2012) — sin
+    // verificar.colegio ni verificar.perfil: aceptarla es el primer paso,
+    // debe funcionar incluso con el colegio suspendido o el perfil sin
+    // completar, y el propio middleware ExigirAceptacionPolitica redirige
+    // acá antes de dejar pasar a cualquier otra ruta autenticada.
+    Route::get('/privacidad',          [PoliticaPrivacidadController::class, 'mostrar'])->name('privacidad.politica');
+    Route::get('/privacidad/aceptar',  [PoliticaPrivacidadController::class, 'aceptar'])->name('privacidad.aceptar');
+    Route::post('/privacidad/aceptar', [PoliticaPrivacidadController::class, 'guardarAceptacion'])->name('privacidad.aceptar.guardar');
+
+    // Derechos ARCO — acceso, rectificación, cancelación, oposición.
+    Route::get('/privacidad/solicitud',  [SolicitudArcoController::class, 'create'])->name('privacidad.solicitud.create');
+    Route::post('/privacidad/solicitud', [SolicitudArcoController::class, 'store'])->name('privacidad.solicitud.store');
 });
 
 // Rutas privadas (requieren autenticación)
@@ -87,6 +117,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     //  ver-finanzas, mismo criterio que finalizarPartido con ver-designaciones.
     Route::get('/mi-estado-cuenta', [EstadoCuentaArbitroController::class, 'show'])->name('arbitros.estado-cuenta');
     Route::get('/mi-estado-cuenta/comprobante/{lote}', [EstadoCuentaArbitroController::class, 'comprobante'])->name('arbitros.estado-cuenta.comprobante');
+    Route::get('/mi-estado-cuenta/comprobante-cobro/{lote}', [EstadoCuentaArbitroController::class, 'comprobanteCobro'])->name('arbitros.estado-cuenta.comprobante-cobro');
 
     // Foto de perfil — el árbitro siempre, y editores con permiso
     Route::post('/arbitros/{id}/foto',   [ArbitroFotoController::class, 'subir'])->name('arbitros.foto.subir');
@@ -276,6 +307,9 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::get('/balance',      [BalanceFinancieroController::class, 'index'])->name('balance.index');
         Route::post('/saldo-inicial', [BalanceFinancieroController::class, 'registrarSaldoInicial'])
             ->middleware('permission:crear-finanzas')->name('saldo-inicial.store');
+        Route::get('/mora', [MoraArbitrosController::class, 'index'])->name('mora.index');
+        Route::get('/cuotas', [CuotasMensualesController::class, 'index'])->name('cuotas.index');
+        Route::get('/comprobantes', [ComprobantesMensualesController::class, 'index'])->name('comprobantes.index');
 
         // Gastos e ingresos institucionales — los 5 tipos de movimiento sin
         // árbitro asociado (ingreso_torneo, otro_ingreso, gasto_fijo,
@@ -303,6 +337,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
             Route::post('/nomina/pagar', [FichaFinancieraArbitroController::class, 'pagarNomina'])
                 ->middleware('permission:crear-finanzas')->name('nomina.pagar');
             Route::get('/comprobante/{lote}', [FichaFinancieraArbitroController::class, 'comprobante'])->name('comprobante');
+            Route::get('/comprobante-cobro/{lote}', [FichaFinancieraArbitroController::class, 'comprobanteCobro'])->name('comprobante-cobro');
         });
     });
 
@@ -378,12 +413,15 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::delete('/{id}', [TipoSancionController::class, 'destroy'])->name('destroy');
     });
 
-    //  Configuración del colegio — solo ejecutivo
+    //  Configuración del colegio — solo ejecutivo. Dos secciones (General /
+    //  Colegio) con subnav propia, mismo patrón que finanzas.partials.subnav —
+    //  ver App\Http\Controllers\Configuracion\ConfiguracionController.
     Route::prefix('configuracion')->name('configuracion.')->middleware('permission:editar-arbitros')->group(function () {
-        Route::get('/',        [ConfiguracionController::class, 'index'])->name('index');
-        Route::put('/',        [ConfiguracionController::class, 'update'])->name('update');
-        Route::post('/logo',   [ConfiguracionController::class, 'actualizarLogo'])->name('logo.actualizar');
-        Route::delete('/logo', [ConfiguracionController::class, 'eliminarLogo'])->name('logo.eliminar');
+        Route::get('/',         [ConfiguracionController::class, 'general'])->name('index');
+        Route::get('/colegio',  [ConfiguracionController::class, 'colegio'])->name('colegio');
+        Route::put('/',         [ConfiguracionController::class, 'update'])->name('update');
+        Route::post('/logo',    [ConfiguracionController::class, 'actualizarLogo'])->name('logo.actualizar');
+        Route::delete('/logo',  [ConfiguracionController::class, 'eliminarLogo'])->name('logo.eliminar');
     });
 
     //  Cuentas admin (tesorero, designador, sanciones, tecnico, veedor, co-ejecutivo)

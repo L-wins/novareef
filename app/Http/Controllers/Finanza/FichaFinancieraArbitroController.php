@@ -116,7 +116,6 @@ class FichaFinancieraArbitroController extends Controller
             $resultado = $this->finanzas->pagarNominaArbitro($arbitro, $datos['idsMovimientos'], [
                 'fecha'      => $datos['fecha'],
                 'metodoPago' => $datos['metodoPago'],
-                'referencia' => $datos['referencia'] ?? null,
             ], Auth::user());
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
@@ -164,6 +163,27 @@ class FichaFinancieraArbitroController extends Controller
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->download("comprobante-pago-{$datos['fecha']->format('Y-m-d')}-" . substr($lote, 0, 8) . '.pdf');
+    }
+
+    /** Recibo PDF de un cobro (mensualidad/otro_ingreso) hecho vía Cobro Masivo, para este árbitro. */
+    public function comprobanteCobro(int $idArbitro, string $lote): mixed
+    {
+        $arbitro = $this->arbitroDelColegio($idArbitro);
+
+        $datos = $this->reportes->datosComprobanteCobro($lote, $this->idColegioActivo(), $arbitro->idArbitro);
+
+        abort_if($datos === null, 404);
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('pdf.comprobante-cobro', [
+            'datos'       => $datos,
+            'idLotePago'  => $lote,
+            'colegio'     => $datos['arbitro']->colegio ?? null,
+            'generadoPor' => Auth::user(),
+        ]);
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download("comprobante-cobro-{$datos['fecha']->format('Y-m-d')}-" . substr($lote, 0, 8) . '.pdf');
     }
 
     // ── Helpers privados ──────────────────

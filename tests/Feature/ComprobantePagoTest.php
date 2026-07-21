@@ -57,7 +57,7 @@ class ComprobantePagoTest extends TestCase
         $resultado = $finanzas->pagarNominaArbitro(
             $arbitro,
             [$nomina->idMovimiento],
-            ['fecha' => today()->format('Y-m-d'), 'metodoPago' => 'transferencia', 'referencia' => 'REF-123'],
+            ['fecha' => today()->format('Y-m-d'), 'metodoPago' => 'pago_digital'],
             $tesorero,
         );
 

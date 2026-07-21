@@ -207,6 +207,16 @@
                     @endif
                 </span>
             </div>
+            @if($suscripcion->tieneCancelacionProgramada())
+            <div class="admin-detail-field">
+                <span class="admin-detail-field__label">Cancelación</span>
+                <span class="admin-detail-field__value">
+                    <span class="badge badge--amber">
+                        Programada — acceso hasta {{ $suscripcion->fechaVencimiento?->format('d/m/Y') }}
+                    </span>
+                </span>
+            </div>
+            @endif
         </div>
         @else
         <p class="admin-detail-empty">Este colegio no tiene suscripción activa.</p>
@@ -247,11 +257,11 @@
                 </button>
             </form>
 
-            @if($suscripcion && $suscripcion->estaVigente())
+            @if($suscripcion && $suscripcion->estaVigente() && ! $suscripcion->tieneCancelacionProgramada())
             <form method="POST" action="{{ route('admin.suscripciones.cancelar', $colegio->idColegio) }}"
                   data-confirm-submit
                   data-confirm-title="Cancelar suscripción"
-                  data-confirm-text="¿Cancelar la suscripción de «{{ $colegio->nombreColegio }}»? El colegio perderá el acceso."
+                  data-confirm-text="¿Cancelar la suscripción de «{{ $colegio->nombreColegio }}»? Conservará el acceso hasta el {{ $suscripcion->fechaVencimiento?->format('d/m/Y') }} (no se corta de inmediato) y luego no se renueva."
                   data-confirm-color="#ef4444"
                   data-confirm-btn="Sí, cancelar">
                 @csrf

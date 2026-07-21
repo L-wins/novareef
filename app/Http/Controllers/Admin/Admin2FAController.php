@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Activar2FARequest;
 use App\Http\Requests\Admin\Desactivar2FARequest;
 use App\Models\Admin;
+use App\Services\AdminAuditService;
 use App\Services\AdminTwoFactorService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +16,10 @@ use Illuminate\View\View;
 
 class Admin2FAController extends Controller
 {
-    public function __construct(private readonly AdminTwoFactorService $twoFactor) {}
+    public function __construct(
+        private readonly AdminTwoFactorService $twoFactor,
+        private readonly AdminAuditService $auditoria,
+    ) {}
 
     public function show(): View
     {
@@ -37,11 +41,15 @@ class Admin2FAController extends Controller
 
     public function enable(Activar2FARequest $request): RedirectResponse
     {
+        $admin = $this->adminAutenticado();
+
         try {
-            $this->twoFactor->activar($this->adminAutenticado(), $request->string('codigo')->toString());
+            $this->twoFactor->activar($admin, $request->string('codigo')->toString());
         } catch (\RuntimeException $e) {
             return back()->withErrors(['codigo' => $e->getMessage()]);
         }
+
+        $this->auditoria->registrar($admin, 'activar_2fa', 'admin', $admin->idAdmin);
 
         return redirect()
             ->route('admin.2fa.config')
@@ -50,11 +58,15 @@ class Admin2FAController extends Controller
 
     public function disable(Desactivar2FARequest $request): RedirectResponse
     {
+        $admin = $this->adminAutenticado();
+
         try {
-            $this->twoFactor->desactivar($this->adminAutenticado(), $request->string('password')->toString());
+            $this->twoFactor->desactivar($admin, $request->string('password')->toString());
         } catch (\RuntimeException $e) {
             return back()->withErrors(['password' => $e->getMessage()]);
         }
+
+        $this->auditoria->registrar($admin, 'desactivar_2fa', 'admin', $admin->idAdmin);
 
         return redirect()
             ->route('admin.2fa.config')

@@ -150,6 +150,11 @@
                         <i class="fa-solid fa-triangle-exclamation w-4 h-4 mt-0.5 shrink-0"></i>
                         <span>{{ session('error') }}</span>
                     </div>
+                @elseif (session('status'))
+                    <div class="alert-success mb-6" role="alert">
+                        <i class="fa-solid fa-circle-check w-4 h-4 mt-0.5 shrink-0"></i>
+                        <span>{{ session('status') }}</span>
+                    </div>
                 @endif
 
                 <form id="login-form" method="POST" action="{{ route('login') }}" novalidate>
@@ -198,6 +203,13 @@
                         @error('passwordUsuario')
                             <p class="mt-1.5 text-xs text-red-400">{{ $message }}</p>
                         @enderror
+                    </div>
+
+                    {{-- Olvidé mi contraseña --}}
+                    <div class="text-right mb-5 -mt-3">
+                        <a href="{{ route('password.request') }}" class="text-xs text-slate-400 hover:text-blue-400 transition-colors">
+                            ¿Olvidaste tu contraseña?
+                        </a>
                     </div>
 
                     {{-- Recordarme --}}

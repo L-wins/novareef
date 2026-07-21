@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Arbitro;
 
+use App\Services\PoliticaPrivacidadService;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -26,6 +27,13 @@ class MiPerfilRequest extends FormRequest
 
     public function rules(): array
     {
+        // rhArbitro/epsArbitro son datos sensibles (salud, Ley 1581/2012 art.
+        // 5) — exigen consentimiento explícito y separado del general. Solo
+        // se pide una vez: si el árbitro ya lo dio antes, no se vuelve a
+        // exigir en cada edición aunque cambie el valor.
+        $yaAceptoDatosSensibles = app(PoliticaPrivacidadService::class)
+            ->haAceptadoDatosSensibles($this->user());
+
         return [
             'telefonoUsuario'   => ['nullable', 'string', 'max:20'],
             'lugarExpedicionCC' => ['nullable', 'string', 'max:100'],
@@ -33,6 +41,10 @@ class MiPerfilRequest extends FormRequest
             'estaturaArbitro'   => ['nullable', 'numeric', 'min:1.00', 'max:2.50'],
             'rhArbitro'         => ['nullable', 'string', 'max:5'],
             'epsArbitro'        => ['nullable', 'string', 'max:100'],
+            'consentimientoDatosSensibles' => [
+                $yaAceptoDatosSensibles ? 'nullable' : 'required_with:rhArbitro,epsArbitro',
+                'boolean',
+            ],
             'profesionArbitro'  => ['nullable', 'string', 'max:100'],
             'direccionArbitro'  => ['nullable', 'string', 'max:255'],
             'barrioArbitro'     => ['nullable', 'string', 'max:100'],
@@ -48,6 +60,7 @@ class MiPerfilRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'consentimientoDatosSensibles.required_with' => 'Debes autorizar el tratamiento de tus datos de salud (RH/EPS) para guardarlos, o dejar esos campos vacíos.',
             'required_if' => 'El campo :attribute es obligatorio cuando tienes vehículo.',
             'in'          => 'El valor seleccionado para :attribute no es válido.',
             'max.string'  => 'El campo :attribute no puede superar :max caracteres.',

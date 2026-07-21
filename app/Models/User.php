@@ -75,6 +75,16 @@ class User extends Authenticatable
         return $this->passwordUsuario;
     }
 
+    /**
+     * Columna donde se busca/almacena el email para el flujo de recuperación
+     * de contraseña (Password::broker('users')). La tabla usuarios no tiene
+     * columna 'email' (nombre por defecto del trait CanResetPassword).
+     */
+    public function getEmailForPasswordReset(): string
+    {
+        return $this->emailUsuario;
+    }
+
     //  Relaciones ─
 
     public function colegio(): BelongsTo

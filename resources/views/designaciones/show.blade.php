@@ -10,9 +10,13 @@
 @section('contenido')
 <div class="container">
 
-    {{-- Breadcrumb --}}
+    {{-- Breadcrumb — refleja la jerarquía real (Designaciones > Torneo > Partido),
+         no solo "Designaciones", sin importar desde dónde se haya entrado
+         (listado del torneo, calificaciones, dashboard o el enlace del correo). --}}
     <div class="breadcrumb">
         <a href="{{ route('designaciones.index') }}">Designaciones</a>
+        <i class="fa-solid fa-chevron-right"></i>
+        <a href="{{ route('designaciones.index', ['torneo' => $partido->idTorneo]) }}">{{ $partido->torneo->nombreTorneo }}</a>
         <i class="fa-solid fa-chevron-right"></i>
         <span>Gestionar partido</span>
     </div>
