@@ -23,7 +23,7 @@ class CuentaAdminController extends Controller
 
     public function __construct(
         private readonly CuentaAdminService $cuentasAdmin,
-        private readonly LimiteService      $limites,
+        private readonly LimiteService $limites,
     ) {}
 
     public function index(): View
@@ -37,9 +37,9 @@ class CuentaAdminController extends Controller
             ->withQueryString();
 
         return view('configuracion.cuentas-admin.index', [
-            'cuentas'    => $cuentas,
-            'usadas'     => $this->limites->cuentasAdminActivas($idColegio),
-            'limite'     => $this->limites->limiteCuentasAdmin($idColegio),
+            'cuentas' => $cuentas,
+            'usadas' => $this->limites->cuentasAdminActivas($idColegio),
+            'limite' => $this->limites->limiteCuentasAdmin($idColegio),
             'porcentaje' => $this->limites->porcentajeUsoCuentasAdmin($idColegio),
         ]);
     }
@@ -51,20 +51,20 @@ class CuentaAdminController extends Controller
 
     public function store(StoreCuentaAdminRequest $request): RedirectResponse
     {
-        $datos     = $request->validated();
+        $datos = $request->validated();
         $idColegio = $this->idColegioActivo();
-        $colegio   = Auth::user()->colegio;
+        $colegio = Auth::user()->colegio;
 
         try {
             $this->cuentasAdmin->crear(
-                idColegio:                $idColegio,
-                nombreColegio:            $colegio?->nombreColegio ?? 'NovaReef',
-                urlAcceso:                config('app.url') . '/login',
-                nombre:                   $datos['nombreUsuario'],
-                username:                 $datos['usernameUsuario'],
-                email:                    $datos['emailUsuario'] ?? null,
+                idColegio: $idColegio,
+                nombreColegio: $colegio?->nombreColegio ?? 'NovaReef',
+                urlAcceso: config('app.url').'/login',
+                nombre: $datos['nombreUsuario'],
+                username: $datos['usernameUsuario'],
+                email: $datos['emailUsuario'] ?? null,
                 emailColegioNotificacion: $colegio?->emailColegio,
-                rol:                      $datos['rolUsuario'],
+                rol: $datos['rolUsuario'],
             );
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
@@ -77,15 +77,18 @@ class CuentaAdminController extends Controller
 
     public function edit(int $id): View
     {
+        $cuenta = $this->cuentaDelColegio($id);
+
         return view('configuracion.cuentas-admin.edit', [
-            'cuenta' => $this->cuentaDelColegio($id),
+            'cuenta' => $cuenta,
+            'esPropiaCuenta' => (int) $cuenta->idUsuario === (int) Auth::id(),
         ]);
     }
 
     public function update(UpdateCuentaAdminRequest $request, int $id): RedirectResponse
     {
         $cuenta = $this->cuentaDelColegio($id);
-        $datos  = $request->validated();
+        $datos = $request->validated();
 
         // Mismo principio que la auto-revocación: cambiar tu propio rol te
         // dejaría sin acceso a esta pantalla para revertirlo.
@@ -139,7 +142,7 @@ class CuentaAdminController extends Controller
     public function verificarUsername(Request $request): JsonResponse
     {
         $username = trim((string) $request->query('username'));
-        $ignorar  = (int) $request->query('ignorar', 0);
+        $ignorar = (int) $request->query('ignorar', 0);
 
         if ($username === '' || ! preg_match('/^[\pL\pM\pN_-]+$/u', $username) || mb_strlen($username) > 60) {
             return response()->json(['valido' => false, 'disponible' => false]);

@@ -12,13 +12,18 @@ use App\Models\Plan;
 use App\Models\Suscripcion;
 use App\Services\AdminAuditService;
 use App\Services\SuscripcionService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminSuscripcionController extends Controller
 {
+    /** Ventana de "vence pronto" usada en el stat-card y el filtro rápido. */
+    private const DIAS_VENCE_PRONTO = 7;
+
     public function __construct(
         private readonly SuscripcionService $suscripciones,
         private readonly AdminAuditService $auditoria,
@@ -26,11 +31,65 @@ class AdminSuscripcionController extends Controller
 
     /**
      * Listado transversal de todas las suscripciones (de todos los colegios),
-     * con filtros por estado y por plan.
+     * con filtros por colegio, estado, plan y proximidad de vencimiento.
+     * Orden por defecto: fechaVencimiento ascendente — así lo más urgente
+     * (vencidas hace más tiempo, luego lo próximo a vencer) queda arriba,
+     * en vez de un orden sin ninguna prioridad de atención.
      */
     public function index(Request $request): View
     {
-        $query = Suscripcion::with(['colegio', 'plan'])->orderByDesc('fechaVencimiento');
+        $suscripciones = $this->consultaFiltrada($request)->paginate(20)->withQueryString();
+        $planes = Plan::orderBy('orden')->get(['idPlan', 'nombre']);
+
+        return view('admin.suscripciones.index', [
+            'suscripciones' => $suscripciones,
+            'planes' => $planes,
+            'resumen' => $this->resumen(),
+            'diasVencePronto' => self::DIAS_VENCE_PRONTO,
+        ]);
+    }
+
+    /** Export CSV del listado filtrado — mismos filtros que index(), sin paginar. */
+    public function exportarCsv(Request $request): StreamedResponse
+    {
+        $suscripciones = $this->consultaFiltrada($request)->get();
+
+        $callback = function () use ($suscripciones): void {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Colegio', 'Plan', 'Estado', 'Inicio', 'Vencimiento', 'Días restantes']);
+
+            foreach ($suscripciones as $s) {
+                $dias = $s->fechaVencimiento ? today()->diffInDays($s->fechaVencimiento, false) : null;
+
+                fputcsv($out, [
+                    $s->colegio?->nombreColegio ?? '—',
+                    $s->plan?->nombre ?? 'Sin plan',
+                    ucfirst($s->estado),
+                    $s->fechaInicio?->format('d/m/Y') ?? '—',
+                    $s->fechaVencimiento?->format('d/m/Y') ?? '—',
+                    $dias === null ? '—' : $dias,
+                ]);
+            }
+
+            fclose($out);
+        };
+
+        return response()->streamDownload($callback, 'suscripciones_'.now()->format('Y-m-d').'.csv', [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
+    /**
+     * @return Builder<Suscripcion>
+     */
+    private function consultaFiltrada(Request $request)
+    {
+        $query = Suscripcion::with(['colegio', 'plan'])->orderBy('fechaVencimiento');
+
+        if ($request->filled('q')) {
+            $buscar = $request->string('q');
+            $query->whereHas('colegio', fn ($c) => $c->where('nombreColegio', 'like', "%{$buscar}%"));
+        }
 
         if ($request->filled('estado')) {
             $query->where('estado', $request->string('estado'));
@@ -40,10 +99,41 @@ class AdminSuscripcionController extends Controller
             $query->where('idPlan', $request->integer('plan'));
         }
 
-        $suscripciones = $query->paginate(20)->withQueryString();
-        $planes        = Plan::orderBy('orden')->get(['idPlan', 'nombre']);
+        if ($request->filled('vencimiento')) {
+            $dias = max(1, $request->integer('vencimiento'));
+            $query->whereIn('estado', Suscripcion::ESTADOS_VIGENTES)
+                ->whereBetween('fechaVencimiento', [today(), today()->addDays($dias)]);
+        }
 
-        return view('admin.suscripciones.index', compact('suscripciones', 'planes'));
+        return $query;
+    }
+
+    /**
+     * Contadores para los stat-cards de arriba — una sola query agregada,
+     * mismo criterio que AdminDashboardMetrics (SUM condicional en vez de
+     * N queries sueltas).
+     *
+     * @return array{activas: int, trial: int, vencidas: int, vencenPronto: int}
+     */
+    private function resumen(): array
+    {
+        $hoy = today();
+        $limit = $hoy->copy()->addDays(self::DIAS_VENCE_PRONTO);
+
+        $fila = Suscripcion::query()->selectRaw(
+            "SUM(estado = 'activa') as activas,
+             SUM(estado = 'trial') as trial,
+             SUM(estado = 'vencida') as vencidas,
+             SUM(estado IN ('activa','trial') AND fechaVencimiento BETWEEN ? AND ?) as vencenPronto",
+            [$hoy, $limit],
+        )->first();
+
+        return [
+            'activas' => (int) $fila->activas,
+            'trial' => (int) $fila->trial,
+            'vencidas' => (int) $fila->vencidas,
+            'vencenPronto' => (int) $fila->vencenPronto,
+        ];
     }
 
     public function cambiarPlan(CambiarPlanColegioRequest $request, int $idColegio): RedirectResponse
@@ -51,7 +141,7 @@ class AdminSuscripcionController extends Controller
         $validated = $request->validated();
 
         $colegio = Colegio::findOrFail($idColegio);
-        $plan    = Plan::findOrFail($validated['idPlan']);
+        $plan = Plan::findOrFail($validated['idPlan']);
 
         $this->suscripciones->cambiarPlan($colegio, $plan);
 

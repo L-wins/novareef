@@ -16,7 +16,7 @@
    selects/date pickers/popups comparten tema con el panel usuario
    vía ../vendor/overrides.css). */
 @import "./variables.css";
-@import "./navbar.css";
+@import "../shared/navbar-sidebar.css";
 @import "./layout.css";
 @import "./components.css";
 @import "./login.css";

@@ -1,78 +1,9 @@
 /*
    MAIN LAYOUT
+   El navbar superior + sidebar + .main/.app-layout viven en
+   shared/navbar-sidebar.css (compartido con el panel usuario). Acá solo
+   queda el padding propio del contenido admin sobre esa base.
     */
-
-.admin-wrapper {
-  display: flex;
-  min-height: 100vh;
-}
-
-.admin-content {
-  flex: 1;
-  margin-left: var(--sidebar-w);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/*  Top Header ─ */
-.admin-header {
-  height: var(--header-h);
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 2rem;
-  background: var(--nv-navbar-bg);
-  backdrop-filter: blur(12px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.admin-header__title {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text-bright);
-}
-
-.admin-header__right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Selector de tema (light / dark / system) */
-.theme-switch {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: 9999px;
-}
-.theme-switch__btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: var(--text);
-  font-size: 0.75rem;
-  transition: background var(--timing) var(--ease), color var(--timing) var(--ease);
-}
-.theme-switch__btn:hover {
-  color: var(--text-bright);
-  background: var(--nv-fill-2);
-}
-.theme-switch__btn.active {
-  background: var(--primary-dim);
-  color: var(--primary);
-}
-
-/*  Main Area  */
 .admin-main {
   flex: 1;
   padding: 2rem;
@@ -109,6 +40,16 @@
   background: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.2);
   color: #fcd34d;
+}
+.admin-flash--info {
+  background: rgba(79, 142, 247, 0.1);
+  border: 1px solid rgba(79, 142, 247, 0.2);
+  color: #93c5fd;
+}
+/* .admin-flash fuerza display:flex — sin esto, [hidden] pierde el empate de
+   especificidad contra la clase (ambas 0,1,0) y el flash queda visible. */
+.admin-flash[hidden] {
+  display: none;
 }
 
 /*  Page Heading ─ */
@@ -163,6 +104,7 @@
 @media (max-width: 640px)  { .admin-stats-grid { grid-template-columns: 1fr; } }
 
 .stat-card {
+  display: block;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 16px;
@@ -172,6 +114,12 @@
 .stat-card:hover {
   border-color: var(--border-hover);
   box-shadow: var(--nv-shadow-2);
+}
+/* Variante clicleable (ej. suscripciones/index): aplica el filtro
+   correspondiente. Resalta cuando ese filtro es el que está activo. */
+.stat-card--active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
 }
 
 .stat-card__head {
@@ -207,15 +155,21 @@
   color: var(--text-muted);
 }
 
-/* Accent colors */
+/* Accent colors — "svg, i": los stat-card reales usan <i> de Font Awesome,
+   no <svg>; la regla original solo cubría svg y el color del ícono nunca
+   se aplicaba (quedaba con el color de texto por defecto). */
 .stat-card.blue .stat-card__icon   { background: rgba(79,142,247,0.12); border:1px solid rgba(79,142,247,0.2); }
-.stat-card.blue .stat-card__icon svg   { color: var(--primary); }
+.stat-card.blue .stat-card__icon svg, .stat-card.blue .stat-card__icon i   { color: var(--primary); }
 .stat-card.green .stat-card__icon  { background: rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.2); }
-.stat-card.green .stat-card__icon svg  { color: var(--success); }
+.stat-card.green .stat-card__icon svg, .stat-card.green .stat-card__icon i  { color: var(--success); }
 .stat-card.amber .stat-card__icon  { background: rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.2); }
-.stat-card.amber .stat-card__icon svg  { color: var(--warning); }
+.stat-card.amber .stat-card__icon svg, .stat-card.amber .stat-card__icon i  { color: var(--warning); }
 .stat-card.purple .stat-card__icon { background: rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.2); }
-.stat-card.purple .stat-card__icon svg { color: #8b5cf6; }
+.stat-card.purple .stat-card__icon svg, .stat-card.purple .stat-card__icon i { color: #8b5cf6; }
+.stat-card.orange .stat-card__icon { background: rgba(249,115,22,0.12); border:1px solid rgba(249,115,22,0.2); }
+.stat-card.orange .stat-card__icon svg, .stat-card.orange .stat-card__icon i { color: #f97316; }
+.stat-card.red .stat-card__icon    { background: rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.2); }
+.stat-card.red .stat-card__icon svg, .stat-card.red .stat-card__icon i    { color: var(--danger); }
 
 /*  Placeholder  */
 .admin-placeholder {
@@ -235,4 +189,5 @@
 :root[data-theme="light"] .admin-flash--success { color: #15803d; }
 :root[data-theme="light"] .admin-flash--danger  { color: #dc2626; }
 :root[data-theme="light"] .admin-flash--warning { color: #b45309; }
+:root[data-theme="light"] .admin-flash--info    { color: #1d4ed8; }
 :root[data-theme="light"] .stat-card.purple .stat-card__icon svg { color: #7c3aed; }

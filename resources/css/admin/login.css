@@ -8,11 +8,13 @@
   animation: adminFadeIn 0.4s var(--ease);
 }
 
-/* Left branding panel — dark por diseño (pre-autenticación, sin preferencia
-   de tema conocida), por eso mantiene hex propios en vez de tokens. */
+/* Split light/dark deliberado (pre-autenticación, sin preferencia de tema
+   conocida): el panel de texto es claro, el de credenciales es oscuro — por
+   eso ambos mantienen hex propios en vez de tokens, que seguirían el tema
+   del sistema. Mismo criterio en auth/login.blade.php (login de usuario). */
 .admin-login__brand {
   flex: 1;
-  background: linear-gradient(145deg, #0a0e18 0%, #1a1f2e 60%, #0f1117 100%);
+  background: linear-gradient(145deg, #ffffff 0%, #f4f7fb 60%, #eef2f7 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -28,8 +30,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(79,142,247,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(79,142,247,0.05) 1px, transparent 1px);
+    linear-gradient(rgba(15,23,42,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,23,42,0.04) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
@@ -42,7 +44,7 @@
   transform: translate(-50%, -50%);
   width: 700px;
   height: 700px;
-  background: radial-gradient(circle, rgba(79,142,247,0.07) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(79,142,247,0.10) 0%, transparent 65%);
   pointer-events: none;
 }
 
@@ -66,18 +68,41 @@
 }
 .admin-login__logo-wrap svg { width: 38px; height: 38px; color: #fff; }
 .admin-login__logo-wrap i  { font-size: 34px; color: #fff; }
+.admin-login__logo-wrap img { width: 100%; height: 100%; object-fit: contain; border-radius: 22px; }
 
 .admin-login__brand-name {
   font-size: 2.75rem;
   font-weight: 900;
-  color: var(--text-bright);
   letter-spacing: -1.5px;
   margin: 0 0 0.5rem;
+}
+.admin-login__brand-name--nova { color: #2563eb; }
+.admin-login__brand-name--reef { color: #0f172a; }
+
+/* Logo compacto — solo visible en móvil (≤1024px), ver media query abajo */
+.admin-login__mobile-logo {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 2rem;
+}
+.admin-login__mobile-logo img {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+.admin-login__mobile-logo span {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: -0.4px;
 }
 
 .admin-login__tagline {
   font-size: 1rem;
-  color: var(--text);
+  color: #64748b;
   line-height: 1.7;
   margin: 0 0 2.5rem;
 }
@@ -94,24 +119,24 @@
   align-items: center;
   gap: 12px;
   font-size: 0.875rem;
-  color: var(--text);
+  color: #475569;
 }
 
 .admin-login__feature-ic {
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background: var(--primary-dim);
-  border: 1px solid rgba(79,142,247,0.2);
+  background: rgba(79,142,247,0.10);
+  border: 1px solid rgba(79,142,247,0.20);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.admin-login__feature-ic svg { width: 14px; height: 14px; color: var(--primary); }
-.admin-login__feature-ic i  { font-size: 13px; color: var(--primary); }
+.admin-login__feature-ic svg { width: 14px; height: 14px; color: #3b82f6; }
+.admin-login__feature-ic i  { font-size: 13px; color: #3b82f6; }
 
-/* Right form panel */
+/* Right form panel — oscuro siempre, ver nota arriba. */
 .admin-login__panel {
   width: 460px;
   display: flex;
@@ -119,8 +144,8 @@
   align-items: center;
   justify-content: center;
   padding: 3rem;
-  background: var(--bg-body);
-  border-left: 1px solid var(--border-color);
+  background: linear-gradient(180deg, #0b0f18 0%, #10131c 100%);
+  border-left: 1px solid rgba(255,255,255,0.06);
 }
 
 .admin-login__form {
@@ -131,13 +156,13 @@
 .admin-login__form-title {
   font-size: 1.5rem;
   font-weight: 800;
-  color: var(--text-bright);
+  color: #f8fafc;
   margin: 0 0 6px;
   letter-spacing: -0.5px;
 }
 .admin-login__form-sub {
   font-size: 0.875rem;
-  color: var(--text);
+  color: #94a3b8;
   margin: 0 0 2rem;
 }
 
@@ -247,11 +272,18 @@
   color: var(--text);
 }
 
-@media (max-width: 860px) {
-  .admin-login { flex-direction: column; }
-  .admin-login__brand { flex:none; padding:2rem; min-height:220px; }
-  .admin-login__features { display: none; }
-  .admin-login__panel { width:100%; border-left:none; border-top:1px solid var(--border-color); }
+/* Debajo de 1024px (mismo corte que "lg" en el login de usuario) se oculta
+   por completo el panel de texto — queda solo el formulario, igual que el
+   login de usuario en móvil. */
+@media (max-width: 1024px) {
+  .admin-login__brand { display: none; }
+  .admin-login__panel { width: 100%; border-left: none; padding: 2.5rem 2rem; }
+  .admin-login__mobile-logo { display: flex; }
+}
+
+@media (max-width: 480px) {
+  .admin-login__panel { padding: 2rem 1.25rem; }
+  .admin-login__form-title { font-size: 1.3rem; }
 }
 
 /*
@@ -339,6 +371,7 @@
   display: flex; align-items: center; justify-content: center;
 }
 .admin-2fa-logo__icon svg { width: 16px; height: 16px; color: #fff; }
+.admin-2fa-logo__icon img { width: 100%; height: 100%; object-fit: contain; border-radius: 9px; }
 .admin-2fa-logo__name { font-size: 1.0625rem; font-weight: 800; color: var(--text-bright); }
 
 .admin-2fa-shield {

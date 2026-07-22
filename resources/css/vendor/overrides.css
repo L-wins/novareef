@@ -17,6 +17,20 @@
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
 }
+/*
+   swal2 le agrega swal2-backdrop-show al container incluso en modo toast
+   (addClasses() en su propio JS no distingue toast) — y ese container en
+   modo toast mide 360px de ancho por 100% de alto (regla propia de swal2,
+   body.swal2-toast-shown .swal2-container), así que el blur/oscurecido de
+   arriba se veía como una franja vertical borrosa detrás del toast entero,
+   no contenida a la tarjeta. El toast no debe llevar backdrop — es lo que
+   lo hace no bloqueante.
+    */
+body.swal2-toast-shown .swal2-container.swal2-backdrop-show {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
 
 .nova-swal {
     background: var(--nv-elevated) !important;
@@ -59,6 +73,119 @@
 .nova-swal .swal2-timer-progress-bar {
     background: rgba(79, 142, 247, 0.55) !important;
 }
+
+/*
+   Toast de confirmación (novaAlert.success) — estilo notificación de iOS.
+   Dos bugs reales en el primer intento, corregidos acá:
+   1) El fondo era demasiado transparente — el contenido de atrás (el reloj
+      del header fijo) se leía a través del blur y ensuciaba la notificación.
+      Los materiales "vibrancy" de Apple son translúcidos pero NUNCA dejan
+      leer texto de fondo: se sube la opacidad base, el blur queda como
+      textura, no como ventana.
+   2) swal2 la posicionaba encima del header fijo (mismo z-index que el
+      contenido, sin separación) — se empuja el contenedor por debajo de la
+      navbar/header (64px en los dos paneles) para que nunca se solapen.
+    */
+.swal2-container.swal2-top { padding-top: 84px !important; }
+
+.nova-swal-toast.swal2-popup {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    width: min(94vw, 380px) !important;
+    background: rgba(30, 30, 32, 0.92) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 16px 32px -10px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    padding: 0.8rem 1rem !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font) !important;
+}
+:root[data-theme="light"] .nova-swal-toast.swal2-popup {
+    background: rgba(255, 255, 255, 0.92) !important;
+    border-color: rgba(15, 23, 42, 0.07) !important;
+    box-shadow: 0 16px 32px -10px rgba(15, 23, 42, 0.2), 0 2px 6px rgba(15, 23, 42, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+.nova-swal-toast .swal2-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+    border-radius: 50% !important;
+    border: none !important;
+    background: #30d158 !important;
+    box-shadow: 0 0 0 1px rgba(48, 209, 88, 0.4), 0 3px 10px -1px rgba(48, 209, 88, 0.65) !important;
+}
+:root[data-theme="light"] .nova-swal-toast .swal2-icon {
+    background: #248a3d !important;
+    box-shadow: 0 0 0 1px rgba(36, 138, 61, 0.35), 0 3px 10px -1px rgba(36, 138, 61, 0.4) !important;
+}
+.nova-swal-toast .swal2-icon-content { display: contents !important; }
+.nova-swal-toast .swal2-icon svg {
+    width: 15px !important;
+    height: 15px !important;
+    color: #fff !important;
+}
+
+.nova-swal-toast .swal2-title {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    overflow: hidden !important;
+    color: #f5f5f7 !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    text-align: left !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+:root[data-theme="light"] .nova-swal-toast .swal2-title { color: #1c1c1e !important; }
+.nova-swal-toast .swal2-title::before {
+    content: "NovaReef";
+    display: block;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #30d158;
+    margin-bottom: 2px;
+}
+:root[data-theme="light"] .nova-swal-toast .swal2-title::before { color: #248a3d !important; }
+
+.nova-swal-toast .swal2-timer-progress-bar-container { display: none !important; }
+
+@media (max-width: 480px) {
+    .swal2-container.swal2-top { padding-top: 72px !important; }
+    .nova-swal-toast.swal2-popup {
+        width: calc(100vw - 20px) !important;
+        padding: 0.7rem 0.9rem !important;
+        border-radius: 16px !important;
+        gap: 0.6rem !important;
+    }
+    .nova-swal-toast .swal2-icon { width: 24px !important; height: 24px !important; min-width: 24px !important; }
+    .nova-swal-toast .swal2-title { font-size: 0.82rem !important; }
+}
+
+@keyframes novaToastIn {
+    from { opacity: 0; transform: translateY(-32px) scale(0.92); }
+    60%  { opacity: 1; transform: translateY(3px) scale(1.01); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes novaToastOut {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(-20px) scale(0.95); }
+}
+.nova-toast-in  { animation: novaToastIn .48s cubic-bezier(.34,1.56,.64,1) both !important; }
+.nova-toast-out { animation: novaToastOut .2s ease-in both !important; }
 
 /*
    Flatpickr — tema NovaReef

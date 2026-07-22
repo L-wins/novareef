@@ -2,6 +2,7 @@
 
 import { initAutoFilter } from '../shared/auto-filter.js';
 import { initTheme } from '../shared/theme.js';
+import { initReloj } from '../shared/reloj.js';
 import { initNovaSelects } from '../shared/nova-selects.js';
 import { Swal, novaAlert, initConfirmSubmit } from '../shared/nova-alert.js';
 
@@ -14,8 +15,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initAutoFilter();
     initTheme();
+    initReloj();
     initNovaSelects();
     initConfirmSubmit();
+
+    // Sombra en el navbar al hacer scroll — mismo comportamiento que app.js
+    var nav = document.getElementById('navbar');
+    if (nav) {
+        window.addEventListener('scroll', function () {
+            nav.classList.toggle('scrolled', window.scrollY > 10);
+        }, { passive: true });
+    }
 
     //  Dropdowns simples (ej. cambiar estado en colegios/show)
     document.querySelectorAll('[data-dropdown]').forEach(function (dd) {
@@ -44,6 +54,24 @@ document.addEventListener('DOMContentLoaded', function () {
             if (radio) radio.checked = true;
         });
     });
+
+    //  Prueba gratuita (colegios/create): oculta la grilla de planes — no
+    //  hay plan comercial que elegir mientras el colegio esté en trial.
+    var trialToggle = document.querySelector('[data-trial-toggle]');
+    var planSelector = document.querySelector('[data-plan-selector]');
+    var trialSummary = document.querySelector('[data-trial-summary]');
+    if (trialToggle && planSelector) {
+        var syncTrialUI = function () {
+            var enTrial = trialToggle.checked;
+            planSelector.hidden = enTrial;
+            if (trialSummary) trialSummary.hidden = !enTrial;
+            planSelector.querySelectorAll('input[type="radio"]').forEach(function (radio) {
+                radio.disabled = enTrial;
+            });
+        };
+        trialToggle.addEventListener('change', syncTrialUI);
+        syncTrialUI();
+    }
 
     //  OTP Inputs
     const digits  = document.querySelectorAll('.otp-digit');

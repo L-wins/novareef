@@ -22,21 +22,8 @@
             text-align: center;
             padding: 32px 0 24px;
         }
-        .logo-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 48px;
-            height: 48px;
-            background-color: #10b981;
-            border-radius: 12px;
-            margin-bottom: 12px;
-        }
-        .logo-name {
-            font-size: 22px;
-            font-weight: 700;
-            color: #0f172a;
-            letter-spacing: -0.5px;
+        .logo-img {
+            height: 40px;
         }
         .card {
             background: #ffffff;
@@ -86,7 +73,7 @@
             display: block;
             margin: 28px 0;
             padding: 14px 24px;
-            background-color: #10b981;
+            background-color: #4f8ef7;
             color: #ffffff !important;
             text-align: center;
             text-decoration: none;
@@ -118,6 +105,30 @@
         .alert-text strong {
             color: #78350f;
         }
+        .tip {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-top: 14px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .tip-icon {
+            font-size: 16px;
+            line-height: 1;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .tip-text {
+            font-size: 13px;
+            color: #1e40af;
+            line-height: 1.5;
+        }
+        .tip-text strong {
+            color: #1e3a8a;
+        }
         .divider {
             border: none;
             border-top: 1px solid #e2e8f0;
@@ -139,15 +150,7 @@
 
         {{-- Logo --}}
         <div class="header">
-            <div class="logo-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                     stroke="#ffffff" stroke-width="2" width="26" height="26">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                    <path d="M2 12h20"/>
-                </svg>
-            </div>
-            <div class="logo-name">NovaReef</div>
+            <img src="{{ asset('images/logo/novareef-logo-light.png') }}" alt="NovaReef" class="logo-img">
         </div>
 
         {{-- Card --}}
@@ -164,7 +167,7 @@
             <div class="credential-row">
                 <p class="section-label">URL de acceso</p>
                 <p class="credential-value">
-                    <a href="{{ $urlAcceso }}" style="color:#10b981;text-decoration:none;">
+                    <a href="{{ $urlAcceso }}" style="color:#4f8ef7;text-decoration:none;">
                         {{ $urlAcceso }}
                     </a>
                 </p>
@@ -193,6 +196,18 @@
                 </div>
             </div>
 
+            @unless($usernameUsuario)
+            {{-- Tip --}}
+            <div class="tip">
+                <span class="tip-icon">💡</span>
+                <div class="tip-text">
+                    <strong>¿Prefieres entrar con un usuario en vez del correo?</strong>
+                    Puedes configurarlo cuando quieras desde
+                    <strong>Configuración → Cuentas Admin</strong> dentro del panel.
+                </div>
+            </div>
+            @endunless
+
         </div>
 
         {{-- Footer --}}
@@ -201,7 +216,7 @@
             <strong>NovaReef</strong> — Sistema de Gestión de Árbitros<br>
             Este correo fue generado automáticamente. Por favor no respondas a este mensaje.<br>
             Si tienes dudas, escríbenos a
-            <a href="mailto:soporte@novareef.com" style="color:#10b981;">soporte@novareef.com</a>
+            <a href="mailto:soporte@novareef.com" style="color:#4f8ef7;">soporte@novareef.com</a>
         </div>
 
     </div>

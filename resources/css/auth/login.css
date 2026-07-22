@@ -157,8 +157,10 @@ body {
     transform: scale(0.99);
 }
 
-/* 
-   Detalles premium — silbato decorativo, líneas
+/*
+   Detalles premium — silbato decorativo, líneas.
+   Solo se usan en el panel izquierdo (claro) del login de usuario, por eso
+   son tonos oscuros sobre transparente, no blancos.
     */
 .login-stripes {
     position: absolute;
@@ -167,8 +169,8 @@ body {
         90deg,
         transparent 0,
         transparent 100px,
-        rgba(255, 255, 255, 0.010) 100px,
-        rgba(255, 255, 255, 0.010) 140px
+        rgba(15, 23, 42, 0.02) 100px,
+        rgba(15, 23, 42, 0.02) 140px
     );
     pointer-events: none;
 }
@@ -194,29 +196,8 @@ body {
 .login-fade-3 { animation-delay: 0.25s; }
 .login-fade-4 { animation-delay: 0.35s; }
 
-/* Card del login con sombras premium */
-#login-card {
-    box-shadow:
-        0 30px 60px -15px rgba(0, 0, 0, 0.55),
-        0 0 0 1px rgba(255, 255, 255, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-#login-card[data-has-error="true"] {
-    border-color: rgba(239, 68, 68, 0.25);
-}
-
-/* Pequeñas tarjetas decorativas */
-.deco-ref-card {
-    width: 32px;
-    height: 44px;
-    border-radius: 3px;
-    box-shadow: 0 6px 14px -4px rgba(0, 0, 0, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-.deco-ref-card--yellow { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
-.deco-ref-card--red    { background: linear-gradient(135deg, #ef4444, #dc2626); }
+/* #login-card ya no es una tarjeta visual (mismo formato "plano" que el
+   login admin) — el id se mantiene solo como gancho de initShakeOnError(). */
 
 .btn-login:disabled {
     opacity: 0.65;

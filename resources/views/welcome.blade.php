@@ -8,9 +8,8 @@
     @include('welcome.trust-bar')
     @include('welcome.que-es')
     @include('welcome.modulos')
-    @include('welcome.planes')
     @include('welcome.para-quien')
-    @include('welcome.como-funciona')
+    @include('welcome.planes')
     @include('welcome.cta-final')
     @include('welcome.footer')
 

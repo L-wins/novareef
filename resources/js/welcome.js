@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initScrollReveal();
     initHeroParallax();
     initTiltCards();
+    initModulosMarquee();
 });
 
 /**
@@ -129,6 +130,24 @@ function initTiltCards() {
 
         card.addEventListener('mouseleave', () => {
             card.style.transform = '';
+        });
+    });
+}
+
+/**
+ * Cinta de módulos: el CSS ya la pausa con :hover (ver .modulos-marquee__track).
+ * Acá solo se maneja el clic para desplegar la descripción — un módulo abierto
+ * a la vez, y cada tarjeta se cierra sola al hacer clic de nuevo.
+ */
+function initModulosMarquee() {
+    const track = document.querySelector('[data-modulos-track]');
+    if (!track) return;
+
+    track.querySelectorAll('[data-modulos-card]').forEach(card => {
+        card.addEventListener('click', () => {
+            const yaAbierta = card.classList.contains('is-open');
+            track.querySelectorAll('.is-open').forEach(abierta => abierta.classList.remove('is-open'));
+            if (!yaAbierta) card.classList.add('is-open');
         });
     });
 }

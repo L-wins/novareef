@@ -22,21 +22,9 @@
             text-align: center;
             padding: 32px 0 24px;
         }
-        .logo-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 48px;
-            height: 48px;
-            background-color: #10b981;
-            border-radius: 12px;
-            margin-bottom: 12px;
-        }
-        .logo-name {
-            font-size: 22px;
-            font-weight: 700;
-            color: #0f172a;
-            letter-spacing: -0.5px;
+        .logo-img {
+            height: 40px;
+            margin-bottom: 4px;
         }
         .card {
             background: #ffffff;
@@ -123,15 +111,7 @@
 
         {{-- Logo --}}
         <div class="header">
-            <div class="logo-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                     stroke="#ffffff" stroke-width="2" width="26" height="26">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                    <path d="M2 12h20"/>
-                </svg>
-            </div>
-            <div class="logo-name">NovaReef</div>
+            <img src="{{ asset('images/logo/novareef-logo-light.png') }}" alt="NovaReef" class="logo-img">
         </div>
 
         {{-- Card --}}

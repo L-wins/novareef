@@ -16,10 +16,16 @@ class ExigirAceptacionPolitica
 
     public function handle(Request $request, Closure $next): Response
     {
+        // password.change* exento: si además debe cambiar la contraseña, dejamos que
+        // termine ese paso primero — de lo contrario esta ruta y VerificarCambioContrasena
+        // se rebotan una a la otra en un loop infinito de redirects.
         if (
             Auth::guard('web')->check()
             && $this->politica->debeAceptarGeneral(Auth::user())
-            && ! $request->routeIs('privacidad.politica', 'privacidad.aceptar', 'privacidad.aceptar.guardar', 'logout')
+            && ! $request->routeIs(
+                'privacidad.politica', 'privacidad.aceptar', 'privacidad.aceptar.guardar', 'logout',
+                'password.change', 'password.change.update',
+            )
         ) {
             return redirect()->route('privacidad.aceptar');
         }

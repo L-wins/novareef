@@ -1,0 +1,403 @@
+/* ════════════════════════════════════════════════════════════════
+   Navbar superior + sidebar de navegación — COMPARTIDO entre el panel
+   usuario (app.css) y el panel admin/superadmin (admin/admin.css), mismo
+   criterio que vendor/overrides.css: un solo componente visual, un solo
+   lugar donde mantenerlo. Antes el panel admin tenía su propia versión
+   (sidebar vertical con logo+menú+usuario, sin reloj, sin navbar superior)
+   completamente desactualizada frente a la del panel usuario — se
+   reemplazó por esta, adaptada en contenido (branding NovaReef fijo en vez
+   de logo de colegio, insignia 2FA) pero idéntica en estructura y trato.
+
+   Usa tokens --nv-* directamente (no los alias legacy de cada panel,
+   --text-primary/--primary/etc.) para no depender de qué bundle la
+   importe. Se adapta sola a claro/oscuro vía tokens.css.
+   ════════════════════════════════════════════════════════════════ */
+
+:root {
+    --navbar-h: 64px;
+    --ease:     cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/*
+   Navbar superior
+    */
+.navbar {
+    position: fixed;
+    top: var(--banner-h, 0px);
+    left: 0;
+    right: 0;
+    height: var(--navbar-h);
+    background: var(--nv-navbar-bg);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--nv-border);
+    z-index: 100;
+    transition: box-shadow 0.3s var(--ease), border-color 0.3s var(--ease);
+}
+.navbar.scrolled {
+    box-shadow: 0 4px 28px rgba(0, 0, 0, 0.45);
+    border-bottom-color: var(--nv-fill-2);
+}
+/* Grid de 3 columnas (no flex): así el reloj central reserva su propio
+   espacio en vez de flotar encima del brand o las acciones cuando el
+   nombre del colegio/panel es largo — con space-between de dos elementos
+   no hay forma de insertar un tercero realmente centrado sin ese riesgo. */
+.nav-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+}
+
+/* Marca */
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-self: start;
+    min-width: 0;
+}
+.brand-icon {
+    width: 34px;
+    height: 34px;
+    background: var(--nv-accent);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 14px var(--nv-accent-glow);
+    flex-shrink: 0;
+}
+.brand-icon i { color: #fff; font-size: 16px; }
+
+/* Variante con logo (de colegio o de NovaReef): sin fondo de acento, imagen completa */
+.brand-icon--logo {
+    background: transparent;
+    box-shadow: none;
+    overflow: hidden;
+}
+.brand-icon--logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 7px;
+}
+
+/* Logo NovaReef (fallback sin logo propio) — dos variantes, se alterna
+   por tema en vez de con JS, mismo criterio que el resto del theming. */
+.brand-icon__novareef--light { display: none; }
+
+.brand-name {
+    font-size: 1.0625rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--nv-text);
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.brand-sep {
+    width: 1px;
+    height: 18px;
+    background: var(--nv-border-2);
+}
+.brand-section {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--nv-text-3);
+}
+@media (max-width: 479px) {
+    .brand-sep, .brand-section { display: none; }
+}
+
+/* Acciones del navbar */
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-self: end;
+}
+
+/* Reloj en vivo — columna central del navbar (fecha + hora, tick cada
+   segundo vía shared/reloj.js). Pill propio para que se sienta parte del
+   mismo lenguaje visual que .user-chip/.theme-switch, no texto suelto. */
+.nav-reloj {
+    display: flex;
+    align-items: center;
+    justify-self: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: var(--nv-fill);
+    border: 1px solid var(--nv-border);
+    border-radius: 9999px;
+    white-space: nowrap;
+}
+.nav-reloj__icon {
+    font-size: 12px;
+    color: var(--nv-text-3);
+}
+.nav-reloj__fecha {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--nv-text-3);
+    text-transform: capitalize;
+}
+.nav-reloj__hora {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--nv-text);
+    font-variant-numeric: tabular-nums; /* evita que el ancho salte al cambiar dígitos */
+}
+/* En pantallas medianas el brand + acciones ya ocupan casi todo el ancho
+   disponible — se prioriza no apretarlos antes que mantener el reloj. */
+@media (max-width: 900px) { .nav-reloj { display: none; } }
+
+/* Insignia 2FA — específica del panel admin, no tiene equivalente en el
+   panel usuario. Vive en .nav-actions junto al resto, no en el reloj/brand. */
+.badge--2fa-on,
+.badge--2fa-off {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.badge--2fa-on {
+    background: var(--nv-success-bg);
+    color: var(--nv-success);
+    border: 1px solid var(--nv-success-bg);
+}
+.badge--2fa-off {
+    background: var(--nv-warning-bg);
+    color: var(--nv-warning);
+    border: 1px solid var(--nv-warning-bg);
+    transition: filter 0.16s var(--ease);
+}
+.badge--2fa-off:hover { filter: brightness(1.15); }
+@media (max-width: 640px) {
+    .badge--2fa-on span, .badge--2fa-off span { display: none; }
+}
+
+.user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px 4px 4px;
+    background: var(--nv-fill);
+    border: 1px solid var(--nv-border);
+    border-radius: 9999px;
+}
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--nv-accent) 0%, var(--nv-accent-strong) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6875rem;
+    font-weight: 800;
+    color: #fff;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+.user-name {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--nv-text-2);
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+@media (max-width: 479px) { .user-name { display: none; } }
+
+/* Selector de tema (light / dark / system) */
+.theme-switch {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    background: var(--nv-fill);
+    border: 1px solid var(--nv-border);
+    border-radius: 9999px;
+}
+.theme-switch__btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--nv-text-3);
+    font-size: 0.75rem;
+    transition: background 0.16s var(--ease), color 0.16s var(--ease);
+}
+.theme-switch__btn:hover {
+    color: var(--nv-text);
+    background: var(--nv-fill-2);
+}
+.theme-switch__btn.active {
+    background: var(--nv-accent-bg);
+    color: var(--nv-accent);
+}
+
+/* Botón cerrar sesión */
+.btn-logout {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    background: var(--nv-danger-bg);
+    border: 1px solid var(--nv-danger-border);
+    border-radius: 10px;
+    color: #f87171;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    transition:
+        background 0.18s var(--ease),
+        border-color 0.18s var(--ease),
+        color 0.18s var(--ease);
+}
+.btn-logout:hover {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.28);
+    color: #fca5a5;
+}
+.btn-logout-text {
+    display: none;
+}
+@media (min-width: 640px) { .btn-logout-text { display: block; } }
+
+/*
+   Layout general + sidebar
+    */
+.app-layout {
+    display: flex;
+    padding-top: calc(var(--navbar-h) + var(--banner-h, 0px));
+    min-height: 100vh;
+}
+
+.sidebar {
+    --sidebar-w: 60px;
+    --sidebar-w-open: 220px;
+    /* El box mide SIEMPRE el ancho expandido — nunca cambia de tamaño. Lo
+       que se anima al hacer hover es cuánto se ve (clip-path), no su
+       "width" real: "width" dispara layout (reflow) en cada frame sin
+       excepción, sea cual sea el "contain" usado — es una limitación de
+       los motores de layout, no algo optimizable desde CSS. clip-path con
+       una forma simple (inset) no dispara layout, solo recorta lo ya
+       pintado: es la única garantía real de cero reflow. Fixed (no
+       sticky/flex-sibling): al estar fuera del flujo normal, esto no
+       reflowa ".main" tampoco (".main" reserva el ancho colapsado con un
+       margin-left fijo que no se anima, ver más abajo). */
+    width: var(--sidebar-w-open);
+    background: var(--nv-surface);
+    border-right: 1px solid var(--nv-border);
+    padding: 16px 0;
+    position: fixed;
+    left: 0;
+    top: calc(var(--navbar-h) + var(--banner-h, 0px));
+    height: calc(100vh - var(--navbar-h) - var(--banner-h, 0px));
+    clip-path: inset(0 calc(var(--sidebar-w-open) - var(--sidebar-w)) 0 0);
+    transition: clip-path 0.22s var(--ease);
+    /* 50, no 10: al ser fixed y flotar sobre .main al expandirse, tiene
+       que ganarle a cualquier z-index normal de página (badges, sticky
+       date-dividers) para que el contenido no se pinte encima del menú.
+       Se deja por debajo del navbar superior y los dropdowns/tooltips de
+       contenido (100) y de los modales (1000). */
+    z-index: 50;
+}
+.sidebar:hover { clip-path: inset(0 0 0 0); }
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 8px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: var(--nv-text-2);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    text-decoration: none;
+    min-height: 42px;
+    transition: background 0.16s var(--ease), color 0.16s var(--ease);
+}
+.sidebar-link:hover {
+    background: var(--nv-card);
+    color: var(--nv-text);
+}
+.sidebar-link.active {
+    background: var(--nv-accent-bg);
+    color: var(--nv-accent-2);
+}
+.sidebar-link svg,
+.sidebar-link i {
+    width: 18px;
+    height: 18px;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.sidebar-link span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.18s var(--ease), transform 0.18s var(--ease);
+    pointer-events: none;
+}
+.sidebar:hover .sidebar-link span {
+    opacity: 1;
+    transform: none;
+}
+
+.sidebar-divider {
+    height: 1px;
+    background: var(--nv-border);
+    margin: 8px 12px;
+}
+
+.sidebar-link--sub {
+    padding-left: 20px;
+    font-size: 0.82rem;
+    color: var(--nv-text-3);
+    min-height: 36px;
+}
+.sidebar:hover .sidebar-link--sub { padding-left: 28px; }
+
+/*
+   Contenido principal
+    */
+.main {
+    flex: 1;
+    margin-left: 60px; /* debe igualar --sidebar-w (colapsado) de .sidebar arriba */
+    min-width: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Tema claro — los pasteles pensados para fondo oscuro (dark)
+   pierden contraste sobre fondo blanco; se oscurecen aquí.
+   ═══════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] .btn-logout       { color: #dc2626; }
+:root[data-theme="light"] .btn-logout:hover { color: #b91c1c; }
+:root[data-theme="light"] .brand-icon__novareef--dark  { display: none; }
+:root[data-theme="light"] .brand-icon__novareef--light { display: block; }

@@ -80,3 +80,25 @@
 @media (max-width: 640px) {
     .cfg-perfil-grid { grid-template-columns: 1fr; }
 }
+
+/*
+   Nota informativa bajo un campo bloqueado (ej. "no puedes cambiar tu
+   propio rol" en cuentas-admin/edit) — mismo patrón que .admin-form-hint
+   del panel admin, adaptado a los tokens del panel usuario.
+    */
+.form-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    margin-top: 0.5rem;
+    padding: 10px 13px;
+    font-size: 0.78rem;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--c-text-secondary);
+    background: var(--c-bg-hover, rgba(255,255,255,.04));
+    border: 1px solid var(--c-border);
+    border-radius: var(--c-radius-sm, 8px);
+}
+.form-hint i,
+.form-hint svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px; color: var(--c-text-secondary); }

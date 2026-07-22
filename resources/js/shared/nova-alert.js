@@ -12,13 +12,26 @@ import Swal from 'sweetalert2';
 export { Swal };
 
 export const novaAlert = {
+    /*
+       Toast no bloqueante — solo confirma que algo se guardó/completó, no
+       exige atención del usuario. Los que sí (error, confirm) se quedan
+       como modal grande centrado.
+        */
     success: (mensaje) => Swal.fire({
+        toast: true,
+        position: 'top',
         icon: 'success',
+        // El checkmark animado por defecto de swal2 está calibrado en px
+        // fijos para su tamaño original (5em) — al forzarlo a un ícono
+        // chico (28px) el trazo queda desalineado. Un SVG propio escala
+        // limpio a cualquier tamaño sin arrastrar ese cálculo interno.
+        iconHtml: '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/></svg>',
         title: mensaje,
         timer: 3000,
-        timerProgressBar: true,
         showConfirmButton: false,
-        customClass: { popup: 'nova-swal' },
+        customClass: { popup: 'nova-swal-toast' },
+        showClass: { popup: 'nova-toast-in' },
+        hideClass: { popup: 'nova-toast-out' },
     }),
 
     error: (mensaje) => Swal.fire({

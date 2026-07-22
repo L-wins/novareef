@@ -18,6 +18,9 @@ final class ColegioService
     /** Categorías que se crean automáticamente en todo colegio nuevo. */
     private const CATEGORIAS_DEFAULT = ['FIFA', 'A', 'A-FEM', 'B', 'C'];
 
+    /** Duración de la prueba gratuita opcional al crear un colegio. */
+    public const DIAS_PRUEBA_GRATUITA = 7;
+
     /**
      * Estados válidos del ciclo de vida de un colegio — coincide exactamente
      * con el ENUM de la columna `colegios.estadoColegio` en BD. No agregar un
@@ -27,7 +30,7 @@ final class ColegioService
 
     /** Etiqueta legible por estado, usada en mensajes flash tras un cambio. */
     private const ESTADO_LABELS = [
-        'activo'     => 'activado',
+        'activo' => 'activado',
         'suspendido' => 'suspendido',
     ];
 
@@ -42,8 +45,13 @@ final class ColegioService
      * El correo de credenciales se despacha vía DB::afterCommit() dentro de
      * ArbitroService::registrarConCredenciales(), por lo que nunca se envía en rollback.
      *
-     * @throws \InvalidArgumentException  Si el plan o el rol no existen.
-     * @throws \RuntimeException          Si el email del admin ya está en uso.
+     * $idPlan es obligatorio salvo en prueba gratuita: ahí el colegio no
+     * elige un plan comercial — se le asigna automáticamente el de mayor
+     * jerarquía (todos los módulos, límites ilimitados) para que pueda
+     * evaluar la plataforma completa durante los DIAS_PRUEBA_GRATUITA.
+     *
+     * @throws \InvalidArgumentException Si el plan o el rol no existen.
+     * @throws \RuntimeException Si el email del admin ya está en uso.
      */
     public function registrar(
         string $nombreColegio,
@@ -55,52 +63,59 @@ final class ColegioService
         ?string $departamentoColegio,
         string $paisColegio,
         ?string $logoColegio,
-        int    $idPlan,
+        ?int $idPlan,
         string $nombreAdmin,
         string $emailAdmin,
+        bool $iniciarComoTrial = false,
     ): Colegio {
         return DB::transaction(function () use (
             $nombreColegio, $codigoColegio, $emailColegio,
             $telefonoColegio, $direccionColegio, $ciudadColegio,
             $departamentoColegio, $paisColegio, $logoColegio,
-            $idPlan, $nombreAdmin, $emailAdmin,
+            $idPlan, $nombreAdmin, $emailAdmin, $iniciarComoTrial,
         ): Colegio {
-            $plan     = Plan::findOrFail($idPlan);
+            $plan = $iniciarComoTrial && $idPlan === null
+                ? $this->planParaPrueba()
+                : Plan::findOrFail($idPlan);
+
             $tenantId = $this->buildTenantId($codigoColegio);
 
             DB::table('tenants')->insertOrIgnore([
-                'id'         => $tenantId,
+                'id' => $tenantId,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
             $colegio = Colegio::create([
-                'tenantId'            => $tenantId,
-                'nombreColegio'       => $nombreColegio,
-                'codigoColegio'       => $codigoColegio,
-                'emailColegio'        => $emailColegio,
-                'telefonoColegio'     => $telefonoColegio,
-                'direccionColegio'    => $direccionColegio,
-                'ciudadColegio'       => $ciudadColegio,
+                'tenantId' => $tenantId,
+                'nombreColegio' => $nombreColegio,
+                'codigoColegio' => $codigoColegio,
+                'emailColegio' => $emailColegio,
+                'telefonoColegio' => $telefonoColegio,
+                'direccionColegio' => $direccionColegio,
+                'ciudadColegio' => $ciudadColegio,
                 'departamentoColegio' => $departamentoColegio,
-                'paisColegio'         => $paisColegio,
-                'logoColegio'         => $logoColegio,
+                'paisColegio' => $paisColegio,
+                'logoColegio' => $logoColegio,
             ]);
 
-            $this->crearSuscripcion($colegio, $plan);
+            $this->crearSuscripcion($colegio, $plan, $iniciarComoTrial);
             $this->crearCategoriasDefault($colegio->idColegio);
             $this->crearConfiguracionInicial($colegio->idColegio);
 
-            $urlAcceso = 'https://' . $tenantId . '.novareef.com';
+            // Sin subdominio real por colegio todavía (ver TenancyServiceProvider,
+            // no registrado) — misma URL de acceso que usan ArbitroController y
+            // CuentaAdminController al invitar cuentas nuevas.
+            $urlAcceso = config('app.url').'/login';
 
             $this->arbitros->registrarConCredenciales(
-                idColegio:    $colegio->idColegio,
-                nombre:       $nombreAdmin,
-                email:        $emailAdmin,
-                telefono:     '',
-                rol:          'ejecutivo',
+                idColegio: $colegio->idColegio,
+                nombre: $nombreAdmin,
+                email: $emailAdmin,
+                telefono: '',
+                rol: 'ejecutivo',
                 nombreColegio: $nombreColegio,
-                urlAcceso:    $urlAcceso,
+                urlAcceso: $urlAcceso,
             );
 
             return $colegio;
@@ -133,8 +148,8 @@ final class ColegioService
             ->first();
 
         return [
-            'total'     => (int) $stats->total,
-            'activos'   => (int) $stats->activos,
+            'total' => (int) $stats->total,
+            'activos' => (int) $stats->activos,
             'enProceso' => (int) $stats->en_proceso,
         ];
     }
@@ -143,7 +158,7 @@ final class ColegioService
      * Cambia el estado del colegio. Si el estado solicitado no es válido,
      * alterna entre activo/suspendido (comportamiento del botón rápido del panel).
      *
-     * @return string  Etiqueta legible del estado final, para el mensaje flash.
+     * @return string Etiqueta legible del estado final, para el mensaje flash.
      */
     public function cambiarEstado(Colegio $colegio, ?string $estadoSolicitado): string
     {
@@ -158,16 +173,21 @@ final class ColegioService
 
     // ── Helpers privados ──────────────────
 
-    private function crearSuscripcion(Colegio $colegio, Plan $plan): void
+    private function crearSuscripcion(Colegio $colegio, Plan $plan, bool $iniciarComoTrial): void
     {
         $inicio = today();
 
         Suscripcion::create([
-            'idColegio'        => $colegio->idColegio,
-            'idPlan'           => $plan->idPlan,
-            'fechaInicio'      => $inicio,
-            'fechaVencimiento' => $plan->calcularVencimiento($inicio),
-            'estado'           => 'activa',
+            'idColegio' => $colegio->idColegio,
+            'idPlan' => $plan->idPlan,
+            'fechaInicio' => $inicio,
+            'fechaVencimiento' => $iniciarComoTrial
+                ? $inicio->copy()->addDays(self::DIAS_PRUEBA_GRATUITA)
+                : $plan->calcularVencimiento($inicio),
+            'estado' => $iniciarComoTrial ? 'trial' : 'activa',
+            'notas' => $iniciarComoTrial
+                ? 'Prueba gratuita de '.self::DIAS_PRUEBA_GRATUITA.' días desde el panel admin.'
+                : null,
         ]);
     }
 
@@ -175,12 +195,12 @@ final class ColegioService
     {
         $categorias = array_map(
             fn (string $nombre) => [
-                'idColegio'       => $idColegio,
+                'idColegio' => $idColegio,
                 'nombreCategoria' => $nombre,
-                'esPorDefecto'    => true,
-                'activa'          => true,
-                'created_at'      => now(),
-                'updated_at'      => now(),
+                'esPorDefecto' => true,
+                'activa' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             self::CATEGORIAS_DEFAULT,
         );
@@ -192,8 +212,20 @@ final class ColegioService
     {
         ConfiguracionColegio::firstOrCreate(
             ['idColegio' => $idColegio, 'clave' => 'dia_disponibilidad'],
-            ['valor'     => '1'],
+            ['valor' => '1'],
         );
+    }
+
+    /**
+     * Plan de mayor jerarquía disponible — el que se asigna por debajo sin
+     * que el superadmin lo elija cuando el colegio arranca en prueba
+     * gratuita. `idPlan` sigue siendo NOT NULL en BD (evita tocar todo lo
+     * que ya depende de Colegio::plan() para límites/módulos); esto solo
+     * evita que alguien tenga que escogerlo a mano en ese caso.
+     */
+    private function planParaPrueba(): Plan
+    {
+        return Plan::orderByDesc('orden')->firstOrFail();
     }
 
     /**

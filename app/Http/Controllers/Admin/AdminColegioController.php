@@ -32,7 +32,7 @@ class AdminColegioController extends Controller
         if ($search = trim((string) $request->input('q', ''))) {
             $query->where(function ($q) use ($search): void {
                 $q->where('nombreColegio', 'like', "%{$search}%")
-                  ->orWhere('codigoColegio', 'like', "%{$search}%");
+                    ->orWhere('codigoColegio', 'like', "%{$search}%");
             });
         }
 
@@ -44,14 +44,14 @@ class AdminColegioController extends Controller
     public function show(int $id): View
     {
         $colegio = Colegio::with(['suscripcionActiva.plan'])->findOrFail($id);
-        $stats   = $this->colegios->estadisticasArbitros($id);
+        $stats = $this->colegios->estadisticasArbitros($id);
 
         return view('admin.colegios.show', [
-            'colegio'          => $colegio,
-            'admin'            => $this->colegios->adminPrincipal($colegio),
-            'totalArbitros'    => $stats['total'],
-            'arbitrosActivos'  => $stats['activos'],
-            'arbitrosProceso'  => $stats['enProceso'],
+            'colegio' => $colegio,
+            'admin' => $this->colegios->adminPrincipal($colegio),
+            'totalArbitros' => $stats['total'],
+            'arbitrosActivos' => $stats['activos'],
+            'arbitrosProceso' => $stats['enProceso'],
             'planesDisponibles' => Plan::where('esActivo', true)->orderBy('orden')->get(['idPlan', 'nombre']),
         ]);
     }
@@ -69,29 +69,34 @@ class AdminColegioController extends Controller
 
         try {
             $colegio = $this->colegios->registrar(
-                nombreColegio:       $data['nombreColegio'],
-                codigoColegio:       $data['codigoColegio'],
-                emailColegio:        $data['emailColegio'],
-                telefonoColegio:     $data['telefonoColegio'] ?? null,
-                direccionColegio:    $data['direccionColegio'] ?? null,
-                ciudadColegio:       $data['ciudadColegio'] ?? null,
+                nombreColegio: $data['nombreColegio'],
+                codigoColegio: $data['codigoColegio'],
+                emailColegio: $data['emailColegio'],
+                telefonoColegio: $data['telefonoColegio'] ?? null,
+                direccionColegio: $data['direccionColegio'] ?? null,
+                ciudadColegio: $data['ciudadColegio'] ?? null,
                 departamentoColegio: $data['departamentoColegio'] ?? null,
-                paisColegio:         $data['paisColegio'],
-                logoColegio:         $data['logoColegio'] ?? null,
-                idPlan:              (int) $data['idPlan'],
-                nombreAdmin:         $data['nombreAdmin'],
-                emailAdmin:          $data['emailAdmin'],
+                paisColegio: $data['paisColegio'],
+                logoColegio: $data['logoColegio'] ?? null,
+                idPlan: isset($data['idPlan']) ? (int) $data['idPlan'] : null,
+                nombreAdmin: $data['nombreAdmin'],
+                emailAdmin: $data['emailAdmin'],
+                iniciarComoTrial: $request->boolean('iniciarComoTrial'),
             );
         } catch (\RuntimeException $e) {
             return back()->withInput()->withErrors(['emailAdmin' => $e->getMessage()]);
         }
+
+        $detalleTrial = $request->boolean('iniciarComoTrial')
+            ? ' — prueba gratuita de '.ColegioService::DIAS_PRUEBA_GRATUITA.' días.'
+            : '.';
 
         $this->auditoria->registrar(
             Auth::guard('admin')->user(),
             'crear',
             'colegio',
             $colegio->idColegio,
-            "Colegio \"{$colegio->nombreColegio}\" registrado.",
+            "Colegio \"{$colegio->nombreColegio}\" registrado{$detalleTrial}",
         );
 
         return redirect()
@@ -128,7 +133,7 @@ class AdminColegioController extends Controller
     public function toggleEstado(Request $request, int $id): RedirectResponse
     {
         $colegio = Colegio::findOrFail($id);
-        $label   = $this->colegios->cambiarEstado($colegio, $request->input('estado'));
+        $label = $this->colegios->cambiarEstado($colegio, $request->input('estado'));
 
         $this->auditoria->registrar(
             Auth::guard('admin')->user(),

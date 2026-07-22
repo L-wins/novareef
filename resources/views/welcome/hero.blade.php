@@ -17,9 +17,9 @@
 
         {{-- Cronómetro decorativo (acento arbitral) --}}
         <div class="absolute top-40 right-12 hidden xl:flex items-center justify-center
-                    w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/10
+                    w-16 h-16 rounded-2xl bg-slate-900/[0.03] border border-slate-900/10
                     whistle-deco fade-up fade-up-delay-4" aria-hidden="true">
-            <i class="fa-solid fa-stopwatch text-blue-400/60 text-2xl"></i>
+            <i class="fa-solid fa-stopwatch text-blue-500/60 text-2xl"></i>
         </div>
 
         <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center w-full">
@@ -34,16 +34,14 @@
             <h1 class="font-editorial font-extrabold uppercase italic
                        text-[3.4rem] sm:text-7xl lg:text-8xl leading-[0.92] mb-7
                        title-shadow fade-up fade-up-delay-1 text-balance">
-                <span class="text-white/55">La plataforma que cada</span><br>
-                <span class="text-white">colegio de árbitros</span><br>
-                <span class="glow-text">estaba esperando</span>
+                <span class="glow-text">NOVA</span><span class="text-slate-900">REEF</span>
             </h1>
 
             {{-- Subtítulo --}}
-            <p class="max-w-2xl mx-auto text-lg sm:text-xl text-slate-400 leading-relaxed mb-10 fade-up fade-up-delay-2">
+            <p class="max-w-2xl mx-auto text-lg sm:text-xl text-slate-500 leading-relaxed mb-10 fade-up fade-up-delay-2">
                 NovaReef centraliza designaciones, torneos, finanzas y formación
                 en una sola plataforma. Diseñada por y para colegios de árbitros que
-                quieren operar con la profesionalidad del fútbol de élite.
+                quieren operar con mayor agilidad.
             </p>
 
             {{-- Botones --}}
@@ -56,7 +54,7 @@
                 </a>
                 <a href="#planes"
                    class="btn-ghost inline-flex items-center justify-center gap-2 px-8 py-4
-                          text-white font-semibold rounded-xl text-base">
+                          text-slate-800 font-semibold rounded-xl text-base">
                     Ver planes y precios
                     <i class="fa-solid fa-arrow-down text-sm"></i>
                 </a>
@@ -65,7 +63,7 @@
 
         {{-- ════════ DASHBOARD PREVIEW FLOTANTE ════════ --}}
         <div class="relative w-full max-w-4xl mx-auto px-4 mt-10 fade-up fade-up-delay-4" data-hero-parallax>
-            <div class="rounded-2xl p-2.5 bg-white/[0.04] border border-white/10 backdrop-blur-2xl shadow-2xl shadow-black/50">
+            <div class="rounded-2xl p-2.5 bg-slate-900/[0.03] border border-slate-900/10 backdrop-blur-2xl shadow-2xl shadow-slate-900/20">
                 <div class="rounded-xl overflow-hidden bg-[#0D0F1A] border border-white/5 select-none">
 
                     {{-- top bar --}}
@@ -112,7 +110,7 @@
 
                         {{-- main --}}
                         <div class="flex-1 p-4 bg-[#12141F]">
-                            <p class="text-[12px] font-semibold text-white mb-3">Bienvenido, Colegio Cundinamarca</p>
+                            <p class="text-[12px] font-semibold text-white mb-3">Bienvenido, Colegio Demo</p>
 
                             <div class="grid grid-cols-2 gap-2.5 mb-3">
                                 <div class="rounded-lg p-3 bg-[#1A1D2E] border border-white/[0.07]">
@@ -143,11 +141,11 @@
                                     <span class="text-[9px] text-slate-600">Ver todas</span>
                                 </div>
                                 <div class="flex items-center justify-between px-3 py-1.5 text-[10px] border-b border-white/[0.05]">
-                                    <span class="text-slate-300">Rincón FC vs Real Chía</span>
+                                    <span class="text-slate-300">Deportivo Sur vs Atlético Norte</span>
                                     <span class="px-2 py-0.5 rounded-full bg-emerald-400/10 text-emerald-400 text-[9px] font-medium">Confirmada</span>
                                 </div>
                                 <div class="flex items-center justify-between px-3 py-1.5 text-[10px]">
-                                    <span class="text-slate-300">Bogotá FC vs Tenjo Atl.</span>
+                                    <span class="text-slate-300">Real Central vs Unión Demo</span>
                                     <span class="px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-400 text-[9px] font-medium">Pendiente</span>
                                 </div>
                             </div>
@@ -162,7 +160,7 @@
         {{-- Indicador de scroll --}}
         <div class="relative mt-10 flex justify-center fade-up fade-up-delay-4">
             <a href="#que-es" aria-label="Bajar"
-               class="text-slate-600 hover:text-blue-400 transition-colors animate-bounce">
+               class="text-slate-400 hover:text-blue-500 transition-colors animate-bounce">
                 <i class="fa-solid fa-chevron-down text-xl"></i>
             </a>
         </div>

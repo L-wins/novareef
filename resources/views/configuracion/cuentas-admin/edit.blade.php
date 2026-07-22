@@ -3,6 +3,10 @@
 @section('titulo', 'Editar cuenta admin')
 @section('seccion', 'Configuración')
 
+@push('styles')
+    @vite(['resources/css/configuracion/configuracion.css'])
+@endpush
+
 @push('scripts')
     @vite(['resources/js/configuracion/configuracion.js'])
 @endpush
@@ -68,7 +72,8 @@
 
                 <div class="form-group" style="margin-top:1rem;">
                     <label class="form-label" for="rolUsuario">Rol</label>
-                    <select name="rolUsuario" id="rolUsuario" class="form-select" required>
+                    <select name="rolUsuario" id="rolUsuario" class="form-select" required
+                            {{ $esPropiaCuenta ? 'disabled' : '' }}>
                         @foreach ([
                             'ejecutivo'  => 'Ejecutivo',
                             'tesorero'   => 'Tesorero',
@@ -82,6 +87,14 @@
                             </option>
                         @endforeach
                     </select>
+                    {{-- Un select disabled no se envía en el POST — se reenvía el rol actual aparte para que el resto del formulario (nombre, username, email) se pueda guardar igual. --}}
+                    @if($esPropiaCuenta)
+                        <input type="hidden" name="rolUsuario" value="{{ $cuenta->rolUsuario }}">
+                        <span class="form-hint">
+                            <i class="fa-solid fa-circle-info"></i>
+                            No puedes cambiar tu propio rol. Pídele a otro ejecutivo que lo haga.
+                        </span>
+                    @endif
                     @error('rolUsuario')
                         <span class="form-error">{{ $message }}</span>
                     @enderror

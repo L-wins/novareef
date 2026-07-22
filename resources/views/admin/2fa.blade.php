@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verificación 2FA — NovaReef Admin</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo/novareef-nr-light.png') }}" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo/novareef-nr-dark.png') }}" media="(prefers-color-scheme: dark)">
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet">
     @vite(['resources/css/admin/admin.css', 'resources/js/admin/admin.js'])
@@ -16,7 +18,7 @@
         {{-- Logo --}}
         <div class="admin-2fa-logo">
             <div class="admin-2fa-logo__icon">
-                <i class="fa-solid fa-futbol"></i>
+                <img src="{{ asset('images/logo/novareef-logo-icontile.png') }}" alt="NovaReef">
             </div>
             <span class="admin-2fa-logo__name">NovaReef</span>
         </div>

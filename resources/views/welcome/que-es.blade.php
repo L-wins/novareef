@@ -1,8 +1,8 @@
     {{--  ¿QUÉ ES?  --}}
-    <section id="que-es" class="py-24 bg-slate-900 relative overflow-hidden">
+    <section id="que-es" class="py-24 bg-slate-50 relative overflow-hidden">
 
         {{-- Glow de fondo --}}
-        <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-blue-500/5 blur-3xl pointer-events-none"></div>
+        <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div class="grid lg:grid-cols-2 gap-16 items-center">
@@ -13,41 +13,35 @@
                         <i class="fa-solid fa-circle-info"></i>
                         ¿Qué es NovaReef?
                     </div>
-                    <h2 class="font-editorial uppercase italic text-4xl sm:text-5xl font-extrabold text-white mb-6 leading-[0.95]">
+                    <h2 class="font-editorial uppercase italic text-4xl sm:text-5xl font-extrabold text-slate-900 mb-6 leading-[0.95]">
                         El sistema operativo de tu
                         <span class="glow-text">colegio de árbitros</span>
                     </h2>
-                    <p class="text-slate-400 text-lg leading-relaxed mb-5">
+                    <p class="text-slate-500 text-lg leading-relaxed mb-5">
                         NovaReef es una plataforma SaaS multi-tenant diseñada para digitalizar
                         la operación administrativa, deportiva y financiera de los colegios de
                         árbitros de fútbol en Colombia.
                     </p>
-                    <p class="text-slate-400 text-lg leading-relaxed mb-8">
+                    <p class="text-slate-500 text-lg leading-relaxed mb-8">
                         Desde la primera designación hasta el informe final de temporada:
                         todo conectado, todo trazable, todo en un solo lugar.
                     </p>
                     <ul class="space-y-3.5">
-                        <li class="flex items-start gap-3 text-slate-300">
-                            <div class="w-6 h-6 rounded-full bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0 mt-0.5">
-                                <i class="fa-solid fa-check text-blue-400 text-xs"></i>
+                        <li class="flex items-start gap-3 text-slate-600">
+                            <div class="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-check text-blue-500 text-xs"></i>
                             </div>
                             <span>Subdominio exclusivo y aislamiento de datos por colegio</span>
                         </li>
-                        <li class="flex items-start gap-3 text-slate-300">
-                            <div class="w-6 h-6 rounded-full bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0 mt-0.5">
-                                <i class="fa-solid fa-check text-blue-400 text-xs"></i>
+                        <li class="flex items-start gap-3 text-slate-600">
+                            <div class="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-check text-blue-500 text-xs"></i>
                             </div>
                             <span>Roles y permisos adaptados a cada función real del colegio</span>
                         </li>
-                        <li class="flex items-start gap-3 text-slate-300">
-                            <div class="w-6 h-6 rounded-full bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0 mt-0.5">
-                                <i class="fa-solid fa-check text-blue-400 text-xs"></i>
-                            </div>
-                            <span>Autenticación de dos factores en cuentas administrativas</span>
-                        </li>
-                        <li class="flex items-start gap-3 text-slate-300">
-                            <div class="w-6 h-6 rounded-full bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0 mt-0.5">
-                                <i class="fa-solid fa-check text-blue-400 text-xs"></i>
+                        <li class="flex items-start gap-3 text-slate-600">
+                            <div class="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-check text-blue-500 text-xs"></i>
                             </div>
                             <span>Sin instalación: 100% web, accesible desde cualquier dispositivo</span>
                         </li>
@@ -73,7 +67,7 @@
                         <div class="flex items-center justify-between mb-5">
                             <div>
                                 <p class="text-xs text-slate-500 mb-0.5">Panel principal</p>
-                                <h3 class="text-white font-bold text-sm">Colegio Antioqueño</h3>
+                                <h3 class="text-white font-bold text-sm">Colegio Demo</h3>
                             </div>
                             <div class="flex items-center gap-2">
                                 <div class="w-7 h-7 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">

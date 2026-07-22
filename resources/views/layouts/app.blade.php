@@ -7,6 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#020617">
     <title>@yield('titulo', 'Panel') — NovaReef</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo/novareef-nr-light.png') }}" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo/novareef-nr-dark.png') }}" media="(prefers-color-scheme: dark)">
     @include('layouts.partials.theme-boot')
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
@@ -35,11 +37,12 @@
             {{-- Marca: logo y nombre del colegio si existen; NovaReef como fallback --}}
             @php($colegioNav = Auth::user()->colegio)
             <div class="nav-brand">
-                <div class="brand-icon {{ $colegioNav?->logoUrl ? 'brand-icon--logo' : '' }}">
+                <div class="brand-icon brand-icon--logo">
                     @if ($colegioNav?->logoUrl)
                         <img src="{{ $colegioNav->logoUrl }}" alt="Logo de {{ $colegioNav->nombreColegio }}">
                     @else
-                        <i class="fa-solid fa-futbol"></i>
+                        <img src="{{ asset('images/logo/novareef-logo-icontile.png') }}" alt="NovaReef" class="brand-icon__novareef brand-icon__novareef--dark">
+                        <img src="{{ asset('images/logo/novareef-logo-icontile-light.png') }}" alt="NovaReef" class="brand-icon__novareef brand-icon__novareef--light">
                     @endif
                 </div>
                 <span class="brand-name" title="{{ $colegioNav?->nombreColegio ?? 'NovaReef' }}">

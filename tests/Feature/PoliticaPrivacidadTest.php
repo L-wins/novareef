@@ -22,8 +22,8 @@ use Tests\TestCase;
  */
 class PoliticaPrivacidadTest extends TestCase
 {
-    use RefreshDatabase;
     use CreaColegioDePrueba;
+    use RefreshDatabase;
 
     public function test_un_usuario_sin_aceptar_la_politica_es_redirigido_al_gate(): void
     {
@@ -46,12 +46,38 @@ class PoliticaPrivacidadTest extends TestCase
 
         $this->assertDatabaseHas('aceptaciones_politica_privacidad', [
             'idUsuario' => $usuario->idUsuario,
-            'tipo'      => 'politica_general',
-            'version'   => PoliticaPrivacidadService::VERSION_ACTUAL,
+            'tipo' => 'politica_general',
+            'version' => PoliticaPrivacidadService::VERSION_ACTUAL,
         ]);
 
         $this->actingAs($usuario, 'web')
             ->get('/dashboard')
+            ->assertOk();
+    }
+
+    /**
+     * Bug real: un colegio recién creado tiene must_change_password=true Y
+     * la política sin aceptar al mismo tiempo. VerificarCambioContrasena
+     * redirige a password.change; ExigirAceptacionPolitica redirige esa
+     * misma página a privacidad.aceptar; VerificarCambioContrasena la
+     * rebota de vuelta a password.change — ERR_TOO_MANY_REDIRECTS. Cada
+     * middleware exime las rutas del otro para romper el ciclo.
+     */
+    public function test_usuario_con_password_pendiente_y_politica_sin_aceptar_no_entra_en_loop(): void
+    {
+        $colegio = $this->crearColegio();
+        $usuario = User::factory()->create([
+            'idColegio' => $colegio->idColegio,
+            'rolUsuario' => 'ejecutivo',
+            'must_change_password' => true,
+        ]);
+
+        $this->actingAsSinAceptarPolitica($usuario, 'web')
+            ->get('/dashboard')
+            ->assertRedirect(route('password.change'));
+
+        $this->actingAsSinAceptarPolitica($usuario, 'web')
+            ->get(route('password.change'))
             ->assertOk();
     }
 
@@ -96,7 +122,7 @@ class PoliticaPrivacidadTest extends TestCase
         $this->assertSame('O+', $arbitro->fresh()->rhArbitro);
         $this->assertDatabaseHas('aceptaciones_politica_privacidad', [
             'idUsuario' => $arbitro->usuario->idUsuario,
-            'tipo'      => 'datos_sensibles',
+            'tipo' => 'datos_sensibles',
         ]);
     }
 
@@ -118,14 +144,14 @@ class PoliticaPrivacidadTest extends TestCase
     {
         Mail::fake();
 
-        $colegio   = $this->crearColegio();
-        $arbitro   = $this->crearArbitro($colegio);
+        $colegio = $this->crearColegio();
+        $arbitro = $this->crearArbitro($colegio);
         $ejecutivo = User::factory()->create(['idColegio' => $colegio->idColegio, 'rolUsuario' => 'ejecutivo']);
         $this->aceptarPoliticaGeneral($arbitro->usuario);
 
         $this->actingAs($arbitro->usuario, 'web')
             ->post(route('privacidad.solicitud.store'), [
-                'tipo'    => 'rectificacion',
+                'tipo' => 'rectificacion',
                 'mensaje' => 'Mi EPS está desactualizada, quiero corregirla.',
             ])
             ->assertRedirect(route('privacidad.politica'));
@@ -133,7 +159,7 @@ class PoliticaPrivacidadTest extends TestCase
         $this->assertDatabaseHas('solicitudes_arco', [
             'idUsuario' => $arbitro->usuario->idUsuario,
             'idColegio' => $colegio->idColegio,
-            'tipo'      => 'rectificacion',
+            'tipo' => 'rectificacion',
         ]);
 
         Mail::assertSent(SolicitudArcoMail::class, fn ($mail) => $mail->hasTo($ejecutivo->emailUsuario));

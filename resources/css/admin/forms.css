@@ -34,6 +34,21 @@
   background: var(--border-color);
 }
 
+.admin-form-section__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--primary-dim);
+  border: 1px solid rgba(79, 142, 247, 0.25);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
 .admin-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

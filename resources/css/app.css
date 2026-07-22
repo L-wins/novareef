@@ -19,6 +19,7 @@
    no define, y .container real vive ahí — layout.css tenía un duplicado
    muerto que se quitó al dividir). */
 @import "./app/reset.css";
+@import "./shared/navbar-sidebar.css";
 @import "./app/layout.css";
 @import "./app/dashboard.css";
 @import "./app/vendor-overrides.css";

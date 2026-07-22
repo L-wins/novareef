@@ -7,16 +7,16 @@
 @section('contenido')
 <div class="flex w-full min-h-screen">
 
-    {{-- ═══ PANEL IZQUIERDO — BRANDING ═══ --}}
-    <div class="hidden lg:flex lg:w-[52%] bg-slate-900 border-r border-white/5
-                flex-col justify-between p-14 relative overflow-hidden">
+    {{-- ═══ PANEL IZQUIERDO — BRANDING (claro, mismo formato que el login admin) ═══ --}}
+    <div class="hidden lg:flex flex-1 bg-gradient-to-br from-white via-slate-50 to-slate-100 border-r border-slate-200
+                flex-col items-center justify-center p-14 relative overflow-hidden">
 
         {{-- Decoración de fondo --}}
         <div class="absolute inset-0 pointer-events-none select-none" aria-hidden="true">
             <div class="absolute -top-24 -left-24 w-96 h-96 rounded-full"
-                 style="background:radial-gradient(circle,rgba(79,142,247,0.12) 0%,transparent 65%);"></div>
+                 style="background:radial-gradient(circle,rgba(79,142,247,0.14) 0%,transparent 65%);"></div>
             <div class="absolute bottom-0 right-0 w-72 h-72 rounded-full"
-                 style="background:radial-gradient(circle,rgba(56,189,248,0.08) 0%,transparent 65%);"></div>
+                 style="background:radial-gradient(circle,rgba(56,189,248,0.10) 0%,transparent 65%);"></div>
 
             {{-- Círculos de cancha --}}
             <div class="login-circle" style="width:480px;height:480px;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.6;"></div>
@@ -27,90 +27,65 @@
 
             {{-- Grid --}}
             <div class="absolute inset-0"
-                 style="background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),
-                                        linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
+                 style="background-image:linear-gradient(rgba(15,23,42,0.035) 1px,transparent 1px),
+                                        linear-gradient(90deg,rgba(15,23,42,0.035) 1px,transparent 1px);
                         background-size:48px 48px;"></div>
         </div>
 
-        {{-- Tarjetas decorativas amarilla/roja --}}
-        <div class="absolute top-12 right-12 hidden xl:flex items-end gap-2 login-fade login-fade-4" aria-hidden="true">
-            <div class="deco-ref-card deco-ref-card--yellow" style="transform:rotate(-8deg);"></div>
-            <div class="deco-ref-card deco-ref-card--red" style="transform:rotate(6deg);margin-left:-6px;"></div>
-        </div>
-
-        <div class="relative z-10">
+        <div class="relative z-10 text-center max-w-sm">
 
             {{-- Logo --}}
-            <div class="flex items-center gap-3 mb-14 login-fade login-fade-1">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600
-                            flex items-center justify-center shadow-lg shadow-blue-500/30 flex-shrink-0">
-                    <i class="fa-solid fa-futbol text-white text-lg"></i>
-                </div>
-                <span class="text-xl font-bold tracking-tight text-white">NovaReef</span>
+            <div class="w-[76px] h-[76px] rounded-[22px] bg-slate-900 shadow-[0_0_50px_rgba(79,142,247,0.30)]
+                        flex items-center justify-center mx-auto mb-7 login-fade login-fade-1">
+                <img src="{{ asset('images/logo/novareef-logo-icontile.png') }}" alt="NovaReef" class="w-full h-full object-contain rounded-[22px]">
             </div>
 
-            {{-- Título --}}
-            <div class="login-fade login-fade-2">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full
-                            bg-blue-500/10 border border-blue-500/20 text-blue-400
-                            text-xs font-semibold mb-6 uppercase tracking-wider">
-                    <i class="fa-solid fa-shield-halved text-[10px]"></i>
-                    Plataforma de colegios
-                </div>
-                <h1 class="text-4xl font-black tracking-tight leading-[1.05] text-white mb-4">
-                    El estándar digital<br>
-                    <span class="bg-gradient-to-r from-blue-400 to-sky-400 bg-clip-text text-transparent">
-                        del arbitraje moderno
-                    </span>
-                </h1>
-                <p class="text-slate-400 text-base leading-relaxed mb-12 max-w-sm">
-                    Designaciones, torneos, finanzas y formación
-                    en una sola plataforma profesional.
-                </p>
-            </div>
+            <h1 class="text-[2.75rem] font-black tracking-tight mb-2 leading-none login-fade login-fade-1">
+                <span class="text-blue-600">Nova</span><span class="text-slate-900">Reef</span>
+            </h1>
+
+            <p class="text-slate-500 leading-relaxed mb-10 login-fade login-fade-2">
+                Plataforma de gestión para colegios de árbitros de fútbol.
+                Designaciones, torneos, finanzas y formación en un solo lugar.
+            </p>
 
             {{-- Features --}}
-            <div class="space-y-3.5 login-fade login-fade-3">
+            <div class="space-y-3.5 text-left login-fade login-fade-3">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20
                                 flex items-center justify-center flex-shrink-0">
-                        <i class="fa-solid fa-calendar-days text-blue-400 text-sm"></i>
+                        <i class="fa-solid fa-calendar-days text-blue-600 text-sm"></i>
                     </div>
-                    <span class="text-slate-300 text-sm">Designaciones por partido y categoría</span>
+                    <span class="text-slate-600 text-sm">Designaciones por partido y categoría</span>
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-sky-500/10 border border-sky-500/20
                                 flex items-center justify-center flex-shrink-0">
-                        <i class="fa-solid fa-id-card text-sky-400 text-sm"></i>
+                        <i class="fa-solid fa-id-card text-sky-600 text-sm"></i>
                     </div>
-                    <span class="text-slate-300 text-sm">Expedientes completos de árbitros</span>
+                    <span class="text-slate-600 text-sm">Expedientes completos de árbitros</span>
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20
                                 flex items-center justify-center flex-shrink-0">
-                        <i class="fa-solid fa-money-bill-trend-up text-indigo-400 text-sm"></i>
+                        <i class="fa-solid fa-money-bill-trend-up text-indigo-600 text-sm"></i>
                     </div>
-                    <span class="text-slate-300 text-sm">Control financiero del colegio</span>
+                    <span class="text-slate-600 text-sm">Control financiero del colegio</span>
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20
                                 flex items-center justify-center flex-shrink-0">
-                        <i class="fa-solid fa-user-group text-purple-400 text-sm"></i>
+                        <i class="fa-solid fa-user-group text-purple-600 text-sm"></i>
                     </div>
-                    <span class="text-slate-300 text-sm">Roles y permisos por función</span>
+                    <span class="text-slate-600 text-sm">Roles y permisos por función</span>
                 </div>
             </div>
 
         </div>
-
-        <p class="relative z-10 text-xs text-slate-600 login-fade login-fade-4">
-            <i class="fa-solid fa-flag mr-1.5 text-blue-500/60"></i>
-            Plataforma SaaS · Colegios de árbitros · Colombia
-        </p>
     </div>
 
-    {{-- ═══ PANEL DERECHO — FORMULARIO ═══ --}}
-    <div class="flex-1 flex items-center justify-center p-8 lg:p-16 bg-slate-950 relative overflow-hidden">
+    {{-- ═══ PANEL DERECHO — FORMULARIO (oscuro) ═══ --}}
+    <div class="w-full lg:w-[460px] shrink-0 flex items-center justify-center p-8 lg:p-12 bg-slate-950 relative overflow-hidden">
 
         {{-- Gradiente sutil de fondo --}}
         <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
@@ -122,9 +97,8 @@
 
             {{-- Logo móvil --}}
             <div class="flex lg:hidden items-center justify-center gap-3 mb-10 login-fade login-fade-1">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600
-                            flex items-center justify-center shadow-lg shadow-blue-500/30">
-                    <i class="fa-solid fa-futbol text-white text-lg"></i>
+                <div class="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-blue-500/30">
+                    <img src="{{ asset('images/logo/novareef-logo-icontile.png') }}" alt="NovaReef" class="w-full h-full object-contain">
                 </div>
                 <span class="text-xl font-bold tracking-tight text-white">NovaReef</span>
             </div>
@@ -134,9 +108,9 @@
                 <p class="text-slate-400 text-sm mb-8">Ingresa tus credenciales para acceder al panel</p>
             </div>
 
-            {{-- Tarjeta --}}
+            {{-- Formulario — sin tarjeta, directo sobre el panel oscuro (mismo formato que el login admin) --}}
             <div id="login-card"
-                 class="bg-slate-900 rounded-2xl border border-white/5 p-8 login-fade login-fade-3"
+                 class="login-fade login-fade-3"
                  data-has-error="{{ $errors->isNotEmpty() ? 'true' : 'false' }}">
 
                 {{-- Error de credenciales --}}

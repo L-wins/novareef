@@ -21,7 +21,7 @@
 {{-- Sección 1: Datos del colegio --}}
 <div class="admin-form-card">
     <div class="admin-form-section">
-        <p class="admin-form-section__title">Datos del colegio</p>
+        <p class="admin-form-section__title"><span class="admin-form-section__num">1</span> Datos del colegio</p>
         <div class="admin-form-grid">
 
             <div class="admin-form-group admin-form-col-2">
@@ -129,7 +129,7 @@
 
     {{-- Sección 2: Plan de suscripción --}}
     <div class="admin-form-section">
-        <p class="admin-form-section__title">Plan de suscripción</p>
+        <p class="admin-form-section__title"><span class="admin-form-section__num">2</span> Plan de suscripción</p>
 
         @error('idPlan')
             <div class="admin-flash admin-flash--danger">
@@ -138,52 +138,79 @@
             </div>
         @enderror
 
-        <div class="plan-cards-grid">
-            @foreach($planes as $plan)
-            @php $planKey = strtolower($plan->nombre); @endphp
-            <label class="plan-card {{ old('idPlan') == $plan->idPlan ? 'plan-card--selected' : '' }}"
-                   data-plan="{{ $planKey }}"
-                   id="plan-label-{{ $plan->idPlan }}">
-                <input type="radio" name="idPlan" value="{{ $plan->idPlan }}"
-                       {{ old('idPlan') == $plan->idPlan ? 'checked' : '' }}>
-
-                <div class="plan-card-check">
-                    <i class="fa-solid fa-check"></i>
+        {{-- El toggle va primero: decide si hay que elegir un plan comercial o no --}}
+        <div class="plan-edit-toggles" style="margin-bottom: 1.5rem;">
+            <label class="plan-edit-toggle-label">
+                <div class="plan-edit-toggle-wrap">
+                    <input type="hidden" name="iniciarComoTrial" value="0">
+                    <input type="checkbox" name="iniciarComoTrial" value="1" class="plan-edit-toggle"
+                           data-trial-toggle
+                           {{ old('iniciarComoTrial') ? 'checked' : '' }}>
+                    <span class="plan-edit-toggle-slider"></span>
                 </div>
-
-                <span class="plan-card__badge">{{ $plan->nombre }}</span>
-
-                <div class="plan-card__price">
-                    ${{ number_format($plan->precio, 0, ',', '.') }}
-                    <span>COP / {{ $plan->periodicidad }}</span>
-                </div>
-
-                <div class="plan-card__detail">
-                    <i class="fa-solid fa-users"></i>
-                    {{ $plan->limiteArbitrosTexto }} árbitros
-                </div>
-
-                @if($plan->incluyePaginaWeb)
-                <div class="plan-card__detail">
-                    <i class="fa-solid fa-globe"></i>
-                    Página web
-                </div>
-                @endif
-
-                @if($plan->incluyeOnboarding)
-                <div class="plan-card__detail">
-                    <i class="fa-solid fa-life-ring"></i>
-                    Onboarding
-                </div>
-                @endif
+                <span class="plan-edit-toggle-text">
+                    <span class="plan-edit-toggle-title">Iniciar como prueba gratuita ({{ \App\Services\ColegioService::DIAS_PRUEBA_GRATUITA }} días)</span>
+                    <span class="plan-edit-toggle-desc">La suscripción nace en estado "trial" con vencimiento a {{ \App\Services\ColegioService::DIAS_PRUEBA_GRATUITA }} días. Pasado ese plazo sin renovar, el acceso se vence solo.</span>
+                </span>
             </label>
-            @endforeach
+        </div>
+
+        {{-- Mensaje que reemplaza la grilla de planes mientras el trial está activo --}}
+        <div class="admin-flash admin-flash--info" data-trial-summary hidden>
+            <i class="fa-solid fa-circle-info"></i>
+            Durante la prueba gratuita el colegio no pertenece a ningún plan comercial — tiene acceso
+            completo a todos los módulos y sin límites, para poder evaluar la plataforma entera.
+            Cuando decida continuar, le asignas un plan real desde "Cambiar plan" en su ficha.
+        </div>
+
+        <div data-plan-selector>
+            <div class="plan-cards-grid">
+                @foreach($planes as $plan)
+                @php $planKey = strtolower($plan->nombre); @endphp
+                <label class="plan-card {{ old('idPlan') == $plan->idPlan ? 'plan-card--selected' : '' }}"
+                       data-plan="{{ $planKey }}"
+                       id="plan-label-{{ $plan->idPlan }}">
+                    <input type="radio" name="idPlan" value="{{ $plan->idPlan }}"
+                           {{ old('idPlan') == $plan->idPlan ? 'checked' : '' }}>
+
+                    <div class="plan-card-check">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+
+                    <span class="plan-card__badge">{{ $plan->nombre }}</span>
+
+                    <div class="plan-card__price">
+                        ${{ number_format($plan->precio, 0, ',', '.') }}
+                        <span>COP / {{ $plan->periodicidad }}</span>
+                    </div>
+
+                    <div class="plan-card__detail">
+                        <i class="fa-solid fa-users"></i>
+                        {{ $plan->limiteArbitrosTexto }} árbitros
+                    </div>
+
+                    @if($plan->incluyePaginaWeb)
+                    <div class="plan-card__detail">
+                        <i class="fa-solid fa-globe"></i>
+                        Página web
+                    </div>
+                    @endif
+
+                    @if($plan->incluyeOnboarding)
+                    <div class="plan-card__detail">
+                        <i class="fa-solid fa-life-ring"></i>
+                        Onboarding
+                    </div>
+                    @endif
+                </label>
+                @endforeach
+            </div>
         </div>
     </div>
 
     {{-- Sección 3: Administrador --}}
     <div class="admin-form-section">
-        <p class="admin-form-section__title">Administrador del colegio</p>
+        <p class="admin-form-section__title"><span class="admin-form-section__num">3</span> Administrador del colegio</p>
         <div class="admin-form-grid">
 
             <div class="admin-form-group">
