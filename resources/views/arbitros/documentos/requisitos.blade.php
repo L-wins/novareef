@@ -57,7 +57,9 @@
         </div>
     </section>
 
-    <details class="document-collapsible document-collapsible--create" {{ $errors->any() ? 'open' : '' }}>
+    <details id="crear-requisito"
+             class="document-collapsible document-collapsible--create"
+             {{ $errors->any() && ! request('abrir') ? 'open' : '' }}>
         <summary>
             <span class="document-collapsible__icon"><i class="fa-solid fa-plus"></i></span>
             <span>
@@ -173,7 +175,9 @@
                         $alcance = $requisito->categoria?->nombreCategoria ?? 'Todos los árbitros';
                     @endphp
 
-                    <details class="document-config-card {{ $requisito->activo ? '' : 'is-paused' }}">
+                    <details id="requisito-{{ $requisito->idRequisito }}"
+                             class="document-config-card {{ $requisito->activo ? '' : 'is-paused' }}"
+                             {{ (string) request('abrir') === (string) $requisito->idRequisito ? 'open' : '' }}>
                         <summary>
                             <span class="document-config-card__drag">{{ str_pad((string) $requisito->orden, 2, '0', STR_PAD_LEFT) }}</span>
                             <span class="document-config-card__title">

@@ -41,6 +41,13 @@ class RequisitoDocumentoArbitroController extends Controller
         return view('arbitros.documentos.requisitos', compact('requisitos', 'categorias'));
     }
 
+    public function enfocar(int $idRequisito): RedirectResponse
+    {
+        $requisito = $this->requisitoDelColegio($idRequisito, soloActivos: false);
+
+        return redirect($this->urlIndiceEnfocada($requisito->idRequisito));
+    }
+
     public function store(StoreRequisitoDocumentoArbitroRequest $request): RedirectResponse
     {
         $datos = $request->validated();
@@ -60,7 +67,8 @@ class RequisitoDocumentoArbitroController extends Controller
             $this->documentos->guardarPlantilla($requisito, $request->file('plantilla'));
         }
 
-        return back()->with('success', 'Requisito documental creado correctamente.');
+        return redirect($this->urlIndiceEnfocada($requisito->idRequisito))
+            ->with('success', 'Requisito documental creado correctamente.');
     }
 
     public function update(StoreRequisitoDocumentoArbitroRequest $request, int $idRequisito): RedirectResponse
@@ -82,7 +90,8 @@ class RequisitoDocumentoArbitroController extends Controller
             $this->documentos->guardarPlantilla($requisito, $request->file('plantilla'));
         }
 
-        return back()->with('success', 'Requisito documental actualizado.');
+        return redirect($this->urlIndiceEnfocada($requisito->idRequisito))
+            ->with('success', 'Requisito documental actualizado.');
     }
 
     public function cambiarEstado(int $idRequisito): RedirectResponse
@@ -90,9 +99,10 @@ class RequisitoDocumentoArbitroController extends Controller
         $requisito = $this->requisitoDelColegio($idRequisito, soloActivos: false);
         $requisito->update(['activo' => ! $requisito->activo]);
 
-        return back()->with('success', $requisito->activo
-            ? 'Requisito documental activado.'
-            : 'Requisito documental pausado.');
+        return redirect($this->urlIndiceEnfocada($requisito->idRequisito))
+            ->with('success', $requisito->activo
+                ? 'Requisito documental activado.'
+                : 'Requisito documental pausado.');
     }
 
     public function descargarPlantilla(int $idRequisito)
@@ -111,5 +121,10 @@ class RequisitoDocumentoArbitroController extends Controller
             ->where('idColegio', $this->idColegioActivo())
             ->when($soloActivos, fn ($query) => $query->where('activo', true))
             ->findOrFail($idRequisito);
+    }
+
+    private function urlIndiceEnfocada(int $idRequisito): string
+    {
+        return route('requisitos-documentos-arbitro.index', ['abrir' => $idRequisito]).'#requisito-'.$idRequisito;
     }
 }

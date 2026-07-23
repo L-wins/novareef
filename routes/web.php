@@ -167,6 +167,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     Route::prefix('requisitos-documentos-arbitro')->name('requisitos-documentos-arbitro.')
         ->middleware('permission:editar-arbitros')->group(function () {
             Route::get('/', [RequisitoDocumentoArbitroController::class, 'index'])->name('index');
+            Route::get('/{idRequisito}', [RequisitoDocumentoArbitroController::class, 'enfocar'])->name('show');
             Route::post('/', [RequisitoDocumentoArbitroController::class, 'store'])->name('store');
             Route::put('/{idRequisito}', [RequisitoDocumentoArbitroController::class, 'update'])->name('update');
             Route::put('/{idRequisito}/estado', [RequisitoDocumentoArbitroController::class, 'cambiarEstado'])->name('estado');

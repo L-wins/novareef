@@ -163,6 +163,18 @@ class DocumentosArbitroControllerTest extends TestCase
         ]);
     }
 
+    public function test_get_directo_a_un_requisito_redirige_a_la_configuracion_enfocada(): void
+    {
+        $colegio = $this->crearColegio();
+        $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
+        $arbitro = $this->crearArbitro($colegio);
+        $requisito = $this->crearRequisito($arbitro);
+
+        $this->actingAs($ejecutivo)
+            ->get(route('requisitos-documentos-arbitro.show', $requisito->idRequisito))
+            ->assertRedirect(route('requisitos-documentos-arbitro.index', ['abrir' => $requisito->idRequisito]).'#requisito-'.$requisito->idRequisito);
+    }
+
     public function test_el_staff_aprueba_y_devuelve_entregas_documentales(): void
     {
         Storage::fake('local');

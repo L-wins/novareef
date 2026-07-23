@@ -60,4 +60,15 @@ class StoreRequisitoDocumentoArbitroRequest extends FormRequest
             'plantilla.max' => 'La plantilla no puede superar 10 MB.',
         ];
     }
+
+    protected function getRedirectUrl(): string
+    {
+        $idRequisito = $this->route('idRequisito');
+
+        if ($idRequisito) {
+            return route('requisitos-documentos-arbitro.index', ['abrir' => $idRequisito]).'#requisito-'.$idRequisito;
+        }
+
+        return route('requisitos-documentos-arbitro.index').'#crear-requisito';
+    }
 }
