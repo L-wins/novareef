@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\Arbitro;
+use App\Models\CategoriaArbitro;
 use App\Models\Colegio;
 use App\Models\DocumentoArbitro;
 use App\Models\RequisitoDocumentoArbitro;
@@ -61,12 +62,14 @@ class DocumentosArbitroControllerTest extends TestCase
 
         $colegio = $this->crearColegio();
         $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
+        $categoria = CategoriaArbitro::where('idColegio', $colegio->idColegio)->firstOrFail();
 
         $archivo = UploadedFile::fake()->create('formato-hoja-vida.docx', 120, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 
         $this->actingAs($ejecutivo)->post(route('requisitos-documentos-arbitro.store'), [
             'nombre' => 'Hoja de vida',
             'descripcion' => 'Diligencia la plantilla y vuelve a cargarla.',
+            'idCategoria' => $categoria->idCategoria,
             'orden' => 1,
             'obligatorio' => '1',
             'requiereRevision' => '1',
@@ -77,13 +80,15 @@ class DocumentosArbitroControllerTest extends TestCase
         $requisito = RequisitoDocumentoArbitro::firstOrFail();
 
         $this->assertSame($colegio->idColegio, $requisito->idColegio);
+        $this->assertSame($categoria->idCategoria, $requisito->idCategoria);
         $this->assertTrue($requisito->obligatorio);
         $this->assertTrue($requisito->requiereRevision);
         Storage::disk('local')->assertExists($requisito->plantillaRuta);
 
         $this->actingAs($ejecutivo)->get(route('requisitos-documentos-arbitro.index'))
             ->assertOk()
-            ->assertSee('Hoja de vida');
+            ->assertSee('Hoja de vida')
+            ->assertSee($categoria->nombreCategoria);
     }
 
     public function test_el_arbitro_entrega_documento_y_no_bloquea_su_estado_operativo(): void
@@ -113,6 +118,49 @@ class DocumentosArbitroControllerTest extends TestCase
         $this->actingAs($arbitro->usuario)->get(route('arbitros.mi-perfil'))
             ->assertOk()
             ->assertViewHas('documentosResumen', fn (array $resumen): bool => $resumen['pendientesRevision'] === 1);
+    }
+
+    public function test_los_requisitos_pueden_aplicar_solo_a_una_categoria(): void
+    {
+        Storage::fake('local');
+
+        $colegio = $this->crearColegio();
+        $arbitro = $this->crearArbitro($colegio);
+        $otraCategoria = CategoriaArbitro::create([
+            'idColegio' => $colegio->idColegio,
+            'nombreCategoria' => 'Nacional B',
+            'activa' => true,
+            'esPorDefecto' => false,
+        ]);
+
+        $global = $this->crearRequisito($arbitro, ['nombre' => 'Documento global']);
+        $propio = $this->crearRequisito($arbitro, [
+            'nombre' => 'Documento de mi categoria',
+            'idCategoria' => $arbitro->idCategoria,
+        ]);
+        $ajeno = $this->crearRequisito($arbitro, [
+            'nombre' => 'Documento de otra categoria',
+            'idCategoria' => $otraCategoria->idCategoria,
+        ]);
+
+        $this->actingAs($arbitro->usuario)->get(route('arbitros.mi-perfil'))
+            ->assertOk()
+            ->assertSee($global->nombre)
+            ->assertSee($propio->nombre)
+            ->assertDontSee($ajeno->nombre)
+            ->assertViewHas('documentosResumen', fn (array $resumen): bool => $resumen['total'] === 2);
+
+        $this->actingAs($arbitro->usuario)->post(route('documentos.arbitro.store', [
+            $arbitro->idArbitro,
+            $ajeno->idRequisito,
+        ]), [
+            'archivo' => UploadedFile::fake()->create('no-aplica.pdf', 100, 'application/pdf'),
+        ])->assertSessionHas('error');
+
+        $this->assertDatabaseMissing('documentos_arbitro', [
+            'idArbitro' => $arbitro->idArbitro,
+            'idRequisito' => $ajeno->idRequisito,
+        ]);
     }
 
     public function test_el_staff_aprueba_y_devuelve_entregas_documentales(): void

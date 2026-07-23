@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Arbitro;
 use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Arbitro\StoreRequisitoDocumentoArbitroRequest;
+use App\Models\CategoriaArbitro;
 use App\Models\RequisitoDocumentoArbitro;
 use App\Services\DocumentoArbitroService;
 use Illuminate\Http\RedirectResponse;
@@ -25,13 +26,19 @@ class RequisitoDocumentoArbitroController extends Controller
     public function index(): View
     {
         $requisitos = RequisitoDocumentoArbitro::query()
+            ->with(['categoria'])
             ->withCount('documentos')
             ->where('idColegio', $this->idColegioActivo())
             ->orderBy('orden')
             ->orderBy('nombre')
             ->get();
+        $categorias = CategoriaArbitro::query()
+            ->where('idColegio', $this->idColegioActivo())
+            ->where('activa', true)
+            ->orderBy('nombreCategoria')
+            ->get();
 
-        return view('arbitros.documentos.requisitos', compact('requisitos'));
+        return view('arbitros.documentos.requisitos', compact('requisitos', 'categorias'));
     }
 
     public function store(StoreRequisitoDocumentoArbitroRequest $request): RedirectResponse
@@ -40,6 +47,7 @@ class RequisitoDocumentoArbitroController extends Controller
 
         $requisito = RequisitoDocumentoArbitro::create([
             'idColegio' => $this->idColegioActivo(),
+            'idCategoria' => $datos['idCategoria'] ?? null,
             'nombre' => $datos['nombre'],
             'descripcion' => $datos['descripcion'] ?? null,
             'orden' => (int) ($datos['orden'] ?? 0),
@@ -62,6 +70,7 @@ class RequisitoDocumentoArbitroController extends Controller
 
         $requisito->update([
             'nombre' => $datos['nombre'],
+            'idCategoria' => $datos['idCategoria'] ?? null,
             'descripcion' => $datos['descripcion'] ?? null,
             'orden' => (int) ($datos['orden'] ?? 0),
             'obligatorio' => $request->boolean('obligatorio'),

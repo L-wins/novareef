@@ -226,9 +226,15 @@ class Arbitro extends Model
         $requisitosActivos = $this->relationLoaded('colegio')
             && $this->colegio
             && $this->colegio->relationLoaded('requisitosDocumentoArbitro')
-                ? $this->colegio->requisitosDocumentoArbitro->where('activo', true)
+                ? $this->colegio->requisitosDocumentoArbitro
+                    ->where('activo', true)
+                    ->filter(fn (RequisitoDocumentoArbitro $requisito): bool => $requisito->idCategoria === null
+                        || (int) $requisito->idCategoria === (int) $this->idCategoria)
                 : RequisitoDocumentoArbitro::where('idColegio', $this->idColegio)
                     ->where('activo', true)
+                    ->where(fn ($query) => $query
+                        ->whereNull('idCategoria')
+                        ->orWhere('idCategoria', $this->idCategoria))
                     ->get();
 
         if ($requisitosActivos->isNotEmpty()) {

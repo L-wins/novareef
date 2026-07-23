@@ -29,6 +29,13 @@ class StoreRequisitoDocumentoArbitroRequest extends FormRequest
                     ->where('idColegio', $idColegio)
                     ->ignore($idRequisito, 'idRequisito'),
             ],
+            'idCategoria' => [
+                'nullable',
+                'integer',
+                Rule::exists('categorias_arbitro', 'idCategoria')
+                    ->where('idColegio', $idColegio)
+                    ->where('activa', true),
+            ],
             'descripcion' => ['nullable', 'string', 'max:1000'],
             'orden' => ['nullable', 'integer', 'min:0', 'max:999'],
             'obligatorio' => ['sometimes', 'boolean'],
@@ -48,6 +55,7 @@ class StoreRequisitoDocumentoArbitroRequest extends FormRequest
         return [
             'nombre.required' => 'Escribe el nombre del documento solicitado.',
             'nombre.unique' => 'Ya existe un requisito documental con ese nombre.',
+            'idCategoria.exists' => 'La categoria seleccionada no pertenece al colegio o no esta activa.',
             'plantilla.mimes' => 'La plantilla debe ser PDF, Word o imagen JPG/PNG.',
             'plantilla.max' => 'La plantilla no puede superar 10 MB.',
         ];

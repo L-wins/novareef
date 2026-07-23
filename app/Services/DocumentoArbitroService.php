@@ -28,11 +28,18 @@ final class DocumentoArbitroService
     /**
      * @return Collection<int, RequisitoDocumentoArbitro>
      */
-    public function requisitosParaColegio(int $idColegio, bool $soloActivos = true): Collection
+    public function requisitosParaColegio(int $idColegio, bool $soloActivos = true, ?int $idCategoria = null): Collection
     {
         return RequisitoDocumentoArbitro::query()
+            ->with('categoria')
             ->where('idColegio', $idColegio)
             ->when($soloActivos, fn ($query) => $query->where('activo', true))
+            ->when(
+                $idCategoria !== null,
+                fn ($query) => $query->where(fn ($scoped) => $scoped
+                    ->whereNull('idCategoria')
+                    ->orWhere('idCategoria', $idCategoria)),
+            )
             ->orderBy('orden')
             ->orderBy('nombre')
             ->get();
@@ -43,7 +50,10 @@ final class DocumentoArbitroService
      */
     public function panelParaArbitro(Arbitro $arbitro): Collection
     {
-        $requisitos = $this->requisitosParaColegio((int) $arbitro->idColegio);
+        $requisitos = $this->requisitosParaColegio(
+            (int) $arbitro->idColegio,
+            idCategoria: $arbitro->idCategoria ? (int) $arbitro->idCategoria : null,
+        );
         $documentos = $arbitro->relationLoaded('documentos')
             ? $arbitro->documentos
             : $arbitro->documentos()->with(['requisito', 'revisor'])->get();
@@ -121,6 +131,10 @@ final class DocumentoArbitroService
     ): DocumentoArbitro {
         if ((int) $arbitro->idColegio !== (int) $requisito->idColegio || ! $requisito->activo) {
             throw new RuntimeException('El requisito documental no pertenece al colegio del arbitro o no esta activo.');
+        }
+
+        if ($requisito->idCategoria !== null && (int) $requisito->idCategoria !== (int) $arbitro->idCategoria) {
+            throw new RuntimeException('Este documento no aplica para la categoria del arbitro.');
         }
 
         $version = ((int) DocumentoArbitro::query()

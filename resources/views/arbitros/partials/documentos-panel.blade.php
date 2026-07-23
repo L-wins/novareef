@@ -74,6 +74,9 @@
                         <div class="document-row__content">
                             <div class="document-row__titleline">
                                 <h3>{{ $requisito->nombre }}</h3>
+                                <span class="badge badge-blue">
+                                    {{ $requisito->categoria?->nombreCategoria ?? 'Todos' }}
+                                </span>
                                 <span class="badge {{ $requisito->obligatorio ? 'badge-amber' : 'badge-gray' }}">
                                     {{ $requisito->obligatorio ? 'Obligatorio' : 'Opcional' }}
                                 </span>
