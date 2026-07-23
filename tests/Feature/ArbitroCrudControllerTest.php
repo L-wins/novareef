@@ -219,6 +219,17 @@ class ArbitroCrudControllerTest extends TestCase
 
         $this->actingAs($ejecutivoA)->get(route('arbitros.show', $arbitroB->idArbitro))->assertNotFound();
         $this->actingAs($ejecutivoA)->get(route('arbitros.edit', $arbitroB->idArbitro))->assertNotFound();
+
+        $this->actingAs($ejecutivoA)->put(route('arbitros.update', $arbitroB->idArbitro), [
+            'nombreUsuario' => 'Intento ajeno',
+            'emailUsuario' => $arbitroB->usuario->emailUsuario,
+            'telefonoUsuario' => $arbitroB->usuario->telefonoUsuario,
+            'idCategoria' => $arbitroB->idCategoria,
+            'tipoDocumento' => $arbitroB->tipoDocumento,
+            'numeroDocumento' => $arbitroB->numeroDocumento,
+        ])->assertNotFound();
+
+        $this->assertNotSame('Intento ajeno', $arbitroB->usuario->fresh()->nombreUsuario);
     }
 
     public function test_lista_crea_activa_y_elimina_categorias(): void
@@ -230,18 +241,43 @@ class ArbitroCrudControllerTest extends TestCase
 
         $this->actingAs($ejecutivo)->post(route('categorias.arbitro.store'), [
             'nombreCategoria' => 'Segunda categoría',
-        ])->assertRedirect(route('categorias.arbitro.index'));
+        ])->assertRedirect();
 
         $categoria = CategoriaArbitro::where('idColegio', $colegio->idColegio)
             ->where('nombreCategoria', 'Segunda categoría')
             ->firstOrFail();
 
         $this->actingAs($ejecutivo)->put(route('categorias.arbitro.estado', $categoria->idCategoria))
-            ->assertRedirect(route('categorias.arbitro.index'));
+            ->assertRedirect(route('categorias.arbitro.index', ['abrir' => $categoria->idCategoria]));
         $this->assertFalse($categoria->fresh()->activa);
 
         $this->actingAs($ejecutivo)->delete(route('categorias.arbitro.destroy', $categoria->idCategoria))
             ->assertRedirect(route('categorias.arbitro.index'));
+        $this->assertDatabaseMissing('categorias_arbitro', ['idCategoria' => $categoria->idCategoria]);
+    }
+
+    public function test_crear_y_eliminar_categoria_por_ajax_devuelve_json_con_la_lista_actualizada(): void
+    {
+        $colegio = $this->crearColegio();
+        $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
+
+        $respuestaStore = $this->actingAs($ejecutivo)->post(route('categorias.arbitro.store'), [
+            'nombreCategoria' => 'Categoría AJAX',
+        ], ['X-Requested-With' => 'XMLHttpRequest']);
+
+        $respuestaStore->assertOk()
+            ->assertJson(['success' => true])
+            ->assertJsonStructure(['success', 'message', 'regions' => ['categorias']]);
+
+        $categoria = CategoriaArbitro::where('idColegio', $colegio->idColegio)
+            ->where('nombreCategoria', 'Categoría AJAX')
+            ->firstOrFail();
+        $this->assertStringContainsString('Categoría AJAX', $respuestaStore->json('regions.categorias'));
+
+        $respuestaDestroy = $this->actingAs($ejecutivo)
+            ->delete(route('categorias.arbitro.destroy', $categoria->idCategoria), [], ['X-Requested-With' => 'XMLHttpRequest']);
+
+        $respuestaDestroy->assertOk()->assertJson(['success' => true, 'message' => 'Categoría eliminada correctamente.']);
         $this->assertDatabaseMissing('categorias_arbitro', ['idCategoria' => $categoria->idCategoria]);
     }
 
@@ -255,5 +291,110 @@ class ArbitroCrudControllerTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseHas('categorias_arbitro', ['idCategoria' => $arbitro->idCategoria]);
+    }
+
+    public function test_actualiza_configuracion_de_categoria_personalizada(): void
+    {
+        $colegio = $this->crearColegio();
+        $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
+        $categoria = CategoriaArbitro::create([
+            'idColegio' => $colegio->idColegio,
+            'nombreCategoria' => 'Juvenil',
+            'esPorDefecto' => false,
+            'activa' => true,
+        ]);
+
+        $this->actingAs($ejecutivo)->put(route('categorias.arbitro.update', $categoria->idCategoria), [
+            'nombreCategoria' => 'Juvenil élite',
+            'descripcion' => 'Categoría para proyección competitiva.',
+        ])->assertRedirect(route('categorias.arbitro.index', ['abrir' => $categoria->idCategoria]));
+
+        $this->assertDatabaseHas('categorias_arbitro', [
+            'idCategoria' => $categoria->idCategoria,
+            'nombreCategoria' => 'Juvenil élite',
+            'descripcion' => 'Categoría para proyección competitiva.',
+        ]);
+    }
+
+    public function test_limita_descripcion_de_categoria_a_cien_caracteres(): void
+    {
+        $colegio = $this->crearColegio();
+        $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
+
+        $this->actingAs($ejecutivo)->post(route('categorias.arbitro.store'), [
+            'nombreCategoria' => 'Juvenil',
+            'descripcion' => str_repeat('a', 101),
+        ])->assertSessionHasErrors('descripcion');
+
+        $this->assertDatabaseMissing('categorias_arbitro', [
+            'idColegio' => $colegio->idColegio,
+            'nombreCategoria' => 'Juvenil',
+        ]);
+    }
+
+    public function test_no_renombra_una_categoria_por_defecto(): void
+    {
+        $colegio = $this->crearColegio();
+        $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
+        $categoria = CategoriaArbitro::where('idColegio', $colegio->idColegio)->firstOrFail();
+
+        $this->actingAs($ejecutivo)->put(route('categorias.arbitro.update', $categoria->idCategoria), [
+            'nombreCategoria' => 'Nombre cambiado',
+            'descripcion' => 'Intento de cambio.',
+        ])->assertRedirect()->assertSessionHas('error');
+
+        $this->assertDatabaseHas('categorias_arbitro', [
+            'idCategoria' => $categoria->idCategoria,
+            'nombreCategoria' => 'FIFA',
+        ]);
+    }
+
+    public function test_no_asigna_arbitro_a_categoria_de_otro_colegio_o_pausada(): void
+    {
+        $colegioA = $this->crearColegio();
+        $colegioB = $this->crearColegio();
+        $ejecutivo = $this->crearEjecutivoConPermisos($colegioA);
+        $categoriaB = CategoriaArbitro::where('idColegio', $colegioB->idColegio)->firstOrFail();
+
+        $this->actingAs($ejecutivo)->post(route('arbitros.store'), array_merge(
+            $this->datosNuevoArbitro($colegioA),
+            ['idCategoria' => $categoriaB->idCategoria],
+        ))->assertSessionHasErrors('idCategoria');
+
+        $categoriaPausada = CategoriaArbitro::create([
+            'idColegio' => $colegioA->idColegio,
+            'nombreCategoria' => 'Pausada',
+            'esPorDefecto' => false,
+            'activa' => false,
+        ]);
+
+        $this->actingAs($ejecutivo)->post(route('arbitros.store'), array_merge(
+            $this->datosNuevoArbitro($colegioA),
+            ['idCategoria' => $categoriaPausada->idCategoria],
+        ))->assertSessionHasErrors('idCategoria');
+    }
+
+    public function test_edita_arbitro_que_conserva_su_categoria_pausada(): void
+    {
+        $colegio = $this->crearColegio();
+        $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
+        $arbitro = $this->crearArbitro($colegio);
+
+        $arbitro->categoria->update(['activa' => false]);
+
+        $this->actingAs($ejecutivo)->get(route('arbitros.edit', $arbitro->idArbitro))
+            ->assertOk()
+            ->assertSee('inactiva');
+
+        $this->actingAs($ejecutivo)->put(route('arbitros.update', $arbitro->idArbitro), [
+            'nombreUsuario' => 'Nombre editado',
+            'emailUsuario' => $arbitro->usuario->emailUsuario,
+            'telefonoUsuario' => $arbitro->usuario->telefonoUsuario,
+            'idCategoria' => $arbitro->idCategoria,
+            'tipoDocumento' => $arbitro->tipoDocumento,
+            'numeroDocumento' => $arbitro->numeroDocumento,
+        ])->assertRedirect(route('arbitros.show', $arbitro->idArbitro));
+
+        $this->assertSame($arbitro->idCategoria, $arbitro->fresh()->idCategoria);
     }
 }

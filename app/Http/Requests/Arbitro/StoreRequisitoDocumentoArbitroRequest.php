@@ -15,6 +15,28 @@ class StoreRequisitoDocumentoArbitroRequest extends FormRequest
         return true;
     }
 
+    /**
+     * El formulario expone un único select "Aplica a" (alcanceRequisito) con
+     * valores 'categoria:{id}' / 'arbitro:{id}' / vacío ('todos') — así el
+     * alcance es mutuamente excluyente por construcción, sin necesitar una
+     * regla de validación aparte que lo verifique. Aquí se traduce a las
+     * columnas reales idCategoria/idArbitro que el resto del código espera.
+     */
+    protected function prepareForValidation(): void
+    {
+        $alcance = (string) $this->input('alcanceRequisito', '');
+        $idCategoria = null;
+        $idArbitro = null;
+
+        if (str_starts_with($alcance, 'categoria:')) {
+            $idCategoria = substr($alcance, strlen('categoria:'));
+        } elseif (str_starts_with($alcance, 'arbitro:')) {
+            $idArbitro = substr($alcance, strlen('arbitro:'));
+        }
+
+        $this->merge(['idCategoria' => $idCategoria, 'idArbitro' => $idArbitro]);
+    }
+
     public function rules(): array
     {
         $idRequisito = $this->route('idRequisito');
@@ -36,6 +58,13 @@ class StoreRequisitoDocumentoArbitroRequest extends FormRequest
                     ->where('idColegio', $idColegio)
                     ->where('activa', true),
             ],
+            'idArbitro' => [
+                'nullable',
+                'integer',
+                Rule::exists('arbitros', 'idArbitro')
+                    ->where('idColegio', $idColegio)
+                    ->where('deleted_at', null),
+            ],
             'descripcion' => ['nullable', 'string', 'max:1000'],
             'orden' => ['nullable', 'integer', 'min:0', 'max:999'],
             'obligatorio' => ['sometimes', 'boolean'],
@@ -55,7 +84,8 @@ class StoreRequisitoDocumentoArbitroRequest extends FormRequest
         return [
             'nombre.required' => 'Escribe el nombre del documento solicitado.',
             'nombre.unique' => 'Ya existe un requisito documental con ese nombre.',
-            'idCategoria.exists' => 'La categoria seleccionada no pertenece al colegio o no esta activa.',
+            'idCategoria.exists' => 'La categoría seleccionada no pertenece al colegio o no está activa.',
+            'idArbitro.exists' => 'El árbitro seleccionado no pertenece al colegio.',
             'plantilla.mimes' => 'La plantilla debe ser PDF, Word o imagen JPG/PNG.',
             'plantilla.max' => 'La plantilla no puede superar 10 MB.',
         ];

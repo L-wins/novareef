@@ -437,6 +437,21 @@ input[data-filter-date].flatpickr-input { display: none !important; }
     color: var(--nv-accent-2) !important;
 }
 
+/* ── 4b. Encabezados de <optgroup> — sin esto Choices los deja sin
+   estilo, indistinguibles de las opciones (ej. "Aplica a" con Todos /
+   Por categoría / Un árbitro específico se veía como una sola lista
+   plana, sin forma de saber dónde termina cada grupo) ── */
+.choices__heading {
+    padding: 10px 14px 6px !important;
+    color: var(--nv-accent-2) !important;
+    background-color: var(--nv-fill) !important;
+    border-bottom: 1px solid var(--nv-border) !important;
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: .06em !important;
+}
+
 /* ── 5. Input de búsqueda dentro del dropdown ─ */
 .choices__list--dropdown .choices__input,
 .choices__list[aria-expanded] .choices__input,

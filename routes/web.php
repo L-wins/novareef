@@ -160,6 +160,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     Route::prefix('categorias-arbitro')->name('categorias.arbitro.')->middleware('permission:editar-arbitros')->group(function () {
         Route::get('/', [CategoriaArbitroController::class, 'index'])->name('index');
         Route::post('/', [CategoriaArbitroController::class, 'store'])->name('store');
+        Route::put('/{id}', [CategoriaArbitroController::class, 'update'])->name('update');
         Route::put('/{id}/estado', [CategoriaArbitroController::class, 'cambiarEstado'])->name('estado');
         Route::delete('/{id}', [CategoriaArbitroController::class, 'destroy'])->name('destroy');
     });
@@ -171,6 +172,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
             Route::post('/', [RequisitoDocumentoArbitroController::class, 'store'])->name('store');
             Route::put('/{idRequisito}', [RequisitoDocumentoArbitroController::class, 'update'])->name('update');
             Route::put('/{idRequisito}/estado', [RequisitoDocumentoArbitroController::class, 'cambiarEstado'])->name('estado');
+            Route::delete('/{idRequisito}', [RequisitoDocumentoArbitroController::class, 'destroy'])->name('destroy');
         });
 
     //  Torneos

@@ -28,17 +28,22 @@ final class DocumentoArbitroService
     /**
      * @return Collection<int, RequisitoDocumentoArbitro>
      */
-    public function requisitosParaColegio(int $idColegio, bool $soloActivos = true, ?int $idCategoria = null): Collection
-    {
+    public function requisitosParaColegio(
+        int $idColegio,
+        bool $soloActivos = true,
+        ?int $idCategoria = null,
+        ?int $idArbitro = null,
+    ): Collection {
         return RequisitoDocumentoArbitro::query()
             ->with('categoria')
             ->where('idColegio', $idColegio)
             ->when($soloActivos, fn ($query) => $query->where('activo', true))
             ->when(
-                $idCategoria !== null,
+                $idCategoria !== null || $idArbitro !== null,
                 fn ($query) => $query->where(fn ($scoped) => $scoped
-                    ->whereNull('idCategoria')
-                    ->orWhere('idCategoria', $idCategoria)),
+                    ->where(fn ($todos) => $todos->whereNull('idCategoria')->whereNull('idArbitro'))
+                    ->when($idCategoria !== null, fn ($q) => $q->orWhere('idCategoria', $idCategoria))
+                    ->when($idArbitro !== null, fn ($q) => $q->orWhere('idArbitro', $idArbitro))),
             )
             ->orderBy('orden')
             ->orderBy('nombre')
@@ -53,6 +58,7 @@ final class DocumentoArbitroService
         $requisitos = $this->requisitosParaColegio(
             (int) $arbitro->idColegio,
             idCategoria: $arbitro->idCategoria ? (int) $arbitro->idCategoria : null,
+            idArbitro: (int) $arbitro->idArbitro,
         );
         $documentos = $arbitro->relationLoaded('documentos')
             ? $arbitro->documentos
@@ -130,11 +136,15 @@ final class DocumentoArbitroService
         UploadedFile $archivo,
     ): DocumentoArbitro {
         if ((int) $arbitro->idColegio !== (int) $requisito->idColegio || ! $requisito->activo) {
-            throw new RuntimeException('El requisito documental no pertenece al colegio del arbitro o no esta activo.');
+            throw new RuntimeException('El requisito documental no pertenece al colegio del árbitro o no está activo.');
         }
 
         if ($requisito->idCategoria !== null && (int) $requisito->idCategoria !== (int) $arbitro->idCategoria) {
-            throw new RuntimeException('Este documento no aplica para la categoria del arbitro.');
+            throw new RuntimeException('Este documento no aplica para la categoría del árbitro.');
+        }
+
+        if ($requisito->idArbitro !== null && (int) $requisito->idArbitro !== (int) $arbitro->idArbitro) {
+            throw new RuntimeException('Este documento no aplica para este árbitro.');
         }
 
         $version = ((int) DocumentoArbitro::query()
@@ -182,5 +192,26 @@ final class DocumentoArbitroService
             'fechaRevision' => now(),
             'idUsuarioRevision' => $revisor->idUsuario,
         ]);
+    }
+
+    /**
+     * Elimina un requisito documental si ningún árbitro ha entregado nada
+     * contra él todavía — mismo criterio que CategoriaArbitroService::eliminar()
+     * (no se borra un catálogo con historial real enganchado). Con entregas
+     * existentes, la vía es pausarlo (activo=false), nunca eliminarlo.
+     *
+     * @throws \RuntimeException Si el requisito ya tiene entregas registradas.
+     */
+    public function eliminarRequisito(RequisitoDocumentoArbitro $requisito): void
+    {
+        if ($requisito->documentos()->exists()) {
+            throw new RuntimeException('No se puede eliminar un requisito con documentos entregados — pausalo en su lugar.');
+        }
+
+        if ($requisito->plantillaRuta) {
+            Storage::disk(self::DISCO)->delete($requisito->plantillaRuta);
+        }
+
+        $requisito->delete();
     }
 }

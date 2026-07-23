@@ -11,24 +11,24 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('requisitos_documento_arbitro', function (Blueprint $table) {
-            $table->unsignedBigInteger('idCategoria')->nullable()->after('idColegio');
+            $table->unsignedBigInteger('idArbitro')->nullable()->after('idCategoria');
 
-            $table->foreign('idCategoria')
-                ->references('idCategoria')
-                ->on('categorias_arbitro')
+            $table->foreign('idArbitro')
+                ->references('idArbitro')
+                ->on('arbitros')
                 ->onUpdate('cascade')
                 ->onDelete('set null');
 
-            $table->index(['idColegio', 'idCategoria', 'activo', 'orden'], 'idx_req_doc_arbitro_categoria');
+            $table->index(['idColegio', 'idArbitro', 'activo', 'orden'], 'idx_req_doc_arbitro_arbitro');
         });
     }
 
     public function down(): void
     {
         Schema::table('requisitos_documento_arbitro', function (Blueprint $table) {
-            $table->dropForeign(['idCategoria']);
-            $table->dropIndex('idx_req_doc_arbitro_categoria');
-            $table->dropColumn('idCategoria');
+            $table->dropForeign(['idArbitro']);
+            $table->dropIndex('idx_req_doc_arbitro_arbitro');
+            $table->dropColumn('idArbitro');
         });
     }
 };

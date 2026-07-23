@@ -65,7 +65,7 @@ class DocumentoArbitro extends Model
     public function getEstadoRevisionLabelAttribute(): string
     {
         return match ($this->estadoRevision) {
-            self::ESTADO_EN_REVISION => 'En revision',
+            self::ESTADO_EN_REVISION => 'En revisión',
             self::ESTADO_APROBADO => 'Aprobado',
             self::ESTADO_DEVUELTO => 'Devuelto',
             default => 'Pendiente',
@@ -85,7 +85,7 @@ class DocumentoArbitro extends Model
     public function getTamanoLegibleAttribute(): string
     {
         if (! $this->tamanoBytes) {
-            return 'Tamano no disponible';
+            return 'Tamaño no disponible';
         }
 
         if ($this->tamanoBytes < 1024 * 1024) {

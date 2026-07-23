@@ -105,7 +105,7 @@
                             @foreach ($categorias as $categoria)
                                 <option value="{{ $categoria->idCategoria }}"
                                     {{ $catSel === $categoria->idCategoria ? 'selected' : '' }}>
-                                    {{ $categoria->nombreCategoria }}
+                                    {{ $categoria->nombreCategoria }}{{ $categoria->activa ? '' : ' (inactiva)' }}
                                 </option>
                             @endforeach
                         </select>

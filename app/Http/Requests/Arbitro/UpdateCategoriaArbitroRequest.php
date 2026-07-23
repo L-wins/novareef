@@ -8,7 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
-class StoreCategoriaArbitroRequest extends FormRequest
+class UpdateCategoriaArbitroRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -28,15 +28,16 @@ class StoreCategoriaArbitroRequest extends FormRequest
     public function rules(): array
     {
         $idColegio = (int) Auth::user()->idColegio;
+        $idCategoria = (int) $this->route('id');
 
         return [
             'nombreCategoria' => [
                 'required',
                 'string',
                 'max:50',
-                // Unicidad scoped al colegio — sin closure, expresado declarativamente.
                 Rule::unique('categorias_arbitro', 'nombreCategoria')
-                    ->where('idColegio', $idColegio),
+                    ->where('idColegio', $idColegio)
+                    ->ignore($idCategoria, 'idCategoria'),
             ],
             'descripcion' => ['nullable', 'string', 'max:100'],
         ];

@@ -187,7 +187,7 @@ class ArbitroController extends Controller
 
         return view('arbitros.edit', [
             'arbitro' => $arbitro,
-            'categorias' => $this->categorias($arbitro->idColegio),
+            'categorias' => $this->categorias($arbitro->idColegio, (int) $arbitro->idCategoria),
         ]);
     }
 
@@ -276,10 +276,16 @@ class ArbitroController extends Controller
             ->findOrFail($id);
     }
 
-    private function categorias(int $idColegio): \Illuminate\Database\Eloquent\Collection
+    private function categorias(int $idColegio, ?int $idCategoriaActual = null): \Illuminate\Database\Eloquent\Collection
     {
         return CategoriaArbitro::where('idColegio', $idColegio)
-            ->where('activa', true)
+            ->where(function ($query) use ($idCategoriaActual): void {
+                $query->where('activa', true);
+
+                if ($idCategoriaActual !== null) {
+                    $query->orWhere('idCategoria', $idCategoriaActual);
+                }
+            })
             ->orderBy('nombreCategoria')
             ->get();
     }

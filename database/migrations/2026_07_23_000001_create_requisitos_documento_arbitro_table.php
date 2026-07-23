@@ -17,6 +17,7 @@ return new class extends Migration
 
             $table->bigIncrements('idRequisito');
             $table->unsignedBigInteger('idColegio');
+            $table->unsignedBigInteger('idCategoria')->nullable();
             $table->string('nombre', 120);
             $table->text('descripcion')->nullable();
             $table->boolean('obligatorio')->default(true);
@@ -35,8 +36,15 @@ return new class extends Migration
                 ->onUpdate('cascade')
                 ->onDelete('cascade');
 
+            $table->foreign('idCategoria')
+                ->references('idCategoria')
+                ->on('categorias_arbitro')
+                ->onUpdate('cascade')
+                ->onDelete('set null');
+
             $table->unique(['idColegio', 'nombre'], 'uq_req_doc_arbitro_colegio_nombre');
             $table->index(['idColegio', 'activo', 'orden'], 'idx_req_doc_arbitro_colegio_activo');
+            $table->index(['idColegio', 'idCategoria', 'activo', 'orden'], 'idx_req_doc_arbitro_categoria');
         });
 
         Schema::table('documentos_arbitro', function (Blueprint $table) {

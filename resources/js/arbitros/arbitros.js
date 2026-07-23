@@ -93,19 +93,139 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    //  Contador de caracteres: motivo del archivado ─
-    document.querySelectorAll('[data-document-file]').forEach(function (input) {
-        input.addEventListener('change', function () {
-            var label = input.closest('form')?.querySelector('[data-document-file-name]');
-            if (!label) return;
+    //  Forms de acción (documentos, requisitos, categorías...) — módulo AJAX ──
+    //  [data-ajax-form]: fetch con FormData (soporta adjuntos) en vez de
+    //  submit nativo; la respuesta trae {success, message, regions} y
+    //  reemplaza el [data-ajax-region] correspondiente sin recargar la
+    //  página — mismo patrón "regions" que EstadisticasController. Se
+    //  combina con [data-confirm-submit] cuando el form también lo trae
+    //  (ej. aprobar un documento o eliminar una categoría): primero confirma,
+    //  luego envía por AJAX. Genérico a propósito — lo usan documentos-panel,
+    //  requisitos y categorías, cada uno con su propia región.
+    //  initAjaxForms() es re-invocable porque el contenido de la
+    //  región se reemplaza por HTML nuevo del servidor tras cada acción —
+    //  sin esto, los forms/inputs recién insertados quedarían sin listeners.
+    function initAjaxForms(container) {
+        container.querySelectorAll('[data-document-file]').forEach(function (input) {
+            if (input.dataset.docFileInit === '1') return;
+            input.dataset.docFileInit = '1';
 
-            label.textContent = input.files && input.files[0]
-                ? input.files[0].name
-                : 'Ningún archivo';
+            input.addEventListener('change', function () {
+                var label = input.closest('form')?.querySelector('[data-document-file-name]');
+                if (!label) return;
+
+                label.textContent = input.files && input.files[0]
+                    ? input.files[0].name
+                    : 'Ningún archivo';
+            });
         });
-    });
 
-    document.querySelectorAll('[data-confirm-submit]').forEach(function (form) {
+        container.querySelectorAll('[data-ajax-form]').forEach(function (form) {
+            if (form.dataset.ajaxInit === '1') return;
+            form.dataset.ajaxInit = '1';
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                if (form.hasAttribute('data-confirm-submit')) {
+                    if (!window.novaAlert) return;
+
+                    var result = await novaAlert.confirm({
+                        titulo: form.dataset.confirmTitle || '¿Confirmar?',
+                        texto: form.dataset.confirmText || '¿Estás seguro?',
+                        icono: 'question',
+                        iconColor: form.dataset.confirmColor || '#4f8ef7',
+                        confirmarTexto: form.dataset.confirmBtn || 'Sí, continuar',
+                        confirmColor: form.dataset.confirmColor || '#4f8ef7',
+                    });
+
+                    if (!result.isConfirmed) return;
+                }
+
+                enviarFormularioAjax(form);
+            });
+        });
+    }
+
+    async function enviarFormularioAjax(form) {
+        // data-ajax-region acepta una lista separada por espacios (ej.
+        // "resumen categorias") — solo controla qué región(es) muestran el
+        // fade de "cargando" mientras se espera la respuesta. Cuáles
+        // regiones se reemplazan de verdad lo decide el propio backend: se
+        // actualiza cualquier [data-ajax-region] cuya clave venga en
+        // data.regions, sin importar qué form la disparó.
+        var nombresRegion = (form.dataset.ajaxRegion || '').split(/\s+/).filter(Boolean);
+        var elsCargando = nombresRegion
+            .map(function (nombre) { return document.querySelector('[data-ajax-region="' + nombre + '"]'); })
+            .filter(Boolean);
+        var btn     = form.querySelector('button[type="submit"]');
+        var htmlBtn = btn ? btn.innerHTML : '';
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        }
+        elsCargando.forEach(function (el) { el.classList.add('is-loading'); });
+
+        try {
+            var r = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                body: new FormData(form),
+            });
+
+            var data = await r.json().catch(function () { return null; });
+
+            if (data && data.regions) {
+                Object.keys(data.regions).forEach(function (nombre) {
+                    var el = document.querySelector('[data-ajax-region="' + nombre + '"]');
+                    if (!el) return;
+                    el.innerHTML = data.regions[nombre];
+                    initAjaxForms(el);
+                    if (window.initNovaSelects) window.initNovaSelects(el);
+                });
+            }
+
+            var huboExito = !!(data && data.success && !data.errors);
+
+            if (huboExito) {
+                if (form.hasAttribute('data-ajax-reset-on-success')) form.reset();
+
+                var idCerrar = form.dataset.ajaxCloseOnSuccess;
+                var elCerrar = idCerrar ? document.getElementById(idCerrar) : null;
+                if (elCerrar && 'open' in elCerrar) elCerrar.open = false;
+            }
+
+            if (!window.novaAlert) return;
+
+            if (data && data.errors) {
+                var primerCampo = Object.values(data.errors)[0];
+                novaAlert.error((primerCampo && primerCampo[0]) || 'Revisa los datos del formulario.');
+            } else if (huboExito) {
+                novaAlert.success(data.message || 'Listo.');
+            } else {
+                novaAlert.error((data && data.message) || 'No se pudo completar la acción.');
+            }
+        } catch (err) {
+            console.error('documentos AJAX error', err);
+            if (window.novaAlert) novaAlert.error('Error de red. Intenta de nuevo.');
+        } finally {
+            if (btn && btn.isConnected) {
+                btn.disabled = false;
+                btn.innerHTML = htmlBtn;
+            }
+            elsCargando.forEach(function (el) { el.classList.remove('is-loading'); });
+        }
+    }
+
+    initAjaxForms(document);
+
+    // [data-ajax-form] ya maneja su propia confirmación+envío en initAjaxForms()
+    // arriba — este loop genérico es solo para forms de submit nativo.
+    document.querySelectorAll('[data-confirm-submit]:not([data-ajax-form])').forEach(function (form) {
         form.addEventListener('submit', async function (e) {
             if (form.dataset.confirmed === '1' || !window.novaAlert) return;
             e.preventDefault();
@@ -139,6 +259,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     //  Restaurar árbitro (vista archivados) 
+    document.querySelectorAll('[data-character-counter]').forEach(function (input) {
+        var wrapper = input.closest('.form-group') || input.parentElement;
+        var output = wrapper ? wrapper.querySelector('[data-character-counter-output]') : null;
+        if (!output) return;
+
+        var limit = Number(input.dataset.characterLimit || input.getAttribute('maxlength') || 0);
+        if (!limit) return;
+
+        function syncCharacterCounter() {
+            var len = input.value.length;
+            output.textContent = len + '/' + limit;
+            output.classList.toggle('is-near-limit', len >= Math.floor(limit * 0.8) && len < limit);
+            output.classList.toggle('is-at-limit', len >= limit);
+        }
+
+        input.addEventListener('input', syncCharacterCounter);
+        syncCharacterCounter();
+    });
+
     document.querySelectorAll('.btn-restaurar').forEach(function (btn) {
         btn.addEventListener('click', async function () {
             var nombre = btn.dataset.nombre;

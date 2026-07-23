@@ -24,6 +24,7 @@ class RequisitoDocumentoArbitro extends Model
     protected $fillable = [
         'idColegio',
         'idCategoria',
+        'idArbitro',
         'nombre',
         'descripcion',
         'obligatorio',
@@ -41,6 +42,7 @@ class RequisitoDocumentoArbitro extends Model
         'requiereRevision' => 'boolean',
         'activo' => 'boolean',
         'idCategoria' => 'integer',
+        'idArbitro' => 'integer',
         'orden' => 'integer',
         'plantillaTamanoBytes' => 'integer',
     ];
@@ -53,6 +55,11 @@ class RequisitoDocumentoArbitro extends Model
     public function categoria(): BelongsTo
     {
         return $this->belongsTo(CategoriaArbitro::class, 'idCategoria', 'idCategoria');
+    }
+
+    public function arbitro(): BelongsTo
+    {
+        return $this->belongsTo(Arbitro::class, 'idArbitro', 'idArbitro');
     }
 
     public function documentos(): HasMany

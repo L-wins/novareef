@@ -29,6 +29,16 @@
     opacity: 0.55;
 }
 
+/* ── [data-ajax-form]/[data-ajax-region] (arbitros.js): mismo fade, para
+   forms de acción (POST/PUT) que reemplazan una región tras enviarse —
+   ver initDocumentosAjax() en resources/js/arbitros/arbitros.js. ── */
+[data-ajax-region] {
+    transition: opacity 0.15s ease;
+}
+[data-ajax-region].is-loading {
+    opacity: 0.55;
+}
+
 /* ── Layout base ──────────────────── */
 .container {
     max-width: 1200px;

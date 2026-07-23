@@ -41,6 +41,13 @@
     text-transform: uppercase;
     color: var(--accent);
 }
+.page-subtitle {
+    max-width: 660px;
+    margin: .4rem 0 0;
+    color: var(--text-secondary);
+    font-size: .86rem;
+    line-height: 1.55;
+}
 .page-header-actions {
     display: flex;
     align-items: center;

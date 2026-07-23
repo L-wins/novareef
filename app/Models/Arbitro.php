@@ -228,13 +228,15 @@ class Arbitro extends Model
             && $this->colegio->relationLoaded('requisitosDocumentoArbitro')
                 ? $this->colegio->requisitosDocumentoArbitro
                     ->where('activo', true)
-                    ->filter(fn (RequisitoDocumentoArbitro $requisito): bool => $requisito->idCategoria === null
-                        || (int) $requisito->idCategoria === (int) $this->idCategoria)
+                    ->filter(fn (RequisitoDocumentoArbitro $requisito): bool => ($requisito->idCategoria === null && $requisito->idArbitro === null)
+                        || (int) $requisito->idCategoria === (int) $this->idCategoria
+                        || (int) $requisito->idArbitro === (int) $this->idArbitro)
                 : RequisitoDocumentoArbitro::where('idColegio', $this->idColegio)
                     ->where('activo', true)
                     ->where(fn ($query) => $query
-                        ->whereNull('idCategoria')
-                        ->orWhere('idCategoria', $this->idCategoria))
+                        ->where(fn ($todos) => $todos->whereNull('idCategoria')->whereNull('idArbitro'))
+                        ->orWhere('idCategoria', $this->idCategoria)
+                        ->orWhere('idArbitro', $this->idArbitro))
                     ->get();
 
         if ($requisitosActivos->isNotEmpty()) {
@@ -261,7 +263,7 @@ class Arbitro extends Model
             ? $this->documentos->where('obligatorio', true)
             : $this->documentos()->where('obligatorio', true)->get();
 
-        return $docs->isNotEmpty();
+        return $docs->where('estadoRevision', DocumentoArbitro::ESTADO_APROBADO)->isNotEmpty();
     }
 
     //  Relaciones ─

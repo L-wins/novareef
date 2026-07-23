@@ -16,7 +16,7 @@ class DevolverDocumentoArbitroRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'comentarioRevision' => ['required', 'string', 'min:5', 'max:1000'],
+            'comentarioRevision' => ['required', 'string', 'min:5', 'max:100'],
         ];
     }
 
@@ -25,7 +25,7 @@ class DevolverDocumentoArbitroRequest extends FormRequest
         return [
             'comentarioRevision.required' => 'Indica que debe corregir el arbitro.',
             'comentarioRevision.min' => 'El comentario debe tener al menos 5 caracteres.',
-            'comentarioRevision.max' => 'El comentario no puede superar 1000 caracteres.',
+            'comentarioRevision.max' => 'El comentario no puede superar 100 caracteres.',
         ];
     }
 }

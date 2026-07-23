@@ -86,7 +86,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: .08em;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     margin: 0;
 }
 .detail-card > .detail-section-title {
@@ -502,6 +502,11 @@
    pierden contraste sobre fondo blanco; se oscurecen aquí.
    ═══════════════════════════════════════════════════════════════ */
 :root[data-theme="light"] .doc-item a { color: #1d4ed8; }
+:root[data-theme="light"] .detail-card-icon {
+    color: #1d4ed8;
+    background: rgba(37, 99, 235, .1);
+    border-color: rgba(37, 99, 235, .22);
+}
 :root[data-theme="light"] .profile-progress-value[data-color="green"]  { color: #15803d; }
 :root[data-theme="light"] .profile-progress-value[data-color="blue"]   { color: #1d4ed8; }
 :root[data-theme="light"] .profile-progress-value[data-color="yellow"] { color: #b45309; }

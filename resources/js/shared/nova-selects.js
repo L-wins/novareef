@@ -38,7 +38,14 @@ export function initNovaSelects(container = document) {
             placeholder:      true,
             placeholderValue: el.dataset.placeholder || 'Selecciona una opción',
             allowHTML:        false,
-            position:         'auto',
+            // 'bottom' fijo, no 'auto': el flip hacia arriba dejaba el
+            // dropdown (sobre todo con <optgroup>, más alto) recortado o
+            // superpuesto con la fila de arriba dentro de listas apretadas
+            // (ej. tarjetas de "Aplica a" en documentos/categorías).
+            position:         'bottom',
+            // Selects "multiple": las opciones ya elegidas se muestran como
+            // chips — sin esto no habría forma visual de quitar una sola.
+            removeItemButton: el.multiple,
         });
 
         el._choicesInstance = instance;

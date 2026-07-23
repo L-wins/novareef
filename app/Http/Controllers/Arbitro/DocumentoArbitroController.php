@@ -12,7 +12,9 @@ use App\Models\Arbitro;
 use App\Models\DocumentoArbitro;
 use App\Models\RequisitoDocumentoArbitro;
 use App\Services\DocumentoArbitroService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -25,7 +27,7 @@ class DocumentoArbitroController extends Controller
         private readonly DocumentoArbitroService $documentos,
     ) {}
 
-    public function store(StoreDocumentoArbitroRequest $request, int $idArbitro, int $idRequisito): RedirectResponse
+    public function store(StoreDocumentoArbitroRequest $request, int $idArbitro, int $idRequisito): RedirectResponse|JsonResponse
     {
         $arbitro = $this->arbitroAccesible($idArbitro, permiteStaff: true);
         $requisito = RequisitoDocumentoArbitro::query()
@@ -36,12 +38,12 @@ class DocumentoArbitroController extends Controller
         try {
             $documento = $this->documentos->guardarEntrega($arbitro, $requisito, $request->file('archivo'));
         } catch (RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+            return $this->respuesta($request, $arbitro, false, $e->getMessage());
         }
 
-        return back()->with('success', $documento->estadoRevision === DocumentoArbitro::ESTADO_APROBADO
-            ? 'Documento cargado y aprobado automaticamente.'
-            : 'Documento enviado para revision.');
+        return $this->respuesta($request, $arbitro, true, $documento->estadoRevision === DocumentoArbitro::ESTADO_APROBADO
+            ? 'Documento cargado y aprobado automáticamente.'
+            : 'Documento enviado para revisión.');
     }
 
     public function descargar(int $idDocumento)
@@ -54,20 +56,20 @@ class DocumentoArbitroController extends Controller
             ->download($documento->archivoRuta, $documento->nombreOriginal ?? $documento->nombreDocumento);
     }
 
-    public function aprobar(int $idDocumento): RedirectResponse
+    public function aprobar(Request $request, int $idDocumento): RedirectResponse|JsonResponse
     {
         $documento = $this->documentoAccesible($idDocumento, soloStaff: true);
         $this->documentos->aprobar($documento, Auth::user());
 
-        return back()->with('success', 'Documento aprobado.');
+        return $this->respuesta($request, $documento->arbitro, true, 'Documento aprobado.');
     }
 
-    public function devolver(DevolverDocumentoArbitroRequest $request, int $idDocumento): RedirectResponse
+    public function devolver(DevolverDocumentoArbitroRequest $request, int $idDocumento): RedirectResponse|JsonResponse
     {
         $documento = $this->documentoAccesible($idDocumento, soloStaff: true);
         $this->documentos->devolver($documento, $request->validated('comentarioRevision'), Auth::user());
 
-        return back()->with('success', 'Documento devuelto para correccion.');
+        return $this->respuesta($request, $documento->arbitro, true, 'Documento devuelto para corrección.');
     }
 
     private function arbitroAccesible(int $idArbitro, bool $permiteStaff = false): Arbitro
@@ -84,6 +86,14 @@ class DocumentoArbitroController extends Controller
         return $query->firstOrFail();
     }
 
+    /**
+     * El documento puede contener datos personales sensibles (cédula,
+     * certificados médicos) — a diferencia del resto del módulo de árbitros,
+     * "poder ver la lista de árbitros" (ver-arbitros, que tesorero/designador/
+     * sanciones/tecnico también tienen) no es motivo suficiente para
+     * descargarlo. Solo puede verlo quien puede revisarlo (editar-arbitros,
+     * mismo permiso que aprobar()/devolver()) o el propio árbitro dueño.
+     */
     private function documentoAccesible(int $idDocumento, bool $soloStaff = false): DocumentoArbitro
     {
         $documento = DocumentoArbitro::query()
@@ -91,12 +101,43 @@ class DocumentoArbitroController extends Controller
             ->whereHas('arbitro', fn ($query) => $query->where('idColegio', $this->idColegioActivo()))
             ->findOrFail($idDocumento);
 
+        $puedeRevisar = Auth::user()->can('editar-arbitros');
+
         if ($soloStaff) {
-            abort_unless(Auth::user()->can('editar-arbitros'), 403);
-        } elseif (! Auth::user()->can('ver-arbitros')) {
+            abort_unless($puedeRevisar, 403);
+        } elseif (! $puedeRevisar) {
             abort_unless((int) $documento->arbitro->idUsuario === (int) Auth::id(), 403);
         }
 
         return $documento;
+    }
+
+    /**
+     * store()/aprobar()/devolver() comparten la misma región AJAX
+     * (documentos-panel-contenido) — con JS (X-Requested-With) responde JSON
+     * con el HTML recién renderizado; sin JS, degrada al redirect+flash de
+     * siempre. Mismo patrón que EstadisticasController con sus sub-acciones.
+     */
+    private function respuesta(Request $request, Arbitro $arbitro, bool $exito, string $mensaje): RedirectResponse|JsonResponse
+    {
+        if (! $request->ajax()) {
+            return back()->with($exito ? 'success' : 'error', $mensaje);
+        }
+
+        $modoRevision = Auth::user()->can('editar-arbitros');
+        $documentosRequisitos = $this->documentos->panelParaArbitro($arbitro->fresh(['usuario', 'documentos.requisito', 'documentos.revisor']));
+
+        return response()->json([
+            'success' => $exito,
+            'message' => $mensaje,
+            'regions' => [
+                'documentos' => view('arbitros.partials.documentos-panel-contenido', [
+                    'arbitro' => $arbitro,
+                    'modoRevision' => $modoRevision,
+                    'documentosRequisitos' => $documentosRequisitos,
+                    'documentosResumen' => $this->documentos->resumenParaArbitro($arbitro, $documentosRequisitos),
+                ])->render(),
+            ],
+        ], $exito ? 200 : 422);
     }
 }
