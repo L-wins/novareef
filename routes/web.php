@@ -37,7 +37,6 @@ use App\Http\Controllers\PoliticaPrivacidadController;
 use App\Http\Controllers\Sancion\JustificacionRevisionController;
 use App\Http\Controllers\Sancion\SancionController;
 use App\Http\Controllers\Sancion\TipoSancionController;
-use App\Http\Controllers\SolicitudArcoController;
 use App\Http\Controllers\Torneo\DivisionTorneoController;
 use App\Http\Controllers\Torneo\EmergenteTorneoController;
 use App\Http\Controllers\Torneo\PartidoController;
@@ -101,10 +100,6 @@ Route::middleware('auth')->group(function () {
     // para el texto de la política en sí.
     Route::get('/privacidad/aceptar', [PoliticaPrivacidadController::class, 'aceptar'])->name('privacidad.aceptar');
     Route::post('/privacidad/aceptar', [PoliticaPrivacidadController::class, 'guardarAceptacion'])->name('privacidad.aceptar.guardar');
-
-    // Derechos ARCO — acceso, rectificación, cancelación, oposición.
-    Route::get('/privacidad/solicitud', [SolicitudArcoController::class, 'create'])->name('privacidad.solicitud.create');
-    Route::post('/privacidad/solicitud', [SolicitudArcoController::class, 'store'])->name('privacidad.solicitud.store');
 });
 
 // Rutas privadas (requieren autenticación)

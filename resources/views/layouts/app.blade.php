@@ -253,13 +253,6 @@
                 </a>
                 @endcan
 
-                <div class="sidebar-divider"></div>
-                <a href="{{ route('privacidad.solicitud.create') }}"
-                   class="sidebar-link {{ request()->routeIs('privacidad.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-user-shield"></i>
-                    <span>Mis datos personales</span>
-                </a>
-
             </nav>
         </aside>
 

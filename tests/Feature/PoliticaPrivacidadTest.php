@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Mail\SolicitudArcoMail;
 use App\Models\Colegio;
 use App\Models\User;
 use App\Services\PoliticaPrivacidadService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
 use Tests\Concerns\CreaColegioDePrueba;
 use Tests\TestCase;
 
@@ -138,31 +136,6 @@ class PoliticaPrivacidadTest extends TestCase
             ->assertRedirect(route('arbitros.mi-perfil'));
 
         $this->assertSame('A-', $arbitro->fresh()->rhArbitro);
-    }
-
-    public function test_solicitud_arco_se_registra_y_notifica_al_ejecutivo_del_colegio(): void
-    {
-        Mail::fake();
-
-        $colegio = $this->crearColegio();
-        $arbitro = $this->crearArbitro($colegio);
-        $ejecutivo = User::factory()->create(['idColegio' => $colegio->idColegio, 'rolUsuario' => 'ejecutivo']);
-        $this->aceptarPoliticaGeneral($arbitro->usuario);
-
-        $this->actingAs($arbitro->usuario, 'web')
-            ->post(route('privacidad.solicitud.store'), [
-                'tipo' => 'rectificacion',
-                'mensaje' => 'Mi EPS está desactualizada, quiero corregirla.',
-            ])
-            ->assertRedirect(route('privacidad.politica'));
-
-        $this->assertDatabaseHas('solicitudes_arco', [
-            'idUsuario' => $arbitro->usuario->idUsuario,
-            'idColegio' => $colegio->idColegio,
-            'tipo' => 'rectificacion',
-        ]);
-
-        Mail::assertSent(SolicitudArcoMail::class, fn ($mail) => $mail->hasTo($ejecutivo->emailUsuario));
     }
 
     private function aceptarPoliticaGeneral(User $usuario): void
