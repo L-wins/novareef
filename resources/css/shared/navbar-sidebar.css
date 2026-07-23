@@ -315,7 +315,19 @@
        Se deja por debajo del navbar superior y los dropdowns/tooltips de
        contenido (100) y de los modales (1000). */
     z-index: 50;
+    /* Con muchos módulos habilitados (todos los permisos + submenús) el
+       menú puede superar el alto disponible en pantallas bajas — sin esto
+       los últimos enlaces quedaban cortados y sin forma de alcanzarlos.
+       El scroll sigue funcionando (rueda del mouse, touch, teclado); la
+       barra se oculta por completo en los 3 motores — un thumb visible
+       encima de un menú que ya se expande con clip-path se ve como un
+       elemento roto, no como scroll intencional. */
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
+.sidebar::-webkit-scrollbar { display: none; }
 .sidebar:hover { clip-path: inset(0 0 0 0); }
 
 .sidebar-nav {
