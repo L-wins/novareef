@@ -18,7 +18,10 @@
    reload. El backend debe responder con JSON cuando la petición trae
    X-Requested-With: XMLHttpRequest (Request::ajax() en Laravel), o con la
    vista completa normal en cualquier otro caso (carga inicial, sin JS).
-   Los links de paginación dentro de una región también se interceptan.
+   Los links de paginación dentro de una región también se interceptan, y
+   también el evento submit del form (Enter en un input de texto dispara el
+   submit nativo aunque el botón esté oculto por data-auto-filter-hide) —
+   sin esto, ese único caso se escapaba del modo AJAX y recargaba la página.
 
    Solo para formularios GET de filtrado/búsqueda. Nunca marcar con
    data-auto-filter formularios que ejecuten acciones (POST/PUT/DELETE).
@@ -116,6 +119,18 @@ export function initAutoFilter(container = document) {
             clearTimeout(timer);
             timer = setTimeout(() => enviar(form, el), DEBOUNCE_MS);
         });
+
+        // Enter en un input de texto, o click en el botón submit (aunque esté
+        // oculto por data-auto-filter-hide, Enter lo dispara igual) — sin
+        // esto, el modo AJAX se saltaba justo en el caso más obvio: escribir
+        // y darle Enter recargaba la página completa en vez de usar fetch().
+        if (form.hasAttribute('data-auto-filter-ajax')) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                clearTimeout(timer);
+                enviar(form, null);
+            });
+        }
 
         // Con JS activo el botón "Filtrar" sobra — ocultarlo (queda como fallback sin JS)
         form.querySelectorAll('[data-auto-filter-hide]').forEach((btn) => {

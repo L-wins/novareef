@@ -1,0 +1,211 @@
+/*
+   ESTADÍSTICAS — módulo de reportes de Designaciones (est-*)
+   Reutiliza .page-header/.btn (globales), .desi-filter-bar/.desi-filter-item
+   (designaciones/index.css), .disp-table/.disp-table-wrap (disponibilidad.css)
+   y .empty-state (designaciones/shared.css) — solo se define aquí lo que es
+   nuevo: tiles de resumen, cards de sección, barra de porcentaje y chips de rol.
+    */
+
+.est-header { margin-bottom: 1.75rem; }
+
+.est-back-link {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            6px;
+  font-size:      0.8rem;
+  font-weight:    600;
+  color:          var(--disp-text-2);
+  text-decoration: none;
+  margin-bottom:  0.5rem;
+}
+.est-back-link:hover { color: var(--nv-accent); }
+
+/* ── Tiles de resumen ──────────────── */
+.est-tiles {
+  display:               grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap:                   1rem;
+  margin-bottom:         2rem;
+}
+
+.est-tile {
+  background:    var(--nv-card-alt);
+  border:        1px solid var(--disp-border);
+  border-radius: 14px;
+  padding:       1.1rem 1.25rem;
+}
+
+.est-tile__value {
+  font-size:   1.7rem;
+  font-weight: 800;
+  color:       var(--nv-text);
+  line-height: 1.1;
+}
+
+.est-tile__label {
+  font-size:      0.72rem;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color:          var(--disp-text-2);
+  margin-top:     0.3rem;
+}
+
+.est-tile--estados { grid-column: span 2; }
+@media (max-width: 640px) { .est-tile--estados { grid-column: span 1; } }
+
+.est-tile__estados-list {
+  display:  flex;
+  flex-wrap: wrap;
+  gap:      0.4rem 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.est-estado-chip {
+  display:     inline-flex;
+  align-items: center;
+  gap:         5px;
+  font-size:   0.75rem;
+  color:       var(--disp-text);
+}
+
+.est-estado-chip strong { color: var(--nv-accent); }
+
+/* ── Cards de sección ──────────────── */
+.est-sections {
+  display:               grid;
+  grid-template-columns: 1fr;
+  gap:                   1.5rem;
+}
+
+.est-section {
+  background:    var(--nv-card-alt);
+  border:        1px solid var(--disp-border);
+  border-radius: 16px;
+  padding:       1.5rem;
+}
+
+.est-section__title {
+  font-size:   1.05rem;
+  font-weight: 700;
+  color:       var(--nv-text);
+  margin:      0 0 0.2rem;
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+}
+
+.est-section__title i { color: var(--nv-accent); font-size: 0.9rem; }
+
+.est-section__desc {
+  font-size:    0.82rem;
+  color:        var(--disp-text-2);
+  margin-bottom: 1.1rem;
+}
+
+/* ── Barra de porcentaje (disponibilidad / calificación) ── */
+.est-bar-cell { display: flex; align-items: center; gap: 0.6rem; min-width: 160px; }
+
+.est-bar {
+  flex:          1;
+  height:        8px;
+  border-radius: 99px;
+  background:    var(--nv-fill);
+  overflow:      hidden;
+}
+
+.est-bar__fill {
+  height:     100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--nv-accent), var(--nv-accent-strong));
+}
+
+.est-bar__fill.is-low  { background: linear-gradient(90deg, #ef4444, #f87171); }
+.est-bar__fill.is-mid  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+
+.est-bar-value {
+  font-size:   0.78rem;
+  font-weight: 700;
+  color:       var(--disp-text);
+  white-space: nowrap;
+  min-width:   40px;
+  text-align:  right;
+}
+
+/* ── Chips de rol (partidos por árbitro / coincidencias) ── */
+.est-rol-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+
+.est-rol-chip {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           4px;
+  font-size:     0.7rem;
+  font-weight:   600;
+  padding:       2px 8px;
+  border-radius: 20px;
+  background:    var(--nv-fill);
+  color:         var(--disp-text-2);
+  white-space:   nowrap;
+}
+
+/* ── Fila de partido en "coincidencias" ── */
+.est-partido-row {
+  display:       flex;
+  align-items:   center;
+  justify-content: space-between;
+  gap:           1rem;
+  padding:       0.65rem 0;
+  border-bottom: 1px solid var(--disp-border);
+  font-size:     0.85rem;
+}
+.est-partido-row:last-child { border-bottom: none; }
+
+.est-partido-row__equipos { font-weight: 600; color: var(--disp-text); }
+.est-partido-row__meta    { font-size: 0.75rem; color: var(--disp-text-2); }
+
+.est-coincidencias-count {
+  font-size:   2rem;
+  font-weight: 800;
+  color:       var(--nv-accent);
+}
+
+.est-chips-row {
+  display:      flex;
+  flex-wrap:    wrap;
+  gap:          0.4rem;
+  margin-bottom: 1.1rem;
+}
+
+.est-subtitle {
+  font-size:      0.78rem;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color:          var(--disp-text-2);
+  margin:         0 0 0.6rem;
+}
+
+.est-pares-table { margin-bottom: 1.5rem; }
+
+.est-hint {
+  font-size: 0.82rem;
+  color:     var(--disp-text-2);
+  padding:   0.75rem 0;
+}
+
+.est-inline-muted {
+  font-size: 0.78rem;
+  color:     var(--disp-text-2);
+}
+
+.est-coincidencias-caption {
+  font-size: 0.82rem;
+  color:     var(--disp-text-2);
+  margin:    0 0 1rem;
+}
+
+.desi-filter-item--wide { flex: 2; min-width: 260px; }
+
+@media (max-width: 900px) {
+  .est-sections { grid-template-columns: 1fr; }
+}

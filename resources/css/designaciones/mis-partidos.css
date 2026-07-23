@@ -245,7 +245,7 @@
   font-weight: 800;
   color: #ef4444;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.5px;
+  letter-spacing: 0;
 }
 .countdown-timer.urgente {
   animation: timerPulse 1s ease-in-out infinite;

@@ -8,7 +8,7 @@
 @endpush
 
 @section('contenido')
-<div class="container">
+<div class="container desi-shell">
 
     {{-- Breadcrumb --}}
     <div class="breadcrumb">
@@ -19,32 +19,37 @@
 
     {{-- ═══ HERO ═══ --}}
     <div class="desi-hero">
-        <div class="desi-hero__left">
-            <div class="desi-hero__eyebrow">
-                @if($criticosCount > 0)
-                <span class="desi-alerta-critico">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    {{ $criticosCount }} crítico{{ $criticosCount > 1 ? 's' : '' }}
-                </span>
-                @endif
-                <span class="desi-hero__label">{{ $torneo->temporada }} · {{ ucfirst($torneo->tipoTorneo) }}</span>
+        <div class="desi-hero__main">
+            <div class="desi-hero__icon">
+                <i class="fa-solid fa-list-check"></i>
             </div>
-            <h1 class="desi-hero__title">{{ $torneo->nombreTorneo }}</h1>
-            <p class="desi-hero__sub">
-                {{ $partidos->total() }} partido{{ $partidos->total() !== 1 ? 's' : '' }}
-                @if(request()->hasAny(['estado','fecha','division']))
-                · <span style="color:#4f8ef7">filtrado{{ $partidos->total() !== 1 ? 's' : '' }}</span>
-                @endif
-            </p>
+            <div class="desi-hero__left">
+                <div class="desi-hero__eyebrow">
+                    @if($criticosCount > 0)
+                    <span class="desi-alerta-critico">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        {{ $criticosCount }} crítico{{ $criticosCount > 1 ? 's' : '' }}
+                    </span>
+                    @endif
+                    <span class="desi-hero__label">{{ $torneo->temporada }} · {{ ucfirst($torneo->tipoTorneo) }}</span>
+                </div>
+                <h1 class="desi-hero__title">{{ $torneo->nombreTorneo }}</h1>
+                <p class="desi-hero__sub">
+                    {{ $partidos->total() }} partido{{ $partidos->total() !== 1 ? 's' : '' }}
+                    @if(request()->hasAny(['estado','fecha','division']))
+                    · <span class="desi-filtered-label">filtrado{{ $partidos->total() !== 1 ? 's' : '' }}</span>
+                    @endif
+                </p>
+            </div>
         </div>
 
         <div class="desi-hero__acciones">
-            <button type="button" class="btn btn-ghost desi-btn-nuevo" id="btn-abrir-exportar-pdf">
+            <button type="button" class="btn btn-ghost desi-action-btn" id="btn-abrir-exportar-pdf">
                 <i class="fa-solid fa-file-pdf"></i>
                 Exportar PDF
             </button>
             @can('crear-designaciones')
-            <a href="{{ route('designaciones.create') }}" class="btn btn-primary desi-btn-nuevo">
+            <a href="{{ route('designaciones.create') }}" class="btn btn-primary desi-action-btn">
                 <i class="fa-solid fa-plus"></i>
                 Nuevo partido
             </a>
@@ -52,28 +57,43 @@
         </div>
     </div>
 
+    <div class="desi-tournament-summary" aria-label="Resumen del torneo">
+        <div class="desi-summary-item">
+            <span>Partidos listados</span>
+            <strong>{{ $partidos->total() }}</strong>
+        </div>
+        <div class="desi-summary-item {{ $criticosCount > 0 ? 'desi-summary-item--danger' : '' }}">
+            <span>Críticos</span>
+            <strong>{{ $criticosCount }}</strong>
+        </div>
+        <div class="desi-summary-item">
+            <span>Filtros activos</span>
+            <strong>{{ request()->hasAny(['estado','fecha','division']) ? 'Sí' : 'No' }}</strong>
+        </div>
+    </div>
+
     {{-- ═══ EXPORTAR PDF: rango de fechas ═══ --}}
     <form method="GET" action="{{ route('designaciones.listado.pdf', ['idTorneo' => $torneo->idTorneo]) }}"
-          id="form-exportar-pdf" class="desi-filter-bar" style="display:none;" target="_blank">
+          id="form-exportar-pdf" class="desi-filter-bar desi-filter-bar--pdf" style="display:none;" target="_blank">
         @if(request()->filled('division'))
             <input type="hidden" name="division" value="{{ request('division') }}">
         @endif
 
         <div class="desi-filter-item">
             <label class="desi-filter-label">Desde</label>
-            <input type="text" name="desde" class="form-input" data-nova-date placeholder="dd/mm/aaaa" style="max-width:160px">
+            <input type="text" name="desde" class="form-input desi-date-input" data-nova-date placeholder="dd/mm/aaaa">
         </div>
 
         <div class="desi-filter-item">
             <label class="desi-filter-label">Hasta</label>
-            <input type="text" name="hasta" class="form-input" data-nova-date placeholder="dd/mm/aaaa" style="max-width:160px">
+            <input type="text" name="hasta" class="form-input desi-date-input" data-nova-date placeholder="dd/mm/aaaa">
         </div>
 
         <div class="desi-filter-actions">
             <button type="submit" class="btn btn-primary btn-sm">
                 <i class="fa-solid fa-file-pdf"></i> Generar PDF
             </button>
-            <p class="field-hint" style="margin:0;">Deja los campos vacíos para exportar todo el torneo.</p>
+            <p class="field-hint desi-filter-hint">Deja los campos vacíos para exportar todo el torneo.</p>
         </div>
     </form>
 
@@ -94,7 +114,7 @@
         <div class="desi-filter-item">
             <label class="desi-filter-label">Fecha</label>
             <input type="text" name="fecha" class="form-input" data-nova-date
-                   value="{{ request('fecha') }}" placeholder="dd/mm/aaaa" style="max-width:160px">
+                   value="{{ request('fecha') }}" placeholder="dd/mm/aaaa">
         </div>
 
         <div class="desi-filter-actions">
@@ -110,6 +130,13 @@
     </form>
 
     {{-- ═══ LISTA DE PARTIDOS ═══ --}}
+    <div class="desi-list-toolbar">
+        <div>
+            <span class="desi-list-toolbar__label">Partidos</span>
+            <strong>{{ $partidos->total() }} resultado{{ $partidos->total() !== 1 ? 's' : '' }}</strong>
+        </div>
+    </div>
+
     <div class="desi-list">
         @php $fechaDivisorAnterior = null; @endphp
         @forelse($partidos as $partido)
@@ -177,9 +204,9 @@
                               data-fecha="{{ $fechaDelPartido }}"
                               @if(!$esHoy && !$esMañana) style="display:none" @endif>
                             @if($esHoy)
-                                <i class="fa-solid fa-circle" style="font-size:.45rem"></i> HOY
+                                <i class="fa-solid fa-circle desi-dot-icon"></i> HOY
                             @elseif($esMañana)
-                                <i class="fa-solid fa-sun" style="font-size:.7rem"></i> Mañana
+                                <i class="fa-solid fa-sun desi-sun-icon"></i> Mañana
                             @endif
                         </span>
 
@@ -269,18 +296,21 @@
                    class="desi-gestionar-btn"
                    title="Gestionar partido">
                     <i class="fa-solid fa-arrow-right"></i>
+                    <span>Gestionar</span>
                 </a>
             </div>
 
         </div>
         @empty
 
-        <div class="empty-state">
-            <i class="fa-solid fa-clipboard-list" style="font-size:3rem;color:var(--text-muted);margin-bottom:1.25rem"></i>
+        <div class="empty-state empty-state--designaciones">
+            <span class="empty-state__icon">
+                <i class="fa-solid fa-clipboard-list"></i>
+            </span>
             <p class="empty-state__title">No hay partidos en este torneo</p>
             <p class="empty-state__sub">
                 @can('crear-designaciones')
-                <a href="{{ route('designaciones.create') }}" class="btn btn-primary" style="margin-top:.75rem">
+                <a href="{{ route('designaciones.create') }}" class="btn btn-primary empty-state__action">
                     <i class="fa-solid fa-plus"></i> Crear primer partido
                 </a>
                 @else

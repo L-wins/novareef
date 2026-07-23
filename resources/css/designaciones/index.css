@@ -3,24 +3,95 @@
     */
 
 /* ── Hero ────────────── */
+.desi-shell {
+  padding-bottom: 2rem;
+}
+
 .desi-hero {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  flex-wrap: wrap; gap: 1.25rem; margin-bottom: 2rem;
-  padding-bottom: 1.5rem; border-bottom: 1px solid var(--disp-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1.25rem;
+  border: 1px solid var(--disp-border);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(79, 142, 247, .1), rgba(34, 197, 94, .045) 48%, transparent),
+    var(--nv-card);
 }
+
+.desi-hero__main {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.desi-hero__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(79, 142, 247, .12);
+  border: 1px solid rgba(79, 142, 247, .25);
+  color: var(--nv-accent);
+  flex-shrink: 0;
+}
+
 .desi-hero__eyebrow {
-  display: flex; align-items: center; gap: .75rem; margin-bottom: .5rem;
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  margin-bottom: .45rem;
+  flex-wrap: wrap;
 }
+
 .desi-hero__label {
-  font-size: .68rem; font-weight: 700; letter-spacing: .15em;
-  text-transform: uppercase; color: var(--disp-text-2);
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--disp-text-2);
 }
+
 .desi-hero__title {
-  font-size: 2rem; font-weight: 800; color: var(--nv-text); margin: 0 0 .25rem; line-height: 1.1;
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--nv-text);
+  margin: 0 0 .25rem;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
 }
-.desi-hero__sub { font-size: .88rem; color: var(--disp-text-2); }
-.desi-btn-nuevo { white-space: nowrap; }
-.desi-hero__acciones { display: flex; gap: .75rem; flex-wrap: wrap; }
+
+.desi-hero__sub {
+  font-size: .88rem;
+  color: var(--disp-text-2);
+  margin: 0;
+}
+
+.desi-filtered-label {
+  color: var(--nv-accent);
+  font-weight: 700;
+}
+
+.desi-action-btn,
+.desi-btn-nuevo {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+.desi-hero__acciones {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .75rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
 
 .desi-alerta-critico {
   display: inline-flex; align-items: center; gap: 5px;
@@ -30,18 +101,135 @@
   animation: criticoPulse 2s ease-in-out infinite;
 }
 
+.desi-alerta-critico--compact {
+  padding-inline: 8px;
+  animation: none;
+}
+
+.desi-dot-icon { font-size: .45rem; }
+.desi-sun-icon { font-size: .7rem; }
+
+.desi-overview-grid,
+.desi-tournament-summary {
+  display: grid;
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+}
+
+.desi-overview-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.desi-tournament-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.desi-overview-card,
+.desi-summary-item {
+  min-height: 78px;
+  padding: .9rem 1rem;
+  border: 1px solid var(--disp-border);
+  border-radius: 12px;
+  background: var(--nv-card-alt);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: .25rem;
+}
+
+.desi-overview-card__label,
+.desi-summary-item span {
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: var(--disp-text-2);
+}
+
+.desi-overview-card strong,
+.desi-summary-item strong {
+  color: var(--nv-text);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.desi-overview-card--danger,
+.desi-summary-item--danger {
+  border-color: rgba(239, 68, 68, .32);
+  background: linear-gradient(160deg, rgba(239, 68, 68, .08), transparent 58%), var(--nv-card-alt);
+}
+
+.desi-overview-card--danger strong,
+.desi-summary-item--danger strong {
+  color: #ef4444;
+}
+
 /* ── Barra de filtros ── */
 .desi-filter-bar {
-  display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem 1.25rem;
-  background: var(--nv-surface); border: 1px solid var(--disp-border);
-  border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: .85rem 1rem;
+  background: var(--nv-surface);
+  border: 1px solid var(--disp-border);
+  border-radius: 14px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
 }
-.desi-filter-item { display: flex; flex-direction: column; gap: .3rem; min-width: 160px; flex: 1; }
+
+.desi-filter-bar--pdf {
+  border-color: rgba(239, 68, 68, .22);
+  background: linear-gradient(135deg, rgba(239, 68, 68, .055), transparent 55%), var(--nv-surface);
+}
+
+.desi-filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  min-width: 180px;
+  flex: 1;
+}
+
 .desi-filter-label {
-  font-size: .68rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: .08em; color: var(--disp-text-2);
+  font-size: .7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: var(--disp-text-2);
 }
-.desi-filter-actions { display: flex; align-items: flex-end; gap: .5rem; }
+
+.desi-date-input {
+  max-width: 170px;
+}
+
+.desi-filter-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.desi-filter-hint {
+  margin: 0;
+  align-self: center;
+}
+
+.desi-list-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .75rem;
+  margin: 1.5rem 0 .85rem;
+}
+
+.desi-list-toolbar__label {
+  display: block;
+  color: var(--disp-text-2);
+  font-size: .72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.desi-list-toolbar strong {
+  color: var(--nv-text);
+  font-size: .95rem;
+}
 
 /* ── Lista de partidos ─ */
 .desi-list { display: flex; flex-direction: column; gap: .75rem; }
@@ -51,14 +239,14 @@
   display: flex; align-items: stretch;
   background: var(--nv-card-alt);
   border: 1px solid var(--nv-border);
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   transition: border-color 220ms, box-shadow 220ms, transform 180ms;
   position: relative;
 }
 .desi-card:hover {
   border-color: var(--nv-border-2);
-  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  box-shadow: 0 12px 30px rgba(0,0,0,.26);
   transform: translateY(-1px);
 }
 
@@ -93,7 +281,7 @@
 
 /* ── Body ────────────── */
 .desi-card__body {
-  flex: 1; padding: 1.1rem 1.25rem; display: flex; flex-direction: column; gap: .65rem;
+  flex: 1; padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: .7rem;
   min-width: 0;
 }
 
@@ -116,7 +304,7 @@
 .desi-estado-pill {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: .7rem; font-weight: 700; padding: 4px 11px;
-  border-radius: 20px; letter-spacing: .02em;
+  border-radius: 20px; letter-spacing: 0;
 }
 .desi-estado--borrador   { background: rgba(79,142,247,.1); color: var(--nv-accent-2); border: 1px dashed rgba(79,142,247,.4); }
 .desi-estado--programado { background: rgba(79,142,247,.12); color: var(--nv-accent); }
@@ -132,7 +320,7 @@
   background: rgba(239,68,68,.12); color: #ef4444;
   border: 1px solid rgba(239,68,68,.3); border-radius: 20px;
   font-size: .68rem; font-weight: 800; padding: 3px 9px;
-  letter-spacing: .06em;
+  letter-spacing: 0;
 }
 .desi-manana-badge {
   display: inline-flex; align-items: center; gap: 5px;
@@ -150,9 +338,14 @@
 /* ── Match title ─────── */
 .desi-card__match {
   display: flex; align-items: center; gap: .75rem;
+  min-width: 0;
 }
 .desi-equipo {
-  font-size: 1.05rem; font-weight: 800; color: var(--nv-text); white-space: nowrap;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--nv-text);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .desi-vs {
   font-size: .8rem; color: var(--disp-text-2); font-weight: 600;
@@ -165,7 +358,7 @@
   display: flex; flex-wrap: wrap; gap: .25rem .75rem;
   font-size: .78rem; color: var(--disp-text-2);
 }
-.desi-meta-item { display: flex; align-items: center; gap: 5px; }
+.desi-meta-item { display: flex; align-items: center; gap: 5px; min-width: 0; }
 .desi-meta-item i { font-size: .7rem; opacity: .7; }
 
 /* ── Bottom: árbitros + progreso ─── */
@@ -181,6 +374,7 @@
   background: var(--nv-fill); border: 1px solid var(--nv-border);
   border-radius: 8px; padding: 5px 10px 5px 5px;
   font-size: .76rem; transition: border-color 180ms;
+  max-width: 100%;
 }
 .desi-arbitro-chip--confirmada {
   background: rgba(34,197,94,.07); border-color: rgba(34,197,94,.2);
@@ -197,13 +391,20 @@
   color: var(--nv-accent); flex-shrink: 0;
 }
 .desi-arbitro-info {
-  display: flex; flex-direction: column; line-height: 1.2;
+  display: flex; flex-direction: column; line-height: 1.2; min-width: 0;
 }
 .desi-arbitro-rol {
   font-size: .65rem; font-weight: 600; color: var(--disp-text-2);
-  text-transform: uppercase; letter-spacing: .04em;
+  text-transform: uppercase; letter-spacing: 0;
 }
-.desi-arbitro-nombre { font-size: .78rem; color: var(--disp-text); font-weight: 600; }
+.desi-arbitro-nombre {
+  font-size: .78rem;
+  color: var(--disp-text);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .desi-chip-estado { font-size: .7rem; margin-left: 2px; }
 .desi-arbitro-chip--confirmada .desi-chip-estado { color: #22c55e; }
 .desi-arbitro-chip--rechazada  .desi-chip-estado { color: #ef4444; }
@@ -238,25 +439,52 @@
   flex-shrink: 0;
 }
 .desi-gestionar-btn {
-  width: 38px; height: 38px; border-radius: 10px;
+  min-width: 42px; height: 40px; border-radius: 10px;
+  padding: 0 .75rem;
   background: rgba(79,142,247,.1); border: 1px solid rgba(79,142,247,.2);
-  color: var(--nv-accent); display: flex; align-items: center; justify-content: center;
-  font-size: .9rem; transition: all 180ms; text-decoration: none;
+  color: var(--nv-accent); display: inline-flex; align-items: center; justify-content: center;
+  gap: .45rem;
+  font-size: .82rem; font-weight: 800; transition: all 180ms; text-decoration: none;
+}
+.desi-gestionar-btn span {
+  display: inline;
 }
 .desi-gestionar-btn:hover {
   background: var(--nv-accent); border-color: var(--nv-accent); color: #fff;
   box-shadow: 0 4px 14px rgba(79,142,247,.4);
-  transform: translateX(2px);
+  transform: translateX(1px);
 }
 
 /* ── Responsive ──────── */
 @media (max-width: 700px) {
-  .desi-hero { flex-direction: column; align-items: flex-start; }
-  .desi-filter-bar { flex-direction: column; }
+  .desi-hero { flex-direction: column; align-items: stretch; }
+  .desi-hero__main { align-items: flex-start; }
+  .desi-hero__acciones { width: 100%; justify-content: stretch; margin-left: 0; }
+  .desi-action-btn { width: 100%; justify-content: center; }
+  .desi-overview-grid,
+  .desi-tournament-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .desi-filter-bar { flex-direction: column; align-items: stretch; }
   .desi-filter-item { min-width: 100%; }
-  .desi-equipo { font-size: .9rem; }
-  .desi-card__cta { padding: 0 .75rem; }
+  .desi-list-toolbar { align-items: flex-start; flex-direction: column; }
+  .desi-equipo { font-size: .92rem; }
+  .desi-card { flex-direction: column; }
+  .desi-card__accent { width: auto; height: 4px; }
+  .desi-card__cta { padding: 0 .9rem .9rem; border-left: none; }
+  .desi-gestionar-btn { width: 100%; }
   .desi-progress-wrap { display: none; }
+}
+
+@media (max-width: 460px) {
+  .desi-hero__icon { width: 42px; height: 42px; }
+  .desi-hero__title { font-size: 1.55rem; }
+  .desi-overview-grid,
+  .desi-tournament-summary { grid-template-columns: 1fr; }
+  .desi-card__match {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .45rem;
+  }
+  .desi-vs { align-self: flex-start; }
 }
 
 /*
@@ -265,26 +493,50 @@
 
 .desi-torneos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 1rem;
 }
 
 .desi-torneo-card {
   display: flex; flex-direction: column; gap: .85rem;
-  background: var(--nv-card-alt); border: 1px solid var(--nv-border); border-radius: 14px;
-  padding: 1.5rem; text-decoration: none;
+  min-height: 188px;
+  background: var(--nv-card-alt); border: 1px solid var(--nv-border); border-radius: 12px;
+  padding: 1.15rem; text-decoration: none;
   transition: border-color 220ms, box-shadow 220ms, transform 180ms;
+  position: relative;
+  overflow: hidden;
+}
+.desi-torneo-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--nv-accent), rgba(34, 197, 94, .78));
+  opacity: .85;
 }
 .desi-torneo-card:hover {
   border-color: var(--nv-border-2);
-  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  box-shadow: 0 12px 30px rgba(0,0,0,.26);
   transform: translateY(-2px);
 }
 
 .desi-torneo-card__top { display: flex; justify-content: space-between; align-items: center; }
+.desi-torneo-card__badge-row { display: flex; align-items: center; flex-wrap: wrap; gap: .35rem; }
+
+.desi-torneo-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(79,142,247,.1);
+  color: var(--nv-accent);
+  flex-shrink: 0;
+}
 
 .desi-torneo-card__estado {
-  font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0;
   padding: 3px 10px; border-radius: 20px;
 }
 .desi-torneo-card__estado--activo  { background: rgba(34,197,94,.12);  color: #22c55e; }
@@ -293,7 +545,8 @@
 .desi-torneo-card__estado--cerrado { background: rgba(100,116,139,.18); color: var(--nv-text-3); }
 
 .desi-torneo-card__nombre {
-  font-size: 1.15rem; font-weight: 800; color: var(--nv-text); line-height: 1.25; margin: 0;
+  font-size: 1.08rem; font-weight: 800; color: var(--nv-text); line-height: 1.25; margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .desi-torneo-card__meta {
@@ -303,11 +556,30 @@
 
 .desi-torneo-card__bottom {
   display: flex; align-items: center; gap: .75rem;
+  flex-wrap: wrap;
+  margin-top: auto;
   padding-top: .75rem; border-top: 1px solid var(--nv-fill);
 }
 .desi-torneo-card__count { font-size: .85rem; color: var(--disp-text); }
 .desi-torneo-card__count strong { color: var(--nv-text); }
-.desi-torneo-card__arrow { margin-left: auto; color: var(--nv-accent); font-size: .8rem; }
+.desi-torneo-card__arrow {
+  margin-left: auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(79,142,247,.1);
+  color: var(--nv-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .78rem;
+  transition: background 160ms, color 160ms, transform 160ms;
+}
+.desi-torneo-card:hover .desi-torneo-card__arrow {
+  background: var(--nv-accent);
+  color: #fff;
+  transform: translateX(2px);
+}
 
 /* ═══════════════════════════════════════════════════════════════
    Tema claro — los pasteles pensados para fondo oscuro (dark)

@@ -8,7 +8,7 @@
 @endpush
 
 @section('contenido')
-<div class="container">
+<div class="container desi-shell">
 
     <div class="breadcrumb">
         <a href="{{ route('designaciones.index') }}">Designaciones</a>
@@ -16,11 +16,21 @@
         <span>Nuevo partido</span>
     </div>
 
-    <div class="page-header">
-        <div class="page-header-left">
-            <h1 class="page-heading">Nuevo partido</h1>
-            <p class="page-subheading">Programa un partido para designar árbitros</p>
+    <div class="desi-form-hero">
+        <div class="desi-form-hero__main">
+            <div class="desi-form-hero__icon">
+                <i class="fa-solid fa-futbol"></i>
+            </div>
+            <div>
+                <span class="desi-hero__label">Designaciones</span>
+                <h1 class="desi-hero__title">Nuevo partido</h1>
+                <p class="desi-hero__sub">Programa un partido para designar árbitros.</p>
+            </div>
         </div>
+        <a href="{{ route('designaciones.index') }}" class="btn btn-ghost desi-action-btn">
+            <i class="fa-solid fa-arrow-left"></i>
+            Volver
+        </a>
     </div>
 
     <form method="POST" action="{{ route('designaciones.store') }}" id="form-partido">
@@ -29,7 +39,14 @@
         <div class="form-card-grid">
 
             {{-- Columna 1 --}}
-            <div class="form-col">
+            <div class="form-col desi-form-panel">
+                <div class="desi-form-panel__header">
+                    <span class="desi-form-panel__icon"><i class="fa-solid fa-trophy"></i></span>
+                    <div>
+                        <h2>Competencia</h2>
+                        <p>Torneo, división, sede y formato arbitral.</p>
+                    </div>
+                </div>
 
                 <div class="form-group">
                     <label class="form-label">Torneo <span class="req">*</span></label>
@@ -82,7 +99,14 @@
             </div>
 
             {{-- Columna 2 --}}
-            <div class="form-col">
+            <div class="form-col desi-form-panel">
+                <div class="desi-form-panel__header">
+                    <span class="desi-form-panel__icon"><i class="fa-solid fa-calendar-days"></i></span>
+                    <div>
+                        <h2>Programación</h2>
+                        <p>Equipos, fecha, hora y observaciones.</p>
+                    </div>
+                </div>
 
                 <div class="form-group">
                     <label class="form-label">Equipo local <span class="req">*</span></label>
@@ -134,9 +158,12 @@
             <div id="formato-roles" class="formato-roles-list"></div>
         </div>
 
-        <div class="form-actions">
-            <a href="{{ route('designaciones.index') }}" class="btn btn-ghost">Cancelar</a>
-            <button type="submit" class="btn btn-primary">
+        <div class="form-actions desi-form-actions">
+            <a href="{{ route('designaciones.index') }}" class="btn btn-ghost desi-action-btn">
+                <i class="fa-solid fa-xmark"></i>
+                Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary desi-action-btn">
                 <i class="fa-solid fa-futbol"></i>
                 Crear partido
             </button>

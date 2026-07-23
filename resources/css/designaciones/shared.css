@@ -12,6 +12,8 @@
 .btn.btn-danger:hover  { opacity: .9; }
 .btn-lg  { padding: 14px 24px; font-size: 1rem; }
 .btn-xs  { padding: 4px 10px; font-size: .72rem; }
+.btn-block { width: 100%; }
+.btn-center { justify-content: center; }
 
 /* ── Modales (rechazo, editar partido) ───── */
 .nova-modal-overlay {
@@ -63,8 +65,26 @@
   text-align: center; padding: 4rem 2rem;
   border: 2px dashed var(--disp-border); border-radius: 16px;
 }
+.empty-state--designaciones {
+  grid-column: 1 / -1;
+  background: var(--nv-card-alt);
+}
+.empty-state__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  color: var(--disp-text-2);
+  background: var(--nv-fill);
+  border: 1px solid var(--disp-border);
+  font-size: 1.45rem;
+}
 .empty-state__title { font-size: 1.1rem; font-weight: 700; color: var(--disp-text); margin-bottom: .5rem; }
 .empty-state__sub   { font-size: .9rem; color: var(--disp-text-2); }
+.empty-state__action { margin-top: .75rem; }
 
 /* ═══════════════════════════════════════════════════════════════
    Tema claro — los pasteles pensados para fondo oscuro (dark)

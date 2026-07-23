@@ -150,7 +150,7 @@ class DisponibilidadController extends Controller
      * plataforma, punto 3.1). Usa los mismos modelos/helpers que el resto de
      * esta clase, solo que agregados para todo el colegio en vez de un árbitro.
      */
-    public function general(Request $request): View
+    public function general(Request $request): View|JsonResponse
     {
         $idColegio = $this->idColegioActivo();
         $semana    = SemanaNavegacion::desde(
@@ -175,10 +175,23 @@ class DisponibilidadController extends Controller
             ->orderBy('idArbitro')
             ->get();
 
-        return view('disponibilidad.general', [
+        $datos = [
             'arbitros' => $arbitros,
             'semana'   => $semana,
             'franjas'  => DisponibilidadArbitro::getFranjas(),
-        ]);
+        ];
+
+        // auto-filter.js (modo AJAX): navegar entre semanas (prev/next/hoy)
+        // reemplaza solo la región del calendario, sin recargar la página
+        // — ver disponibilidad/general.blade.php y resources/js/shared/auto-filter.js.
+        if ($request->ajax()) {
+            return response()->json([
+                'regions' => [
+                    'calendario' => view('disponibilidad.partials.calendario-general', $datos)->render(),
+                ],
+            ]);
+        }
+
+        return view('disponibilidad.general', $datos);
     }
 }

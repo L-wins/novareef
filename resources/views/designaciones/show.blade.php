@@ -8,7 +8,7 @@
 @endpush
 
 @section('contenido')
-<div class="container">
+<div class="container desi-shell">
 
     {{-- Breadcrumb — refleja la jerarquía real (Designaciones > Torneo > Partido),
          no solo "Designaciones", sin importar desde dónde se haya entrado
@@ -62,17 +62,22 @@
     @endif
 
     {{-- Header del partido --}}
-    <div class="show-header">
+    <div class="show-header show-header--panel">
         <div class="show-header__match">
-            <h1 class="show-match-title">
-                {{ $partido->equipoLocal }}
-                <span class="show-vs">vs</span>
-                {{ $partido->equipoVisitante }}
-            </h1>
-            <div class="show-meta-chips">
-                <span><i class="fa-regular fa-calendar"></i> {{ ucfirst($fechaHuman) }}</span>
-                <span><i class="fa-regular fa-clock"></i> {{ $partido->horaPartido }}</span>
-                <span><i class="fa-solid fa-location-dot"></i> {{ $partido->sede?->nombreSede ?? '—' }}</span>
+            <div class="show-header__icon">
+                <i class="fa-solid fa-futbol"></i>
+            </div>
+            <div>
+                <h1 class="show-match-title">
+                    {{ $partido->equipoLocal }}
+                    <span class="show-vs">vs</span>
+                    {{ $partido->equipoVisitante }}
+                </h1>
+                <div class="show-meta-chips">
+                    <span><i class="fa-regular fa-calendar"></i> {{ ucfirst($fechaHuman) }}</span>
+                    <span><i class="fa-regular fa-clock"></i> {{ $partido->horaPartido }}</span>
+                    <span><i class="fa-solid fa-location-dot"></i> {{ $partido->sede?->nombreSede ?? '—' }}</span>
+                </div>
             </div>
         </div>
         <span class="partido-estado-badge partido-estado-badge--lg estado-{{ $estado }}">
@@ -126,7 +131,7 @@
                         {{ $nombreSlot }}
                     </div>
                     @if($esBorrador && $designacion && $designacion->estaPendiente())
-                    <button class="btn btn-ghost btn-xs btn-quitar"
+                    <button class="btn btn-ghost btn-xs btn-quitar slot-action-btn"
                             data-id="{{ $designacion->idDesignacion }}"
                             onclick="quitarDesignacion({{ $designacion->idDesignacion }}, {{ $slot->idRol }})">
                         <i class="fa-solid fa-xmark"></i> Quitar
@@ -134,7 +139,7 @@
                     @endif
                     @if(!$esBorrador && $designacion && $puedeReasignar)
                     @can('crear-designaciones')
-                    <button class="btn btn-ghost btn-xs btn-reasignar"
+                    <button class="btn btn-ghost btn-xs btn-reasignar slot-action-btn"
                             onclick="toggleReasignarBusqueda({{ $designacion->idDesignacion }})">
                         <i class="fa-solid fa-arrows-rotate"></i> Reasignar
                     </button>
@@ -209,7 +214,7 @@
 
             {{-- Historial — solo designador y ejecutivo, nunca árbitros --}}
             @if($veHistorial)
-            <div class="show-section-title" style="margin-top:2rem">
+            <div class="show-section-title show-section-title--spaced">
                 <i class="fa-solid fa-history"></i>
                 Historial de acciones
             </div>
@@ -255,8 +260,7 @@
                 @endforelse
             </div>
             @if($partido->historial->count() > $historialVisibleInicial)
-            <button type="button" class="btn btn-ghost btn-sm" id="btn-historial-toggle"
-                    style="width:100%;margin-top:.5rem"
+            <button type="button" class="btn btn-ghost btn-sm btn-block show-history-toggle" id="btn-historial-toggle"
                     data-restantes="{{ $partido->historial->count() - $historialVisibleInicial }}"
                     onclick="toggleHistorialCompleto()">
                 <i class="fa-solid fa-chevron-down"></i>
@@ -282,12 +286,12 @@
                     <i class="fa-solid fa-rocket"></i>
                     Publicar partido
                 </button>
-                <button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;margin-top:.6rem"
+                <button class="btn btn-secondary btn-sm btn-block btn-center info-card__action"
                         onclick="abrirModalEditarPartido()">
                     <i class="fa-solid fa-pen"></i>
                     Editar partido
                 </button>
-                <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:.6rem;color:#fca5a5"
+                <button class="btn btn-ghost btn-sm btn-block btn-center info-card__action info-card__action--danger"
                         onclick="eliminarPartido({{ $partido->idPartido }})">
                     <i class="fa-solid fa-trash"></i>
                     Eliminar partido
@@ -298,7 +302,7 @@
 
             {{-- Info del partido --}}
             <div class="info-card">
-                <div class="info-card__title">Información del partido</div>
+                <div class="info-card__title"><i class="fa-solid fa-circle-info"></i> Información del partido</div>
                 <div class="info-row"><span>Torneo</span><strong>{{ $partido->torneo?->nombreTorneo }}</strong></div>
                 <div class="info-row"><span>División</span><strong>{{ $partido->division?->nombreDivision ?? '—' }}</strong></div>
                 <div class="info-row"><span>Formato</span><strong>{{ $partido->formato?->nombre ?? '—' }}</strong></div>
@@ -315,7 +319,7 @@
                 <div class="info-row"><span>Sede</span><strong>{{ $partido->sede?->nombreSede ?? '—' }}</strong></div>
                 <div class="info-row"><span>Ciudad</span><strong>{{ $partido->sede?->ciudad ?? '—' }}</strong></div>
                 @if($partido->sede?->urlMaps)
-                <a href="{{ $partido->sede->urlMaps }}" target="_blank" class="btn btn-ghost btn-sm" style="width:100%;margin-top:.75rem;justify-content:center">
+                <a href="{{ $partido->sede->urlMaps }}" target="_blank" class="btn btn-ghost btn-sm btn-block btn-center info-card__action">
                     <i class="fa-solid fa-map-location-dot"></i> Ver en Maps
                 </a>
                 @endif
@@ -331,13 +335,13 @@
             @can('crear-designaciones')
             @if(!$esBorrador && !$esTerminal)
             <div class="info-card">
-                <div class="info-card__title">Cambiar estado</div>
+                <div class="info-card__title"><i class="fa-solid fa-arrows-rotate"></i> Cambiar estado</div>
                 <select id="estado-nuevo" class="form-input" data-nova-select>
                     @foreach(\App\StateMachines\PartidoStateMachine::transicionesManuales($estado) as $sig)
                     <option value="{{ $sig }}">{{ $estadoMapa[$sig] ?? $sig }}</option>
                     @endforeach
                 </select>
-                <button class="btn btn-primary" style="width:100%;margin-top:.75rem"
+                <button class="btn btn-primary btn-block info-card__action"
                         onclick="cambiarEstado({{ $partido->idPartido }}, {{ $partido->version }})">
                     <i class="fa-solid fa-arrows-rotate"></i> Aplicar cambio
                 </button>
@@ -358,7 +362,7 @@
                     @endif
                     Esta acción queda registrada en el historial.
                 </p>
-                <button class="btn btn-warning" style="width:100%"
+                <button class="btn btn-warning btn-block"
                         onclick="revertirFinalizado({{ $partido->idPartido }}, {{ $partido->version }})">
                     <i class="fa-solid fa-rotate-left"></i> Revertir a programado
                 </button>
@@ -370,17 +374,17 @@
             <div class="info-card">
                 <div class="info-card__title"><i class="fa-solid fa-eye"></i> Veedor</div>
                 @if($partido->veedor)
-                <div class="arbitro-item" style="margin-bottom:.75rem">
+                <div class="arbitro-item show-veedor-card">
                     <div class="arbitro-avatar">
                         {{ strtoupper(substr($partido->veedor->nombreUsuario ?? 'V', 0, 2)) }}
                     </div>
-                    <div style="flex:1">
-                        <div style="font-weight:600;color:var(--text-primary)">{{ $partido->veedor->nombreUsuario }}</div>
-                        <div style="font-size:.78rem;color:var(--text-muted)">{{ $partido->veedor->rolUsuario }}</div>
+                    <div class="show-veedor-card__info">
+                        <div class="show-veedor-card__name">{{ $partido->veedor->nombreUsuario }}</div>
+                        <div class="show-veedor-card__role">{{ $partido->veedor->rolUsuario }}</div>
                     </div>
                 </div>
                 @else
-                <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:.75rem">Sin veedor asignado.</p>
+                <p class="show-empty-note">Sin veedor asignado.</p>
                 @endif
 
                 @if(!$esTerminal)
@@ -392,7 +396,7 @@
                     </option>
                     @endforeach
                 </select>
-                <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:.5rem"
+                <button class="btn btn-secondary btn-sm btn-block info-card__action"
                         onclick="asignarVeedor({{ $partido->idPartido }})">
                     <i class="fa-solid fa-user-check"></i>
                     {{ $partido->veedor ? 'Cambiar veedor' : 'Asignar veedor' }}
@@ -406,7 +410,7 @@
                 <div class="info-card__title"><i class="fa-solid fa-file-pdf"></i> Documentos</div>
                 <a href="{{ route('designaciones.partido.acta', $partido->idPartido) }}"
                    target="_blank"
-                   class="btn btn-ghost btn-sm" style="width:100%;justify-content:center">
+                   class="btn btn-ghost btn-sm btn-block btn-center">
                     <i class="fa-solid fa-download"></i> Descargar acta PDF
                 </a>
             </div>
@@ -417,7 +421,7 @@
             <div class="info-card">
                 <div class="info-card__title"><i class="fa-solid fa-star"></i> Calificaciones</div>
                 <a href="{{ route('designaciones.calificaciones.index', $partido->idPartido) }}"
-                   class="btn btn-primary btn-sm" style="width:100%;justify-content:center">
+                   class="btn btn-primary btn-sm btn-block btn-center">
                     <i class="fa-solid fa-star-half-stroke"></i> Calificar árbitros
                 </a>
             </div>
