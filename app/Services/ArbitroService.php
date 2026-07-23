@@ -22,6 +22,7 @@ final class ArbitroService
 
     public function __construct(
         private readonly LimiteService $limites,
+        private readonly WhatsAppService $whatsapp,
     ) {}
 
     /**
@@ -244,7 +245,7 @@ final class ArbitroService
 
             $usuario->assignRole($rol);
 
-            DB::afterCommit(function () use ($destinoNotificacion, $email, $usernameUsuario, $passwordPlano, $nombreColegio, $urlAcceso, $usuario): void {
+            DB::afterCommit(function () use ($destinoNotificacion, $email, $telefono, $usernameUsuario, $passwordPlano, $nombreColegio, $urlAcceso, $usuario): void {
                 try {
                     Mail::to($destinoNotificacion)->send(
                         new CredencialesColegioMail(
@@ -263,10 +264,52 @@ final class ArbitroService
                         'error'     => $e->getMessage(),
                     ]);
                 }
+
+                $this->enviarCredencialesPorWhatsApp($usuario, $telefono, $nombreColegio, $email, $usernameUsuario, $passwordPlano, $urlAcceso);
             });
 
             return $usuario;
         });
+    }
+
+    /**
+     * Envío best-effort — nunca bloquea la creación de la cuenta ni afecta
+     * el envío del correo (try/catch independiente, mismo criterio). Sin
+     * teléfono o sin WHATSAPP_PLANTILLA_CREDENCIALES configurada, no hace
+     * nada — el correo sigue siendo el canal garantizado.
+     */
+    private function enviarCredencialesPorWhatsApp(
+        User $usuario,
+        string $telefono,
+        string $nombreColegio,
+        ?string $email,
+        ?string $usernameUsuario,
+        string $passwordPlano,
+        string $urlAcceso,
+    ): void {
+        $plantilla = config('services.whatsapp.plantilla_credenciales');
+
+        if ($telefono === '' || ! $plantilla) {
+            return;
+        }
+
+        try {
+            // Los nombres de estas claves deben coincidir exactamente con
+            // las variables {{colegio}}, {{usuario}}, {{password}},
+            // {{url_acceso}} configuradas en la plantilla aprobada en Meta.
+            $this->whatsapp->enviarPlantilla($telefono, $plantilla, [
+                'colegio'     => $nombreColegio,
+                'usuario'     => $usernameUsuario ?? $email ?? '—',
+                'password'    => $passwordPlano,
+                'url_acceso'  => $urlAcceso,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('No se pudo enviar WhatsApp de credenciales', [
+                'idUsuario' => $usuario->idUsuario,
+                'telefono'  => $telefono,
+                'error'     => $e->getMessage(),
+            ]);
+        }
     }
 
     // ── Helpers privados ──────────────────

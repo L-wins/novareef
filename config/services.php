@@ -37,4 +37,16 @@ return [
         'from'  => env('TWILIO_FROM'),
     ],
 
+    'whatsapp' => [
+        'token'                 => env('WHATSAPP_TOKEN'),
+        'phone_number_id'       => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'business_account_id'   => env('WHATSAPP_BUSINESS_ACCOUNT_ID'),
+        'modo_prueba'           => env('WHATSAPP_MODO_PRUEBA', true),
+        // Nombre exacto de la plantilla aprobada en Meta (Business Suite →
+        // Administrador de WhatsApp → Plantillas) — sin esto configurado,
+        // ArbitroService::registrarConCredenciales() simplemente no envía
+        // WhatsApp (el correo sigue siendo el canal garantizado).
+        'plantilla_credenciales' => env('WHATSAPP_PLANTILLA_CREDENCIALES'),
+    ],
+
 ];
