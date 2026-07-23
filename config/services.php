@@ -44,9 +44,9 @@ return [
         'modo_prueba'           => env('WHATSAPP_MODO_PRUEBA', true),
         // Nombre exacto de la plantilla aprobada en Meta (Business Suite →
         // Administrador de WhatsApp → Plantillas) — sin esto configurado,
-        // ArbitroService::registrarConCredenciales() simplemente no envía
-        // WhatsApp (el correo sigue siendo el canal garantizado).
-        'plantilla_credenciales' => env('WHATSAPP_PLANTILLA_CREDENCIALES'),
+        // NotificarDesignacionJob simplemente no envía WhatsApp (el correo
+        // sigue siendo el canal garantizado).
+        'plantilla_designacion' => env('WHATSAPP_PLANTILLA_DESIGNACION'),
     ],
 
 ];

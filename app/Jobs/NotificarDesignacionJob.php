@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Mail\DesignacionNotificacionMail;
 use App\Models\Designacion;
+use App\Services\WhatsAppService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -57,6 +58,7 @@ class NotificarDesignacionJob implements ShouldQueue
         }
 
         $this->enviarSms($designacion);
+        $this->enviarWhatsApp($designacion);
 
         $designacion->update([
             'notificacionEnviada' => true,
@@ -99,5 +101,51 @@ class NotificarDesignacionJob implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Envío best-effort — nunca bloquea la notificación por correo/SMS
+     * (try/catch independiente, mismo criterio que enviarSms()). Sin
+     * teléfono o sin WHATSAPP_PLANTILLA_DESIGNACION configurada, no hace
+     * nada — el correo sigue siendo el canal garantizado.
+     */
+    private function enviarWhatsApp(Designacion $designacion): void
+    {
+        $plantilla = config('services.whatsapp.plantilla_designacion');
+
+        if (! $plantilla) {
+            return;
+        }
+
+        $telefono = $designacion->arbitro?->usuario?->telefonoUsuario;
+        if (! $telefono) {
+            return;
+        }
+
+        $partido = $designacion->partido;
+        $fecha   = $partido->fechaPartido?->locale('es')->isoFormat('D [de] MMMM') ?? '';
+        $hora    = (string) $partido->horaPartido;
+
+        try {
+            // Los nombres de estas claves deben coincidir exactamente con
+            // las variables {{equipos}}, {{fecha}}, {{hora}}, {{rol}},
+            // {{url}} configuradas en la plantilla aprobada en Meta.
+            $this->whatsapp()->enviarPlantilla($telefono, $plantilla, [
+                'equipos' => "{$partido->equipoLocal} vs {$partido->equipoVisitante}",
+                'fecha'   => $fecha,
+                'hora'    => $hora,
+                'rol'     => $designacion->rol?->nombre ?? '',
+                'url'     => route('mis-partidos.index'),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning("NotificarDesignacionJob: fallo WhatsApp. idDesignacion={$designacion->idDesignacion}", [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function whatsapp(): WhatsAppService
+    {
+        return app(WhatsAppService::class);
     }
 }

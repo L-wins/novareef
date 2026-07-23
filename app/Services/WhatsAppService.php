@@ -20,7 +20,8 @@ use Illuminate\Support\Facades\Log;
  *   sus credenciales apenas se crea la cuenta).
  * - enviarPlantilla(): usa una plantilla pre-aprobada por Meta — es el único
  *   tipo de mensaje que puede iniciar conversación fuera de esa ventana.
- *   Necesaria para el flujo de credenciales.
+ *   Necesaria para notificar a un usuario que nunca le ha escrito al número
+ *   (ej. avisar una nueva designación de partido).
  *
  * En modo prueba (WHATSAPP_MODO_PRUEBA=true) el número solo puede escribirle
  * a destinatarios agregados manualmente en el panel de Meta — cualquier otro
