@@ -44,10 +44,31 @@
         <div class="flash-error" style="margin-bottom:1.25rem;">{{ session('error') }}</div>
     @endif
 
+    <form method="GET" action="{{ route('academico.sesiones.index') }}" class="filter-bar-grid" data-auto-filter>
+        <div class="filter-group">
+            <label class="filter-label">Desde</label>
+            <input type="text" name="desde" value="{{ $desde }}" data-nova-date placeholder="dd/mm/aaaa" class="filter-input">
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Hasta</label>
+            <input type="text" name="hasta" value="{{ $hasta }}" data-nova-date placeholder="dd/mm/aaaa" class="filter-input">
+        </div>
+        <div class="filter-group filter-actions">
+            <button type="submit" class="btn btn-primary btn-sm" data-auto-filter-hide>Filtrar</button>
+            @if ($desde || $hasta)
+                <a href="{{ route('academico.sesiones.index') }}" class="btn btn-secondary btn-sm">Limpiar</a>
+            @endif
+        </div>
+    </form>
+
+    @if (! $desde && ! $hasta)
+        <p class="page-subheading" style="margin:-0.5rem 0 1.25rem;">Mostrando sesiones de hoy en adelante. Usa el filtro de fechas para ver el historial.</p>
+    @endif
+
     @if ($sesiones->isEmpty())
         <div class="empty-state">
             <i class="fa-solid fa-graduation-cap" style="font-size:48px;"></i>
-            <p>Aún no hay sesiones académicas registradas.</p>
+            <p>{{ $desde || $hasta ? 'No hay sesiones académicas en ese rango de fechas.' : 'No hay sesiones académicas de hoy en adelante.' }}</p>
         </div>
     @else
         <div class="sesiones-grid">

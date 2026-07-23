@@ -13,6 +13,7 @@ use App\Models\SesionAcademica;
 use App\Models\TipoSesionAcademica;
 use App\Services\SesionAcademicaService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -24,9 +25,13 @@ class SesionAcademicaController extends Controller
         private readonly SesionAcademicaService $sesiones,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $idColegio = $this->idColegioActivo();
+
+        $desde = $request->query('desde');
+        $hasta = $request->query('hasta');
+        $sinFiltro = ! $desde && ! $hasta;
 
         $sesiones = SesionAcademica::where('idColegio', $idColegio)
             ->with('tipo')
@@ -34,11 +39,17 @@ class SesionAcademicaController extends Controller
                 'asistencias',
                 'asistencias as presentes_count' => fn ($q) => $q->where('estadoAsistencia', 'presente'),
             ])
-            ->orderByDesc('fechaSesion')
+            // Sin filtro de fecha: solo hoy en adelante — el historial
+            // completo (que puede ser largo) se consulta a propósito con el
+            // filtro, no se mezcla por defecto con lo vigente/próximo.
+            ->when($sinFiltro, fn ($q) => $q->whereDate('fechaSesion', '>=', today()))
+            ->when($desde, fn ($q) => $q->whereDate('fechaSesion', '>=', $desde))
+            ->when($hasta, fn ($q) => $q->whereDate('fechaSesion', '<=', $hasta))
+            ->orderBy('fechaSesion')
             ->paginate(20)
             ->withQueryString();
 
-        return view('academico.sesiones.index', compact('sesiones'));
+        return view('academico.sesiones.index', compact('sesiones', 'desde', 'hasta'));
     }
 
     public function create(): View

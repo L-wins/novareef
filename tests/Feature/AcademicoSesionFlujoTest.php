@@ -174,4 +174,43 @@ class AcademicoSesionFlujoTest extends TestCase
             ->assertOk()
             ->assertViewHas('proximas', fn ($proximas) => $proximas->count() === 1);
     }
+
+    public function test_el_listado_solo_muestra_hoy_en_adelante_sin_filtro_de_fecha(): void
+    {
+        $colegio    = $this->crearColegioConAcademico();
+        $instructor = $this->crearInstructor($colegio);
+        $tipo       = $this->crearTipoSesion($colegio);
+
+        $pasada = SesionAcademica::create([
+            'idColegio'       => $colegio->idColegio,
+            'idInstructor'    => $instructor->idUsuario,
+            'idTipoSesion'    => $tipo->idTipoSesion,
+            'modalidad'       => 'presencial',
+            'tema'            => 'Sesión del semestre pasado',
+            'fechaSesion'     => today()->subMonths(3)->format('Y-m-d'),
+            'horaSesion'      => '18:00',
+            'duracionMinutos' => 90,
+            'dirigidaA'       => 'todos',
+            'modoAsistencia'  => 'manual',
+            'estadoSesion'    => SesionAcademica::ESTADO_FINALIZADA,
+        ]);
+
+        $this->actingAs($instructor)->post(route('academico.sesiones.store'), $this->datosSesion($tipo));
+        $proxima = SesionAcademica::where('idColegio', $colegio->idColegio)->where('idSesion', '!=', $pasada->idSesion)->firstOrFail();
+
+        // Sin filtro: solo la próxima (hoy en adelante), la pasada queda oculta.
+        $this->actingAs($instructor)->get(route('academico.sesiones.index'))
+            ->assertOk()
+            ->assertViewHas('sesiones', fn ($sesiones) => $sesiones->pluck('idSesion')->all() === [$proxima->idSesion])
+            ->assertDontSee('Sesión del semestre pasado');
+
+        // Con filtro de fecha que cubre la pasada, aparece en el historial.
+        $this->actingAs($instructor)->get(route('academico.sesiones.index', [
+            'desde' => today()->subMonths(4)->format('Y-m-d'),
+            'hasta' => today()->subMonths(2)->format('Y-m-d'),
+        ]))
+            ->assertOk()
+            ->assertViewHas('sesiones', fn ($sesiones) => $sesiones->pluck('idSesion')->all() === [$pasada->idSesion])
+            ->assertSee('Sesión del semestre pasado');
+    }
 }
