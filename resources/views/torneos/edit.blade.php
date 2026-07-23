@@ -10,15 +10,16 @@
 @section('contenido')
 @php $modalidadBloqueada = $torneo->partidos_count > 0; @endphp
 
-<div class="container">
+<div class="container torneo-form-page">
 
     <a href="{{ route('torneos.show', $torneo->idTorneo) }}" class="back-link">
         <i class="fa-solid fa-arrow-left"></i>
         Volver al torneo
     </a>
 
-    <div class="page-header">
+    <div class="page-header page-header--panel">
         <div class="page-header-left">
+            <span class="page-kicker">Ajustes del torneo</span>
             <h1 class="page-heading">Editar torneo</h1>
             <p class="page-subheading">Datos básicos del torneo</p>
         </div>
@@ -38,7 +39,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('torneos.update', $torneo->idTorneo) }}" class="form-card">
+    <form method="POST" action="{{ route('torneos.update', $torneo->idTorneo) }}" class="form-card form-card--guided">
         @csrf
         @method('PUT')
 

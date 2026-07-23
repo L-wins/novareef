@@ -8,7 +8,7 @@
 @endpush
 
 @section('contenido')
-<div class="container">
+<div class="container torneo-detail-page">
 
     <a href="{{ route('torneos.index') }}" class="back-link">
         <i class="fa-solid fa-arrow-left"></i>
@@ -37,6 +37,11 @@
                 <span><i class="fa-solid fa-calendar-day"></i>{{ $torneo->fechaInicio->format('d/m/Y') }} – {{ $torneo->fechaFin->format('d/m/Y') }}</span>
                 <span><i class="fa-solid fa-user-tie"></i>{{ $torneo->organizadorNombre }}</span>
                 <span><i class="fa-solid fa-money-bill-wave"></i>{{ $torneo->modalidadPago === 'campo' ? 'Pago en campo' : 'Por nómina' }}</span>
+            </div>
+            <div class="torneo-hero-stats">
+                <span><strong>{{ $torneo->divisiones->count() }}</strong> divisiones</span>
+                <span><strong>{{ $torneo->sedes->count() }}</strong> sedes</span>
+                <span><strong>{{ $torneo->partidos->count() }}</strong> partidos</span>
             </div>
         </div>
 

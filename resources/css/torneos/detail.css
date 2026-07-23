@@ -2,7 +2,7 @@
    SHOW / DETAIL
     */
 .torneo-hero {
-    background: linear-gradient(135deg, var(--t-bg-card) 0%, var(--t-bg-card-2) 100%);
+    background: linear-gradient(180deg, rgba(79, 142, 247, .06), rgba(16, 185, 129, .03)), var(--t-bg-card);
     border: 1px solid var(--t-border);
     border-radius: var(--t-radius);
     padding: 1.5rem;
@@ -37,7 +37,35 @@
     gap: 0.4rem 1rem;
 }
 .torneo-hero-meta--text i { color: var(--t-text-mute); margin-right: 0.3rem; }
-.torneo-hero-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.torneo-hero-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+    margin-top: .95rem;
+}
+.torneo-hero-stats span {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .3rem;
+    padding: .45rem .65rem;
+    border-radius: var(--t-radius-sm);
+    border: 1px solid var(--t-border);
+    background: var(--nv-fill);
+    color: var(--t-text-mute);
+    font-size: .78rem;
+}
+.torneo-hero-stats strong {
+    color: var(--t-text);
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+}
+.torneo-hero-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    max-width: 430px;
+}
 
 .detail-grid-card {
     background: var(--t-bg-card);
@@ -45,6 +73,10 @@
     border-radius: var(--t-radius);
     padding: 1.25rem 1.5rem;
     margin-bottom: 1.25rem;
+    transition: border-color .18s, box-shadow .18s;
+}
+.detail-grid-card:hover {
+    border-color: rgba(79,142,247,.22);
 }
 .detail-grid-card-title {
     font-size: 0.76rem;
@@ -151,6 +183,11 @@
     background: var(--nv-fill);
     border: 1px solid var(--t-border);
     border-radius: var(--t-radius-sm);
+    transition: border-color .18s, background .18s;
+}
+.perfil-list-item:hover {
+    background: var(--t-bg-card-2);
+    border-color: var(--t-border-h);
 }
 .perfil-list-info        { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
 .perfil-list-info strong { color: var(--t-text); font-size: 0.88rem; font-weight: 600; }
@@ -228,6 +265,24 @@
 .reglamento-card-info { flex: 1; }
 .reglamento-card-info strong { color: var(--t-text); display: block; font-size: 0.9rem; }
 .reglamento-card-info small  { color: var(--t-text-mute); font-size: 0.76rem; }
+
+@media (max-width: 768px) {
+    .torneo-hero-actions {
+        max-width: none;
+        width: 100%;
+    }
+    .torneo-hero-actions .btn,
+    .torneo-hero-actions form {
+        width: 100%;
+    }
+    .torneo-hero-actions .btn {
+        justify-content: center;
+    }
+    .torneo-hero-stats {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+}
 
 /* Historial de reglamentos (acordeón nativo <details>) */
 .reglamento-history {

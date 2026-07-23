@@ -15,7 +15,21 @@
 }
 .page-header-left  { display: flex; flex-direction: column; gap: 0.2rem; }
 .page-heading      { font-size: 1.5rem; font-weight: 700; color: var(--t-text); margin: 0; }
-.page-subheading   { font-size: 0.85rem; color: var(--t-text-mute); }
+.page-subheading   { font-size: 0.85rem; color: var(--t-text-mute); margin: 0; }
+.page-header--panel {
+    align-items: flex-start;
+    padding: 1.15rem 1.2rem;
+    background: linear-gradient(180deg, rgba(79, 142, 247, .06), rgba(16, 185, 129, .03));
+    border: 1px solid var(--t-border);
+    border-radius: var(--t-radius);
+}
+.page-kicker {
+    color: var(--t-accent);
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
 
 .back-link {
     display: inline-flex;
@@ -32,13 +46,31 @@
 /*  Filtros ─ */
 .filter-bar-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    grid-template-columns: repeat(3, minmax(170px, 1fr)) auto;
     gap: 0.85rem;
     padding: 1rem 1.1rem;
     background: var(--t-bg-card);
     border: 1px solid var(--t-border);
     border-radius: var(--t-radius);
     margin-bottom: 1.5rem;
+    align-items: end;
+}
+.filter-panel__head {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: .7rem;
+    border-bottom: 1px solid var(--t-border);
+    color: var(--t-text-2);
+    font-size: .8rem;
+    font-weight: 800;
+}
+.filter-panel__head span {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
 }
 .filter-group       { display: flex; flex-direction: column; gap: 0.35rem; }
 .filter-group--grow { grid-column: span 2; }
@@ -56,9 +88,19 @@
 }
 .filter-input:focus,
 .filter-select:focus { border-color: var(--t-accent); background: rgba(79,142,247,.05); }
-.filter-actions { display: flex; align-items: flex-end; gap: 0.5rem; }
-.filter-clear   { font-size: 0.78rem; color: var(--t-text-mute); text-decoration: none; padding: 0.45rem 0.6rem; }
-.filter-clear:hover { color: var(--t-text); }
+.filter-actions { display: flex; align-items: flex-end; justify-content: flex-end; gap: 0.5rem; }
+.filter-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: 0.78rem;
+    color: var(--t-text-mute);
+    text-decoration: none;
+    padding: 0.35rem 0.55rem;
+    border: 1px solid var(--t-border);
+    border-radius: var(--t-radius-sm);
+}
+.filter-clear:hover { color: var(--t-text); border-color: var(--t-border-h); }
 
 /*  Botones (heredan estilo base, esto son variantes locales)  */
 .btn {
@@ -75,6 +117,11 @@
     transition: background .15s, border-color .15s, color .15s, transform .08s;
 }
 .btn:active { transform: scale(.98); }
+.btn:focus-visible,
+.btn-icon:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79,142,247,.22);
+}
 .btn-primary {
     background: var(--t-accent);
     color: #fff;
@@ -160,6 +207,33 @@
     color: var(--t-text-mute);
 }
 .empty-state i { color: var(--t-text-mute); display: block; }
+.empty-state-icon {
+    width: 60px;
+    height: 60px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    border-radius: 18px;
+    background: var(--nv-fill);
+    border: 1px solid var(--t-border);
+}
+.empty-state-icon i {
+    margin: 0;
+    font-size: 1.55rem;
+    opacity: .75;
+}
+.empty-state h2 {
+    margin: 0 0 .35rem;
+    color: var(--t-text);
+    font-size: 1.05rem;
+}
+.empty-state p {
+    max-width: 430px;
+    margin: 0 auto 1rem;
+    font-size: .9rem;
+    line-height: 1.5;
+}
 
 .pagination-wrapper {
     display: flex;
@@ -229,6 +303,10 @@
     .span-2                    { grid-column: span 1; }
     .torneo-card__meta         { grid-template-columns: 1fr; }
     .filter-group--grow        { grid-column: span 1; }
+    .filter-bar-grid           { grid-template-columns: 1fr; }
+    .filter-actions            { align-items: stretch; justify-content: flex-start; }
+    .filter-actions .btn       { justify-content: center; width: 100%; }
+    .page-header--panel .btn   { width: 100%; justify-content: center; }
     .data-table thead th,
     .data-table tbody td       { padding: 0.65rem 0.75rem; }
 }

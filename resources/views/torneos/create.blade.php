@@ -8,21 +8,22 @@
 @endpush
 
 @section('contenido')
-<div class="container">
+<div class="container torneo-form-page">
 
     <a href="{{ route('torneos.index') }}" class="back-link">
         <i class="fa-solid fa-arrow-left"></i>
         Volver a torneos
     </a>
 
-    <div class="page-header">
+    <div class="page-header page-header--panel">
         <div class="page-header-left">
+            <span class="page-kicker">Configuración inicial</span>
             <h1 class="page-heading">Nuevo torneo</h1>
             <p class="page-subheading">Paso 1 de 2 — datos básicos</p>
         </div>
     </div>
 
-    <div class="form-note" style="margin-bottom:1.25rem;">
+    <div class="form-note form-note--intro">
         <i class="fa-solid fa-circle-info"></i>
         <div>
             Después podrás agregar <strong>divisiones</strong>, <strong>sedes</strong>,
@@ -44,7 +45,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('torneos.store') }}" class="form-card">
+    <form method="POST" action="{{ route('torneos.store') }}" class="form-card form-card--guided">
         @csrf
 
         {{-- DATOS GENERALES --}}

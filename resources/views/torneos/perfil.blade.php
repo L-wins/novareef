@@ -8,15 +8,16 @@
 @endpush
 
 @section('contenido')
-<div class="container">
+<div class="container torneo-profile-page">
 
     <a href="{{ route('torneos.show', $torneo->idTorneo) }}" class="back-link">
         <i class="fa-solid fa-arrow-left"></i>
         Volver al torneo
     </a>
 
-    <div class="page-header">
+    <div class="page-header page-header--panel">
         <div class="page-header-left">
+            <span class="page-kicker">Configuración avanzada</span>
             <h1 class="page-heading">{{ $torneo->nombreTorneo }}</h1>
             <p class="page-subheading">Perfil del torneo · Divisiones, Sedes, Tarifas y Reglamento</p>
         </div>
