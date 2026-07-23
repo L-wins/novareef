@@ -28,7 +28,7 @@
 }
 .back-link:hover { color: var(--san-text); }
 
-.flash-success, .flash-error {
+.flash-success, .flash-error, .flash-warning {
     padding: 0.75rem 1rem;
     border-radius: var(--san-radius-sm);
     font-size: 0.85rem;
@@ -36,6 +36,7 @@
 }
 .flash-success { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.25); color: #6ee7b7; }
 .flash-error   { background: rgba(239,68,68,.12);  border-color: rgba(239,68,68,.25);  color: #fca5a5; }
+.flash-warning { background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.25); color: #fcd34d; }
 
 /*  Filtros  */
 .filter-bar-grid {
@@ -144,4 +145,5 @@
    ═══════════════════════════════════════════════════════════════ */
 :root[data-theme="light"] .flash-success { color: #15803d; }
 :root[data-theme="light"] .flash-error   { color: #dc2626; }
+:root[data-theme="light"] .flash-warning { color: #b45309; }
 :root[data-theme="light"] .btn-danger    { color: #dc2626; }

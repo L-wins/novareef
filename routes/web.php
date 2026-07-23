@@ -430,6 +430,7 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::get('/crear', [SancionController::class, 'create'])->middleware('permission:crear-sanciones')->name('create');
         Route::post('/', [SancionController::class, 'store'])->middleware('permission:crear-sanciones')->name('store');
         Route::get('/{id}', [SancionController::class, 'show'])->name('show');
+        Route::get('/{id}/acta', [SancionController::class, 'acta'])->name('acta');
         Route::put('/{id}/estado', [SancionController::class, 'cambiarEstado'])->middleware('permission:crear-sanciones')->name('estado');
     });
 

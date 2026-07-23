@@ -26,7 +26,7 @@ class VencerSancionesJobTest extends TestCase
         $servicio = app(SancionService::class);
 
         $tipo = TipoSancion::create([
-            'idColegio' => $colegio->idColegio, 'nombre' => 'falta', 'etiqueta' => 'Falta',
+            'idColegio' => $colegio->idColegio, 'etiqueta' => 'Falta',
             'severidad' => 'leve', 'esActivo' => true,
         ]);
 

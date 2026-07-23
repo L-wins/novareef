@@ -45,8 +45,7 @@ class SancionFlujoTest extends TestCase
     {
         return TipoSancion::create(array_merge([
             'idColegio' => $colegio->idColegio,
-            'nombre'    => 'falta_' . uniqid(),
-            'etiqueta'  => 'Falta de prueba',
+            'etiqueta'  => 'Falta de prueba ' . uniqid(),
             'severidad' => 'moderada',
             'esActivo'  => true,
         ], $overrides));
@@ -285,8 +284,8 @@ class SancionFlujoTest extends TestCase
         $colegioA = $this->crearColegioConSanciones();
         $colegioB = $this->crearColegioConSanciones();
 
-        $this->crearTipoSancion($colegioA, ['nombre' => 'grave_a']);
-        $this->crearTipoSancion($colegioB, ['nombre' => 'grave_b']);
+        $this->crearTipoSancion($colegioA, ['etiqueta' => 'Grave A']);
+        $this->crearTipoSancion($colegioB, ['etiqueta' => 'Grave B']);
 
         $this->assertSame(1, TipoSancion::where('idColegio', $colegioA->idColegio)->count());
         $this->assertSame(1, TipoSancion::where('idColegio', $colegioB->idColegio)->count());
@@ -315,5 +314,165 @@ class SancionFlujoTest extends TestCase
         $this->actingAs($datos['arbitroCentral']->usuario)
             ->postJson("/mis-partidos/{$datos['designacionCentral']->idDesignacion}/confirmar")
             ->assertJson(['success' => true]);
+    }
+
+    public function test_una_sancion_puede_ser_solo_economica_sin_rango_de_suspension(): void
+    {
+        $colegio = $this->crearColegioConSanciones();
+        $comite  = $this->crearMiembroComite($colegio);
+        $arbitro = $this->crearArbitro($colegio);
+        $tipo    = $this->crearTipoSancion($colegio);
+
+        $response = $this->actingAs($comite)->post('/sanciones', [
+            'idArbitro'           => $arbitro->idArbitro,
+            'idTipoSancion'       => $tipo->idTipoSancion,
+            'motivoSancion'       => 'Solo una multa, sin suspensión',
+            'fechaHecho'          => today()->format('Y-m-d'),
+            'tieneMultaEconomica' => '1',
+            'montoMulta'          => 30000,
+        ]);
+
+        $response->assertRedirect();
+
+        $sancion = Sancion::where('idColegio', $colegio->idColegio)->firstOrFail();
+        $this->assertNull($sancion->fechaInicioSancion);
+        $this->assertNull($sancion->fechaFinSancion);
+        $this->assertFalse($sancion->tieneSuspension());
+        $this->assertTrue((bool) $sancion->tieneMultaEconomica);
+    }
+
+    public function test_no_se_puede_registrar_fecha_fin_sin_fecha_inicio_de_suspension(): void
+    {
+        $colegio = $this->crearColegioConSanciones();
+        $comite  = $this->crearMiembroComite($colegio);
+        $arbitro = $this->crearArbitro($colegio);
+        $tipo    = $this->crearTipoSancion($colegio);
+
+        $this->actingAs($comite)->post('/sanciones', [
+            'idArbitro'       => $arbitro->idArbitro,
+            'idTipoSancion'   => $tipo->idTipoSancion,
+            'motivoSancion'   => 'Motivo',
+            'fechaHecho'      => today()->format('Y-m-d'),
+            'fechaFinSancion' => today()->addDays(10)->format('Y-m-d'),
+        ])->assertSessionHasErrors('fechaInicioSancion');
+
+        $this->assertDatabaseCount('sanciones', 0);
+    }
+
+    public function test_no_se_puede_apelar_una_sancion_fuera_del_plazo(): void
+    {
+        $colegio  = $this->crearColegioConSanciones();
+        $comite   = $this->crearMiembroComite($colegio);
+        $arbitro  = $this->crearArbitro($colegio);
+        $servicio = app(SancionService::class);
+
+        $sancion = $servicio->crearSancion($colegio->idColegio, [
+            'idArbitro' => $arbitro->idArbitro,
+            'idTipoSancion' => $this->crearTipoSancion($colegio)->idTipoSancion,
+            'motivoSancion' => 'Motivo', 'fechaHecho' => today()->format('Y-m-d'),
+            'tieneMultaEconomica' => false,
+        ], $comite);
+
+        $sancion->forceFill(['created_at' => now()->subDays(Sancion::DIAS_LIMITE_APELACION + 1)])->save();
+
+        $this->assertFalse($sancion->fresh()->puedeApelarse());
+
+        $this->actingAs($comite)->put("/sanciones/{$sancion->idSancion}/estado", [
+            'accion' => 'apelar',
+        ])->assertSessionHas('error');
+
+        $this->assertSame('activa', $sancion->fresh()->estadoSancion);
+    }
+
+    public function test_se_marca_reincidente_al_tercer_sancion_en_el_mismo_semestre(): void
+    {
+        $colegio  = $this->crearColegioConSanciones();
+        $comite   = $this->crearMiembroComite($colegio);
+        $arbitro  = $this->crearArbitro($colegio);
+        $servicio = app(SancionService::class);
+        $tipo     = $this->crearTipoSancion($colegio);
+
+        $datosBase = [
+            'idArbitro' => $arbitro->idArbitro,
+            'idTipoSancion' => $tipo->idTipoSancion,
+            'motivoSancion' => 'Motivo', 'tieneMultaEconomica' => false,
+        ];
+
+        $servicio->crearSancion($colegio->idColegio, $datosBase + ['fechaHecho' => today()->subMonths(4)->format('Y-m-d')], $comite);
+        $servicio->crearSancion($colegio->idColegio, $datosBase + ['fechaHecho' => today()->subMonths(2)->format('Y-m-d')], $comite);
+        $tercera = $servicio->crearSancion($colegio->idColegio, $datosBase + ['fechaHecho' => today()->format('Y-m-d')], $comite);
+
+        $this->assertTrue($servicio->esReincidente($tercera));
+        $this->assertSame(3, $servicio->totalSancionesRecientes($tercera));
+
+        $this->actingAs($comite)->get("/sanciones/{$tercera->idSancion}")
+            ->assertOk()
+            ->assertViewHas('esReincidente', true)
+            ->assertSee('reincidente');
+    }
+
+    public function test_una_sancion_anulada_no_cuenta_para_reincidencia(): void
+    {
+        $colegio  = $this->crearColegioConSanciones();
+        $comite   = $this->crearMiembroComite($colegio);
+        $arbitro  = $this->crearArbitro($colegio);
+        $servicio = app(SancionService::class);
+        $tipo     = $this->crearTipoSancion($colegio);
+
+        $datosBase = [
+            'idArbitro' => $arbitro->idArbitro,
+            'idTipoSancion' => $tipo->idTipoSancion,
+            'motivoSancion' => 'Motivo', 'tieneMultaEconomica' => false,
+        ];
+
+        $anulada = $servicio->crearSancion($colegio->idColegio, $datosBase + ['fechaHecho' => today()->subMonth()->format('Y-m-d')], $comite);
+        $servicio->anular($anulada, $comite, 'Error de registro');
+
+        $segunda = $servicio->crearSancion($colegio->idColegio, $datosBase + ['fechaHecho' => today()->format('Y-m-d')], $comite);
+
+        $this->assertFalse($servicio->esReincidente($segunda));
+        $this->assertSame(1, $servicio->totalSancionesRecientes($segunda));
+    }
+
+    public function test_descarga_el_acta_pdf_de_una_sancion(): void
+    {
+        $colegio  = $this->crearColegioConSanciones();
+        $comite   = $this->crearMiembroComite($colegio);
+        $arbitro  = $this->crearArbitro($colegio);
+        $servicio = app(SancionService::class);
+
+        $sancion = $servicio->crearSancion($colegio->idColegio, [
+            'idArbitro' => $arbitro->idArbitro,
+            'idTipoSancion' => $this->crearTipoSancion($colegio, ['articuloReglamento' => 'Art. 12 del Reglamento Interno'])->idTipoSancion,
+            'motivoSancion' => 'Motivo', 'fechaHecho' => today()->format('Y-m-d'),
+            'tieneMultaEconomica' => false,
+        ], $comite);
+
+        $this->actingAs($comite)->get("/sanciones/{$sancion->idSancion}/acta")
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_un_arbitro_no_puede_descargar_el_acta_de_otro_arbitro(): void
+    {
+        $colegio  = $this->crearColegioConSanciones();
+        $comite   = $this->crearMiembroComite($colegio);
+        $arbitroA = $this->crearArbitro($colegio);
+        $arbitroB = $this->crearArbitro($colegio);
+        $servicio = app(SancionService::class);
+
+        Permission::firstOrCreate(['name' => 'ver-sanciones', 'guard_name' => 'web']);
+        $rolArbitro = Role::firstOrCreate(['name' => 'arbitro', 'guard_name' => 'web']);
+        $rolArbitro->givePermissionTo('ver-sanciones');
+        $arbitroB->usuario->assignRole('arbitro');
+
+        $sancionA = $servicio->crearSancion($colegio->idColegio, [
+            'idArbitro' => $arbitroA->idArbitro,
+            'idTipoSancion' => $this->crearTipoSancion($colegio)->idTipoSancion,
+            'motivoSancion' => 'Motivo', 'fechaHecho' => today()->format('Y-m-d'),
+            'tieneMultaEconomica' => false,
+        ], $comite);
+
+        $this->actingAs($arbitroB->usuario)->get("/sanciones/{$sancionA->idSancion}/acta")->assertForbidden();
     }
 }

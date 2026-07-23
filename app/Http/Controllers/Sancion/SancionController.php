@@ -53,7 +53,7 @@ class SancionController extends Controller
         $idColegio = $this->idColegioActivo();
 
         $arbitros = Arbitro::where('idColegio', $idColegio)->with('usuario')->get();
-        $tipos    = TipoSancion::where('idColegio', $idColegio)->where('esActivo', true)->orderBy('nombre')->get();
+        $tipos    = TipoSancion::where('idColegio', $idColegio)->where('esActivo', true)->orderBy('etiqueta')->get();
 
         return view('sanciones.create', compact('arbitros', 'tipos'));
     }
@@ -80,7 +80,26 @@ class SancionController extends Controller
             abort_unless((int) $sancion->idArbitro === $arbitro->idArbitro, 403);
         }
 
-        return view('sanciones.show', compact('sancion'));
+        $totalReciente = $this->sanciones->totalSancionesRecientes($sancion);
+        $esReincidente = $this->sanciones->esReincidente($sancion);
+
+        return view('sanciones.show', compact('sancion', 'totalReciente', 'esReincidente'));
+    }
+
+    public function acta(int $id): \Symfony\Component\HttpFoundation\Response
+    {
+        $sancion = $this->sancionDelColegio($id, ['arbitro.usuario', 'arbitro.categoria', 'tipo', 'usuarioImpuso', 'movimientoFinanciero', 'colegio']);
+
+        if (Auth::user()->rolUsuario === 'arbitro') {
+            $arbitro = $this->arbitroAutenticado();
+            abort_unless((int) $sancion->idArbitro === $arbitro->idArbitro, 403);
+        }
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('pdf.acta-sancion', ['sancion' => $sancion, 'generadoPor' => Auth::user()]);
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download("resolucion-sancion-{$sancion->idSancion}.pdf");
     }
 
     public function cambiarEstado(CambiarEstadoSancionRequest $request, int $id): RedirectResponse

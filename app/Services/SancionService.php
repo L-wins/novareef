@@ -28,7 +28,7 @@ final class SancionService
      *
      * @param  array{
      *     idArbitro: int, idTipoSancion: int, idPartido?: ?int,
-     *     motivoSancion: string, fechaHecho: string, fechaInicioSancion: string,
+     *     motivoSancion: string, fechaHecho: string, fechaInicioSancion?: ?string,
      *     fechaFinSancion?: ?string, tieneMultaEconomica: bool, montoMulta?: float|string,
      * }  $datos
      */
@@ -42,7 +42,7 @@ final class SancionService
                 'idPartido'           => $datos['idPartido'] ?? null,
                 'motivoSancion'       => $datos['motivoSancion'],
                 'fechaHecho'          => $datos['fechaHecho'],
-                'fechaInicioSancion'  => $datos['fechaInicioSancion'],
+                'fechaInicioSancion'  => $datos['fechaInicioSancion'] ?? null,
                 'fechaFinSancion'     => $datos['fechaFinSancion'] ?? null,
                 'estadoSancion'       => Sancion::ESTADO_ACTIVA,
                 'tieneMultaEconomica' => $datos['tieneMultaEconomica'] ?? false,
@@ -129,9 +129,11 @@ final class SancionService
     }
 
     /**
-     * El árbitro (o el colegio en su representación) apela una sanción activa.
+     * El árbitro (o el colegio en su representación) apela una sanción activa
+     * — solo dentro de los Sancion::DIAS_LIMITE_APELACION días siguientes a
+     * su registro.
      *
-     * @throws \RuntimeException  Si la sanción no está activa.
+     * @throws \RuntimeException  Si la sanción no está activa o el plazo ya venció.
      */
     public function apelar(Sancion $sancion, User $usuario, ?string $motivo = null): void
     {
@@ -140,6 +142,13 @@ final class SancionService
 
             if (! $sancion->estaActiva()) {
                 throw new \RuntimeException('Solo se pueden apelar sanciones activas.');
+            }
+
+            if ($sancion->vencioPlazoApelacion()) {
+                throw new \RuntimeException(sprintf(
+                    'El plazo para apelar esta sanción venció el %s.',
+                    $sancion->fechaLimiteApelacion()->format('d/m/Y'),
+                ));
             }
 
             $this->transicionar($sancion, Sancion::ESTADO_APELADA, $usuario, HistorialSancion::TIPO_APELADA, $motivo);
@@ -181,6 +190,34 @@ final class SancionService
                 }
             }
         });
+    }
+
+    /** Ventana y umbral de reincidencia — ver esReincidente(). */
+    private const MESES_REINCIDENCIA = 6;
+
+    private const UMBRAL_REINCIDENCIA = 3;
+
+    /**
+     * Cuántas sanciones no anuladas tiene el árbitro (incluida esta) en los
+     * últimos Sancion::MESES_REINCIDENCIA meses, contando por fechaHecho.
+     */
+    public function totalSancionesRecientes(Sancion $sancion): int
+    {
+        return Sancion::where('idColegio', $sancion->idColegio)
+            ->where('idArbitro', $sancion->idArbitro)
+            ->where('estadoSancion', '!=', Sancion::ESTADO_ANULADA)
+            ->where('fechaHecho', '>=', now()->subMonths(self::MESES_REINCIDENCIA))
+            ->count();
+    }
+
+    /**
+     * Solo informativo — no cambia severidad ni bloquea nada, es una alerta
+     * visual para que el Comité vea de un vistazo que este árbitro acumula
+     * sanciones recientes.
+     */
+    public function esReincidente(Sancion $sancion): bool
+    {
+        return $this->totalSancionesRecientes($sancion) >= self::UMBRAL_REINCIDENCIA;
     }
 
     // ── Lectura para dashboards (por rol) ──

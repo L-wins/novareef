@@ -24,6 +24,9 @@ class Sancion extends Model
     public const ESTADO_ANULADA  = 'anulada';
     public const ESTADO_APELADA  = 'apelada';
 
+    /** Días desde que la sanción se registra en el sistema (created_at) para poder apelarla. */
+    public const DIAS_LIMITE_APELACION = 5;
+
     /** Igual patrón que MovimientoFinanciero::ETIQUETAS_ESTADO — una sola fuente de verdad para las vistas. */
     public const ETIQUETAS_ESTADO = [
         self::ESTADO_ACTIVA   => ['Activa', 'amber'],
@@ -65,6 +68,33 @@ class Sancion extends Model
     public function estaApelada(): bool
     {
         return $this->estadoSancion === self::ESTADO_APELADA;
+    }
+
+    /** false = sanción puramente económica u otro tipo sin rango de suspensión. */
+    public function tieneSuspension(): bool
+    {
+        return $this->fechaInicioSancion !== null;
+    }
+
+    /**
+     * Cuenta desde created_at (cuándo se registró/notificó la sanción), no
+     * desde fechaHecho — el Comité puede tardar días en formalizar una
+     * sanción por un hecho ya ocurrido, y el árbitro solo puede reaccionar
+     * desde que se entera.
+     */
+    public function fechaLimiteApelacion(): \Illuminate\Support\Carbon
+    {
+        return $this->created_at->copy()->addDays(self::DIAS_LIMITE_APELACION);
+    }
+
+    public function vencioPlazoApelacion(): bool
+    {
+        return now()->gt($this->fechaLimiteApelacion()->endOfDay());
+    }
+
+    public function puedeApelarse(): bool
+    {
+        return $this->estaActiva() && ! $this->vencioPlazoApelacion();
     }
 
     // ── Relaciones ──

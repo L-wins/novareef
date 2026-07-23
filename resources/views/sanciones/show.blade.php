@@ -28,17 +28,25 @@
                 {{ $sancion->arbitro->usuario->nombreUsuario ?? '—' }}
             </p>
         </div>
+        <div style="display:flex; gap:0.75rem;">
+            <a href="{{ route('sanciones.acta', $sancion->idSancion) }}" class="btn btn-secondary">
+                <i class="fa-solid fa-file-pdf"></i>
+                Descargar acta
+            </a>
         @can('crear-sanciones')
-            <div style="display:flex; gap:0.75rem;">
                 @if (in_array($sancion->estadoSancion, ['activa', 'apelada']))
                     <button type="button" class="btn btn-primary" data-accion-sancion="cumplir">
                         <i class="fa-solid fa-check"></i> Cumplir
                     </button>
                 @endif
-                @if ($sancion->estadoSancion === 'activa')
+                @if ($sancion->puedeApelarse())
                     <button type="button" class="btn btn-secondary" data-accion-sancion="apelar">
                         <i class="fa-solid fa-gavel"></i> Apelar
                     </button>
+                @elseif ($sancion->estadoSancion === 'activa')
+                    <span class="badge badge-gray" title="El plazo para apelar venció el {{ $sancion->fechaLimiteApelacion()->format('d/m/Y') }}.">
+                        <i class="fa-solid fa-gavel"></i> Plazo de apelación vencido
+                    </span>
                 @endif
                 @can('editar-sanciones')
                     @if ($sancion->estadoSancion === 'apelada')
@@ -52,8 +60,8 @@
                         </button>
                     @endif
                 @endcan
-            </div>
         @endcan
+        </div>
     </div>
 
     @if (session('success'))
@@ -61,6 +69,12 @@
     @endif
     @if (session('error'))
         <div class="flash-error" style="margin-bottom:1.25rem;">{{ session('error') }}</div>
+    @endif
+    @if ($esReincidente)
+        <div class="flash-warning" style="margin-bottom:1.25rem;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            Árbitro reincidente: acumula {{ $totalReciente }} sanciones en los últimos 6 meses (incluida esta).
+        </div>
     @endif
 
     <div class="form-card">
@@ -72,13 +86,32 @@
                     <span>{{ $sancion->fechaHecho->format('d/m/Y') }}</span>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Vigencia</label>
+                    <label class="form-label">Suspensión</label>
                     <span>
-                        {{ $sancion->fechaInicioSancion->format('d/m/Y') }}
-                        —
-                        {{ $sancion->fechaFinSancion?->format('d/m/Y') ?? 'indefinida' }}
+                        @if ($sancion->tieneSuspension())
+                            {{ $sancion->fechaInicioSancion->format('d/m/Y') }}
+                            —
+                            {{ $sancion->fechaFinSancion?->format('d/m/Y') ?? 'indefinida' }}
+                        @else
+                            Sin suspensión — solo registro{{ $sancion->tieneMultaEconomica ? ' y multa económica' : '' }}
+                        @endif
                     </span>
                 </div>
+                @if ($sancion->estaActiva())
+                    <div class="form-group">
+                        <label class="form-label">Plazo para apelar</label>
+                        <span>
+                            {{ $sancion->vencioPlazoApelacion() ? 'Vencido el' : 'Hasta el' }}
+                            {{ $sancion->fechaLimiteApelacion()->format('d/m/Y') }}
+                        </span>
+                    </div>
+                @endif
+                @if ($sancion->tipo?->articuloReglamento)
+                    <div class="form-group span-2">
+                        <label class="form-label">Fundamento reglamentario</label>
+                        <span>{{ $sancion->tipo->articuloReglamento }}</span>
+                    </div>
+                @endif
                 <div class="form-group span-2">
                     <label class="form-label">Motivo</label>
                     <span>{{ $sancion->motivoSancion }}</span>

@@ -22,8 +22,8 @@ class TipoSancion extends Model
 
     protected $fillable = [
         'idColegio',
-        'nombre',
         'etiqueta',
+        'articuloReglamento',
         'severidad',
         'diasSuspensionSugeridos',
         'descripcion',

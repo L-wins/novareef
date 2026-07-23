@@ -43,8 +43,8 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Nombre</th>
                             <th>Etiqueta</th>
+                            <th>Artículo del reglamento</th>
                             <th>Severidad</th>
                             <th>Estado</th>
                             <th class="text-right">Acciones</th>
@@ -53,8 +53,8 @@
                     <tbody>
                         @foreach ($tipos as $tipo)
                         <tr>
-                            <td class="td-primary">{{ $tipo->nombre }}</td>
-                            <td>{{ $tipo->etiqueta }}</td>
+                            <td class="td-primary">{{ $tipo->etiqueta }}</td>
+                            <td>{{ $tipo->articuloReglamento ?? '—' }}</td>
                             <td>
                                 <span class="badge {{ match($tipo->severidad) { 'grave' => 'badge-red', 'moderada' => 'badge-amber', default => 'badge-gray' } }}">
                                     {{ ucfirst($tipo->severidad) }}
@@ -99,16 +99,17 @@
                 @csrf
                 <div class="form-grid form-grid-2">
                     <div class="form-group">
-                        <label class="form-label">Nombre interno <span class="req">*</span></label>
-                        <input type="text" name="nombre" value="{{ old('nombre') }}" maxlength="60"
-                               placeholder="Ej. inasistencia_injustificada" class="form-input {{ $errors->has('nombre') ? 'is-invalid' : '' }}">
-                        @error('nombre') <p class="field-error">{{ $message }}</p> @enderror
-                    </div>
-                    <div class="form-group">
                         <label class="form-label">Etiqueta visible <span class="req">*</span></label>
                         <input type="text" name="etiqueta" value="{{ old('etiqueta') }}" maxlength="80"
                                placeholder="Ej. Inasistencia injustificada" class="form-input {{ $errors->has('etiqueta') ? 'is-invalid' : '' }}">
                         @error('etiqueta') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Artículo del reglamento</label>
+                        <input type="text" name="articuloReglamento" value="{{ old('articuloReglamento') }}" maxlength="120"
+                               placeholder="Ej. Art. 45 del Reglamento Interno" class="form-input {{ $errors->has('articuloReglamento') ? 'is-invalid' : '' }}">
+                        <p class="field-hint">Cláusula del reglamento/estatuto que sustenta esta sanción.</p>
+                        @error('articuloReglamento') <p class="field-error">{{ $message }}</p> @enderror
                     </div>
                     <div class="form-group">
                         <label class="form-label">Severidad <span class="req">*</span></label>

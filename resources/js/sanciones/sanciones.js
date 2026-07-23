@@ -14,6 +14,22 @@ document.addEventListener('DOMContentLoaded', function () {
         sincronizarMulta();
     }
 
+    // ── Formulario de sanción: mostrar fechas de suspensión solo si aplica ──
+    var checkSuspension = document.getElementById('tieneSuspension');
+    var camposSuspension = document.querySelectorAll('[data-campo-condicional="suspension"]');
+
+    function sincronizarSuspension() {
+        if (!checkSuspension) return;
+        camposSuspension.forEach(function (campo) {
+            campo.classList.toggle('is-visible', checkSuspension.checked);
+        });
+    }
+
+    if (checkSuspension) {
+        checkSuspension.addEventListener('change', sincronizarSuspension);
+        sincronizarSuspension();
+    }
+
     // ── Cambiar estado: mostrar campo de motivo/resultado según la acción ──
     document.querySelectorAll('[data-accion-sancion]').forEach(function (btn) {
         btn.addEventListener('click', function () {

@@ -65,7 +65,7 @@
                             <div class="widget-list-item">
                                 <div class="widget-list-item__main">
                                     <span class="widget-list-item__title">{{ $s->arbitro->usuario->nombreUsuario ?? 'Árbitro #' . $s->idArbitro }}</span>
-                                    <span class="widget-list-item__meta">{{ $s->tipo->etiqueta ?? $s->tipo->nombre ?? '' }} · {{ $s->fechaHecho->format('d/m/Y') }}</span>
+                                    <span class="widget-list-item__meta">{{ $s->tipo->etiqueta ?? '' }} · {{ $s->fechaHecho->format('d/m/Y') }}</span>
                                 </div>
                                 <span class="dash-pill" data-color="red">Activa</span>
                             </div>

@@ -12,8 +12,8 @@ final class TipoSancionService
     {
         return TipoSancion::create([
             'idColegio'               => $idColegio,
-            'nombre'                  => $datos['nombre'],
             'etiqueta'                => $datos['etiqueta'],
+            'articuloReglamento'      => $datos['articuloReglamento'] ?? null,
             'severidad'               => $datos['severidad'],
             'diasSuspensionSugeridos' => $datos['diasSuspensionSugeridos'] ?? null,
             'descripcion'             => $datos['descripcion'] ?? null,

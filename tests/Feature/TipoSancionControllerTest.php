@@ -50,8 +50,7 @@ class TipoSancionControllerTest extends TestCase
     {
         return TipoSancion::create(array_merge([
             'idColegio' => $colegio->idColegio,
-            'nombre'    => 'falta_' . uniqid(),
-            'etiqueta'  => 'Falta de prueba',
+            'etiqueta'  => 'Falta de prueba ' . uniqid(),
             'severidad' => 'moderada',
             'esActivo'  => true,
         ], $overrides));
@@ -62,13 +61,13 @@ class TipoSancionControllerTest extends TestCase
         $colegio = $this->crearColegioConSanciones();
         $comite  = $this->crearMiembroComite($colegio);
 
-        $this->crearTipoSancion($colegio, ['nombre' => 'b_falta', 'orden' => 2]);
-        $this->crearTipoSancion($colegio, ['nombre' => 'a_falta', 'orden' => 1]);
+        $this->crearTipoSancion($colegio, ['etiqueta' => 'B falta', 'orden' => 2]);
+        $this->crearTipoSancion($colegio, ['etiqueta' => 'A falta', 'orden' => 1]);
 
         $this->actingAs($comite)->get(route('tipos-sancion.index'))
             ->assertOk()
             ->assertViewIs('sanciones.tipos')
-            ->assertSeeInOrder(['a_falta', 'b_falta']);
+            ->assertSeeInOrder(['A falta', 'B falta']);
     }
 
     public function test_crea_un_tipo_de_sancion(): void
@@ -77,15 +76,32 @@ class TipoSancionControllerTest extends TestCase
         $comite  = $this->crearMiembroComite($colegio);
 
         $this->actingAs($comite)->post(route('tipos-sancion.store'), [
-            'nombre'    => 'reincidencia',
             'etiqueta'  => 'Reincidencia',
             'severidad' => 'grave',
         ])->assertRedirect(route('tipos-sancion.index'));
 
         $this->assertDatabaseHas('tipos_sancion', [
             'idColegio' => $colegio->idColegio,
-            'nombre'    => 'reincidencia',
+            'etiqueta'  => 'Reincidencia',
             'esActivo'  => true,
+        ]);
+    }
+
+    public function test_crea_un_tipo_de_sancion_con_articulo_del_reglamento(): void
+    {
+        $colegio = $this->crearColegioConSanciones();
+        $comite  = $this->crearMiembroComite($colegio);
+
+        $this->actingAs($comite)->post(route('tipos-sancion.store'), [
+            'etiqueta'           => 'Reincidencia',
+            'articuloReglamento' => 'Art. 12 del Reglamento Interno',
+            'severidad'          => 'grave',
+        ])->assertRedirect(route('tipos-sancion.index'));
+
+        $this->assertDatabaseHas('tipos_sancion', [
+            'idColegio'          => $colegio->idColegio,
+            'etiqueta'           => 'Reincidencia',
+            'articuloReglamento' => 'Art. 12 del Reglamento Interno',
         ]);
     }
 

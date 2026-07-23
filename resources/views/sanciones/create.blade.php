@@ -89,18 +89,27 @@
                     @error('fechaHecho') <p class="field-error">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="fechaInicioSancion">Inicio de la sanción <span class="req">*</span></label>
+                <div class="form-group span-2">
+                    <label class="form-label" style="flex-direction:row;align-items:center;gap:0.5rem;">
+                        <input type="checkbox" id="tieneSuspension" name="tieneSuspension" value="1"
+                               {{ old('tieneSuspension', old('fechaInicioSancion')) ? 'checked' : '' }}>
+                        Esta sanción incluye suspensión (rango de tiempo sin ejercer)
+                    </label>
+                    <p class="field-hint">Déjalo sin marcar si la sanción es solo un llamado de atención o una multa económica, sin suspender al árbitro.</p>
+                </div>
+
+                <div class="form-group" data-campo-condicional="suspension" style="{{ old('fechaInicioSancion') ? 'display:flex;' : '' }}">
+                    <label class="form-label" for="fechaInicioSancion">Inicio de la suspensión <span class="req">*</span></label>
                     <input type="text" id="fechaInicioSancion" name="fechaInicioSancion" value="{{ old('fechaInicioSancion') }}"
                            data-nova-date placeholder="dd/mm/aaaa" class="form-input {{ $errors->has('fechaInicioSancion') ? 'is-invalid' : '' }}">
                     @error('fechaInicioSancion') <p class="field-error">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="fechaFinSancion">Fin de la sanción</label>
+                <div class="form-group" data-campo-condicional="suspension" style="{{ old('fechaInicioSancion') ? 'display:flex;' : '' }}">
+                    <label class="form-label" for="fechaFinSancion">Fin de la suspensión</label>
                     <input type="text" id="fechaFinSancion" name="fechaFinSancion" value="{{ old('fechaFinSancion') }}"
                            data-nova-date placeholder="dd/mm/aaaa (opcional)" class="form-input {{ $errors->has('fechaFinSancion') ? 'is-invalid' : '' }}">
-                    <p class="field-hint">Déjalo vacío si la sanción es indefinida hasta que el Comité la resuelva.</p>
+                    <p class="field-hint">Déjalo vacío si la suspensión es indefinida hasta que el Comité la resuelva.</p>
                     @error('fechaFinSancion') <p class="field-error">{{ $message }}</p> @enderror
                 </div>
             </div>

@@ -48,7 +48,7 @@ class TipoSancionController extends CatalogoActivableController
 
     protected function columnasOrden(): array
     {
-        return ['orden', 'nombre'];
+        return ['orden', 'etiqueta'];
     }
 
     protected function alternarActivo(Model $tipo): string

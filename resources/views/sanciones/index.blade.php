@@ -21,14 +21,22 @@
                 {{ $esArbitro ? 'Historial de sanciones disciplinarias registradas a tu nombre.' : 'Registro disciplinario de los árbitros del colegio.' }}
             </p>
         </div>
-        @can('crear-sanciones')
-            @if (!$esArbitro)
-            <a href="{{ route('sanciones.create') }}" class="btn btn-primary">
-                <i class="fa-solid fa-plus"></i>
-                Nueva sanción
-            </a>
-            @endif
-        @endcan
+        @if (!$esArbitro)
+            <div style="display:flex; gap:0.75rem;">
+                @can('editar-sanciones')
+                    <a href="{{ route('tipos-sancion.index') }}" class="btn btn-secondary">
+                        <i class="fa-solid fa-list-check"></i>
+                        Tipos de sanción
+                    </a>
+                @endcan
+                @can('crear-sanciones')
+                    <a href="{{ route('sanciones.create') }}" class="btn btn-primary">
+                        <i class="fa-solid fa-plus"></i>
+                        Nueva sanción
+                    </a>
+                @endcan
+            </div>
+        @endif
     </div>
 
     @if (session('success'))
@@ -102,11 +110,15 @@
                             </td>
                             <td>{{ $sancion->fechaHecho->format('d/m/Y') }}</td>
                             <td>
-                                {{ $sancion->fechaInicioSancion->format('d/m/Y') }}
-                                @if ($sancion->fechaFinSancion)
-                                    — {{ $sancion->fechaFinSancion->format('d/m/Y') }}
+                                @if ($sancion->tieneSuspension())
+                                    {{ $sancion->fechaInicioSancion->format('d/m/Y') }}
+                                    @if ($sancion->fechaFinSancion)
+                                        — {{ $sancion->fechaFinSancion->format('d/m/Y') }}
+                                    @else
+                                        — indefinida
+                                    @endif
                                 @else
-                                    — indefinida
+                                    Sin suspensión
                                 @endif
                             </td>
                             <td><span class="badge badge-{{ $estadoColor }}">{{ $estadoLabel }}</span></td>
