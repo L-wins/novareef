@@ -10,6 +10,7 @@ use App\Models\Partido;
 use App\Models\Torneo;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Consultas de lectura/agregación de Designaciones (resúmenes de dashboard
@@ -19,6 +20,9 @@ use Illuminate\Support\Collection;
  */
 final class ReporteDesignacionesService
 {
+    /** Mismo TTL/razonamiento que DashboardService::TTL_DASHBOARD_EJECUTIVO. */
+    private const TTL_GRID_TORNEOS = 60;
+
     /**
      * Resumen para el dashboard de designador/ejecutivo: partidos críticos y
      * de hoy (colegio completo) + una vista previa de designaciones aún sin
@@ -59,15 +63,19 @@ final class ReporteDesignacionesService
      */
     public function gridTorneosConConteos(int $idColegio): Collection
     {
-        return Torneo::where('idColegio', $idColegio)
-            ->withCount([
-                'partidos',
-                'partidos as partidos_criticos_count' => fn ($q) => $q->where('estadoPartido', Partido::ESTADO_CRITICO),
-                'partidos as partidos_hoy_count' => fn ($q) => $q->whereDate('fechaPartido', now()->toDateString()),
-            ])
-            ->orderByDesc('temporada')
-            ->orderBy('nombreTorneo')
-            ->get();
+        return Cache::remember(
+            "designaciones.grid-torneos.{$idColegio}",
+            self::TTL_GRID_TORNEOS,
+            fn () => Torneo::where('idColegio', $idColegio)
+                ->withCount([
+                    'partidos',
+                    'partidos as partidos_criticos_count' => fn ($q) => $q->where('estadoPartido', Partido::ESTADO_CRITICO),
+                    'partidos as partidos_hoy_count' => fn ($q) => $q->whereDate('fechaPartido', now()->toDateString()),
+                ])
+                ->orderByDesc('temporada')
+                ->orderBy('nombreTorneo')
+                ->get(),
+        );
     }
 
     /** Cantidad de partidos en estado crítico del colegio, opcionalmente acotado a un torneo. */

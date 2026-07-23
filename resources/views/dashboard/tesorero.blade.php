@@ -7,6 +7,15 @@
 
     <x-dashboard.welcome subtitulo="Aquí tienes el estado financiero del colegio, al día de hoy." />
 
+    @if ($partidosNominaSinGenerar > 0)
+        @include('partials.alerta-banner', [
+            'nivel'  => 'critico',
+            'titulo' => 'Hay partidos finalizados sin nómina generada',
+            'texto'  => "{$partidosNominaSinGenerar} partido" . ($partidosNominaSinGenerar === 1 ? '' : 's') . " finalizado" . ($partidosNominaSinGenerar === 1 ? '' : 's') . " en modalidad nómina no generó pago a los árbitros — revisa que las tarifas de división/rol/formato estén configuradas y que las designaciones hayan sido confirmadas.",
+            'href'   => route('finanzas.balance.index'),
+        ])
+    @endif
+
     <x-dashboard.section label="Bolsillos">
         <div class="stats-grid">
             <x-dashboard.stat-card icon="fa-vault" color="emerald" :value="'$' . number_format($bolsillos['saldoEnCaja'], 0, ',', '.')" label="Caja en banco" href="{{ route('finanzas.balance.index') }}" sub="Dinero realmente cobrado menos realmente pagado" />

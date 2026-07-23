@@ -9,17 +9,20 @@ use App\Http\Requests\Admin\AdminLoginRequest;
 use App\Http\Requests\Admin\Verificar2FALoginRequest;
 use App\Models\Admin;
 use App\Services\AdminTwoFactorService;
+use App\Services\LoginThrottleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
 
 class AdminLoginController extends Controller
 {
-    public function __construct(private readonly AdminTwoFactorService $twoFactor) {}
+    public function __construct(
+        private readonly AdminTwoFactorService $twoFactor,
+        private readonly LoginThrottleService $throttle,
+    ) {}
 
     public function showLogin(): View|RedirectResponse
     {
@@ -32,8 +35,8 @@ class AdminLoginController extends Controller
 
     public function login(AdminLoginRequest $request): RedirectResponse
     {
-        if (RateLimiter::tooManyAttempts($this->throttleKey($request), config('admin.max_intentos'))) {
-            $segundos = RateLimiter::availableIn($this->throttleKey($request));
+        if ($this->throttle->bloqueado($this->throttleKey($request), config('admin.max_intentos'))) {
+            $segundos = $this->throttle->segundosRestantes($this->throttleKey($request));
             return back()
                 ->withErrors(['email' => "Demasiados intentos fallidos. Intenta nuevamente en {$segundos} segundos."])
                 ->withInput($request->only('email'));
@@ -45,13 +48,13 @@ class AdminLoginController extends Controller
         $this->registrarLog($request, $request->input('email'), $credencialesOk);
 
         if (! $credencialesOk) {
-            RateLimiter::hit($this->throttleKey($request), config('admin.bloqueo_segundos'));
+            $this->throttle->registrarFallo($this->throttleKey($request), config('admin.bloqueo_segundos'));
             return back()
                 ->withErrors(['email' => 'Correo o contraseña incorrectos.'])
                 ->withInput($request->only('email'));
         }
 
-        RateLimiter::clear($this->throttleKey($request));
+        $this->throttle->limpiar($this->throttleKey($request));
         $admin->update(['ultimo_acceso' => now()]);
 
         if ($admin->two_factor_enabled) {
@@ -86,8 +89,8 @@ class AdminLoginController extends Controller
         // Defensa en profundidad: el throttle genérico de escritura (30/60s) ya
         // limita el ritmo, pero un TOTP de 6 dígitos merece su propio límite en
         // vez de depender de uno compartido con el resto de rutas admin.
-        if (RateLimiter::tooManyAttempts($throttleKey, config('admin.max_intentos'))) {
-            $segundos = RateLimiter::availableIn($throttleKey);
+        if ($this->throttle->bloqueado($throttleKey, config('admin.max_intentos'))) {
+            $segundos = $this->throttle->segundosRestantes($throttleKey);
             return back()->withErrors(['code' => "Demasiados intentos fallidos. Intenta nuevamente en {$segundos} segundos."]);
         }
 
@@ -103,11 +106,11 @@ class AdminLoginController extends Controller
         $this->registrarLog($request, $admin->email, $valido);
 
         if (! $valido) {
-            RateLimiter::hit($throttleKey, config('admin.bloqueo_segundos'));
+            $this->throttle->registrarFallo($throttleKey, config('admin.bloqueo_segundos'));
             return back()->withErrors(['code' => 'Código incorrecto. Verifica tu aplicación de autenticación.']);
         }
 
-        RateLimiter::clear($throttleKey);
+        $this->throttle->limpiar($throttleKey);
         $request->session()->forget('admin_2fa_pending');
         Auth::guard('admin')->login($admin);
 

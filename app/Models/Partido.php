@@ -125,4 +125,9 @@ class Partido extends Model
     {
         return $this->belongsTo(User::class, 'idVeedor', 'idUsuario');
     }
+
+    public function movimientosFinancieros(): HasMany
+    {
+        return $this->hasMany(MovimientoFinanciero::class, 'idPartido', 'idPartido');
+    }
 }

@@ -14,8 +14,8 @@ use App\Models\Arbitro;
 use App\Models\CategoriaArbitro;
 use App\Models\EstadoArbitro;
 use App\Services\ArbitroService;
+use App\Services\EstadoCuentaArbitroService;
 use App\Services\LimiteService;
-use App\Services\ReporteFinanzasService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,7 +37,7 @@ class ArbitroController extends Controller
     public function __construct(
         private readonly ArbitroService $arbitros,
         private readonly LimiteService  $limites,
-        private readonly ReporteFinanzasService $reportesFinanzas,
+        private readonly EstadoCuentaArbitroService $reportesFinanzas,
     ) {}
 
     public function index(Request $request): View|JsonResponse

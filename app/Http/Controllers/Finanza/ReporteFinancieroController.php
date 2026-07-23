@@ -8,7 +8,7 @@ use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Finanza\ReporteFinancieroRequest;
 use App\Models\Colegio;
-use App\Services\ReporteFinanzasService;
+use App\Services\BalanceFinanzasService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -18,7 +18,7 @@ class ReporteFinancieroController extends Controller
     use ResuelveColegio;
 
     public function __construct(
-        private readonly ReporteFinanzasService $reportes,
+        private readonly BalanceFinanzasService $reportes,
     ) {}
 
     public function index(ReporteFinancieroRequest $request): View

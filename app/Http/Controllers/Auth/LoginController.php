@@ -7,11 +7,11 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
+use App\Services\LoginThrottleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
 
 class LoginController extends Controller
@@ -21,6 +21,8 @@ class LoginController extends Controller
 
     /** Duración del bloqueo en segundos una vez agotados los intentos. */
     private const BLOQUEO_SEGUNDOS = 300;
+
+    public function __construct(private readonly LoginThrottleService $throttle) {}
 
     public function showLoginForm(): View|RedirectResponse
     {
@@ -35,8 +37,8 @@ class LoginController extends Controller
     {
         $throttleKey = $this->throttleKey($request);
 
-        if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_INTENTOS)) {
-            $minutos = (int) ceil(RateLimiter::availableIn($throttleKey) / 60);
+        if ($this->throttle->bloqueado($throttleKey, self::MAX_INTENTOS)) {
+            $minutos = (int) ceil($this->throttle->segundosRestantes($throttleKey) / 60);
 
             return back()
                 ->withErrors(['identificador' => "Por seguridad, el acceso quedó bloqueado tras {$this->maxIntentos()} intentos fallidos. Intenta nuevamente en {$minutos} " . ($minutos === 1 ? 'minuto' : 'minutos') . '.'])
@@ -47,7 +49,7 @@ class LoginController extends Controller
         $remember     = $request->boolean('remember');
 
         if (Auth::attempt($credenciales, $remember)) {
-            RateLimiter::clear($throttleKey);
+            $this->throttle->limpiar($throttleKey);
             $request->session()->regenerate();
 
             return redirect()->intended(route('dashboard'));
@@ -62,9 +64,9 @@ class LoginController extends Controller
                 ->withInput($request->only('identificador'));
         }
 
-        RateLimiter::hit($throttleKey, self::BLOQUEO_SEGUNDOS);
+        $this->throttle->registrarFallo($throttleKey, self::BLOQUEO_SEGUNDOS);
 
-        $restantes = RateLimiter::remaining($throttleKey, self::MAX_INTENTOS);
+        $restantes = $this->throttle->intentosRestantes($throttleKey, self::MAX_INTENTOS);
         $aviso     = $restantes > 0
             ? ' Te ' . ($restantes === 1 ? 'queda 1 intento' : "quedan {$restantes} intentos") . ' antes del bloqueo temporal.'
             : '';

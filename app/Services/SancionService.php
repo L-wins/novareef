@@ -221,7 +221,14 @@ final class SancionService
      * acción manual) pueden ambas validar el estado sobre la misma instancia
      * obsoleta y la que escribe último pisa silenciosamente a la otra,
      * dejando historial contradictorio. Mismo patrón que
-     * FinanzasService::registrarAbono()/anularMovimiento().
+     * FinanzasService::registrarAbono()/anularMovimiento(). Este es el
+     * mecanismo de concurrencia real de Sancion — la columna `version` de
+     * abajo NO es optimistic locking (a diferencia de
+     * PartidoStateMachine::transicionarCon(), que sí compara
+     * WHERE version = $esperada antes de escribir): solo se incrementa,
+     * nunca se lee para decidir nada. lockForUpdate() ya es suficiente
+     * protección; no se agregó la comparación real porque duplicaría lo que
+     * el lock pesimista ya garantiza.
      */
     private function bloquear(Sancion $sancion): Sancion
     {

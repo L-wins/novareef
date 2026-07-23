@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Finanza;
 
 use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
-use App\Services\ReporteFinanzasService;
+use App\Services\BalanceFinanzasService;
 use Illuminate\View\View;
 
 /**
@@ -19,7 +19,7 @@ class MoraArbitrosController extends Controller
     use ResuelveColegio;
 
     public function __construct(
-        private readonly ReporteFinanzasService $reportes,
+        private readonly BalanceFinanzasService $reportes,
     ) {}
 
     public function index(): View

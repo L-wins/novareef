@@ -9,13 +9,13 @@ use App\Http\Requests\Auth\RestablecerContrasenaRequest;
 use App\Http\Requests\Auth\SolicitarRecuperacionRequest;
 use App\Mail\RecuperarContrasenaMail;
 use App\Models\User;
+use App\Services\LoginThrottleService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -30,6 +30,8 @@ class RecuperarContrasenaController extends Controller
     /** Mensaje único de éxito — nunca revela si el correo existe o no. */
     private const MENSAJE_GENERICO = 'Si el correo ingresado está registrado, te enviamos un enlace para restablecer tu contraseña. Revisa también tu carpeta de spam.';
 
+    public function __construct(private readonly LoginThrottleService $throttle) {}
+
     public function mostrarSolicitud(): View
     {
         return view('auth.recuperar-contrasena');
@@ -40,8 +42,8 @@ class RecuperarContrasenaController extends Controller
         $email       = mb_strtolower(trim($request->validated('email')));
         $throttleKey = $this->throttleKey($request, $email);
 
-        if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_INTENTOS)) {
-            $minutos = (int) ceil(RateLimiter::availableIn($throttleKey) / 60);
+        if ($this->throttle->bloqueado($throttleKey, self::MAX_INTENTOS)) {
+            $minutos = (int) ceil($this->throttle->segundosRestantes($throttleKey) / 60);
 
             return back()
                 ->withErrors(['email' => "Demasiadas solicitudes. Intenta nuevamente en {$minutos} " . ($minutos === 1 ? 'minuto' : 'minutos') . '.'])
@@ -51,7 +53,7 @@ class RecuperarContrasenaController extends Controller
         // Se cuenta la solicitud exista o no la cuenta — evita usar este
         // endpoint para bombardear de correos a un usuario real, y evita
         // que el conteo mismo filtre si la cuenta existe.
-        RateLimiter::hit($throttleKey, self::BLOQUEO_SEGUNDOS);
+        $this->throttle->registrarFallo($throttleKey, self::BLOQUEO_SEGUNDOS);
 
         Password::broker('users')->sendResetLink(
             ['emailUsuario' => $email],

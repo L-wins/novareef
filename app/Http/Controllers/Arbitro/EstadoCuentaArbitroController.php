@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Arbitro;
 
 use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
-use App\Services\ReporteFinanzasService;
+use App\Services\EstadoCuentaArbitroService;
 use Illuminate\View\View;
 
 class EstadoCuentaArbitroController extends Controller
@@ -14,7 +14,7 @@ class EstadoCuentaArbitroController extends Controller
     use ResuelveColegio;
 
     public function __construct(
-        private readonly ReporteFinanzasService $reportes,
+        private readonly EstadoCuentaArbitroService $reportes,
     ) {}
 
     public function show(): View

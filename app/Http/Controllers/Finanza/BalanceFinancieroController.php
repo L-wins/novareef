@@ -8,8 +8,8 @@ use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Finanza\StoreSaldoInicialRequest;
 use App\Models\MovimientoFinanciero;
+use App\Services\BalanceFinanzasService;
 use App\Services\FinanzasService;
-use App\Services\ReporteFinanzasService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -19,7 +19,7 @@ class BalanceFinancieroController extends Controller
     use ResuelveColegio;
 
     public function __construct(
-        private readonly ReporteFinanzasService $reportes,
+        private readonly BalanceFinanzasService $reportes,
         private readonly FinanzasService $finanzas,
     ) {}
 

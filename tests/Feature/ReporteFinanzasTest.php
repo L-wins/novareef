@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Models\Colegio;
 use App\Models\MovimientoFinanciero;
 use App\Models\User;
+use App\Services\BalanceFinanzasService;
 use App\Services\FinanzasService;
 use App\Services\ReporteFinanzasService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -84,7 +85,6 @@ class ReporteFinanzasTest extends TestCase
     {
         $colegio  = $this->crearColegioConFinanzas();
         $finanzas = app(FinanzasService::class);
-        $reportes = app(ReporteFinanzasService::class);
 
         $finanzas->registrarMovimiento($colegio->idColegio, [
             'tipoMovimiento' => 'ingreso', 'categoria' => 'mensualidad',
@@ -95,7 +95,7 @@ class ReporteFinanzasTest extends TestCase
             'concepto' => 'Junio', 'montoTotal' => 7000, 'fechaMovimiento' => '2026-06-05',
         ], null);
 
-        $serie = $reportes->serieMensual($colegio->idColegio, '2026-04-01', '2026-06-30');
+        $serie = app(BalanceFinanzasService::class)->serieMensual($colegio->idColegio, '2026-04-01', '2026-06-30');
 
         $this->assertCount(3, $serie); // abr, may (vacío), jun
         $this->assertSame(['2026-04', '2026-05', '2026-06'], $serie->pluck('mes')->all());
@@ -109,7 +109,6 @@ class ReporteFinanzasTest extends TestCase
     {
         $colegio  = $this->crearColegioConFinanzas();
         $finanzas = app(FinanzasService::class);
-        $reportes = app(ReporteFinanzasService::class);
 
         // Período actual: junio — 30000 de ingresos
         $finanzas->registrarMovimiento($colegio->idColegio, [
@@ -123,7 +122,7 @@ class ReporteFinanzasTest extends TestCase
             'concepto' => 'Mayo', 'montoTotal' => 20000, 'fechaMovimiento' => '2026-05-15',
         ], null);
 
-        $reporte = $reportes->reporte($colegio->idColegio, '2026-06-01', '2026-06-30');
+        $reporte = app(BalanceFinanzasService::class)->reporte($colegio->idColegio, '2026-06-01', '2026-06-30');
 
         $this->assertSame(30000.0, $reporte['totalIngresos']);
         $this->assertSame(20000.0, $reporte['comparativa']['totalIngresos']);

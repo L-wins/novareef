@@ -7,7 +7,7 @@ namespace Tests\Feature;
 use App\Models\Colegio;
 use App\Models\User;
 use App\Services\FinanzasService;
-use App\Services\ReporteFinanzasService;
+use App\Services\BalanceFinanzasService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -68,7 +68,7 @@ class ReporteFinancieroTest extends TestCase
         $tesorero = $this->crearTesorero($colegio);
         $finanzas->anularMovimiento($anulado, $tesorero);
 
-        $reporte = app(ReporteFinanzasService::class)->reporte($colegio->idColegio, '2026-06-01', '2026-06-30');
+        $reporte = app(BalanceFinanzasService::class)->reporte($colegio->idColegio, '2026-06-01', '2026-06-30');
 
         $this->assertSame(50000.0, $reporte['totalIngresos']);
         $this->assertSame(30000.0, $reporte['totalEgresos']);

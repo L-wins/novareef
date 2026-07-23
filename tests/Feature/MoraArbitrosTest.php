@@ -7,7 +7,7 @@ namespace Tests\Feature;
 use App\Models\Colegio;
 use App\Models\User;
 use App\Services\FinanzasService;
-use App\Services\ReporteFinanzasService;
+use App\Services\BalanceFinanzasService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -44,8 +44,8 @@ class MoraArbitrosTest extends TestCase
         $colegio = $this->crearColegioConFinanzas();
         $this->crearArbitro($colegio);
 
-        $balance = app(ReporteFinanzasService::class)->balanceGeneral($colegio->idColegio);
-        $mora    = app(ReporteFinanzasService::class)->moraDesdeBalance($balance);
+        $balance = app(BalanceFinanzasService::class)->balanceGeneral($colegio->idColegio);
+        $mora    = app(BalanceFinanzasService::class)->moraDesdeBalance($balance);
 
         $this->assertCount(0, $mora);
     }
@@ -65,8 +65,8 @@ class MoraArbitrosTest extends TestCase
             'idArbitro'       => $arbitro->idArbitro,
         ], null);
 
-        $balance = app(ReporteFinanzasService::class)->balanceGeneral($colegio->idColegio);
-        $mora    = app(ReporteFinanzasService::class)->moraDesdeBalance($balance);
+        $balance = app(BalanceFinanzasService::class)->balanceGeneral($colegio->idColegio);
+        $mora    = app(BalanceFinanzasService::class)->moraDesdeBalance($balance);
 
         $this->assertCount(1, $mora);
         $this->assertSame(20000.0, $mora->first()['nosDebe']);
@@ -93,8 +93,8 @@ class MoraArbitrosTest extends TestCase
             'idArbitro' => $arbitroB->idArbitro,
         ], null);
 
-        $balance = app(ReporteFinanzasService::class)->balanceGeneral($colegio->idColegio);
-        $mora    = app(ReporteFinanzasService::class)->moraDesdeBalance($balance);
+        $balance = app(BalanceFinanzasService::class)->balanceGeneral($colegio->idColegio);
+        $mora    = app(BalanceFinanzasService::class)->moraDesdeBalance($balance);
 
         $this->assertCount(2, $mora);
         $this->assertSame($arbitroB->idArbitro, $mora->first()['arbitro']->idArbitro);

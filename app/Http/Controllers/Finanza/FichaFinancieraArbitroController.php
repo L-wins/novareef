@@ -11,8 +11,8 @@ use App\Http\Requests\Finanza\StoreAbonoArbitroRequest;
 use App\Http\Requests\Finanza\StoreCargoArbitroRequest;
 use App\Models\Arbitro;
 use App\Models\MovimientoFinanciero;
+use App\Services\EstadoCuentaArbitroService;
 use App\Services\FinanzasService;
-use App\Services\ReporteFinanzasService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -31,7 +31,7 @@ class FichaFinancieraArbitroController extends Controller
 
     public function __construct(
         private readonly FinanzasService $finanzas,
-        private readonly ReporteFinanzasService $reportes,
+        private readonly EstadoCuentaArbitroService $reportes,
     ) {}
 
     public function show(int $idArbitro): View

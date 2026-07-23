@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Finanza;
 
 use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
-use App\Services\ReporteFinanzasService;
+use App\Services\EstadoCuentaArbitroService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -20,7 +20,7 @@ class ComprobantesMensualesController extends Controller
     use ResuelveColegio;
 
     public function __construct(
-        private readonly ReporteFinanzasService $reportes,
+        private readonly EstadoCuentaArbitroService $reportes,
     ) {}
 
     public function index(Request $request): View

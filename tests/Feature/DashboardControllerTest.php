@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\Colegio;
+use App\Models\Partido;
 use App\Models\User;
+use App\Services\EstadoCuentaArbitroService;
 use App\Services\FinanzasService;
-use App\Services\ReporteFinanzasService;
+use App\StateMachines\PartidoStateMachine;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -105,9 +107,51 @@ class DashboardControllerTest extends TestCase
         $response->assertViewIs('dashboard.arbitro');
         $response->assertSee('$60.000'); // formato COP sin decimales
         $this->assertSame(
-            app(ReporteFinanzasService::class)->saldoPendienteArbitro($arbitro->fresh()),
+            app(EstadoCuentaArbitroService::class)->saldoPendienteArbitro($arbitro->fresh()),
             $response->viewData('saldoPendienteCobrar'),
         );
+    }
+
+    /**
+     * Hallazgo de la auditoría de carga (docs/auditoria-carga-2026-07.md):
+     * un partido finalizado en modalidad nómina cuyas designaciones nunca se
+     * confirmaron no genera ningún egreso — antes de este contador, eso
+     * quedaba invisible para el ejecutivo salvo por un Log::warning() en
+     * servidor. El caso real más común (tarifa faltante) exigiría montar
+     * TarifaTorneo también; confirmar via designaciones sin confirmar basta
+     * para ejercitar el mismo contador con menos fixture.
+     */
+    public function test_ejecutivo_ve_alerta_de_partidos_sin_nomina_generada(): void
+    {
+        $colegio = $this->crearColegio();
+        $ejecutivo = $this->crearEjecutivo($colegio);
+
+        $partido = $this->prepararPartidoPublicado($colegio, $this->crearDesignador($colegio));
+        Partido::where('idPartido', $partido['partido']->idPartido)->update(['modalidadPago' => 'nomina']);
+
+        // Designaciones deliberadamente sin confirmar — el partido se lleva
+        // a 'finalizado' con la state machine directamente, como haría un
+        // job/comando que no pase por confirmarDesignacion() de cada árbitro.
+        PartidoStateMachine::transicionarCon($partido['partido']->fresh(), 'confirmado', $ejecutivo);
+        PartidoStateMachine::transicionarCon($partido['partido']->fresh(), 'finalizado', $ejecutivo);
+
+        app(FinanzasService::class); // asegura el binding antes del dashboard
+        $response = $this->actingAs($ejecutivo)->get('/dashboard');
+
+        $response->assertOk();
+        $response->assertSee('Hay partidos finalizados sin nómina generada');
+        $this->assertSame(1, $response->viewData('partidosNominaSinGenerar'));
+    }
+
+    public function test_ejecutivo_sin_partidos_sin_nomina_no_ve_alerta(): void
+    {
+        $colegio = $this->crearColegio();
+        $ejecutivo = $this->crearEjecutivo($colegio);
+
+        $response = $this->actingAs($ejecutivo)->get('/dashboard');
+
+        $response->assertOk();
+        $response->assertDontSee('Hay partidos finalizados sin nómina generada');
     }
 
     /**

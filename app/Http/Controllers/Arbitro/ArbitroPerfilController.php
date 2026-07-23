@@ -8,8 +8,8 @@ use App\Http\Controllers\Concerns\ResuelveColegio;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Arbitro\MiPerfilRequest;
 use App\Services\ArbitroService;
+use App\Services\EstadoCuentaArbitroService;
 use App\Services\PoliticaPrivacidadService;
-use App\Services\ReporteFinanzasService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -20,7 +20,7 @@ class ArbitroPerfilController extends Controller
 
     public function __construct(
         private readonly ArbitroService $arbitros,
-        private readonly ReporteFinanzasService $reportes,
+        private readonly EstadoCuentaArbitroService $reportes,
         private readonly PoliticaPrivacidadService $politica,
     ) {}
 

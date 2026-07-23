@@ -8,7 +8,7 @@ use App\Models\Colegio;
 use App\Models\MovimientoFinanciero;
 use App\Models\User;
 use App\Services\FinanzasService;
-use App\Services\ReporteFinanzasService;
+use App\Services\BalanceFinanzasService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -64,7 +64,7 @@ class BalanceFinancieroTest extends TestCase
             'concepto' => 'Pendiente', 'montoTotal' => 99999, 'fechaMovimiento' => today()->format('Y-m-d'),
         ], null);
 
-        $balance = app(ReporteFinanzasService::class)->balanceGeneral($colegio->idColegio);
+        $balance = app(BalanceFinanzasService::class)->balanceGeneral($colegio->idColegio);
 
         $this->assertSame(30000.0, $balance['saldoEnCaja']);
     }
@@ -88,7 +88,7 @@ class BalanceFinancieroTest extends TestCase
             'idArbitro' => $arbitroA->idArbitro, 'tipoOrigenMulta' => MovimientoFinanciero::ORIGEN_MULTA_MANUAL,
         ], null);
 
-        $balance = app(ReporteFinanzasService::class)->balanceGeneral($colegio->idColegio);
+        $balance = app(BalanceFinanzasService::class)->balanceGeneral($colegio->idColegio);
 
         $this->assertCount(2, $balance['porArbitro']);
 

@@ -9,6 +9,15 @@
 
     <x-dashboard.modules-grid compact :modulos="$modulos" :modulos-plan="$modulosPlan ?? []" />
 
+    @if ($partidosNominaSinGenerar > 0)
+        @include('partials.alerta-banner', [
+            'nivel'  => 'critico',
+            'titulo' => 'Hay partidos finalizados sin nómina generada',
+            'texto'  => "{$partidosNominaSinGenerar} partido" . ($partidosNominaSinGenerar === 1 ? '' : 's') . " finalizado" . ($partidosNominaSinGenerar === 1 ? '' : 's') . " en modalidad nómina no generó pago a los árbitros — revisa que las tarifas de división/rol/formato estén configuradas y que las designaciones hayan sido confirmadas.",
+            'href'   => route('finanzas.balance.index'),
+        ])
+    @endif
+
     <x-dashboard.section label="Resumen">
         <div class="stats-grid">
             <x-dashboard.stat-card icon="fa-users" color="teal" :value="$arbitrosActivos" label="Árbitros activos"
