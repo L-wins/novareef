@@ -14,11 +14,13 @@ use App\Models\Arbitro;
 use App\Models\CategoriaArbitro;
 use App\Models\EstadoArbitro;
 use App\Services\ArbitroService;
+use App\Services\DocumentoArbitroService;
 use App\Services\EstadoCuentaArbitroService;
 use App\Services\LimiteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -27,24 +29,25 @@ class ArbitroController extends Controller
     use ResuelveColegio;
 
     private const ORDENES_PERMITIDOS = [
-        'nombre_asc'  => ['usuarios.nombreUsuario', 'asc'],
+        'nombre_asc' => ['usuarios.nombreUsuario', 'asc'],
         'nombre_desc' => ['usuarios.nombreUsuario', 'desc'],
-        'fecha_asc'   => ['arbitros.fechaIngresoColegio', 'asc'],
-        'fecha_desc'  => ['arbitros.fechaIngresoColegio', 'desc'],
-        'carnet_asc'  => ['arbitros.codigoCarnet', 'asc'],
+        'fecha_asc' => ['arbitros.fechaIngresoColegio', 'asc'],
+        'fecha_desc' => ['arbitros.fechaIngresoColegio', 'desc'],
+        'carnet_asc' => ['arbitros.codigoCarnet', 'asc'],
     ];
 
     public function __construct(
         private readonly ArbitroService $arbitros,
-        private readonly LimiteService  $limites,
+        private readonly LimiteService $limites,
         private readonly EstadoCuentaArbitroService $reportesFinanzas,
+        private readonly DocumentoArbitroService $documentos,
     ) {}
 
     public function index(Request $request): View|JsonResponse
     {
         $idColegio = $this->idColegioActivo();
 
-        $query = Arbitro::with(['usuario', 'categoria', 'estado'])
+        $query = Arbitro::with(['usuario', 'categoria', 'estado', 'documentos.requisito', 'colegio.requisitosDocumentoArbitro'])
             ->join('usuarios', 'usuarios.idUsuario', '=', 'arbitros.idUsuario')
             ->where('arbitros.idColegio', $idColegio)
             ->select('arbitros.*');
@@ -52,8 +55,8 @@ class ArbitroController extends Controller
         if ($buscar = trim((string) $request->query('buscar', ''))) {
             $query->where(function ($q) use ($buscar): void {
                 $q->where('usuarios.nombreUsuario', 'like', "%{$buscar}%")
-                  ->orWhere('arbitros.numeroDocumento', 'like', "%{$buscar}%")
-                  ->orWhere('arbitros.codigoCarnet', 'like', "%{$buscar}%");
+                    ->orWhere('arbitros.numeroDocumento', 'like', "%{$buscar}%")
+                    ->orWhere('arbitros.codigoCarnet', 'like', "%{$buscar}%");
             });
         }
 
@@ -68,14 +71,17 @@ class ArbitroController extends Controller
         [$col, $dir] = self::ORDENES_PERMITIDOS[$request->query('orden', 'nombre_asc')]
             ?? self::ORDENES_PERMITIDOS['nombre_asc'];
 
-        $arbitros   = $query->orderBy($col, $dir)->paginate(15)->withQueryString();
+        $arbitros = $query->orderBy($col, $dir)->paginate(15)->withQueryString();
         $categorias = $this->categorias($idColegio);
-        $estados    = $this->estados();
+        $estados = $this->estados();
+        $resumenEstados = $this->resumenEstados($idColegio);
 
         $datos = compact('arbitros', 'categorias', 'estados') + [
-            'limiteUsados'     => $this->limites->arbitrosActivos($idColegio),
-            'limite'           => $this->limites->limiteArbitros($idColegio),
+            'limiteUsados' => $this->limites->arbitrosActivos($idColegio),
+            'limite' => $this->limites->limiteArbitros($idColegio),
             'limitePorcentaje' => $this->limites->porcentajeUsoArbitros($idColegio),
+            'resumenEstados' => $resumenEstados,
+            'totalActivos' => (int) $resumenEstados->sum(),
         ];
 
         // auto-filter.js (modo AJAX): la lista/el contador se actualizan sin
@@ -83,7 +89,7 @@ class ArbitroController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'regions' => [
-                    'contador'   => view('arbitros.partials.contador', $datos)->render(),
+                    'contador' => view('arbitros.partials.contador', $datos)->render(),
                     'resultados' => view('arbitros.partials.resultados', $datos)->render(),
                 ],
             ]);
@@ -95,7 +101,7 @@ class ArbitroController extends Controller
     public function show(int $id): View
     {
         $arbitro = $this->arbitroDelColegio($id, [
-            'usuario', 'categoria', 'colegio', 'documentos',
+            'usuario', 'categoria', 'colegio.requisitosDocumentoArbitro', 'documentos.requisito', 'documentos.revisor',
             'estado', 'historialEstados.usuarioCambio', 'historialEstados.estadoNuevoModel',
         ]);
 
@@ -106,14 +112,18 @@ class ArbitroController extends Controller
         if (Auth::user()->can('ver-finanzas')) {
             $resumenFinanciero = [
                 'leDebemos' => $this->reportesFinanzas->saldoPendienteArbitro($arbitro),
-                'nosDebe'   => $this->reportesFinanzas->saldoPorCobrarArbitro($arbitro),
+                'nosDebe' => $this->reportesFinanzas->saldoPorCobrarArbitro($arbitro),
             ];
         }
 
+        $documentosRequisitos = $this->documentos->panelParaArbitro($arbitro);
+
         return view('arbitros.show', [
-            'arbitro'           => $arbitro,
-            'estados'           => $this->estados(),
+            'arbitro' => $arbitro,
+            'estados' => $this->estados(),
             'resumenFinanciero' => $resumenFinanciero,
+            'documentosRequisitos' => $documentosRequisitos,
+            'documentosResumen' => $this->documentos->resumenParaArbitro($arbitro, $documentosRequisitos),
         ]);
     }
 
@@ -134,7 +144,7 @@ class ArbitroController extends Controller
 
     public function store(StoreArbitroRequest $request): RedirectResponse
     {
-        $datos     = $request->validated();
+        $datos = $request->validated();
         $idColegio = $this->idColegioActivo();
 
         // nombreColegio viene de la relación ya disponible en el modelo User.
@@ -142,17 +152,17 @@ class ArbitroController extends Controller
 
         try {
             $arbitro = $this->arbitros->registrar(
-                idColegio:           $idColegio,
-                nombreColegio:       $nombreColegio,
-                urlAcceso:           config('app.url') . '/login',
-                nombreUsuario:       $datos['nombreUsuario'],
-                emailUsuario:        $datos['emailUsuario'],
-                telefonoUsuario:     $datos['telefonoUsuario'] ?? null,
-                idCategoria:         (int) $datos['idCategoria'],
-                tipoDocumento:       $datos['tipoDocumento'],
-                numeroDocumento:     $datos['numeroDocumento'],
+                idColegio: $idColegio,
+                nombreColegio: $nombreColegio,
+                urlAcceso: config('app.url').'/login',
+                nombreUsuario: $datos['nombreUsuario'],
+                emailUsuario: $datos['emailUsuario'],
+                telefonoUsuario: $datos['telefonoUsuario'] ?? null,
+                idCategoria: (int) $datos['idCategoria'],
+                tipoDocumento: $datos['tipoDocumento'],
+                numeroDocumento: $datos['numeroDocumento'],
                 fechaIngresoColegio: $datos['fechaIngresoColegio'],
-                lugarExpedicionCC:   $datos['lugarExpedicionCC'] ?? null,
+                lugarExpedicionCC: $datos['lugarExpedicionCC'] ?? null,
             );
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
@@ -176,7 +186,7 @@ class ArbitroController extends Controller
         $arbitro = $this->arbitroDelColegio($id, ['usuario']);
 
         return view('arbitros.edit', [
-            'arbitro'    => $arbitro,
+            'arbitro' => $arbitro,
             'categorias' => $this->categorias($arbitro->idColegio),
         ]);
     }
@@ -197,7 +207,7 @@ class ArbitroController extends Controller
     public function cambiarEstado(ToggleEstadoArbitroRequest $request, int $id): RedirectResponse
     {
         $arbitro = $this->arbitroDelColegio($id);
-        $datos   = $request->validated();
+        $datos = $request->validated();
 
         try {
             $this->arbitros->cambiarEstado(
@@ -277,5 +287,14 @@ class ArbitroController extends Controller
     private function estados(): \Illuminate\Database\Eloquent\Collection
     {
         return EstadoArbitro::where('esActivo', true)->orderBy('orden')->get();
+    }
+
+    private function resumenEstados(int $idColegio): Collection
+    {
+        return Arbitro::query()
+            ->where('idColegio', $idColegio)
+            ->selectRaw('estadoArbitro, COUNT(*) as total')
+            ->groupBy('estadoArbitro')
+            ->pluck('total', 'estadoArbitro');
     }
 }

@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Models\Arbitro;
 use App\Models\CategoriaArbitro;
 use App\Models\Colegio;
+use App\Models\EstadoArbitro;
 use App\Models\User;
 use Database\Seeders\EstadoArbitroSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,8 +23,8 @@ use Tests\TestCase;
  */
 class ArbitroCrudControllerTest extends TestCase
 {
-    use RefreshDatabase;
     use CreaColegioDePrueba;
+    use RefreshDatabase;
 
     private function crearEjecutivoConPermisos(Colegio $colegio): User
     {
@@ -49,19 +50,19 @@ class ArbitroCrudControllerTest extends TestCase
         $categoria = CategoriaArbitro::where('idColegio', $colegio->idColegio)->firstOrFail();
 
         return [
-            'nombreUsuario'       => 'Juan Pérez',
-            'emailUsuario'        => 'juan.perez.' . uniqid() . '@test.com',
-            'telefonoUsuario'     => '3001234567',
-            'idCategoria'         => $categoria->idCategoria,
-            'tipoDocumento'       => 'cedula',
-            'numeroDocumento'     => (string) random_int(10000000, 99999999),
+            'nombreUsuario' => 'Juan Pérez',
+            'emailUsuario' => 'juan.perez.'.uniqid().'@test.com',
+            'telefonoUsuario' => '3001234567',
+            'idCategoria' => $categoria->idCategoria,
+            'tipoDocumento' => 'cedula',
+            'numeroDocumento' => (string) random_int(10000000, 99999999),
             'fechaIngresoColegio' => today()->format('Y-m-d'),
         ];
     }
 
     public function test_lista_arbitros_del_colegio_con_filtros(): void
     {
-        $colegio  = $this->crearColegio();
+        $colegio = $this->crearColegio();
         $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
         $this->crearArbitro($colegio);
         $this->crearArbitro($colegio);
@@ -73,22 +74,22 @@ class ArbitroCrudControllerTest extends TestCase
 
     public function test_registra_un_arbitro_nuevo(): void
     {
-        $colegio   = $this->crearColegio();
+        $colegio = $this->crearColegio();
         $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
 
         $this->actingAs($ejecutivo)->post(route('arbitros.store'), $this->datosNuevoArbitro($colegio))
             ->assertRedirect();
 
         $this->assertDatabaseHas('usuarios', [
-            'idColegio'  => $colegio->idColegio,
+            'idColegio' => $colegio->idColegio,
             'rolUsuario' => 'arbitro',
         ]);
     }
 
     public function test_no_se_puede_registrar_al_alcanzar_el_limite_del_plan(): void
     {
-        $plan     = $this->crearPlan(['limiteArbitros' => 1]);
-        $colegio  = $this->crearColegio($plan);
+        $plan = $this->crearPlan(['limiteArbitros' => 1]);
+        $colegio = $this->crearColegio($plan);
         $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
         $this->crearArbitro($colegio);
 
@@ -103,32 +104,46 @@ class ArbitroCrudControllerTest extends TestCase
 
     public function test_actualiza_datos_del_arbitro(): void
     {
-        $colegio   = $this->crearColegio();
+        $colegio = $this->crearColegio();
         $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
-        $arbitro   = $this->crearArbitro($colegio);
+        $arbitro = $this->crearArbitro($colegio);
 
         $this->actingAs($ejecutivo)->put(route('arbitros.update', $arbitro->idArbitro), [
-            'nombreUsuario'   => 'Nombre Actualizado',
-            'emailUsuario'    => $arbitro->usuario->emailUsuario,
+            'nombreUsuario' => 'Nombre Actualizado',
+            'emailUsuario' => $arbitro->usuario->emailUsuario,
             'telefonoUsuario' => '3009999999',
-            'idCategoria'     => $arbitro->idCategoria,
-            'tipoDocumento'   => $arbitro->tipoDocumento,
+            'idCategoria' => $arbitro->idCategoria,
+            'tipoDocumento' => $arbitro->tipoDocumento,
             'numeroDocumento' => $arbitro->numeroDocumento,
         ])->assertRedirect(route('arbitros.show', $arbitro->idArbitro));
 
         $this->assertSame('Nombre Actualizado', $arbitro->usuario->fresh()->nombreUsuario);
     }
 
+    public function test_muestra_la_ficha_profesional_del_arbitro(): void
+    {
+        $this->seed(EstadoArbitroSeeder::class);
+        $colegio = $this->crearColegio();
+        $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
+        $arbitro = $this->crearArbitro($colegio, ['arbitro' => ['estadoArbitro' => 'activo']]);
+
+        $this->actingAs($ejecutivo)->get(route('arbitros.show', $arbitro->idArbitro))
+            ->assertOk()
+            ->assertSee($arbitro->usuario->nombreUsuario)
+            ->assertSee($arbitro->codigoCarnet)
+            ->assertSee('Perfil completo');
+    }
+
     public function test_cambia_el_estado_del_arbitro_con_motivo(): void
     {
         $this->seed(EstadoArbitroSeeder::class);
-        $colegio   = $this->crearColegio();
+        $colegio = $this->crearColegio();
         $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
-        $arbitro   = $this->crearArbitro($colegio, ['arbitro' => ['estadoArbitro' => 'activo']]);
+        $arbitro = $this->crearArbitro($colegio, ['arbitro' => ['estadoArbitro' => 'activo']]);
 
         $this->actingAs($ejecutivo)->put(route('arbitros.estado', $arbitro->idArbitro), [
             'estadoNuevo' => 'suspendido',
-            'motivo'      => 'Sanción disciplinaria',
+            'motivo' => 'Sanción disciplinaria',
             'fechaInicio' => today()->format('Y-m-d'),
         ])->assertRedirect();
 
@@ -138,9 +153,9 @@ class ArbitroCrudControllerTest extends TestCase
     public function test_suspender_sin_motivo_falla_validacion(): void
     {
         $this->seed(EstadoArbitroSeeder::class);
-        $colegio   = $this->crearColegio();
+        $colegio = $this->crearColegio();
         $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
-        $arbitro   = $this->crearArbitro($colegio, ['arbitro' => ['estadoArbitro' => 'activo']]);
+        $arbitro = $this->crearArbitro($colegio, ['arbitro' => ['estadoArbitro' => 'activo']]);
 
         $this->actingAs($ejecutivo)->put(route('arbitros.estado', $arbitro->idArbitro), [
             'estadoNuevo' => 'suspendido',
@@ -149,11 +164,35 @@ class ArbitroCrudControllerTest extends TestCase
         $this->assertSame('activo', $arbitro->fresh()->estadoArbitro);
     }
 
+    public function test_no_permite_cambiar_a_un_estado_inactivo_del_catalogo(): void
+    {
+        $this->seed(EstadoArbitroSeeder::class);
+        EstadoArbitro::create([
+            'nombre' => 'revision_manual',
+            'etiqueta' => 'Revisión manual',
+            'color' => 'gray',
+            'descripcion' => 'Estado deshabilitado para pruebas.',
+            'permiteDesignar' => false,
+            'esActivo' => false,
+            'orden' => 99,
+        ]);
+
+        $colegio = $this->crearColegio();
+        $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
+        $arbitro = $this->crearArbitro($colegio, ['arbitro' => ['estadoArbitro' => 'activo']]);
+
+        $this->actingAs($ejecutivo)->put(route('arbitros.estado', $arbitro->idArbitro), [
+            'estadoNuevo' => 'revision_manual',
+        ])->assertSessionHasErrors('estadoNuevo');
+
+        $this->assertSame('activo', $arbitro->fresh()->estadoArbitro);
+    }
+
     public function test_archiva_y_restaura_un_arbitro(): void
     {
-        $colegio   = $this->crearColegio();
+        $colegio = $this->crearColegio();
         $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
-        $arbitro   = $this->crearArbitro($colegio);
+        $arbitro = $this->crearArbitro($colegio);
 
         $this->actingAs($ejecutivo)->post(route('arbitros.archivar', $arbitro->idArbitro), [
             'motivo' => 'Se retira del colegio',
@@ -173,10 +212,10 @@ class ArbitroCrudControllerTest extends TestCase
 
     public function test_un_colegio_no_puede_ver_ni_editar_arbitros_de_otro_colegio(): void
     {
-        $colegioA  = $this->crearColegio();
-        $colegioB  = $this->crearColegio();
+        $colegioA = $this->crearColegio();
+        $colegioB = $this->crearColegio();
         $ejecutivoA = $this->crearEjecutivoConPermisos($colegioA);
-        $arbitroB   = $this->crearArbitro($colegioB);
+        $arbitroB = $this->crearArbitro($colegioB);
 
         $this->actingAs($ejecutivoA)->get(route('arbitros.show', $arbitroB->idArbitro))->assertNotFound();
         $this->actingAs($ejecutivoA)->get(route('arbitros.edit', $arbitroB->idArbitro))->assertNotFound();
@@ -184,7 +223,7 @@ class ArbitroCrudControllerTest extends TestCase
 
     public function test_lista_crea_activa_y_elimina_categorias(): void
     {
-        $colegio   = $this->crearColegio();
+        $colegio = $this->crearColegio();
         $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
 
         $this->actingAs($ejecutivo)->get(route('categorias.arbitro.index'))->assertOk();
@@ -208,9 +247,9 @@ class ArbitroCrudControllerTest extends TestCase
 
     public function test_no_elimina_una_categoria_con_arbitros_asignados(): void
     {
-        $colegio   = $this->crearColegio();
+        $colegio = $this->crearColegio();
         $ejecutivo = $this->crearEjecutivoConPermisos($colegio);
-        $arbitro   = $this->crearArbitro($colegio);
+        $arbitro = $this->crearArbitro($colegio);
 
         $this->actingAs($ejecutivo)->delete(route('categorias.arbitro.destroy', $arbitro->idCategoria))
             ->assertRedirect();

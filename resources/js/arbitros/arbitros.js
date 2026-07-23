@@ -23,14 +23,30 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     //  Cambio de estado: motivo/fechas según selección 
-    var estadoSelect    = document.getElementById('estadoNuevo');
-    var motivoWrap      = document.getElementById('motivo-wrap');
-    var fechasWrap      = document.getElementById('fechas-wrap');
+    var estadoSelect = document.getElementById('estadoNuevo');
+    var motivoWrap   = document.getElementById('motivo-wrap');
+    var fechasWrap   = document.getElementById('fechas-wrap');
+    var motivoEstado = document.getElementById('motivo');
+    var fechaInicio  = document.getElementById('fechaInicio');
+    var fechaFin     = document.getElementById('fechaFin');
     if (estadoSelect) {
         function syncCambioEstado() {
             var v = estadoSelect.value;
-            if (motivoWrap) motivoWrap.style.display = (v === 'suspendido' || v === 'retirado') ? '' : 'none';
-            if (fechasWrap) fechasWrap.style.display = (v === 'suspendido') ? '' : 'none';
+            var requiereMotivo = v === 'suspendido' || v === 'retirado';
+            var requiereFechas = v === 'suspendido';
+
+            if (motivoWrap) motivoWrap.hidden = !requiereMotivo;
+            if (motivoEstado) {
+                motivoEstado.required = requiereMotivo;
+                motivoEstado.disabled = !requiereMotivo;
+            }
+
+            if (fechasWrap) fechasWrap.hidden = !requiereFechas;
+            if (fechaInicio) {
+                fechaInicio.required = requiereFechas;
+                fechaInicio.disabled = !requiereFechas;
+            }
+            if (fechaFin) fechaFin.disabled = !requiereFechas;
         }
         estadoSelect.addEventListener('change', syncCambioEstado);
         syncCambioEstado();
@@ -78,6 +94,38 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     //  Contador de caracteres: motivo del archivado ─
+    document.querySelectorAll('[data-document-file]').forEach(function (input) {
+        input.addEventListener('change', function () {
+            var label = input.closest('form')?.querySelector('[data-document-file-name]');
+            if (!label) return;
+
+            label.textContent = input.files && input.files[0]
+                ? input.files[0].name
+                : 'Ningún archivo';
+        });
+    });
+
+    document.querySelectorAll('[data-confirm-submit]').forEach(function (form) {
+        form.addEventListener('submit', async function (e) {
+            if (form.dataset.confirmed === '1' || !window.novaAlert) return;
+            e.preventDefault();
+
+            var result = await novaAlert.confirm({
+                titulo: form.dataset.confirmTitle || '¿Confirmar?',
+                texto: form.dataset.confirmText || '¿Estás seguro?',
+                icono: 'question',
+                iconColor: form.dataset.confirmColor || '#4f8ef7',
+                confirmarTexto: form.dataset.confirmBtn || 'Sí, continuar',
+                confirmColor: form.dataset.confirmColor || '#4f8ef7',
+            });
+
+            if (result.isConfirmed) {
+                form.dataset.confirmed = '1';
+                form.submit();
+            }
+        });
+    });
+
     var motivoInput = document.getElementById('motivo-archivar');
     var contador    = document.getElementById('contador-motivo');
     if (motivoInput && contador) {
@@ -160,6 +208,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (!estadoSelect || !estadoSelect.value) {
                 if (window.novaAlert) novaAlert.error('Debes seleccionar un estado.');
+                return;
+            }
+
+            var requiereMotivo = estadoSelect.value === 'suspendido' || estadoSelect.value === 'retirado';
+            var requiereFechas = estadoSelect.value === 'suspendido';
+
+            if (requiereMotivo && motivoEstado && motivoEstado.value.trim() === '') {
+                if (window.novaAlert) novaAlert.error('Debes indicar el motivo del cambio de estado.');
+                motivoEstado.focus();
+                return;
+            }
+
+            if (requiereFechas && fechaInicio && fechaInicio.value === '') {
+                if (window.novaAlert) novaAlert.error('Debes indicar la fecha de inicio de la suspensión.');
+                fechaInicio.focus();
+                return;
+            }
+
+            if (requiereFechas && fechaInicio && fechaFin && fechaInicio.value && fechaFin.value && fechaFin.value <= fechaInicio.value) {
+                if (window.novaAlert) novaAlert.error('La fecha de fin debe ser posterior a la fecha de inicio.');
+                fechaFin.focus();
                 return;
             }
 

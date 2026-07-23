@@ -4,20 +4,23 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Models\Arbitro;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Support\Facades\Storage;
+use Stancl\Tenancy\Database\Models\Tenant;
 
 class Colegio extends Model
 {
-    protected $table      = 'colegios';
+    protected $table = 'colegios';
+
     protected $primaryKey = 'idColegio';
-    protected $keyType    = 'int';
-    public    $incrementing = true;
+
+    protected $keyType = 'int';
+
+    public $incrementing = true;
 
     protected $fillable = [
         'tenantId',
@@ -37,8 +40,8 @@ class Colegio extends Model
 
     protected $casts = [
         'fechaSuscripcion' => 'date',
-        'fechaExpiracion'  => 'date',
-        'estadoColegio'    => 'string',
+        'fechaExpiracion' => 'date',
+        'estadoColegio' => 'string',
     ];
 
     //  Accessors ─
@@ -58,19 +61,24 @@ class Colegio extends Model
             return $this->logoColegio;
         }
 
-        return \Illuminate\Support\Facades\Storage::disk('public')->url($this->logoColegio);
+        return Storage::disk('public')->url($this->logoColegio);
     }
 
     //  Relaciones ─
 
     public function tenant(): BelongsTo
     {
-        return $this->belongsTo(\Stancl\Tenancy\Database\Models\Tenant::class, 'tenantId');
+        return $this->belongsTo(Tenant::class, 'tenantId');
     }
 
     public function arbitros(): HasMany
     {
         return $this->hasMany(Arbitro::class, 'idColegio', 'idColegio');
+    }
+
+    public function requisitosDocumentoArbitro(): HasMany
+    {
+        return $this->hasMany(RequisitoDocumentoArbitro::class, 'idColegio', 'idColegio');
     }
 
     public function suscripciones(): HasMany
@@ -97,7 +105,7 @@ class Colegio extends Model
             'idColegio',
             'idPlan',
         )->whereIn('suscripciones.estado', Suscripcion::ESTADOS_VIGENTES)
-         ->orderByDesc('suscripciones.fechaVencimiento');
+            ->orderByDesc('suscripciones.fechaVencimiento');
     }
 
     public function usuarios(): HasMany

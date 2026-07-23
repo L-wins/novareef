@@ -9,7 +9,9 @@ use App\Http\Controllers\Arbitro\ArbitroController;
 use App\Http\Controllers\Arbitro\ArbitroFotoController;
 use App\Http\Controllers\Arbitro\ArbitroPerfilController;
 use App\Http\Controllers\Arbitro\CategoriaArbitroController;
+use App\Http\Controllers\Arbitro\DocumentoArbitroController;
 use App\Http\Controllers\Arbitro\EstadoCuentaArbitroController;
+use App\Http\Controllers\Arbitro\RequisitoDocumentoArbitroController;
 use App\Http\Controllers\Auth\CambioContrasenaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RecuperarContrasenaController;
@@ -21,6 +23,7 @@ use App\Http\Controllers\Designacion\CalificacionController;
 use App\Http\Controllers\Designacion\DesignacionAccionesController;
 use App\Http\Controllers\Designacion\DesignacionController;
 use App\Http\Controllers\Designacion\DisponibilidadController;
+use App\Http\Controllers\Designacion\EstadisticasController;
 use App\Http\Controllers\Designacion\ImportacionDesignacionesController;
 use App\Http\Controllers\Designacion\MisPartidosController;
 use App\Http\Controllers\Finanza\BalanceFinancieroController;
@@ -125,6 +128,16 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
     Route::post('/arbitros/{id}/foto', [ArbitroFotoController::class, 'subir'])->name('arbitros.foto.subir');
     Route::delete('/arbitros/{id}/foto', [ArbitroFotoController::class, 'eliminar'])->name('arbitros.foto.eliminar');
 
+    Route::prefix('documentos-arbitro')->name('documentos.arbitro.')->group(function () {
+        Route::get('/plantillas/{idRequisito}', [RequisitoDocumentoArbitroController::class, 'descargarPlantilla'])->name('plantilla');
+        Route::get('/{idDocumento}/descargar', [DocumentoArbitroController::class, 'descargar'])->name('descargar');
+        Route::post('/{idArbitro}/requisitos/{idRequisito}', [DocumentoArbitroController::class, 'store'])->name('store');
+        Route::put('/{idDocumento}/aprobar', [DocumentoArbitroController::class, 'aprobar'])
+            ->middleware('permission:editar-arbitros')->name('aprobar');
+        Route::put('/{idDocumento}/devolver', [DocumentoArbitroController::class, 'devolver'])
+            ->middleware('permission:editar-arbitros')->name('devolver');
+    });
+
     //  Árbitros archivados ─
     Route::get('/arbitros-archivados', [ArbitroController::class, 'archivados'])
         ->middleware('permission:editar-arbitros')
@@ -150,6 +163,14 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::put('/{id}/estado', [CategoriaArbitroController::class, 'cambiarEstado'])->name('estado');
         Route::delete('/{id}', [CategoriaArbitroController::class, 'destroy'])->name('destroy');
     });
+
+    Route::prefix('requisitos-documentos-arbitro')->name('requisitos-documentos-arbitro.')
+        ->middleware('permission:editar-arbitros')->group(function () {
+            Route::get('/', [RequisitoDocumentoArbitroController::class, 'index'])->name('index');
+            Route::post('/', [RequisitoDocumentoArbitroController::class, 'store'])->name('store');
+            Route::put('/{idRequisito}', [RequisitoDocumentoArbitroController::class, 'update'])->name('update');
+            Route::put('/{idRequisito}/estado', [RequisitoDocumentoArbitroController::class, 'cambiarEstado'])->name('estado');
+        });
 
     //  Torneos
     Route::prefix('torneos')->name('torneos.')->middleware(['permission:ver-torneos', 'modulo:torneos'])->group(function () {
@@ -229,6 +250,20 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
 
         Route::get('/torneo/{idTorneo}/listado-pdf', [DesignacionController::class, 'generarListado'])
             ->middleware('permission:ver-designaciones')->name('listado.pdf');
+
+        // Estadísticas — rango fijo, debe ir antes de '/{id}' (línea siguiente)
+        // por la misma razón que el importador: si no, Laravel capturaría
+        // "estadisticas" como si fuera el literal del parámetro {id}.
+        Route::get('/estadisticas', [EstadisticasController::class, 'index'])
+            ->middleware('permission:crear-designaciones')->name('estadisticas');
+        Route::prefix('estadisticas')->name('estadisticas.')
+            ->middleware('permission:crear-designaciones')
+            ->group(function () {
+                Route::get('/disponibilidad', [EstadisticasController::class, 'disponibilidad'])->name('disponibilidad');
+                Route::get('/partidos-arbitro', [EstadisticasController::class, 'partidosArbitro'])->name('partidos-arbitro');
+                Route::get('/confiabilidad', [EstadisticasController::class, 'confiabilidad'])->name('confiabilidad');
+                Route::get('/coincidencias', [EstadisticasController::class, 'coincidencias'])->name('coincidencias');
+            });
 
         Route::get('/{id}', [DesignacionController::class, 'show'])->name('show');
 

@@ -13,9 +13,10 @@
     $porcentaje = $arbitro->porcentajePerfil;
     $colorBar   = $arbitro->colorPerfil;
     $estadoObj  = $arbitro->estado;
+    $perfilChecklist = $arbitro->perfilChecklist();
 @endphp
 
-<div class="container" style="max-width:900px;">
+<div class="container arbitros-page profile-self-page">
 
     @if (session('success'))
         <div id="flash-msg" class="flash-success">{{ session('success') }}</div>
@@ -35,7 +36,7 @@
     @endif
 
     {{-- ===== HERO ===== --}}
-    <div class="profile-hero">
+    <div class="profile-hero profile-hero--self">
         <div class="profile-hero-left">
 
             <div class="profile-photo-wrap">
@@ -101,17 +102,36 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <div style="margin-top:1rem;">
-        <a href="{{ route('arbitros.estado-cuenta') }}" class="btn btn-secondary">
+        <div class="profile-hero-actions">
+            <a href="{{ route('arbitros.estado-cuenta') }}" class="btn btn-secondary">
             <i class="fa-solid fa-sack-dollar"></i>
             Mi estado de cuenta
             @if ($saldoPendienteCobrar > 0)
                 <span class="badge badge-amber">${{ number_format($saldoPendienteCobrar, 0, ',', '.') }} pendiente</span>
             @endif
-        </a>
+            </a>
+        </div>
     </div>
+
+    <div class="profile-checklist profile-checklist--inline">
+        @foreach ($perfilChecklist as $item)
+            <div class="profile-checkitem {{ $item['completo'] ? 'is-complete' : '' }}">
+                <span class="profile-checkitem__icon">
+                    <i class="fa-solid {{ $item['icono'] }}"></i>
+                </span>
+                <div>
+                    <span class="profile-checkitem__title">{{ $item['etiqueta'] }}</span>
+                    <span class="profile-checkitem__desc">{{ $item['puntos'] }} pts</span>
+                </div>
+                <i class="fa-solid {{ $item['completo'] ? 'fa-check' : 'fa-circle' }} profile-checkitem__state"></i>
+            </div>
+        @endforeach
+    </div>
+
+    @include('arbitros.partials.documentos-panel', [
+        'modoRevision' => false,
+    ])
 
     {{-- ===== DATOS NO EDITABLES ===== --}}
     <div class="detail-card" style="margin-top:1rem;">
@@ -161,7 +181,7 @@
 
             {{-- Contacto --}}
             <div class="form-section">
-                <p class="form-section-title">Contacto</p>
+                <p class="form-section-title">Contacto y salud</p>
                 <div class="form-grid form-grid-2">
                     <div class="form-group">
                         <label for="telefonoUsuario" class="form-label">Teléfono</label>
@@ -172,12 +192,28 @@
                         @error('telefonoUsuario') <p class="field-error">{{ $message }}</p> @enderror
                     </div>
                     <div class="form-group">
+                        <label for="rhArbitro" class="form-label">RH</label>
+                        <input type="text" id="rhArbitro" name="rhArbitro"
+                               value="{{ old('rhArbitro', $arbitro->rhArbitro) }}"
+                               maxlength="5" placeholder="Ej. O+"
+                               class="form-input {{ $errors->has('rhArbitro') ? 'is-invalid' : '' }}">
+                        @error('rhArbitro') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
                         <label for="epsArbitro" class="form-label">EPS</label>
                         <input type="text" id="epsArbitro" name="epsArbitro"
                                value="{{ old('epsArbitro', $arbitro->epsArbitro) }}"
                                maxlength="100" placeholder="Ej. Sura"
                                class="form-input {{ $errors->has('epsArbitro') ? 'is-invalid' : '' }}">
                         @error('epsArbitro') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="profesionArbitro" class="form-label">Profesión</label>
+                        <input type="text" id="profesionArbitro" name="profesionArbitro"
+                               value="{{ old('profesionArbitro', $arbitro->profesionArbitro) }}"
+                               maxlength="100" placeholder="Ej. Entrenador"
+                               class="form-input {{ $errors->has('profesionArbitro') ? 'is-invalid' : '' }}">
+                        @error('profesionArbitro') <p class="field-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
                 @unless($yaAceptoDatosSensibles ?? false)
@@ -235,6 +271,14 @@
                                maxlength="100" placeholder="Ej. Chapinero"
                                class="form-input {{ $errors->has('barrioArbitro') ? 'is-invalid' : '' }}">
                         @error('barrioArbitro') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="lugarExpedicionCC" class="form-label">Lugar de expedición</label>
+                        <input type="text" id="lugarExpedicionCC" name="lugarExpedicionCC"
+                               value="{{ old('lugarExpedicionCC', $arbitro->lugarExpedicionCC) }}"
+                               maxlength="100" placeholder="Ej. Bogotá"
+                               class="form-input {{ $errors->has('lugarExpedicionCC') ? 'is-invalid' : '' }}">
+                        @error('lugarExpedicionCC') <p class="field-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </div>
@@ -295,6 +339,7 @@
             <div class="form-footer">
                 @if ($porcentaje < 100)
                     <a href="{{ route('arbitros.completar-perfil') }}" class="btn btn-secondary">
+                        <i class="fa-solid fa-list-check"></i>
                         Completar perfil
                     </a>
                 @endif

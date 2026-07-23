@@ -18,6 +18,7 @@
 .form-grid   { display: grid; gap: 1rem; }
 .form-grid-2 { grid-template-columns: 1fr 1fr; }
 .form-group  { display: flex; flex-direction: column; gap: 0.35rem; }
+.form-group--spaced { margin-top: 1.25rem; }
 .span-2      { grid-column: span 2; }
 
 .form-label { font-size: 0.82rem; font-weight: 500; color: var(--text-secondary); }

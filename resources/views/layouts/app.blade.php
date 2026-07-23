@@ -162,6 +162,11 @@
                     <i class="fa-solid fa-tags"></i>
                     <span>Categorías</span>
                 </a>
+                <a href="{{ route('requisitos-documentos-arbitro.index') }}"
+                   class="sidebar-link sidebar-link--sub {{ request()->routeIs('requisitos-documentos-arbitro.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-folder-tree"></i>
+                    <span>Documentos</span>
+                </a>
                 @endcan
 
                 @if (in_array('torneos', $modulosPlan ?? [], true))

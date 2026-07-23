@@ -1,15 +1,21 @@
 @if ($arbitros->isEmpty())
     <div class="empty-state">
-        <i class="fa-solid fa-user-slash" style="font-size:48px;margin-bottom:1rem;opacity:.5;"></i>
+        <div class="empty-state-icon">
+            <i class="fa-solid fa-user-slash"></i>
+        </div>
         @if (request('buscar') || request('estado') || request('categoria'))
-            <p>No hay árbitros que coincidan con los filtros aplicados.</p>
-            <a href="{{ route('arbitros.index') }}" class="btn btn-secondary" style="margin-top:1rem;">
+            <h2>No encontramos coincidencias</h2>
+            <p>Prueba con otro nombre, documento, carné o limpia los filtros activos.</p>
+            <a href="{{ route('arbitros.index') }}" class="btn btn-secondary">
+                <i class="fa-solid fa-rotate-left"></i>
                 Ver todos
             </a>
         @else
+            <h2>Aún no hay árbitros registrados</h2>
             <p>No hay árbitros registrados todavía.</p>
             @can('crear-arbitros')
-            <a href="{{ route('arbitros.create') }}" class="btn btn-primary" style="margin-top:1rem;">
+            <a href="{{ route('arbitros.create') }}" class="btn btn-primary">
+                <i class="fa-solid fa-user-plus"></i>
                 Registrar primer árbitro
             </a>
             @endcan
@@ -25,13 +31,16 @@
                     <th>Documento</th>
                     <th>Categoría</th>
                     <th>Estado</th>
+                    <th>Perfil</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($arbitros as $arbitro)
                 <tr>
-                    <td class="td-code">{{ $arbitro->codigoCarnet }}</td>
+                    <td class="td-code">
+                        <span class="code-chip">{{ $arbitro->codigoCarnet }}</span>
+                    </td>
                     <td>
                         <div class="cell-with-avatar">
                             @if ($arbitro->fotoPerfil)
@@ -44,7 +53,9 @@
                                 </span>
                             @endif
                             <div>
-                                <span class="td-primary">{{ $arbitro->usuario->nombreUsuario }}</span>
+                                <a href="{{ route('arbitros.show', $arbitro->idArbitro) }}" class="td-primary td-link">
+                                    {{ $arbitro->usuario->nombreUsuario }}
+                                </a>
                                 <span class="td-secondary">{{ $arbitro->usuario->emailUsuario }}</span>
                             </div>
                         </div>
@@ -63,15 +74,36 @@
                         </span>
                     </td>
                     <td>
+                        @php
+                            $perfil = $arbitro->porcentajePerfil;
+                            $perfilColor = $arbitro->colorPerfil;
+                        @endphp
+                        <div class="table-profile-meter" title="Perfil completo al {{ $perfil }}%">
+                            <div class="table-profile-meter__head">
+                                <span>{{ $perfil }}%</span>
+                                <span>{{ $perfil === 100 ? 'Completo' : 'Pendiente' }}</span>
+                            </div>
+                            <div class="table-profile-meter__bar" aria-hidden="true">
+                                <span data-color="{{ $perfilColor }}" style="width: {{ $perfil }}%;"></span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
                         <div class="table-actions">
                             <a href="{{ route('arbitros.show', $arbitro->idArbitro) }}"
-                               class="btn-icon btn-icon-view" title="Ver detalle">
+                               class="row-action row-action--primary"
+                               title="Ver detalle"
+                               aria-label="Ver detalle de {{ $arbitro->usuario->nombreUsuario }}">
                                 <i class="fa-solid fa-eye"></i>
+                                <span>Ver</span>
                             </a>
                             @can('editar-arbitros')
                             <a href="{{ route('arbitros.edit', $arbitro->idArbitro) }}"
-                               class="btn-icon btn-icon-edit" title="Editar">
+                               class="row-action"
+                               title="Editar"
+                               aria-label="Editar {{ $arbitro->usuario->nombreUsuario }}">
                                 <i class="fa-solid fa-pen-to-square"></i>
+                                <span>Editar</span>
                             </a>
                             @endcan
                         </div>

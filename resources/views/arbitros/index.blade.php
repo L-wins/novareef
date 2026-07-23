@@ -9,21 +9,38 @@
 
 @section('contenido')
 <div class="container">
+    @php
+        $tieneFiltros = request()->filled('buscar') || request()->filled('estado') || request()->filled('categoria') || request()->filled('orden');
+        $estadoActual = request('estado');
+    @endphp
 
     {{-- Cabecera --}}
-    <div class="page-header">
+    <div class="page-header page-header--panel">
         <div class="page-header-left">
+            <span class="page-kicker">Registro operativo</span>
             <h1 class="page-heading">Árbitros</h1>
             <p class="page-subheading" data-auto-filter-region="contador">
                 @include('arbitros.partials.contador')
             </p>
         </div>
-        @can('crear-arbitros')
-        <a href="{{ route('arbitros.create') }}" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i>
-            Nuevo árbitro
-        </a>
-        @endcan
+        <div class="page-header-actions">
+            @can('editar-arbitros')
+                <a href="{{ route('categorias.arbitro.index') }}" class="btn btn-secondary">
+                    <i class="fa-solid fa-tags"></i>
+                    Categorías
+                </a>
+                <a href="{{ route('arbitros.archivados') }}" class="btn btn-secondary">
+                    <i class="fa-solid fa-box-archive"></i>
+                    Archivados
+                </a>
+            @endcan
+            @can('crear-arbitros')
+            <a href="{{ route('arbitros.create') }}" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i>
+                Nuevo árbitro
+            </a>
+            @endcan
+        </div>
     </div>
 
     @include('partials.limite-plan-banner', [
@@ -33,14 +50,39 @@
         'porcentaje' => $limitePorcentaje,
     ])
 
+    <div class="status-filter-strip" aria-label="Filtros rápidos por estado">
+        <a href="{{ route('arbitros.index', request()->except('estado', 'page')) }}"
+           class="status-filter-chip {{ $estadoActual ? '' : 'is-active' }}">
+            <span>Todos</span>
+            <strong>{{ $totalActivos }}</strong>
+        </a>
+        @foreach ($estados as $est)
+            @php $estadoParams = array_merge(request()->except('page'), ['estado' => $est->nombre]); @endphp
+            <a href="{{ route('arbitros.index', $estadoParams) }}"
+               class="status-filter-chip {{ $estadoActual === $est->nombre ? 'is-active' : '' }}"
+               data-color="{{ $est->color ?? 'gray' }}">
+                <span>{{ $est->etiqueta }}</span>
+                <strong>{{ (int) $resumenEstados->get($est->nombre, 0) }}</strong>
+            </a>
+        @endforeach
+    </div>
+
     {{-- Barra de búsqueda + filtros --}}
-    <form method="GET" action="{{ route('arbitros.index') }}" class="filter-bar filter-bar-grid" data-auto-filter data-auto-filter-ajax>
-        <div class="filter-group filter-grow">
+    <form method="GET" action="{{ route('arbitros.index') }}" class="filter-bar filter-bar-grid filter-panel" data-auto-filter data-auto-filter-ajax>
+        <div class="filter-group filter-grow filter-search">
             <label class="filter-label">Buscar</label>
+            <i class="fa-solid fa-magnifying-glass filter-search-icon"></i>
             <input type="text" name="buscar"
                    value="{{ request('buscar') }}"
                    placeholder="Buscar por nombre, documento o carnet..."
                    class="filter-input">
+            @if (request('buscar'))
+                <a href="{{ route('arbitros.index', request()->except('buscar', 'page')) }}"
+                   class="filter-search-clear"
+                   aria-label="Limpiar búsqueda">
+                    <i class="fa-solid fa-xmark"></i>
+                </a>
+            @endif
         </div>
 
         <div class="filter-group">
@@ -92,8 +134,11 @@
                 <i class="fa-solid fa-magnifying-glass"></i>
                 Buscar
             </button>
-            @if (request('buscar') || request('estado') || request('categoria') || request('orden'))
-                <a href="{{ route('arbitros.index') }}" class="filter-clear">Limpiar</a>
+            @if ($tieneFiltros)
+                <a href="{{ route('arbitros.index') }}" class="filter-clear">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    Limpiar
+                </a>
             @endif
         </div>
     </form>
@@ -101,16 +146,6 @@
     <div data-auto-filter-region="resultados">
         @include('arbitros.partials.resultados')
     </div>
-
-    @can('editar-arbitros')
-        <div class="archived-link-wrap">
-            <a href="{{ route('arbitros.archivados') }}" class="archived-link">
-                <i class="fa-solid fa-box-archive"></i>
-                Ver árbitros archivados
-            </a>
-        </div>
-    @endcan
-
 </div>
 @endsection
 

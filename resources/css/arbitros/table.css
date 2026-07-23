@@ -3,6 +3,7 @@
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
+    overflow: hidden;
 }
 .data-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 .data-table thead tr { background: var(--nv-fill); border-bottom: 1px solid var(--border); }
@@ -23,19 +24,81 @@
     vertical-align: middle;
 }
 .data-table tbody tr:last-child td { border-bottom: none; }
-.data-table tbody tr:hover { background: var(--bg-hover); }
+.data-table tbody tr {
+    transition: background .16s, box-shadow .16s;
+}
+.data-table tbody tr:hover {
+    background: var(--bg-hover);
+    box-shadow: inset 3px 0 0 var(--accent);
+}
 
 .td-primary   { display: block; color: var(--text-primary); font-weight: 500; }
 .td-secondary { display: block; font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+.td-link {
+    text-decoration: none;
+    transition: color .18s;
+}
+.td-link:hover { color: var(--accent); }
 .td-code {
     font-family: 'Cascadia Code','SF Mono',monospace;
     font-size: 0.8rem;
     color: #a78bfa;
 }
-.table-actions { display: flex; align-items: center; gap: 0.25rem; }
+.code-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: .22rem .5rem;
+    border-radius: 999px;
+    background: rgba(139, 92, 246, .1);
+    border: 1px solid rgba(139, 92, 246, .25);
+    color: #c4b5fd;
+    font-family: 'Cascadia Code','SF Mono',monospace;
+    font-size: .76rem;
+    white-space: nowrap;
+}
+.table-actions { display: flex; align-items: center; gap: 0.35rem; justify-content: flex-start; }
+
+.table-profile-meter {
+    min-width: 118px;
+}
+.table-profile-meter__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    margin-bottom: .35rem;
+    font-size: .72rem;
+    color: var(--text-muted);
+}
+.table-profile-meter__head span:first-child {
+    color: var(--text-primary);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+.table-profile-meter__bar {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--nv-border);
+    overflow: hidden;
+}
+.table-profile-meter__bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+}
+.table-profile-meter__bar span[data-color="green"]  { background: #10b981; }
+.table-profile-meter__bar span[data-color="blue"]   { background: var(--nv-accent-strong); }
+.table-profile-meter__bar span[data-color="yellow"] { background: #f59e0b; }
+.table-profile-meter__bar span[data-color="red"]    { background: #ef4444; }
+
+@media (max-width: 900px) {
+    .table-card { overflow-x: auto; }
+    .data-table { min-width: 900px; }
+}
 
 /* ═══════════════════════════════════════════════════════════════
    Tema claro — los pasteles pensados para fondo oscuro (dark)
    pierden contraste sobre fondo blanco; se oscurecen aquí.
    ═══════════════════════════════════════════════════════════════ */
 :root[data-theme="light"] .td-code { color: #7c3aed; }
+:root[data-theme="light"] .code-chip { color: #6d28d9; background: rgba(124,58,237,.08); }
