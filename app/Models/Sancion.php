@@ -97,6 +97,12 @@ class Sancion extends Model
         return $this->estaActiva() && ! $this->vencioPlazoApelacion();
     }
 
+    /** Días completos que faltan para que venza el plazo de apelación — solo presentación (countdown visual), nunca negativo. */
+    public function diasRestantesApelacion(): int
+    {
+        return max(0, (int) ceil(now()->floatDiffInDays($this->fechaLimiteApelacion()->endOfDay(), false)));
+    }
+
     // ── Relaciones ──
 
     public function colegio(): BelongsTo

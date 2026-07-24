@@ -431,7 +431,11 @@ Route::middleware(['auth', 'verificar.colegio', 'verificar.perfil'])->group(func
         Route::post('/', [SancionController::class, 'store'])->middleware('permission:crear-sanciones')->name('store');
         Route::get('/{id}', [SancionController::class, 'show'])->name('show');
         Route::get('/{id}/acta', [SancionController::class, 'acta'])->name('acta');
-        Route::put('/{id}/estado', [SancionController::class, 'cambiarEstado'])->middleware('permission:crear-sanciones')->name('estado');
+        // Sin middleware de permiso a nivel de ruta: cambiarEstado() autoriza
+        // cada acción por separado (cumplir/anular/resolver por permiso,
+        // apelar por ser el árbitro dueño de la sanción) — ver comentario
+        // en el controller.
+        Route::put('/{id}/estado', [SancionController::class, 'cambiarEstado'])->name('estado');
     });
 
     //  Revisión de justificaciones académicas — vive bajo /sanciones por

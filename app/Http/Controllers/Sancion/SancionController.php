@@ -44,8 +44,9 @@ class SancionController extends Controller
         $sanciones = $query->orderByDesc('fechaHecho')->paginate(20)->withQueryString();
 
         $arbitros = $esArbitro ? collect() : Arbitro::where('idColegio', $idColegio)->with('usuario')->get();
+        $resumen  = $esArbitro ? null : $this->sanciones->resumenParaDashboard($idColegio, limiteRecientes: 0);
 
-        return view('sanciones.index', compact('sanciones', 'arbitros', 'esArbitro'));
+        return view('sanciones.index', compact('sanciones', 'arbitros', 'esArbitro', 'resumen'));
     }
 
     public function create(): View
@@ -73,9 +74,10 @@ class SancionController extends Controller
 
     public function show(int $id): View
     {
-        $sancion = $this->sancionDelColegio($id, ['arbitro.usuario', 'tipo', 'partido', 'usuarioImpuso', 'movimientoFinanciero', 'historial.usuarioAccion']);
+        $sancion   = $this->sancionDelColegio($id, ['arbitro.usuario', 'tipo', 'partido', 'usuarioImpuso', 'movimientoFinanciero', 'historial.usuarioAccion']);
+        $esArbitro = Auth::user()->rolUsuario === 'arbitro';
 
-        if (Auth::user()->rolUsuario === 'arbitro') {
+        if ($esArbitro) {
             $arbitro = $this->arbitroAutenticado();
             abort_unless((int) $sancion->idArbitro === $arbitro->idArbitro, 403);
         }
@@ -83,7 +85,7 @@ class SancionController extends Controller
         $totalReciente = $this->sanciones->totalSancionesRecientes($sancion);
         $esReincidente = $this->sanciones->esReincidente($sancion);
 
-        return view('sanciones.show', compact('sancion', 'totalReciente', 'esReincidente'));
+        return view('sanciones.show', compact('sancion', 'totalReciente', 'esReincidente', 'esArbitro'));
     }
 
     public function acta(int $id): \Symfony\Component\HttpFoundation\Response
@@ -106,25 +108,52 @@ class SancionController extends Controller
     {
         $sancion = $this->sancionDelColegio($id);
         $datos   = $request->validated();
+        $usuario = Auth::user();
 
-        if (in_array($datos['accion'], ['anular', 'resolver'], true)) {
-            abort_unless(Auth::user()->can('editar-sanciones'), 403, 'No tienes permiso para anular o resolver apelaciones.');
-        }
+        match ($datos['accion']) {
+            'cumplir'             => abort_unless($usuario->can('crear-sanciones'), 403, 'No tienes permiso para marcar sanciones como cumplidas.'),
+            'anular', 'resolver'  => abort_unless($usuario->can('editar-sanciones'), 403, 'No tienes permiso para anular o resolver apelaciones.'),
+            'apelar'              => $this->autorizarApelacion($sancion, $usuario),
+        };
 
         try {
             match ($datos['accion']) {
-                'cumplir'  => $this->sanciones->cumplir($sancion, Auth::user(), $datos['motivo'] ?? null),
-                'anular'   => $this->sanciones->anular($sancion, Auth::user(), $datos['motivo']),
-                'apelar'   => $this->sanciones->apelar($sancion, Auth::user(), $datos['motivo'] ?? null),
-                'resolver' => $this->sanciones->resolverApelacion($sancion, $datos['resultado'], Auth::user(), $datos['motivo'] ?? null),
+                'cumplir'  => $this->sanciones->cumplir($sancion, $usuario, $datos['motivo'] ?? null),
+                'anular'   => $this->sanciones->anular($sancion, $usuario, $datos['motivo']),
+                'apelar'   => $this->sanciones->apelar($sancion, $usuario, $datos['motivo']),
+                'resolver' => $this->sanciones->resolverApelacion($sancion, $datos['resultado'], $usuario, $datos['motivo'] ?? null),
             };
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
 
+        $mensajes = [
+            'cumplir'  => 'Sanción marcada como cumplida.',
+            'anular'   => 'Sanción anulada.',
+            'apelar'   => 'Tu apelación fue registrada. El comité la revisará.',
+            'resolver' => 'Apelación resuelta.',
+        ];
+
         return redirect()
             ->route('sanciones.show', $sancion->idSancion)
-            ->with('success', 'Estado de la sanción actualizado.');
+            ->with('success', $mensajes[$datos['accion']]);
+    }
+
+    /**
+     * Apelar es un acto exclusivo del árbitro sancionado — el Comité NUNCA
+     * apela "en nombre de" alguien. Si el Comité quiere dejar sin efecto una
+     * sanción por su propia iniciativa (ej. reconoce un error de registro),
+     * ya existe anular() con permission:editar-sanciones, que logra el mismo
+     * efecto sin fingir una apelación que el árbitro nunca presentó. Por eso
+     * esta acción no depende de ningún permission de Spatie, solo de que
+     * quien la ejecuta sea el árbitro dueño de la sanción.
+     */
+    private function autorizarApelacion(Sancion $sancion, $usuario): void
+    {
+        abort_unless($usuario->rolUsuario === 'arbitro', 403, 'Solo el árbitro sancionado puede apelar su propia sanción.');
+
+        $arbitro = $this->arbitroAutenticado();
+        abort_unless((int) $sancion->idArbitro === $arbitro->idArbitro, 403, 'No puedes apelar una sanción que no es tuya.');
     }
 
     private function sancionDelColegio(int $id, array $relaciones = []): Sancion

@@ -1,0 +1,196 @@
+/*
+   Detalle de sanción (show.blade.php) — tarjeta de plazo de apelación con
+   countdown visual, grid de datos de solo lectura, banner de reincidencia,
+   tarjeta de multa y barra de acciones diferenciada por rol.
+    */
+
+/* ── Tiles de resumen (index.blade.php, vista comité) ── */
+.san-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+.san-tile {
+    background: var(--san-bg-card);
+    border: 1px solid var(--san-border);
+    border-radius: var(--san-radius);
+    padding: 1.1rem 1.25rem;
+}
+.san-tile__value {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: var(--san-text);
+    line-height: 1.1;
+}
+.san-tile__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--san-text-mute);
+    margin-top: 0.3rem;
+}
+
+/* ── Cabecera / actions bar ─────────────────────── */
+.sancion-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.75rem;
+}
+
+.sancion-actions-bar {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* ── Tarjeta de plazo de apelación ──────────────── */
+.plazo-card {
+    background: var(--san-bg-card);
+    border: 1px solid var(--san-border);
+    border-radius: var(--san-radius);
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.plazo-card__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    background: var(--nv-accent-bg);
+    color: var(--san-accent);
+}
+.plazo-card[data-urgencia="critica"] .plazo-card__icon { background: var(--nv-danger-bg); color: var(--nv-danger); }
+.plazo-card[data-urgencia="media"]   .plazo-card__icon { background: var(--nv-warning-bg); color: var(--nv-warning); }
+
+.plazo-card__body { flex: 1; min-width: 200px; }
+
+.plazo-card__title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--san-text);
+    margin-bottom: 0.15rem;
+}
+
+.plazo-card__subtitle {
+    font-size: 0.78rem;
+    color: var(--san-text-mute);
+}
+
+.plazo-card__bar {
+    height: 6px;
+    border-radius: 99px;
+    background: var(--nv-fill);
+    overflow: hidden;
+    margin-top: 0.55rem;
+    max-width: 320px;
+}
+.plazo-card__bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--nv-accent), var(--nv-accent-strong));
+}
+.plazo-card[data-urgencia="media"]   .plazo-card__bar-fill { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.plazo-card[data-urgencia="critica"] .plazo-card__bar-fill { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+.plazo-card__days {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--san-text);
+    white-space: nowrap;
+}
+.plazo-card__days span {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--san-text-mute);
+}
+
+.plazo-card--vencido {
+    opacity: 0.75;
+}
+
+/* ── Banner de reincidencia ─────────────────────── */
+.reincidente-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--nv-warning-bg);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: var(--san-radius);
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--nv-warning);
+}
+.reincidente-banner i { font-size: 1.1rem; flex-shrink: 0; }
+.reincidente-banner strong { color: var(--san-text); }
+
+/* ── Grid de datos de solo lectura ──────────────── */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.15rem 1.5rem;
+}
+.detail-grid .span-2 { grid-column: span 2; }
+
+.detail-field { display: flex; flex-direction: column; gap: 0.3rem; }
+.detail-field__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--san-text-mute);
+}
+.detail-field__value {
+    font-size: 0.92rem;
+    color: var(--san-text);
+    line-height: 1.5;
+}
+.detail-field__value--muted { color: var(--san-text-2); }
+
+/* ── Tarjeta de multa económica ─────────────────── */
+.multa-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: var(--nv-fill);
+    border: 1px solid var(--san-border);
+    border-radius: var(--san-radius-sm);
+    padding: 0.85rem 1rem;
+    flex-wrap: wrap;
+}
+.multa-card__amount {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--san-text);
+}
+.multa-card__amount span {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--san-text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: block;
+    margin-top: 0.1rem;
+}
+
+@media (max-width: 720px) {
+    .detail-grid { grid-template-columns: 1fr; }
+    .detail-grid .span-2 { grid-column: span 1; }
+}

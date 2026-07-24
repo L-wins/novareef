@@ -129,9 +129,12 @@ final class SancionService
     }
 
     /**
-     * El árbitro (o el colegio en su representación) apela una sanción activa
-     * — solo dentro de los Sancion::DIAS_LIMITE_APELACION días siguientes a
-     * su registro.
+     * Apela una sanción activa — solo dentro de los
+     * Sancion::DIAS_LIMITE_APELACION días siguientes a su registro. Este
+     * Service es agnóstico de "quién" apela (solo valida el estado de la
+     * sanción y el plazo); la restricción de que únicamente el árbitro
+     * dueño de la sanción puede invocar esta acción vive en
+     * SancionController::autorizarApelacion(), no aquí.
      *
      * @throws \RuntimeException  Si la sanción no está activa o el plazo ya venció.
      */

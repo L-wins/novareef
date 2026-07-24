@@ -30,7 +30,43 @@ document.addEventListener('DOMContentLoaded', function () {
         sincronizarSuspension();
     }
 
+    // ── Formulario de sanción: ayuda contextual del tipo seleccionado ──
+    var selectTipo = document.getElementById('idTipoSancion');
+    var hintTipo = document.getElementById('hint-tipo-sancion');
+    var hintTipoTexto = document.getElementById('hint-tipo-sancion-texto');
+
+    function sincronizarHintTipo() {
+        if (!selectTipo || !hintTipo || !hintTipoTexto) return;
+        var opcion = selectTipo.options[selectTipo.selectedIndex];
+        var articulo = opcion ? opcion.dataset.articulo : '';
+        var dias = opcion ? opcion.dataset.dias : '';
+        var partes = [];
+
+        if (articulo) partes.push('Fundamento: ' + articulo);
+        if (dias && parseInt(dias, 10) > 0) partes.push(dias + ' días de suspensión sugeridos');
+
+        if (partes.length) {
+            hintTipoTexto.textContent = partes.join(' · ');
+            hintTipo.style.display = 'flex';
+        } else {
+            hintTipo.style.display = 'none';
+        }
+    }
+
+    if (selectTipo) {
+        selectTipo.addEventListener('change', sincronizarHintTipo);
+        // Choices.js reemplaza el <select> nativo — su evento propio también dispara 'change' en el original.
+        sincronizarHintTipo();
+    }
+
     // ── Cambiar estado: mostrar campo de motivo/resultado según la acción ──
+    var textosMotivo = {
+        anular: { label: 'Motivo', placeholder: 'Explica por qué se anula esta sanción.' },
+        apelar: { label: 'Tu versión de los hechos', placeholder: 'Explica por qué apelas esta sanción — tu versión de lo ocurrido.' },
+        resolver: { label: 'Motivo (opcional)', placeholder: '' },
+        cumplir: { label: 'Motivo (opcional)', placeholder: '' },
+    };
+
     document.querySelectorAll('[data-accion-sancion]').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var accion = btn.dataset.accionSancion;
@@ -39,12 +75,24 @@ document.addEventListener('DOMContentLoaded', function () {
             var wrapMotivo = document.getElementById('wrap-motivo');
             var wrapResultado = document.getElementById('wrap-resultado');
             var tituloModal = document.getElementById('modal-estado-titulo');
+            var labelMotivo = document.getElementById('label-motivo');
+            var textareaMotivo = document.getElementById('textarea-motivo');
 
             if (!form || !inputAccion) return;
 
             inputAccion.value = accion;
-            if (wrapMotivo) wrapMotivo.style.display = (accion === 'anular') ? '' : 'none';
+
+            var motivoObligatorio = (accion === 'anular' || accion === 'apelar');
+            if (wrapMotivo) wrapMotivo.style.display = (accion === 'anular' || accion === 'apelar') ? '' : 'none';
             if (wrapResultado) wrapResultado.style.display = (accion === 'resolver') ? '' : 'none';
+
+            if (textareaMotivo) {
+                textareaMotivo.required = motivoObligatorio;
+                textareaMotivo.value = '';
+                var textos = textosMotivo[accion] || textosMotivo.cumplir;
+                textareaMotivo.placeholder = textos.placeholder;
+                if (labelMotivo) labelMotivo.textContent = textos.label;
+            }
 
             var titulos = { cumplir: 'Marcar como cumplida', anular: 'Anular sanción', apelar: 'Apelar sanción', resolver: 'Resolver apelación' };
             if (tituloModal) tituloModal.textContent = titulos[accion] || 'Cambiar estado';
@@ -64,8 +112,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Justificaciones pendientes: mostrar formulario de rechazo ──
     document.querySelectorAll('[data-abrir-rechazo]').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            var form = document.getElementById('form-rechazo-' + btn.dataset.abrirRechazo);
-            if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            var wrap = document.getElementById('wrap-rechazo-' + btn.dataset.abrirRechazo);
+            if (wrap) wrap.classList.toggle('is-open');
         });
     });
 

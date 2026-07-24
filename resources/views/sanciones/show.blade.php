@@ -9,7 +9,7 @@
 
 @php
     [$estadoLabel, $estadoColor] = \App\Models\Sancion::ETIQUETAS_ESTADO[$sancion->estadoSancion] ?? ['—', 'gray'];
-    $esArbitro = auth()->user()->rolUsuario === 'arbitro';
+    $severidad = $sancion->tipo?->severidad;
 @endphp
 
 @section('contenido')
@@ -20,34 +20,46 @@
         Volver a {{ $esArbitro ? 'mis sanciones' : 'sanciones' }}
     </a>
 
-    <div class="page-header">
+    <div class="sancion-header">
         <div class="page-header-left">
             <h1 class="page-heading">{{ $sancion->tipo->etiqueta ?? 'Sanción' }}</h1>
             <p class="page-subheading">
                 <span class="badge badge-{{ $estadoColor }}">{{ $estadoLabel }}</span>
-                {{ $sancion->arbitro->usuario->nombreUsuario ?? '—' }}
+                @if ($severidad)
+                    <span class="sev-chip" data-severidad="{{ $severidad }}">
+                        <i class="fa-solid fa-circle-exclamation"></i>{{ ucfirst($severidad) }}
+                    </span>
+                @endif
+                @unless ($esArbitro)
+                    {{ $sancion->arbitro->usuario->nombreUsuario ?? '—' }}
+                @endunless
             </p>
         </div>
-        <div style="display:flex; gap:0.75rem;">
+
+        <div class="sancion-actions-bar">
             <a href="{{ route('sanciones.acta', $sancion->idSancion) }}" class="btn btn-secondary">
                 <i class="fa-solid fa-file-pdf"></i>
                 Descargar acta
             </a>
-        @can('crear-sanciones')
-                @if (in_array($sancion->estadoSancion, ['activa', 'apelada']))
-                    <button type="button" class="btn btn-primary" data-accion-sancion="cumplir">
-                        <i class="fa-solid fa-check"></i> Cumplir
-                    </button>
-                @endif
+
+            @if ($esArbitro)
+                {{-- Apelar es exclusivo del árbitro dueño de la sanción — ver
+                     SancionController::autorizarApelacion(). El comité no
+                     tiene este botón: si quiere dejar sin efecto una sanción
+                     por su cuenta, usa Anular. --}}
                 @if ($sancion->puedeApelarse())
-                    <button type="button" class="btn btn-secondary" data-accion-sancion="apelar">
-                        <i class="fa-solid fa-gavel"></i> Apelar
+                    <button type="button" class="btn btn-primary" data-accion-sancion="apelar">
+                        <i class="fa-solid fa-gavel"></i> Apelar sanción
                     </button>
-                @elseif ($sancion->estadoSancion === 'activa')
-                    <span class="badge badge-gray" title="El plazo para apelar venció el {{ $sancion->fechaLimiteApelacion()->format('d/m/Y') }}.">
-                        <i class="fa-solid fa-gavel"></i> Plazo de apelación vencido
-                    </span>
                 @endif
+            @else
+                @can('crear-sanciones')
+                    @if (in_array($sancion->estadoSancion, ['activa', 'apelada']))
+                        <button type="button" class="btn btn-primary" data-accion-sancion="cumplir">
+                            <i class="fa-solid fa-check"></i> Cumplir
+                        </button>
+                    @endif
+                @endcan
                 @can('editar-sanciones')
                     @if ($sancion->estadoSancion === 'apelada')
                         <button type="button" class="btn btn-secondary" data-accion-sancion="resolver">
@@ -60,7 +72,7 @@
                         </button>
                     @endif
                 @endcan
-        @endcan
+            @endif
         </div>
     </div>
 
@@ -70,64 +82,62 @@
     @if (session('error'))
         <div class="flash-error" style="margin-bottom:1.25rem;">{{ session('error') }}</div>
     @endif
+
     @if ($esReincidente)
-        <div class="flash-warning" style="margin-bottom:1.25rem;">
+        <div class="reincidente-banner">
             <i class="fa-solid fa-triangle-exclamation"></i>
-            Árbitro reincidente: acumula {{ $totalReciente }} sanciones en los últimos 6 meses (incluida esta).
+            <span><strong>Árbitro reincidente:</strong> acumula {{ $totalReciente }} sanciones en los últimos 6 meses (incluida esta).</span>
         </div>
     @endif
 
-    <div class="form-card">
+    @if ($sancion->estaActiva())
+        @include('sanciones.partials.plazo-apelacion')
+    @endif
+
+    <div class="form-card sancion-card--severidad" data-severidad="{{ $severidad }}">
         <div class="form-section">
-            <p class="form-section-title">Detalle</p>
-            <div class="form-grid form-grid-2">
-                <div class="form-group">
-                    <label class="form-label">Fecha del hecho</label>
-                    <span>{{ $sancion->fechaHecho->format('d/m/Y') }}</span>
+            <p class="form-section-title">Detalle del hecho</p>
+            <div class="detail-grid">
+                <div class="detail-field">
+                    <span class="detail-field__label">Fecha del hecho</span>
+                    <span class="detail-field__value">{{ $sancion->fechaHecho->format('d/m/Y') }}</span>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Suspensión</label>
-                    <span>
+                <div class="detail-field">
+                    <span class="detail-field__label">Suspensión</span>
+                    <span class="detail-field__value">
                         @if ($sancion->tieneSuspension())
                             {{ $sancion->fechaInicioSancion->format('d/m/Y') }}
                             —
                             {{ $sancion->fechaFinSancion?->format('d/m/Y') ?? 'indefinida' }}
                         @else
-                            Sin suspensión — solo registro{{ $sancion->tieneMultaEconomica ? ' y multa económica' : '' }}
+                            <span class="detail-field__value--muted">Sin suspensión — solo registro{{ $sancion->tieneMultaEconomica ? ' y multa económica' : '' }}</span>
                         @endif
                     </span>
                 </div>
-                @if ($sancion->estaActiva())
-                    <div class="form-group">
-                        <label class="form-label">Plazo para apelar</label>
-                        <span>
-                            {{ $sancion->vencioPlazoApelacion() ? 'Vencido el' : 'Hasta el' }}
-                            {{ $sancion->fechaLimiteApelacion()->format('d/m/Y') }}
-                        </span>
-                    </div>
-                @endif
                 @if ($sancion->tipo?->articuloReglamento)
-                    <div class="form-group span-2">
-                        <label class="form-label">Fundamento reglamentario</label>
-                        <span>{{ $sancion->tipo->articuloReglamento }}</span>
+                    <div class="detail-field span-2">
+                        <span class="detail-field__label">Fundamento reglamentario</span>
+                        <span class="detail-field__value">{{ $sancion->tipo->articuloReglamento }}</span>
                     </div>
                 @endif
-                <div class="form-group span-2">
-                    <label class="form-label">Motivo</label>
-                    <span>{{ $sancion->motivoSancion }}</span>
+                <div class="detail-field span-2">
+                    <span class="detail-field__label">Motivo</span>
+                    <span class="detail-field__value">{{ $sancion->motivoSancion }}</span>
                 </div>
                 @if ($sancion->tieneMultaEconomica && $sancion->movimientoFinanciero)
-                    <div class="form-group span-2">
-                        <label class="form-label">Multa económica asociada</label>
-                        <span>
-                            ${{ number_format((float) $sancion->movimientoFinanciero->montoTotal, 2) }}
-                            — estado: {{ $sancion->movimientoFinanciero->estadoMovimiento }}
-                        </span>
+                    <div class="detail-field span-2">
+                        <span class="detail-field__label">Multa económica asociada</span>
+                        <div class="multa-card">
+                            <span class="multa-card__amount">
+                                ${{ number_format((float) $sancion->movimientoFinanciero->montoTotal, 2) }}
+                                <span>Estado: {{ $sancion->movimientoFinanciero->estadoMovimiento }}</span>
+                            </span>
+                        </div>
                     </div>
                 @endif
-                <div class="form-group">
-                    <label class="form-label">Registrada por</label>
-                    <span>{{ $sancion->usuarioImpuso->nombreUsuario ?? '—' }}</span>
+                <div class="detail-field">
+                    <span class="detail-field__label">Registrada por</span>
+                    <span class="detail-field__value">{{ $sancion->usuarioImpuso->nombreUsuario ?? '—' }}</span>
                 </div>
             </div>
         </div>
@@ -137,18 +147,7 @@
         <div class="form-section" style="border-bottom:none;">
             <p class="form-section-title">Historial</p>
         </div>
-        <div style="display:flex;flex-direction:column;gap:0.75rem;">
-            @foreach ($sancion->historial as $item)
-                <div style="font-size:0.85rem;color:var(--san-text-2);">
-                    <span class="td-primary">{{ ucfirst(str_replace('_', ' ', $item->tipoAccion)) }}</span>
-                    <span class="td-secondary">
-                        {{ $item->created_at->format('d/m/Y H:i') }}
-                        @if ($item->usuarioAccion) — {{ $item->usuarioAccion->nombreUsuario }} @endif
-                        @if ($item->detalle) — {{ $item->detalle }} @endif
-                    </span>
-                </div>
-            @endforeach
-        </div>
+        @include('sanciones.partials.timeline')
     </div>
 
     {{-- Modal de cambio de estado --}}
@@ -172,8 +171,8 @@
                             </select>
                         </div>
                         <div class="form-group" id="wrap-motivo">
-                            <label class="form-label">Motivo</label>
-                            <textarea name="motivo" class="form-textarea"></textarea>
+                            <label class="form-label" id="label-motivo">Motivo</label>
+                            <textarea name="motivo" id="textarea-motivo" class="form-textarea"></textarea>
                         </div>
                     </div>
                 </div>

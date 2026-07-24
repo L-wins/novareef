@@ -63,12 +63,19 @@
                             class="form-select {{ $errors->has('idTipoSancion') ? 'is-invalid' : '' }}">
                         <option value="">— Selecciona —</option>
                         @foreach ($tipos as $tipo)
-                            <option value="{{ $tipo->idTipoSancion }}" {{ (string) old('idTipoSancion') === (string) $tipo->idTipoSancion ? 'selected' : '' }}>
-                                {{ $tipo->etiqueta }} ({{ ucfirst($tipo->severidad) }})
+                            <option value="{{ $tipo->idTipoSancion }}"
+                                    data-articulo="{{ $tipo->articuloReglamento }}"
+                                    data-dias="{{ $tipo->diasSuspensionSugeridos }}"
+                                    {{ (string) old('idTipoSancion') === (string) $tipo->idTipoSancion ? 'selected' : '' }}>
+                                {{ ucfirst($tipo->severidad) }} — {{ $tipo->etiqueta }}
                             </option>
                         @endforeach
                     </select>
                     @error('idTipoSancion') <p class="field-error">{{ $message }}</p> @enderror
+                    <p class="sev-hint" id="hint-tipo-sancion" style="display:none;">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <span id="hint-tipo-sancion-texto"></span>
+                    </p>
                 </div>
             </div>
         </div>

@@ -1,0 +1,71 @@
+/*
+   Severidad de tipos/sanciones (sev-*) — tratamiento más marcado que
+   .badge genérico (badges.css): icono propio + color semántico por nivel,
+   reutilizable tanto en tablas (tipos.blade.php) como en tarjetas de
+   detalle (show.blade.php).
+    */
+
+.sev-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.7rem 0.3rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+.sev-chip i { font-size: 0.7rem; }
+
+.sev-chip[data-severidad="leve"] {
+    background: var(--nv-success-bg);
+    color: var(--nv-success);
+    border-color: rgba(34, 197, 94, 0.28);
+}
+.sev-chip[data-severidad="moderada"] {
+    background: var(--nv-warning-bg);
+    color: var(--nv-warning);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+.sev-chip[data-severidad="grave"] {
+    background: var(--nv-danger-bg);
+    color: var(--nv-danger);
+    border-color: rgba(239, 68, 68, 0.32);
+}
+
+/* Borde izquierdo de acento en tarjetas — mismo criterio que las filas de
+   documentos.css, aplicado aquí a .form-card cuando se marca la severidad. */
+.sancion-card--severidad {
+    border-left: 3px solid transparent;
+}
+.sancion-card--severidad[data-severidad="leve"]     { border-left-color: var(--nv-success); }
+.sancion-card--severidad[data-severidad="moderada"] { border-left-color: var(--nv-warning); }
+.sancion-card--severidad[data-severidad="grave"]    { border-left-color: var(--nv-danger); }
+
+/* Selects nativos (create.blade.php) no soportan chips — se usa texto con
+   punto de color antes de la etiqueta como fallback accesible. */
+.sev-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.4rem;
+}
+.sev-dot[data-severidad="leve"]     { background: var(--nv-success); }
+.sev-dot[data-severidad="moderada"] { background: var(--nv-warning); }
+.sev-dot[data-severidad="grave"]    { background: var(--nv-danger); }
+
+.sev-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    color: var(--san-text-mute);
+    background: var(--nv-fill);
+    border: 1px solid var(--san-border);
+    border-radius: var(--san-radius-sm);
+    padding: 0.6rem 0.8rem;
+    margin-top: 0.5rem;
+}
+.sev-hint i { color: var(--san-accent); }

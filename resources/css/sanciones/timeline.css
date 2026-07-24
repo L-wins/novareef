@@ -1,0 +1,81 @@
+/*
+   Timeline del historial de una sanción (san-timeline-*) — reemplaza la
+   lista plana anterior en show.blade.php. Línea vertical + punto de color
+   por tipo de acción (impuesta/cumplida/anulada/apelada/apelacion_resuelta).
+    */
+
+.san-timeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+    padding-left: 0.35rem;
+}
+
+.san-timeline__item {
+    position: relative;
+    padding-left: 1.75rem;
+}
+
+/* Línea vertical conectando los puntos — se dibuja con el borde del propio
+   item para no depender de :last-child ::before/::after duplicados. */
+.san-timeline__item::before {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 18px;
+    bottom: -1.35rem;
+    width: 2px;
+    background: var(--san-border);
+}
+.san-timeline__item:last-child::before { display: none; }
+
+.san-timeline__dot {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--nv-fill-2);
+    border: 2px solid var(--san-bg-card);
+    box-shadow: 0 0 0 2px var(--san-border);
+}
+.san-timeline__dot[data-color="green"]  { background: var(--nv-success); box-shadow: 0 0 0 2px rgba(34,197,94,.25); }
+.san-timeline__dot[data-color="red"]    { background: var(--nv-danger);  box-shadow: 0 0 0 2px rgba(239,68,68,.25); }
+.san-timeline__dot[data-color="blue"]   { background: var(--san-accent); box-shadow: 0 0 0 2px rgba(79,142,247,.25); }
+.san-timeline__dot[data-color="amber"]  { background: var(--nv-warning); box-shadow: 0 0 0 2px rgba(245,158,11,.25); }
+
+.san-timeline__head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.san-timeline__label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--san-text);
+}
+
+.san-timeline__meta {
+    font-size: 0.74rem;
+    color: var(--san-text-mute);
+}
+
+.san-timeline__detalle {
+    margin-top: 0.3rem;
+    font-size: 0.84rem;
+    color: var(--san-text-2);
+    line-height: 1.5;
+    background: var(--nv-fill);
+    border-radius: var(--san-radius-sm);
+    padding: 0.6rem 0.75rem;
+}
+
+.san-timeline-empty {
+    font-size: 0.85rem;
+    color: var(--san-text-mute);
+    padding: 0.75rem 0;
+}

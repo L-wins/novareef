@@ -46,6 +46,19 @@
         <div class="flash-error" style="margin-bottom:1.25rem;">{{ session('error') }}</div>
     @endif
 
+    @if (!$esArbitro && $resumen)
+        <div class="san-tiles" style="margin-bottom:1.5rem;">
+            <div class="san-tile">
+                <div class="san-tile__value">{{ $resumen['activasCount'] }}</div>
+                <div class="san-tile__label">Sanciones activas</div>
+            </div>
+            <div class="san-tile">
+                <div class="san-tile__value">{{ $resumen['apelacionesPendientes'] }}</div>
+                <div class="san-tile__label">Apelaciones por resolver</div>
+            </div>
+        </div>
+    @endif
+
     @if (!$esArbitro)
     <form method="GET" action="{{ route('sanciones.index') }}" class="filter-bar-grid" data-auto-filter>
         <div class="filter-group">
@@ -104,9 +117,14 @@
                             @endif
                             <td>
                                 <span class="td-primary">{{ $sancion->tipo->etiqueta ?? '—' }}</span>
-                                @if ($sancion->tieneMultaEconomica)
-                                    <span class="td-secondary">Con multa económica</span>
-                                @endif
+                                <div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.25rem;">
+                                    @if ($sancion->tipo?->severidad)
+                                        <span class="sev-chip" data-severidad="{{ $sancion->tipo->severidad }}">{{ ucfirst($sancion->tipo->severidad) }}</span>
+                                    @endif
+                                    @if ($sancion->tieneMultaEconomica)
+                                        <span class="td-secondary">Con multa económica</span>
+                                    @endif
+                                </div>
                             </td>
                             <td>{{ $sancion->fechaHecho->format('d/m/Y') }}</td>
                             <td>

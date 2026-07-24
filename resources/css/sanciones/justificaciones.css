@@ -1,0 +1,101 @@
+/*
+   Revisión de justificaciones académicas (just-*) — vive bajo el namespace
+   de Sanciones (ver JustificacionRevisionController) pero es un flujo de
+   M08 Académico. Mismo nivel visual que el resto del módulo: tarjetas con
+   urgencia por vencimiento y transición suave del formulario de rechazo.
+    */
+
+.just-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.just-card {
+    background: var(--san-bg-card);
+    border: 1px solid var(--san-border);
+    border-radius: var(--san-radius);
+    padding: 1.25rem 1.4rem;
+}
+
+.just-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.just-card__arbitro {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--san-text);
+}
+
+.just-card__sesion {
+    font-size: 0.8rem;
+    color: var(--san-text-mute);
+    margin-top: 0.15rem;
+}
+
+/* Badge de vencimiento — urgencia por proximidad, mismo criterio semántico
+   que .plazo-card de detalle.css. */
+.just-vence {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+    background: var(--nv-fill);
+    color: var(--san-text-2);
+    border: 1px solid var(--san-border);
+}
+.just-vence[data-urgencia="media"]   { background: var(--nv-warning-bg); color: var(--nv-warning); border-color: rgba(245,158,11,.3); }
+.just-vence[data-urgencia="critica"] { background: var(--nv-danger-bg);  color: var(--nv-danger);  border-color: rgba(239,68,68,.3); }
+
+.just-card__motivo {
+    font-size: 0.86rem;
+    color: var(--san-text-2);
+    line-height: 1.55;
+    background: var(--nv-fill);
+    border-radius: var(--san-radius-sm);
+    padding: 0.75rem 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.just-card__doc {
+    margin-bottom: 1rem;
+}
+
+.just-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* Panel de rechazo — transición suave por grid-template-rows en vez de
+   display:none abrupto (mismo patrón usado en documentos.css para
+   <details>, adaptado a un <form> normal via clase toggle). */
+.just-rechazo {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition: grid-template-rows .22s ease, opacity .18s ease, margin-top .22s ease;
+    margin-top: 0;
+}
+.just-rechazo.is-open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    margin-top: 0.85rem;
+}
+.just-rechazo__inner { overflow: hidden; }
+
+.just-empty-icon { color: var(--nv-success); }
+
+@media (max-width: 640px) {
+    .just-card__head { flex-direction: column; }
+}

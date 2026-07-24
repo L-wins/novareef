@@ -56,8 +56,8 @@
                             <td class="td-primary">{{ $tipo->etiqueta }}</td>
                             <td>{{ $tipo->articuloReglamento ?? '—' }}</td>
                             <td>
-                                <span class="badge {{ match($tipo->severidad) { 'grave' => 'badge-red', 'moderada' => 'badge-amber', default => 'badge-gray' } }}">
-                                    {{ ucfirst($tipo->severidad) }}
+                                <span class="sev-chip" data-severidad="{{ $tipo->severidad }}">
+                                    <i class="fa-solid fa-circle-exclamation"></i>{{ ucfirst($tipo->severidad) }}
                                 </span>
                             </td>
                             <td>

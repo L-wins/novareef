@@ -359,12 +359,22 @@ class SancionFlujoTest extends TestCase
         $this->assertDatabaseCount('sanciones', 0);
     }
 
+    /** Asigna el rol Spatie 'arbitro' (con ver-sanciones) al usuario del árbitro — mismo patrón que test_un_arbitro_solo_ve_sus_propias_sanciones. */
+    private function asignarRolArbitro(\App\Models\Arbitro $arbitro): void
+    {
+        Permission::firstOrCreate(['name' => 'ver-sanciones', 'guard_name' => 'web']);
+        $rolArbitro = Role::firstOrCreate(['name' => 'arbitro', 'guard_name' => 'web']);
+        $rolArbitro->givePermissionTo('ver-sanciones');
+        $arbitro->usuario->assignRole('arbitro');
+    }
+
     public function test_no_se_puede_apelar_una_sancion_fuera_del_plazo(): void
     {
         $colegio  = $this->crearColegioConSanciones();
         $comite   = $this->crearMiembroComite($colegio);
         $arbitro  = $this->crearArbitro($colegio);
         $servicio = app(SancionService::class);
+        $this->asignarRolArbitro($arbitro);
 
         $sancion = $servicio->crearSancion($colegio->idColegio, [
             'idArbitro' => $arbitro->idArbitro,
@@ -377,9 +387,103 @@ class SancionFlujoTest extends TestCase
 
         $this->assertFalse($sancion->fresh()->puedeApelarse());
 
+        $this->actingAs($arbitro->usuario)->put("/sanciones/{$sancion->idSancion}/estado", [
+            'accion' => 'apelar',
+            'motivo' => 'Quiero apelar esta sanción',
+        ])->assertSessionHas('error');
+
+        $this->assertSame('activa', $sancion->fresh()->estadoSancion);
+    }
+
+    public function test_el_arbitro_dueno_puede_apelar_su_propia_sancion_activa(): void
+    {
+        $colegio  = $this->crearColegioConSanciones();
+        $comite   = $this->crearMiembroComite($colegio);
+        $arbitro  = $this->crearArbitro($colegio);
+        $servicio = app(SancionService::class);
+        $this->asignarRolArbitro($arbitro);
+
+        $sancion = $servicio->crearSancion($colegio->idColegio, [
+            'idArbitro' => $arbitro->idArbitro,
+            'idTipoSancion' => $this->crearTipoSancion($colegio)->idTipoSancion,
+            'motivoSancion' => 'Motivo', 'fechaHecho' => today()->format('Y-m-d'),
+            'tieneMultaEconomica' => false,
+        ], $comite);
+
+        $this->actingAs($arbitro->usuario)->put("/sanciones/{$sancion->idSancion}/estado", [
+            'accion' => 'apelar',
+            'motivo' => 'No estuve de acuerdo con el reporte del veedor',
+        ])->assertRedirect(route('sanciones.show', $sancion->idSancion));
+
+        $this->assertSame('apelada', $sancion->fresh()->estadoSancion);
+    }
+
+    public function test_un_arbitro_que_no_es_el_dueno_no_puede_apelar_la_sancion_de_otro(): void
+    {
+        $colegio  = $this->crearColegioConSanciones();
+        $comite   = $this->crearMiembroComite($colegio);
+        $arbitroA = $this->crearArbitro($colegio);
+        $arbitroB = $this->crearArbitro($colegio);
+        $servicio = app(SancionService::class);
+        $this->asignarRolArbitro($arbitroA);
+        $this->asignarRolArbitro($arbitroB);
+
+        $sancionA = $servicio->crearSancion($colegio->idColegio, [
+            'idArbitro' => $arbitroA->idArbitro,
+            'idTipoSancion' => $this->crearTipoSancion($colegio)->idTipoSancion,
+            'motivoSancion' => 'Motivo', 'fechaHecho' => today()->format('Y-m-d'),
+            'tieneMultaEconomica' => false,
+        ], $comite);
+
+        $this->actingAs($arbitroB->usuario)->put("/sanciones/{$sancionA->idSancion}/estado", [
+            'accion' => 'apelar',
+            'motivo' => 'Intento apelar la sanción de otro árbitro',
+        ])->assertForbidden();
+
+        $this->assertSame('activa', $sancionA->fresh()->estadoSancion);
+    }
+
+    public function test_el_comite_ya_no_puede_apelar_en_nombre_del_arbitro(): void
+    {
+        $colegio  = $this->crearColegioConSanciones();
+        $comite   = $this->crearMiembroComite($colegio);
+        $arbitro  = $this->crearArbitro($colegio);
+        $servicio = app(SancionService::class);
+        $this->asignarRolArbitro($arbitro);
+
+        $sancion = $servicio->crearSancion($colegio->idColegio, [
+            'idArbitro' => $arbitro->idArbitro,
+            'idTipoSancion' => $this->crearTipoSancion($colegio)->idTipoSancion,
+            'motivoSancion' => 'Motivo', 'fechaHecho' => today()->format('Y-m-d'),
+            'tieneMultaEconomica' => false,
+        ], $comite);
+
         $this->actingAs($comite)->put("/sanciones/{$sancion->idSancion}/estado", [
             'accion' => 'apelar',
-        ])->assertSessionHas('error');
+            'motivo' => 'El comité intenta apelar en nombre del árbitro',
+        ])->assertForbidden();
+
+        $this->assertSame('activa', $sancion->fresh()->estadoSancion);
+    }
+
+    public function test_apelar_via_http_exige_motivo_obligatorio(): void
+    {
+        $colegio  = $this->crearColegioConSanciones();
+        $comite   = $this->crearMiembroComite($colegio);
+        $arbitro  = $this->crearArbitro($colegio);
+        $servicio = app(SancionService::class);
+        $this->asignarRolArbitro($arbitro);
+
+        $sancion = $servicio->crearSancion($colegio->idColegio, [
+            'idArbitro' => $arbitro->idArbitro,
+            'idTipoSancion' => $this->crearTipoSancion($colegio)->idTipoSancion,
+            'motivoSancion' => 'Motivo', 'fechaHecho' => today()->format('Y-m-d'),
+            'tieneMultaEconomica' => false,
+        ], $comite);
+
+        $this->actingAs($arbitro->usuario)->put("/sanciones/{$sancion->idSancion}/estado", [
+            'accion' => 'apelar',
+        ])->assertSessionHasErrors('motivo');
 
         $this->assertSame('activa', $sancion->fresh()->estadoSancion);
     }

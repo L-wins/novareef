@@ -46,6 +46,19 @@ class HistorialSancion extends Model
         });
     }
 
+    /** Color del punto en el timeline visual (resources/css/sanciones/timeline.css) — una sola fuente de verdad para la vista. */
+    public static function colorPorTipo(string $tipoAccion): string
+    {
+        return match ($tipoAccion) {
+            self::TIPO_IMPUESTA => 'amber',
+            self::TIPO_CUMPLIDA => 'green',
+            self::TIPO_ANULADA => 'red',
+            self::TIPO_APELADA => 'blue',
+            self::TIPO_APELACION_RESUELTA => 'green',
+            default => 'gray',
+        };
+    }
+
     // ── Relaciones ──
 
     public function sancion(): BelongsTo
